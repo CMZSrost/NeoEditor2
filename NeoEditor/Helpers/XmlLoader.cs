@@ -1,117 +1,98 @@
 ﻿using System.Collections.ObjectModel;
+using System.Data;
+using System.Dynamic;
 using System.IO;
-using System.Windows;
 using System.Xml;
-using Microsoft.EntityFrameworkCore;
-using NeoEditor.Data.Context;
-using NeoEditor.Data.Models;
-using NeoEditor.Helpers.Converters;
+using Dapper;
+using Microsoft.Data.Sqlite;
+using Microsoft.Extensions.Configuration;
 using NeoEditor.ViewModels.Data;
 
 namespace NeoEditor.Helpers;
 
-public interface ILoadingCollection
+public class DapperCollection
 {
-    public void Add(dynamic? obj);
+    private readonly IList<string> _attributes;
+    private readonly string _connectionString;
 
-    public int Count();
+    private readonly string _insertString;
+    private readonly string _tableName;
+    public readonly Collection<ExpandoObject> EntitiesList;
 
-    public Task Clean();
-
-
-    public void BulkInsert();
-}
-
-public class LoadingCollection<T>(DbSet<T> db) : ILoadingCollection where T : class
-{
-    public Collection<T> Collection = new(db.ToList());
-
-    public void Add(dynamic? obj)
+    public DapperCollection(string connectionString, string tableName, List<string> attributes)
     {
-        Collection.Add(obj);
+        _connectionString = connectionString;
+        _tableName = tableName;
+        _attributes = attributes;
+        EntitiesList = [];
+        var insertStringKey = $"({string.Join(", ", attributes)})";
+        var insertStringValue = $"(@{string.Join(", @", attributes)})";
+        _insertString = $"INSERT INTO {_tableName} {insertStringKey} VALUES {insertStringValue};";
+        // _insertString = $"INSERT INTO {_tableName} {insertStringKey} VALUES ";
     }
 
-    public int Count()
+    public async Task Truncate()
     {
-        return Collection.Count;
+        try
+        {
+            using IDbConnection connection = new SqliteConnection(_connectionString);
+
+            await connection.ExecuteAsync($"DELETE FROM {_tableName};");
+            await connection.ExecuteAsync($"UPDATE sqlite_sequence SET seq = 0 WHERE name = '{_tableName}';");
+        }
+        catch (Exception ex)
+        {
+        }
     }
 
-    public async Task Clean()
-    {
-        await db.LoadAsync();
-        await db.ExecuteDeleteAsync();
-    }
-
-    public void BulkInsert()
-    {
-        db.AddRange(Collection.AsEnumerable());
-    }
-}
-
-public class BulkCollection(NeoContext db)
-{
-    public readonly Dictionary<Type, ILoadingCollection> Collections = new()
-    {
-        { typeof(attackmode), new LoadingCollection<attackmode>(db.attackmodes) },
-        { typeof(barterhex), new LoadingCollection<barterhex>(db.barterhexes) },
-        { typeof(battlemove), new LoadingCollection<battlemove>(db.battlemoves) },
-        { typeof(camptype), new LoadingCollection<camptype>(db.camptypes) },
-        { typeof(chargeprofile), new LoadingCollection<chargeprofile>(db.chargeprofiles) },
-        { typeof(condition), new LoadingCollection<condition>(db.conditions) },
-        { typeof(containertype), new LoadingCollection<containertype>(db.containertypes) },
-        { typeof(creature), new LoadingCollection<creature>(db.creatures) },
-        { typeof(creaturesource), new LoadingCollection<creaturesource>(db.creaturesources) },
-        { typeof(datafile), new LoadingCollection<datafile>(db.datafiles) },
-        { typeof(dmcplace), new LoadingCollection<dmcplace>(db.dmcplaces) },
-        { typeof(encounter), new LoadingCollection<encounter>(db.encounters) },
-        { typeof(encountertrigger), new LoadingCollection<encountertrigger>(db.encountertriggers) },
-        { typeof(faction), new LoadingCollection<faction>(db.factions) },
-        { typeof(forbiddenhex), new LoadingCollection<forbiddenhex>(db.forbiddenhexes) },
-        { typeof(gamevar), new LoadingCollection<gamevar>(db.gamevars) },
-        { typeof(headline), new LoadingCollection<headline>(db.headlines) },
-        { typeof(hextype), new LoadingCollection<hextype>(db.hextypes) },
-        { typeof(image), new LoadingCollection<image>(db.images) },
-        { typeof(ingredient), new LoadingCollection<ingredient>(db.ingredients) },
-        { typeof(itemprop), new LoadingCollection<itemprop>(db.itemprops) },
-        { typeof(itemtype), new LoadingCollection<itemtype>(db.itemtypes) },
-        { typeof(map), new LoadingCollection<map>(db.maps) },
-        { typeof(recipe), new LoadingCollection<recipe>(db.recipes) },
-        { typeof(treasuretable), new LoadingCollection<treasuretable>(db.treasuretables) }
-    };
-
-    public void Add(dynamic? obj)
-    {
-        Collections[obj?.GetType()].Add(obj);
-    }
-
-    public int Count(string name)
-    {
-        return Collections[DictionaryModelConverter.GetType(name)].Count();
-    }
 
     public async Task BulkInsert()
     {
-        await Application.Current.Dispatcher.InvokeAsync(() =>
+        try
         {
-            foreach (var collection in Collections.Values) collection.BulkInsert();
-        });
-
-
-        await db.SaveChangesAsync();
+            using IDbConnection connection = new SqliteConnection(_connectionString);
+            if (connection.State == ConnectionState.Closed) connection.Open();
+            var transaction = connection.BeginTransaction();
+            foreach (var dictionary in EntitiesList)
+                await connection.ExecuteAsync(_insertString, dictionary, transaction);
+            transaction.Commit();
+            EntitiesList.Clear();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex);
+        }
     }
 }
 
 public class XmlLoader
 {
-    private readonly BulkCollection _bulkCollection;
     private readonly Dictionary<string, int> _cntDictory;
-    private readonly NeoContext _db;
+    private readonly string _connectionString;
+    private readonly Dictionary<string, DapperCollection> _dapperCollections;
+    private readonly Dictionary<string, List<string>> _tableAttribs;
+    private readonly List<string> _tableNames;
 
-    public XmlLoader(NeoContext db)
+    public XmlLoader(IConfiguration configuration)
     {
-        _bulkCollection = new BulkCollection(db);
         _cntDictory = new Dictionary<string, int>();
-        _db = db;
+        _connectionString = configuration.GetConnectionString("DefaultConnection") ??
+                            throw new ArgumentNullException(nameof(configuration));
+        _dapperCollections = new Dictionary<string, DapperCollection>();
+        _tableAttribs = configuration.GetSection("tableAttibute")
+            .GetChildren()
+            .Select(tableName =>
+                {
+                    var lst = tableName.GetChildren().Select(c => c.Value ?? string.Empty)
+                        .ToList();
+                    return new
+                    {
+                        key = tableName.Key,
+                        value = lst.Concat(["idx", "modName", "modIndex", "serialId_", "overId_"]).ToList()
+                    };
+                }
+            ).ToDictionary(arg => arg.key, arg => arg.value);
+        _tableNames = _tableAttribs.Keys.ToList();
     }
 
     public int Idx { get; set; }
@@ -119,15 +100,19 @@ public class XmlLoader
     public async Task Clean()
     {
         Idx = 0;
-        // _cntDictory.Clear();
+        _cntDictory.Clear();
+        _dapperCollections.Clear();
         await Truncate();
     }
 
     public async Task Truncate()
     {
-        foreach (var bulkCollectionCollection in _bulkCollection.Collections.Values)
-            await bulkCollectionCollection.Clean();
-        await _db.SaveChangesAsync();
+        foreach (var tableName in _tableNames)
+        {
+            var dapperCollection = new DapperCollection(_connectionString, tableName, _tableAttribs[tableName]);
+            _dapperCollections.Add(tableName, dapperCollection);
+            await dapperCollection.Truncate();
+        }
     }
 
     public async Task CleanEncodingHeader(string xmlFilePath)
@@ -146,6 +131,26 @@ public class XmlLoader
         File.Move(xmlFilePath + ".tmp", xmlFilePath, true);
     }
 
+    private object? GuessType(string attrib, dynamic? obj = null)
+    {
+        try
+        {
+            if (attrib.StartsWith('v') || attrib.StartsWith('a') || attrib.StartsWith("str"))
+                return obj == null ? string.Empty : Convert.ChangeType(obj, TypeCode.String);
+
+            if (attrib.StartsWith('n') || attrib.StartsWith('i') || attrib.StartsWith('b'))
+                return obj == null ? -1 : Convert.ChangeType(obj, TypeCode.Int32);
+
+            if (attrib.StartsWith('f') || attrib.StartsWith("m_f"))
+                return obj == null ? double.NaN : Convert.ChangeType(obj, TypeCode.Double);
+        }
+        catch (FormatException)
+        {
+        }
+
+        return obj;
+    }
+
     public async Task LoadXml(string xmlFilePath, ModData modData)
     {
         await CleanEncodingHeader(xmlFilePath);
@@ -160,51 +165,30 @@ public class XmlLoader
                     var name = selectTable.Attributes?["name"]?.Value ?? string.Empty;
                     var columns = selectTable.SelectNodes("./column")?.Cast<XmlNode>().ToList();
                     ArgumentNullException.ThrowIfNull(columns);
-                    Dictionary<string, dynamic?> dictionary;
+                    var eo = new ExpandoObject();
                     try
                     {
-                        dictionary = columns.ToDictionary<XmlNode, string, dynamic?>(
-                            p => p.Attributes?["name"]?.Value ??
-                                 throw new ArgumentNullException(nameof(p), "xml node can't be null!"),
-                            p =>
-                            {
-                                var nameAttr = p.Attributes?["name"]?.Value ?? "";
-                                bool? isByte = nameAttr.StartsWith("b");
-                                bool? isInt = nameAttr.StartsWith("n");
-                                bool? isStr = nameAttr.StartsWith("str");
-                                bool? isVector = nameAttr.StartsWith("v");
-                                bool? isArray = nameAttr.StartsWith("a");
-                                bool? isFloat = nameAttr.StartsWith("f");
-                                bool? ismFloat = nameAttr.StartsWith("m_f");
-                                if ((bool)isByte && byte.TryParse(p.InnerText, out var byteValue))
-                                    return byteValue;
-                                if ((bool)isStr || (bool)isArray || (bool)isVector) return p.InnerText;
-                                if (((bool)ismFloat || (bool)isFloat) &&
-                                    double.TryParse(p.InnerText, out var doubleValue))
-                                    return doubleValue;
-                                if ((bool)isInt && int.TryParse(p.InnerText, out var intV)) return intV;
-                                if (int.TryParse(p.InnerText, out var intValue)) return intValue;
-                                return p.InnerText ?? string.Empty;
-                            }
-                        );
-                        if (_cntDictory.TryGetValue(name, out var idx))
-                        {
-                            dictionary.TryAdd("idx", idx);
-                            _cntDictory[name] = idx + 1;
-                        }
-                        else
-                        {
-                            dictionary.TryAdd("idx", 0);
-                            _cntDictory.Add(name, 1);
-                        }
-
+                        var cnt = 0;
+                        _cntDictory.TryGetValue(name, out cnt);
+                        _cntDictory[name] = cnt + 1;
                         Idx += 1;
-                        dictionary.TryAdd("modName", modData.ModName);
-                        dictionary.TryAdd("modIndex", modData.ModIndex);
-                        dictionary.TryAdd("serialId_", -1);
-                        dictionary.TryAdd("overId_", -1);
+                        eo.TryAdd("idx", cnt);
 
-                        _bulkCollection.Add(DictionaryModelConverter.Convert(dictionary, name));
+                        eo.TryAdd("modName", modData.ModName);
+                        eo.TryAdd("modIndex", modData.ModIndex);
+                        eo.TryAdd("serialId_", -1);
+                        eo.TryAdd("overId_", -1);
+
+                        foreach (var xmlNode in columns)
+                        {
+                            var attrib = xmlNode.Attributes["name"].Value;
+                            eo.TryAdd(attrib, GuessType(attrib, xmlNode.InnerText));
+                        }
+
+                        foreach (var attrib in _tableAttribs[name])
+                            eo.TryAdd(attrib, GuessType(attrib));
+
+                        _dapperCollections[name].EntitiesList.Add((dynamic)eo);
                     }
                     catch (ArgumentException e)
                     {
@@ -221,8 +205,7 @@ public class XmlLoader
                     }
                 }
 
-                await _bulkCollection.BulkInsert();
-                await _db.SaveChangesAsync();
+                foreach (var dapperCollection in _dapperCollections.Values) await dapperCollection.BulkInsert();
             }
         );
     }

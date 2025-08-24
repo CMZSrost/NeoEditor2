@@ -54,6 +54,7 @@ public partial class App : Application
             });
             Encoding.GetEncoding("utf-8");
 
+            services.AddSingleton<SqliteConnectionFactory>();
             services.AddSingleton<XmlLoader>();
 
             services.AddSingleton<LoggerService>();
