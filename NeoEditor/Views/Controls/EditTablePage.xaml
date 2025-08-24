@@ -1,0 +1,16 @@
+﻿<UserControl
+    x:Class="NeoEditor.Views.Controls.EditTablePage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="clr-namespace:NeoEditor.ViewModels.Controls"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    d:DataContext="{d:DesignInstance Type=controls:EditTableViewModel}"
+    mc:Ignorable="d">
+    <Grid>
+        <TabControl
+            Margin="10"
+            ItemsSource="{Binding Tabs}"
+            Style="{StaticResource TabControlInLine}" />
+    </Grid>
+</UserControl>
