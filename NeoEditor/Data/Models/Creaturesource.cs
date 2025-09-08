@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
 
@@ -8,24 +6,22 @@ namespace NeoEditor.Data.Models;
 
 [Index("nCreatureID", Name = "main_creaturesources_nCreatureID_index")]
 [Index("nX", "nY", Name = "main_creaturesources_nX_nY_index")]
-public partial class creaturesource
+public class creaturesource
 {
-    [Key]
-    public int idx { get; set; }
+    [Key] public int idx { get; set; }
 
-    [Column(TypeName = "varchar(255)")]
-    public string modName { get; set; } = null!;
+    [Column(TypeName = "varchar(255)")] public string modName { get; set; } = null!;
 
     public int modIndex { get; set; }
 
     public int serialId_ { get; set; }
+    public bool isLast_ { get; set; } = false;
 
     public int? overId_ { get; set; }
 
     public int? id { get; set; }
 
-    [Column(TypeName = "varchar(255)")]
-    public string strName { get; set; } = null!;
+    [Column(TypeName = "varchar(255)")] public string strName { get; set; } = null!;
 
     public int nX { get; set; }
 
@@ -37,6 +33,5 @@ public partial class creaturesource
 
     public int nMax { get; set; }
 
-    [Column(TypeName = "float")]
-    public double fWeight { get; set; }
+    [Column(TypeName = "float")] public double fWeight { get; set; }
 }

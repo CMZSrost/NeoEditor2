@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using NeoEditor.Data;
 using NeoEditor.Data.Context;
 using NeoEditor.Data.Options;
 using NeoEditor.Helpers;
@@ -55,9 +56,9 @@ public partial class App : Application
             Encoding.GetEncoding("utf-8");
 
             services.AddSingleton<SqliteConnectionFactory>();
-            services.AddSingleton<XmlLoader>();
+            services.AddTransient<XmlLoader>().AddTransient<SerialIdHelper>();
 
-            services.AddSingleton<LoggerService>();
+            services.AddSingleton<LoggerViewModel>();
 
             services.AddSingleton<MainWindow>()
                 .AddSingleton<MenuViewModel>()
@@ -67,6 +68,14 @@ public partial class App : Application
             services.AddTransient<TabItem, AttackMode>().AddTransient<AttackModeViewModel>();
 
             services.AddSingleton<EditTablePage>().AddSingleton<EditTableViewModel>();
+        }).ConfigureServices((
+            collection, services) =>
+        {
+            services.AddAutoMapper(expression =>
+            {
+                expression.AddProfile(typeof(SerialRecordProfile));
+                expression.AddProfile(typeof(DtoProfile));
+            });
         })
         .Build();
 

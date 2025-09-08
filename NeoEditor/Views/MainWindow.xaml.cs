@@ -18,20 +18,17 @@ public partial class MainWindow : Window
     private readonly MessageHelper _messageHelper = new();
 
     public MainWindow(
-        MainWindowViewModel vm,
-        LoggerService loggerService
+        MainWindowViewModel vm
     )
     {
         DataContext = vm;
-        LoggerService = loggerService;
         _messageHelper.LoadProjectMessageHandler += ReceiveLoadProject;
 
         InitializeComponent();
     }
 
-    private LoggerService LoggerService { get; }
 
-    private void ReceiveLoadProject(LoadProjectMessage message)
+    private void ReceiveLoadProject(OpenEditTableMessage message)
     {
         Application.Current.Dispatcher.Invoke(() =>
         {
@@ -50,14 +47,14 @@ public partial class MainWindow : Window
         _messageHelper.Onloaded();
     }
 
-    public class MessageHelper : ObservableRecipient, IRecipient<LoadProjectMessage>
+    public class MessageHelper : ObservableRecipient, IRecipient<OpenEditTableMessage>
     {
         public MessageHelper()
         {
             IsActive = true;
         }
 
-        public void Receive(LoadProjectMessage message)
+        public void Receive(OpenEditTableMessage message)
         {
             LoadProjectMessageHandler?.Invoke(message);
         }
@@ -67,6 +64,6 @@ public partial class MainWindow : Window
             Messenger.Send(new MainWindowLoadedMessage());
         }
 
-        public event Action<LoadProjectMessage>? LoadProjectMessageHandler;
+        public event Action<OpenEditTableMessage>? LoadProjectMessageHandler;
     }
 }

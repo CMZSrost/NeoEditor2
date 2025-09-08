@@ -1,5 +1,5 @@
 ﻿using NeoEditor.Data.Context;
-using NeoEditor.Data.Models;
+using attackmode = NeoEditor.Data.Models.attackmode;
 
 namespace NeoEditor.ViewModels.Controls.Tabs;
 

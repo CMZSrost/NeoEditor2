@@ -23,8 +23,10 @@
     </ItemGroup>
 
     <ItemGroup>
+        <PackageReference Include="AutoMapper" Version="15.0.1"/>
         <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0"/>
         <PackageReference Include="Dapper" Version="2.1.66"/>
+        <PackageReference Include="DataGridExtensions" Version="2.7.0"/>
         <PackageReference Include="Dirkster.AvalonDock" Version="4.72.1"/>
         <PackageReference Include="HandyControl" Version="3.5.1"/>
         <PackageReference Include="HandyControls" Version="3.5.0"/>
@@ -50,6 +52,7 @@
         <PackageReference Include="Serilog.Sinks.File" Version="7.0.0"/>
         <PackageReference Include="Serilog.Sinks.SQLite" Version="6.0.0"/>
         <PackageReference Include="System.Xml.XDocument" Version="4.3.0"/>
+        <PackageReference Include="unvell.ReoGridWPF.dll" Version="3.3.0" />
         <PackageReference Include="Z.EntityFramework.Extensions.EFCore" Version="9.103.9.3"/>
     </ItemGroup>
 

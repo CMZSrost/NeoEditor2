@@ -8,14 +8,18 @@ public class MainWindowViewModel : ObservableRecipient
     public MainWindowViewModel(
         MenuViewModel menuVm,
         EditTableViewModel editTableVm,
-        ProjectViewModel projectVm
+        ProjectViewModel projectVm,
+        LoggerViewModel loggerViewModel
     )
     {
         IsActive = true;
         MenuVm = menuVm;
         EditTableVm = editTableVm;
         ProjectVm = projectVm;
+        LoggerVm = loggerViewModel;
     }
+    
+    public LoggerViewModel LoggerVm { get; set; }
 
     public MenuViewModel MenuVm { get; set; }
     public ProjectViewModel ProjectVm { get; set; }

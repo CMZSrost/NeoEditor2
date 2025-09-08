@@ -17,7 +17,7 @@ public static class PhPHelper
         var nRowLine = await f.ReadLineAsync() ?? throw new Exception("Invalid PHP file");
         // Console.WriteLine(nRowLine);
         var nrows = int.Parse(NRowPatten.Match(nRowLine).Groups[1].Value);
-        for (var i = 0; i < nrows; i++)
+        for (var i = 0; i <= nrows; i++)
         {
             var line = await f.ReadLineAsync();
             // Console.WriteLine(line);

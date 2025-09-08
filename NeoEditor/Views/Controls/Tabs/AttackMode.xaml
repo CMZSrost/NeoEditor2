@@ -3,6 +3,7 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:dgx="urn:tom-englert.de/DataGridExtensions"
     xmlns:hc="https://handyorg.github.io/handycontrol"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:vm="clr-namespace:NeoEditor.ViewModels.Controls.Tabs"
@@ -15,6 +16,8 @@
     <Grid Margin="5">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="Auto" />
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
@@ -22,19 +25,25 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
+        <RibbonToggleButton Command="{Binding ToggleLastCommand}" Content="切换最新" />
         <Button
+            Grid.Column="1"
             Command="{Binding LoadDataCommand}"
             CommandParameter="{Binding Name}"
             Content="刷新" />
+        <Button
+            Grid.Column="2"
+            Command="{Binding SaveCommand}"
+            Content="保存" />
         <hc:TextBox
             Grid.Row="0"
-            Grid.Column="1"
+            Grid.Column="3"
             hc:InfoElement.ShowClearButton="True" />
-        <!--  View="{Binding DataView}"  -->
         <DataGrid
             Grid.Row="1"
             Grid.Column="0"
-            Grid.ColumnSpan="2"
-            ItemsSource="{Binding Data, IsAsync=True, Mode=TwoWay}" />
+            Grid.ColumnSpan="4"
+            dgx:DataGridFilter.IsAutoFilterEnabled="True"
+            ItemsSource="{Binding CollectionSource.View, IsAsync=True}" />
     </Grid>
 </hc:TabItem>

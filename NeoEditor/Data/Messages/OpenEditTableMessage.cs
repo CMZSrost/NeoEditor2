@@ -1,6 +1,6 @@
 ﻿namespace NeoEditor.Data.Messages;
 
-public class LoadProjectMessage
+public class OpenEditTableMessage
 {
     public required string ModConfigFilePath;
     public required string ProjectDataFolder;

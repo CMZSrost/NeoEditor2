@@ -7,10 +7,12 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     d:DataContext="{d:DesignInstance Type=controls:EditTableViewModel}"
     mc:Ignorable="d">
+    <!-- xmlns:rg="clr-namespace:unvell.ReoGrid;assembly=unvell.ReoGrid" -->
     <Grid>
+        <!-- <rg:ReoGridControl x:Name="ReoGrid" /> -->
         <TabControl
-            Margin="10"
-            ItemsSource="{Binding Tabs}"
-            Style="{StaticResource TabControlInLine}" />
+        Margin="10"
+        ItemsSource="{Binding Tabs}"
+        Style="{StaticResource TabControlInLine}" />
     </Grid>
 </UserControl>

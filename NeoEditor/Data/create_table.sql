@@ -5,6 +5,7 @@ create table main.attackmodes
     modName             varchar(255) not null default '',
     modIndex            integer      not null,
     serialId_           integer      not null,
+    isLast_             boolean      not null default false,
     overId_             integer,
 
     id                  integer,
@@ -17,7 +18,7 @@ create table main.attackmodes
     nPenetration        integer      not null default 0,
     nType               integer      not null default 0,
     strSnd              varchar(30)  not null default '',
-    bTransfer           tinyint(1)   not null default 0,
+    bTransfer           boolean      not null default 0,
     vAttackerConditions varchar(255) not null default '',
     strIMG              varchar(50)  not null default '',
     fMorale             float        not null default 0.25,
@@ -32,12 +33,13 @@ create table main.barterhexes
     modName            varchar(255) not null default '',
     modIndex           integer      not null,
     serialId_          integer      not null,
+    isLast_            boolean      not null default false,
     overId_            integer,
 
     id                 integer,
     nX                 integer      not null default 0,
     nY                 integer      not null default 0,
-    bBuys              tinyint(1)   not null default 0,
+    bBuys              boolean      not null default 0,
     nRestockTreasureID integer      not null default 3
 );
 
@@ -53,6 +55,7 @@ create table main.battlemoves
     modName             varchar(255) not null default '',
     modIndex            integer      not null,
     serialId_           integer      not null,
+    isLast_             boolean      not null default false,
     overId_             integer,
 
     id                  integer,
@@ -73,8 +76,8 @@ create table main.battlemoves
     vThemPreConditions  varchar(255)          default null,
     nSeeThem            integer               default 2,
     nSeeUs              integer               default 2,
-    bAllOutOfRange      tinyint(1)            default 0,
-    bInAttackRange      tinyint(1)            default 0,
+    bAllOutOfRange      boolean               default 0,
+    bInAttackRange      boolean               default 0,
     nMinCharges         integer               default 0,
     nMinRange           integer               default -1,
     nMaxRange           integer               default -1,
@@ -85,12 +88,12 @@ create table main.battlemoves
     fDetect             float                 default 1,
     fOrder              float                 default 0.5,
     fFatigue            float                 default 0,
-    bApproach           tinyint(1)            default 0,
-    bOffense            tinyint(1)            default 0,
-    bFallBack           tinyint(1)            default 0,
-    bRetreat            tinyint(1)            default 0,
-    bPosition           tinyint(1)            default 0,
-    bPassive            tinyint(1)   not null default 0
+    bApproach           boolean               default 0,
+    bOffense            boolean               default 0,
+    bFallBack           boolean               default 0,
+    bRetreat            boolean               default 0,
+    bPosition           boolean               default 0,
+    bPassive            boolean      not null default 0
 );
 
 create index main_battlemoves_strID_index
@@ -102,6 +105,7 @@ create table main.camptypes
     modName           varchar(255) not null default '',
     modIndex          integer      not null,
     serialId_         integer      not null,
+    isLast_           boolean      not null default false,
     overId_           integer,
 
     id                integer,
@@ -124,6 +128,7 @@ create table main.chargeprofiles
     modName          varchar(255) not null default '',
     modIndex         integer      not null,
     serialId_        integer      not null,
+    isLast_          boolean      not null default false,
     overId_          integer,
 
     nID              integer,
@@ -133,7 +138,7 @@ create table main.chargeprofiles
     fPerHour         float        not null default 0,
     fPerHourEquipped float        not null default 0,
     fPerHex          float        not null default 0,
-    bDegrade         tinyint(1)   not null default 0
+    bDegrade         boolean      not null default 0
 );
 
 create index main_chargeprofiles_strItemID_index
@@ -145,6 +150,7 @@ create table main.conditions
     modName           varchar(255) not null default '',
     modIndex          integer      not null,
     serialId_         integer      not null,
+    isLast_           boolean      not null default false,
     overId_           integer,
 
     id                integer,
@@ -153,19 +159,19 @@ create table main.conditions
     aFieldNames       varchar(255) not null default '',
     aModifiers        varchar(100) not null default '',
     aEffects          text         not null default '',
-    bFatal            tinyint(1)   not null default 0,
+    bFatal            boolean      not null default 0,
     vIDNext           varchar(255) not null default '0',
     fDuration         float        not null default 0,
-    bPermanent        tinyint(1)   not null default 0,
+    bPermanent        boolean      not null default 0,
     vChanceNext       varchar(255) not null default '0',
-    bStackable        tinyint(1)   not null default 0,
-    bDisplay          tinyint(1)   not null default 1,
-    bDisplayOther     tinyint(1)   not null default 0,
-    bDisplayGameOver  tinyint(1)   not null default 1,
+    bStackable        boolean      not null default 0,
+    bDisplay          boolean      not null default 1,
+    bDisplayOther     boolean      not null default 0,
+    bDisplayGameOver  boolean      not null default 1,
     nColor            integer      not null default 0,
-    bResetTimer       tinyint(1)   not null default 1,
-    bRemoveAll        tinyint(1)   not null default 0,
-    bRemovePostCombat tinyint(1)   not null default 0,
+    bResetTimer       boolean      not null default 1,
+    bRemoveAll        boolean      not null default 0,
+    bRemovePostCombat boolean      not null default 0,
     nTransferRange    integer      not null default -1,
     aThresholds       varchar(255) not null default ''
 );
@@ -178,6 +184,7 @@ create table main.containertypes
     modName   varchar(255) not null default '',
     modIndex  integer      not null,
     serialId_ integer      not null,
+    isLast_   boolean      not null default false,
     overId_   integer,
 
     id        integer,
@@ -191,6 +198,7 @@ create table main.creatures
     modName         varchar(255) not null default '',
     modIndex        integer      not null,
     serialId_       integer      not null,
+    isLast_         boolean      not null default false,
     overId_         integer,
 
     id              integer,
@@ -220,6 +228,7 @@ create table main.creaturesources
     modName     varchar(255) not null default '',
     modIndex    integer      not null,
     serialId_   integer      not null,
+    isLast_     boolean      not null default false,
     overId_     integer,
 
     id          integer,
@@ -245,6 +254,7 @@ create table main.datafiles
     modName   varchar(255) not null default '',
     modIndex  integer      not null,
     serialId_ integer      not null,
+    isLast_   boolean      not null default false,
     overId_   integer,
 
     id        integer,
@@ -261,6 +271,7 @@ create table main.dmcplaces
     modName      varchar(255) not null default '',
     modIndex     integer      not null,
     serialId_    integer      not null,
+    isLast_      boolean      not null default false,
     overId_      integer,
 
     id           integer,
@@ -282,6 +293,7 @@ create table main.encounters
     modName           varchar(255) not null default '',
     modIndex          integer      not null,
     serialId_         integer      not null,
+    isLast_           boolean      not null default false,
     overId_           integer,
 
     id                integer,
@@ -295,8 +307,8 @@ create table main.encounters
     fPrice            float        not null default 0,
     aResponses        text         not null default '',
     aMinimapHexes     varchar(255) not null default '',
-    bRemoveCreatures  tinyint(1)   not null default 0,
-    bRemoveUsed       tinyint(1)   not null default 0,
+    bRemoveCreatures  boolean      not null default 0,
+    bRemoveUsed       boolean      not null default 0,
     nItemsID          integer      not null default 3,
     nCreatureID       integer      not null default 0,
     ptCreatureHex     varchar(9)   not null default '0,0',
@@ -330,17 +342,18 @@ create table main.encountertriggers
     modName      varchar(255) not null default '',
     modIndex     integer      not null,
     serialId_    integer      not null,
+    isLast_      boolean      not null default false,
     overId_      integer,
 
     id           integer,
     strName      varchar(255) not null default '',
     nEncounterID integer      not null,
     fChance      float        not null,
-    bLocBased    tinyint(1)   not null,
-    bDateBased   tinyint(1)   not null,
-    bHexBased    tinyint(1)   not null,
-    bUnique      tinyint(1)   not null,
-    bAIPassable  tinyint(1)   not null default '1',
+    bLocBased    boolean      not null,
+    bDateBased   boolean      not null,
+    bHexBased    boolean      not null,
+    bUnique      boolean      not null,
+    bAIPassable  boolean      not null default '1',
     aArea        varchar(25)  not null default '',
     dateMin      varchar(15)  not null default '',
     dateMax      varchar(15)  not null default '',
@@ -356,6 +369,7 @@ create table main.factions
     modName      varchar(255) not null default '',
     modIndex     integer      not null,
     serialId_    integer      not null,
+    isLast_      boolean      not null default false,
     overId_      integer,
 
     id           integer,
@@ -369,6 +383,7 @@ create table main.forbiddenhexes
     modName   varchar(255) not null default '',
     modIndex  integer      not null,
     serialId_ integer      not null,
+    isLast_   boolean      not null default false,
     overId_   integer,
 
     id        integer,
@@ -386,6 +401,7 @@ create table main.gamevars
     modName   varchar(255) not null default '',
     modIndex  integer      not null,
     serialId_ integer      not null,
+    isLast_   boolean      not null default false,
     overId_   integer,
 
     strName   varchar(255) not null default '',
@@ -399,6 +415,7 @@ create table main.headlines
     modName     varchar(255) not null default '',
     modIndex    integer      not null,
     serialId_   integer      not null,
+    isLast_     boolean      not null default false,
     overId_     integer,
 
     id          integer,
@@ -411,6 +428,7 @@ create table main.hextypes
     modName                 varchar(255) not null default '',
     modIndex                integer      not null,
     serialId_               integer      not null,
+    isLast_                 boolean      not null default false,
     overId_                 integer,
 
     id                      integer,
@@ -420,7 +438,7 @@ create table main.hextypes
     nVizLimiter             integer      not null,
     nVizIncrease            integer      not null,
     nTreasureID             integer      not null,
-    bPassable               tinyint(1)   not null,
+    bPassable               boolean      not null,
     nScavengeInitialID      integer      not null default 3,
     nScavengeItemsIDPerHour integer      not null default 25,
     nCampItems              integer      not null default 5,
@@ -449,6 +467,7 @@ create table main.ingredients
     modName           varchar(255) not null default '',
     modIndex          integer      not null,
     serialId_         integer      not null,
+    isLast_           boolean      not null default false,
     overId_           integer,
 
     nID               integer,
@@ -463,6 +482,7 @@ create table main.itemprops
     modName         varchar(255) not null default '',
     modIndex        integer      not null,
     serialId_       integer      not null,
+    isLast_         boolean      not null default false,
     overId_         integer,
 
     nID             integer,
@@ -475,6 +495,7 @@ create table main.itemtypes
     modName              varchar(255) not null default '',
     modIndex             integer      not null,
     serialId_            integer      not null,
+    isLast_              boolean      not null default false,
     overId_              integer,
 
     id                   integer,
@@ -501,13 +522,13 @@ create table main.itemtypes
     aCapacities          varchar(255) not null default '',
     vEquipSlots          varchar(255) not null default '',
     vUseSlots            varchar(255) not null default '',
-    bSocketLocked        tinyint(1)   not null default 0,
+    bSocketLocked        boolean      not null default 0,
     vProperties          varchar(255) not null default '',
     aContentIDs          varchar(255) not null default '',
     nFormatID            integer      not null default '3',
     nTreasureID          integer      not null default '3',
     nComponentID         integer      not null default '3',
-    bMirrored            tinyint(1)   not null default '0',
+    bMirrored            boolean      not null default '0',
     nSlotDepth           integer      not null default '0',
     strChargeProfiles    varchar(255) not null default '',
     aAttackModes         varchar(255) not null default '',
@@ -541,6 +562,7 @@ create table main.maps
     modName   varchar(255) not null default '',
     modIndex  integer      not null,
     serialId_ integer      not null,
+    isLast_   boolean      not null default false,
     overId_   integer,
 
     id        integer,
@@ -554,6 +576,7 @@ create table main.recipes
     modName             varchar(255) not null default '',
     modIndex            integer      not null,
     serialId_           integer      not null,
+    isLast_             boolean      not null default false,
     overId_             integer,
 
     nID                 integer,
@@ -566,13 +589,13 @@ create table main.recipes
     fHours              float        not null default 0,
     nReverse            integer      not null default 0,
     nHiddenID           integer      not null default 0,
-    bIdentify           tinyint(1)   not null default 0,
-    bTransferComponents tinyint(1)   not null default 0,
+    bIdentify           boolean      not null default 0,
+    bTransferComponents boolean      not null default 0,
     vAlsoTry            varchar(255) not null default '',
     nTempTreasureID     integer      not null default 3,
-    bDegradeOutput      tinyint(1)   not null default 1,
+    bDegradeOutput      boolean      not null default 1,
     strType             varchar(255) not null default '',
-    bScrap              tinyint(1)   not null default 1
+    bScrap              boolean      not null default 1
 );
 
 create index main_recipes_nTreasureID_index
@@ -587,14 +610,15 @@ create table main.treasuretable
     modName    varchar(255) not null default '',
     modIndex   integer      not null,
     serialId_  integer      not null,
+    isLast_    boolean      not null default false,
     overId_    integer,
 
     id         integer,
     strName    varchar(255) not null default '',
     aTreasures text         not null default '',
-    bNested    tinyint(1)   not null default 0,
-    bSuppress  tinyint(1)   not null default 0,
-    bIdentify  tinyint(1)   not null default 0
+    bNested    boolean      not null default 0,
+    bSuppress  boolean      not null default 0,
+    bIdentify  boolean      not null default 0
 );
 drop table if exists main.images;
 create table main.images
@@ -603,6 +627,7 @@ create table main.images
     modName   varchar(255) not null default '',
     modIndex  integer      not null,
     serialId_ integer      not null,
+    isLast_   boolean      not null default false,
     overId_   integer,
 
     id        integer,

@@ -17,6 +17,7 @@ public class DapperCollection
 
     private readonly string _insertString;
     private readonly string _tableName;
+    private readonly string _upsertString;
     public readonly Collection<ExpandoObject> EntitiesList;
 
     public DapperCollection(string connectionString, string tableName, List<string> attributes)
@@ -28,6 +29,7 @@ public class DapperCollection
         var insertStringKey = $"({string.Join(", ", attributes)})";
         var insertStringValue = $"(@{string.Join(", @", attributes)})";
         _insertString = $"INSERT INTO {_tableName} {insertStringKey} VALUES {insertStringValue};";
+        _upsertString = $"INSERT INTO {_tableName} {insertStringKey} VALUES {insertStringValue};";
         // _insertString = $"INSERT INTO {_tableName} {insertStringKey} VALUES ";
     }
 
@@ -70,6 +72,7 @@ public class XmlLoader
     private readonly Dictionary<string, int> _cntDictory;
     private readonly string _connectionString;
     private readonly Dictionary<string, DapperCollection> _dapperCollections;
+    private readonly SerialIdHelper _serialIdHelper;
     private readonly Dictionary<string, List<string>> _tableAttribs;
     private readonly List<string> _tableNames;
 
@@ -79,7 +82,15 @@ public class XmlLoader
         _connectionString = configuration.GetConnectionString("DefaultConnection") ??
                             throw new ArgumentNullException(nameof(configuration));
         _dapperCollections = new Dictionary<string, DapperCollection>();
-        _tableAttribs = configuration.GetSection("tableAttibute")
+        _tableAttribs = GetTableAttribs(configuration);
+        _tableNames = _tableAttribs.Keys.ToList();
+    }
+
+    public int Idx { get; set; }
+
+    public static Dictionary<string, List<string>> GetTableAttribs(IConfiguration configuration)
+    {
+        return configuration.GetSection("tableAttibute")
             .GetChildren()
             .Select(tableName =>
                 {
@@ -92,10 +103,7 @@ public class XmlLoader
                     };
                 }
             ).ToDictionary(arg => arg.key, arg => arg.value);
-        _tableNames = _tableAttribs.Keys.ToList();
     }
-
-    public int Idx { get; set; }
 
     public async Task Clean()
     {

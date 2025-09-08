@@ -16,11 +16,13 @@ public partial class ProjectViewModel : ObservableRecipient, IRecipient<SetProje
     IRecipient<MainWindowLoadedMessage>
 {
     private readonly XmlLoader _loader;
+    private readonly SerialIdHelper _serialIdHelper;
 
-    public ProjectViewModel(IOptions<ProjectOption> projectOption, XmlLoader loader)
+    public ProjectViewModel(IOptions<ProjectOption> projectOption, XmlLoader loader, SerialIdHelper serialIdHelper)
     {
         IsActive = true;
         _loader = loader;
+        _serialIdHelper = serialIdHelper;
         ModConfigFilePath = projectOption.Value.ModConfigPath;
     }
 
@@ -57,6 +59,8 @@ public partial class ProjectViewModel : ObservableRecipient, IRecipient<SetProje
 
                 Messenger.Send(new LogMessage { Message = $"{modData.ModName} loaded {_loader.Idx - offset} items" });
             }
+
+            await _serialIdHelper.ReorderAll();
 
             // Console.WriteLine($"loaded {_loader.Idx} items");
             Messenger.Send(new LogMessage { Message = $"loaded {_loader.Idx} items" });
@@ -104,7 +108,29 @@ public partial class ProjectViewModel : ObservableRecipient, IRecipient<SetProje
         });
         await foreach (var modData in PhPHelper.FileToList(ModConfigFilePath)) Mods.Add(modData);
 
-        Messenger.Send(new LoadProjectMessage
+        Messenger.Send(new OpenEditTableMessage
+        {
+            ProjectRootDirectory = ProjectRootDirectory!,
+            ProjectDataFolder = ProjectDataDirectory,
+            ProjectModFolder = ProjectModDirectory,
+            ModConfigFilePath = ModConfigFilePath
+        });
+    }
+
+    [RelayCommand]
+    public void OpenEditTable()
+    {
+        if (ModConfigFilePath is null)
+        {
+            Messenger.Send(new LogMessage
+            {
+                Level = LogLevel.Warning,
+                Message = "ModConfigFilePath is null! Open edit table failed."
+            });
+            return;
+        }
+
+        Messenger.Send(new OpenEditTableMessage
         {
             ProjectRootDirectory = ProjectRootDirectory!,
             ProjectDataFolder = ProjectDataDirectory,

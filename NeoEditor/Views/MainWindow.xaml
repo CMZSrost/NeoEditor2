@@ -46,12 +46,30 @@
                                 Title="ProjectView"
                                 CanDockAsTabbedDocument="False"
                                 CanHide="False">
-                                <ListView ItemsSource="{Binding ProjectVm.Mods}">
+                                <StackPanel DataContext="{Binding ProjectVm}">
+                                    <ListView ItemsSource="{Binding Mods}">
+                                        <ListView.View>
+                                            <GridView>
+                                                <GridViewColumn DisplayMemberBinding="{Binding ModIndex}" Header="ModIndex" />
+                                                <GridViewColumn DisplayMemberBinding="{Binding ModName}" Header="ModName" />
+                                                <GridViewColumn DisplayMemberBinding="{Binding ModDirectory}" Header="ModDirectory" />
+                                            </GridView>
+                                        </ListView.View>
+                                    </ListView>
+                                    <StackPanel Orientation="Horizontal">
+                                        <Button Command="{Binding OpenEditTableCommand}">打开编辑页</Button>
+                                    </StackPanel>
+                                </StackPanel>
+                            </LayoutAnchorable>
+                            <LayoutAnchorable
+                                Title="LogView"
+                                CanDockAsTabbedDocument="False"
+                                CanHide="False">
+                                <ListView DataContext="{Binding LoggerVm}" ItemsSource="{Binding Logs}">
                                     <ListView.View>
                                         <GridView>
-                                            <GridViewColumn DisplayMemberBinding="{Binding ModIndex}" Header="ModIndex" />
-                                            <GridViewColumn DisplayMemberBinding="{Binding ModName}" Header="ModName" />
-                                            <GridViewColumn DisplayMemberBinding="{Binding ModDirectory}" Header="ModDirectory" />
+                                            <GridViewColumn DisplayMemberBinding="{Binding Level}" Header="Level" />
+                                            <GridViewColumn DisplayMemberBinding="{Binding Message}" Header="Message" />
                                         </GridView>
                                     </ListView.View>
                                 </ListView>

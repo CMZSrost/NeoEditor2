@@ -15,6 +15,7 @@ public class barterhex
     public int modIndex { get; set; }
 
     public int serialId_ { get; set; }
+    public bool isLast_ { get; set; } = false;
 
     public int? overId_ { get; set; }
 

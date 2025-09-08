@@ -1,14 +1,16 @@
-﻿using System.Windows;
+﻿using System.Collections.ObjectModel;
+using System.Windows;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Messaging;
 using Microsoft.Extensions.Logging;
 using NeoEditor.Data.Messages;
 
-namespace NeoEditor.Services;
+namespace NeoEditor.ViewModels;
 
-public class LoggerService : ObservableRecipient, IRecipient<LogMessage>
+public class LoggerViewModel : ObservableRecipient, IRecipient<LogMessage>
 {
-    public LoggerService(ILogger<App> logger)
+    public ObservableCollection<LogMessage> Logs { get; } = new();
+    public LoggerViewModel(ILogger<App> logger)
     {
         Console.WriteLine("loggerService!");
         Logger = logger;
@@ -19,8 +21,8 @@ public class LoggerService : ObservableRecipient, IRecipient<LogMessage>
 
     public async void Receive(LogMessage message)
     {
-        Console.WriteLine(message.Message);
         Logger.Log(message.Level, message.Message);
+        Logs.Add(message);
         if (message.MsgBox) await Show(message);
     }
 
@@ -28,12 +30,6 @@ public class LoggerService : ObservableRecipient, IRecipient<LogMessage>
     {
         await Application.Current.Dispatcher.InvokeAsync(async () =>
         {
-            // var msgBox = new MessageBox
-            // {
-            //     Title = message.Level.ToString(),
-            //     Content = message.Message
-            // };
-            // await msgBox.ShowDialogAsync();
             MessageBox.Show(message.Message, message.Level.ToString());
         });
     }

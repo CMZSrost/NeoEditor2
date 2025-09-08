@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
 
@@ -12,17 +10,16 @@ namespace NeoEditor.Data.Models;
 [Index("nGroupID", "nSubgroupID", Name = "main_itemtypes_nGroupID_nSubgroupID_index")]
 [Index("nSubgroupID", Name = "main_itemtypes_nSubgroupID_index")]
 [Index("nTreasureID", Name = "main_itemtypes_nTreasureID_index")]
-public partial class itemtype
+public class itemtype
 {
-    [Key]
-    public int idx { get; set; }
+    [Key] public int idx { get; set; }
 
-    [Column(TypeName = "varchar(255)")]
-    public string modName { get; set; } = null!;
+    [Column(TypeName = "varchar(255)")] public string modName { get; set; } = null!;
 
     public int modIndex { get; set; }
 
     public int serialId_ { get; set; }
+    public bool isLast_ { get; set; } = false;
 
     public int? overId_ { get; set; }
 
@@ -32,48 +29,35 @@ public partial class itemtype
 
     public int nSubgroupID { get; set; }
 
-    [Column(TypeName = "varchar(255)")]
-    public string strName { get; set; } = null!;
+    [Column(TypeName = "varchar(255)")] public string strName { get; set; } = null!;
 
-    [Column(TypeName = "varchar(255)")]
-    public string strDesc { get; set; } = null!;
+    [Column(TypeName = "varchar(255)")] public string strDesc { get; set; } = null!;
 
-    [Column(TypeName = "varchar(255)")]
-    public string strDescAlt { get; set; } = null!;
+    [Column(TypeName = "varchar(255)")] public string strDescAlt { get; set; } = null!;
 
     public int nCondID { get; set; }
 
     public string vImageList { get; set; } = null!;
 
-    [Column(TypeName = "varchar(255)")]
-    public string vSpriteList { get; set; } = null!;
+    [Column(TypeName = "varchar(255)")] public string vSpriteList { get; set; } = null!;
 
-    [Column(TypeName = "varchar(25)")]
-    public string vImageUsage { get; set; } = null!;
+    [Column(TypeName = "varchar(25)")] public string vImageUsage { get; set; } = null!;
 
-    [Column(TypeName = "float")]
-    public double fWeight { get; set; }
+    [Column(TypeName = "float")] public double fWeight { get; set; }
 
-    [Column(TypeName = "float")]
-    public double fMonetaryValue { get; set; }
+    [Column(TypeName = "float")] public double fMonetaryValue { get; set; }
 
-    [Column(TypeName = "float")]
-    public double fMonetaryValueAlt { get; set; }
+    [Column(TypeName = "float")] public double fMonetaryValueAlt { get; set; }
 
-    [Column(TypeName = "float")]
-    public double fDurability { get; set; }
+    [Column(TypeName = "float")] public double fDurability { get; set; }
 
-    [Column(TypeName = "float")]
-    public double fDegradePerHour { get; set; }
+    [Column(TypeName = "float")] public double fDegradePerHour { get; set; }
 
-    [Column(TypeName = "float")]
-    public double fEquipDegradePerHour { get; set; }
+    [Column(TypeName = "float")] public double fEquipDegradePerHour { get; set; }
 
-    [Column(TypeName = "float")]
-    public double fDegradePerUse { get; set; }
+    [Column(TypeName = "float")] public double fDegradePerUse { get; set; }
 
-    [Column(TypeName = "varchar(255)")]
-    public string vDegradeTreasureIDs { get; set; } = null!;
+    [Column(TypeName = "varchar(255)")] public string vDegradeTreasureIDs { get; set; } = null!;
 
     public string aEquipConditions { get; set; } = null!;
 
@@ -81,23 +65,17 @@ public partial class itemtype
 
     public string aUseConditions { get; set; } = null!;
 
-    [Column(TypeName = "varchar(255)")]
-    public string aCapacities { get; set; } = null!;
+    [Column(TypeName = "varchar(255)")] public string aCapacities { get; set; } = null!;
 
-    [Column(TypeName = "varchar(255)")]
-    public string vEquipSlots { get; set; } = null!;
+    [Column(TypeName = "varchar(255)")] public string vEquipSlots { get; set; } = null!;
 
-    [Column(TypeName = "varchar(255)")]
-    public string vUseSlots { get; set; } = null!;
+    [Column(TypeName = "varchar(255)")] public string vUseSlots { get; set; } = null!;
 
-    [Column(TypeName = "tinyint(1)")]
-    public byte bSocketLocked { get; set; }
+    [Column(TypeName = "tinyint(1)")] public byte bSocketLocked { get; set; }
 
-    [Column(TypeName = "varchar(255)")]
-    public string vProperties { get; set; } = null!;
+    [Column(TypeName = "varchar(255)")] public string vProperties { get; set; } = null!;
 
-    [Column(TypeName = "varchar(255)")]
-    public string aContentIDs { get; set; } = null!;
+    [Column(TypeName = "varchar(255)")] public string aContentIDs { get; set; } = null!;
 
     public int nFormatID { get; set; }
 
@@ -105,22 +83,17 @@ public partial class itemtype
 
     public int nComponentID { get; set; }
 
-    [Column(TypeName = "tinyint(1)")]
-    public byte bMirrored { get; set; }
+    [Column(TypeName = "tinyint(1)")] public byte bMirrored { get; set; }
 
     public int nSlotDepth { get; set; }
 
-    [Column(TypeName = "varchar(255)")]
-    public string strChargeProfiles { get; set; } = null!;
+    [Column(TypeName = "varchar(255)")] public string strChargeProfiles { get; set; } = null!;
 
-    [Column(TypeName = "varchar(255)")]
-    public string aAttackModes { get; set; } = null!;
+    [Column(TypeName = "varchar(255)")] public string aAttackModes { get; set; } = null!;
 
     public int nStackLimit { get; set; }
 
-    [Column(TypeName = "varchar(255)")]
-    public string aSwitchIDs { get; set; } = null!;
+    [Column(TypeName = "varchar(255)")] public string aSwitchIDs { get; set; } = null!;
 
-    [Column(TypeName = "varchar(255)")]
-    public string aSounds { get; set; } = null!;
+    [Column(TypeName = "varchar(255)")] public string aSounds { get; set; } = null!;
 }
