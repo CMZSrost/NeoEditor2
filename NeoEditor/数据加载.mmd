@@ -1,0 +1,95 @@
+stateDiagram-v2
+    state SetProject {
+        [*] --> PhPHelper
+        state PhPHelper {
+            LoadPhP --> ParseModData
+            ParseModData --> WriteModTable
+        }
+        WriteModTable --> [*]
+    }
+
+    state LoadProject {
+        [*] --> GetModData
+        state isEnd? <<choice>>
+        GetModData --> mod加载流程: 遍历Mod数据
+        state mod加载流程 {
+            [*] --> XmlLoader: 并发加载Mod文件夹下所有xml
+            state XmlLoader {
+                state AllPathDone <<choice>>
+                HeadEncodingFix --> LoadXml
+                LoadXml --> AllPathDone: 遍历文件完成？
+                AllPathDone --> LoadXml: 未遍历完成
+                AllPathDone --> MergeDataTable: 合并多个xml为一个Mod数据集（多表）
+                MergeDataTable --> DapperRepository: 推送数据表进对应仓库的队列
+            }
+
+            state DapperRepository {
+                Dequeue --> SeparateTable: 从队列获取数据表
+                SeparateTable --> SerialHelper: 推送前进行顺序化
+                SerialHelper --> WriteTableToRepo
+
+                state SerialHelper {
+                    state IsEndOfTable? <<choice>>
+                    IsOverride: SerialId=iota\nOverId=-1
+                    IsOrigin: SerialId=id\nOverId=Dict[Id]
+                    SetDict: Dict[Id] = Idx
+                    [*] --> SerialTable
+                    SerialTable --> IsOverride: ModName == "0"
+                    SerialTable --> IsOrigin: ModName != "0"
+                    IsOrigin --> SetDict: SetDict
+                    SetDict --> IsEndOfTable?: 遍历数据行
+                    IsOverride --> IsEndOfTable?
+                    IsEndOfTable? --> SerialTable: 遍历未完成
+                    IsEndOfTable? --> [*]: 遍历完成
+                }
+            }
+            WriteTableToRepo --> [*]
+        }
+        mod加载流程 --> isEnd?: 遍历完成？
+        isEnd? --> [*]: Yes
+        isEnd? --> mod加载流程: No
+    }
+
+    state CRUD {
+        state LoadData {
+            [*] --> GetCurrentTableName
+            GetCurrentTableName --> ReadTableFromRepo
+            ReadTableFromRepo --> TransferDataTable
+            ReadTableFromRepo --> CleanCurrentWorksheet
+            state Await1 <<join>>
+            TransferDataTable --> Await1
+            CleanCurrentWorksheet --> Await1
+            Await1 --> WriteToWorksheet
+            WriteToWorksheet --> [*]
+        }
+
+        state OnDeleteLine {
+            [*] --> GetCurrentLine
+            GetCurrentLine --> DeleteLine
+            DeleteLine --> OnReorder
+            OnReorder --> [*]
+        }
+
+        state OnAddLine {
+            [*] --> GetCurrentLine2
+            GetCurrentLine2 --> AddLine
+            AddLine --> OnReorder
+            OnReorder --> [*]
+        }
+        state SaveData {
+            [*] --> GetWorksheetData
+            GetWorksheetData --> GetDataEditTrace
+            GetDataEditTrace --> SaveDataTable
+            SaveDataTable --> OnReorder
+            OnReorder --> [*]
+        }
+        state OnReorder {
+            [*] --> GetCurrentTableName2
+            GetCurrentTableName2 --> SerialTable2
+            SerialTable2 --> [*]
+
+            state SerialHelper2 {
+                SerialTable2
+            }
+        }
+    }

@@ -28,7 +28,7 @@ public static class PhPHelper
                     ModIndex = i,
                     ModName = match.Groups[2].Value,
                     ModDirectoryPath = match.Groups[3].Value,
-                    ModDirectory = Path.GetFileName(match.Groups[3].Value)
+                    ModDirectoryName = Path.GetFileName(match.Groups[3].Value)
                 };
         }
     }

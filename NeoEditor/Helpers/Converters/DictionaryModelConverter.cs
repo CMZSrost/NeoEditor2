@@ -1,29 +1,5 @@
 ﻿using System.Dynamic;
-using NeoEditor.Data.Models;
-using attackmode = NeoEditor.Data.Models.Dto.attackmode;
-using battlemove = NeoEditor.Data.Models.Dto.battlemove;
-using camptype = NeoEditor.Data.Models.Dto.camptype;
-using chargeprofile = NeoEditor.Data.Models.Dto.chargeprofile;
-using condition = NeoEditor.Data.Models.Dto.condition;
-using containertype = NeoEditor.Data.Models.Dto.containertype;
-using creature = NeoEditor.Data.Models.Dto.creature;
-using creaturesource = NeoEditor.Data.Models.Dto.creaturesource;
-using datafile = NeoEditor.Data.Models.Dto.datafile;
-using dmcplace = NeoEditor.Data.Models.Dto.dmcplace;
-using encounter = NeoEditor.Data.Models.Dto.encounter;
-using encountertrigger = NeoEditor.Data.Models.Dto.encountertrigger;
-using faction = NeoEditor.Data.Models.Dto.faction;
-using forbiddenhex = NeoEditor.Data.Models.Dto.forbiddenhex;
-using gamevar = NeoEditor.Data.Models.Dto.gamevar;
-using headline = NeoEditor.Data.Models.Dto.headline;
-using hextype = NeoEditor.Data.Models.Dto.hextype;
-using image = NeoEditor.Data.Models.Dto.image;
-using ingredient = NeoEditor.Data.Models.Dto.ingredient;
-using itemprop = NeoEditor.Data.Models.Dto.itemprop;
-using itemtype = NeoEditor.Data.Models.Dto.itemtype;
-using map = NeoEditor.Data.Models.Dto.map;
-using recipe = NeoEditor.Data.Models.Dto.recipe;
-using treasuretable = NeoEditor.Data.Models.Dto.treasuretable;
+using NeoEditor.Data.Models.Dto;
 
 namespace NeoEditor.Helpers.Converters;
 

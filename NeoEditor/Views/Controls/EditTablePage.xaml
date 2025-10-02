@@ -5,14 +5,14 @@
     xmlns:controls="clr-namespace:NeoEditor.ViewModels.Controls"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:reoGrid="clr-namespace:unvell.ReoGrid;assembly=unvell.ReoGrid"
+    Name="edit"
     d:DataContext="{d:DesignInstance Type=controls:EditTableViewModel}"
     mc:Ignorable="d">
-    <!-- xmlns:rg="clr-namespace:unvell.ReoGrid;assembly=unvell.ReoGrid" -->
     <Grid>
-        <!-- <rg:ReoGridControl x:Name="ReoGrid" /> -->
-        <TabControl
-        Margin="10"
-        ItemsSource="{Binding Tabs}"
-        Style="{StaticResource TabControlInLine}" />
+        <reoGrid:ReoGridControl
+            x:Name="ReoGrid"
+            DataContext="{Binding GridViewModel}"
+            SheetTabNewButtonVisible="False" />
     </Grid>
 </UserControl>

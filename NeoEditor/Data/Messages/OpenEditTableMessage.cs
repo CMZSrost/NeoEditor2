@@ -7,3 +7,5 @@ public class OpenEditTableMessage
     public required string ProjectModFolder;
     public required string ProjectRootDirectory;
 }
+
+public class OpenEditTableEvent : PubSubEvent<OpenEditTableMessage>;

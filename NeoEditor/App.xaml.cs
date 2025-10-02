@@ -1,99 +1,199 @@
-﻿using System.IO;
+﻿using System.Diagnostics;
 using System.Text;
 using System.Windows;
-using System.Windows.Threading;
-using HandyControl.Controls;
-using Microsoft.EntityFrameworkCore;
+using DryIoc.Microsoft.DependencyInjection;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using NeoEditor.Data;
-using NeoEditor.Data.Context;
 using NeoEditor.Data.Options;
 using NeoEditor.Helpers;
-using NeoEditor.Services;
+using NeoEditor.Services.QueueProcess;
+using NeoEditor.Services.Worker;
 using NeoEditor.ViewModels;
 using NeoEditor.ViewModels.Controls;
-using NeoEditor.ViewModels.Controls.Tabs;
 using NeoEditor.Views;
 using NeoEditor.Views.Controls;
-using NeoEditor.Views.Controls.Tabs;
 using Serilog;
-using MessageBox = System.Windows.MessageBox;
 
 namespace NeoEditor;
 
 /// <summary>
 ///     Interaction logic for App.xaml
 /// </summary>
-public partial class App : Application
+public partial class App : PrismApplication
 {
-    private static readonly IHost Host = Microsoft.Extensions.Hosting.Host.CreateDefaultBuilder()
-        .ConfigureAppConfiguration(builder =>
-        {
-            var basePath = Path.GetDirectoryName(AppContext.BaseDirectory);
-            ArgumentException.ThrowIfNullOrEmpty(basePath);
-            builder.SetBasePath(basePath)
-                .AddInMemoryCollection().AddEnvironmentVariables()
-                .AddJsonFile("appsettings.json", false, true)
-                .AddJsonFile("appsettings.development.json", true, true);
+    protected override void RegisterTypes(IContainerRegistry containerRegistry)
+    {
+        containerRegistry.RegisterSingleton<IRegionManager, RegionManager>();
+        containerRegistry.RegisterSingleton<IEventAggregator, EventAggregator>();
+        containerRegistry.RegisterSingleton<IRegionNavigationService, RegionNavigationService>();
 
-            Log.Logger = new LoggerConfiguration()
-                .ReadFrom.Configuration(builder.Build())
-                .Enrich.FromLogContext()
-                .CreateLogger();
-        })
-        .UseSerilog()
-        .ConfigureServices((
-            collection, services) =>
+        containerRegistry.RegisterSingleton<TableConfig>();
+
+        // containerRegistry.RegisterSingleton<MainWindowViewModel>();
+        // containerRegistry.RegisterSingleton<EditTableViewModel>();
+        containerRegistry.RegisterSingleton<ProjectViewModel>();
+        containerRegistry.RegisterSingleton<ReoGridControlViewModel>();
+        containerRegistry.RegisterSingleton<LoggerViewModel>();
+
+        containerRegistry.RegisterForNavigation<MainWindowView, MainWindowViewModel>();
+        containerRegistry.RegisterForNavigation<EditTablePage, EditTableViewModel>();
+
+        containerRegistry.Register<SerialQueueProcess>();
+        containerRegistry.Register<LoadXmlQueueProcess>();
+        containerRegistry.Register<ProjectLoadingWorker>();
+
+        containerRegistry.RegisterInstance(Log.Logger);
+    }
+
+
+    private void ConfigureServices(IServiceCollection services)
+    {
+        services.AddLogging(builder =>
+            builder.AddSerilog(dispose: true)
+        );
+
+        // services.AddScoped<IAsyncInterceptor, ExceptionInterceptor>();
+        // services.AddDefaultProxyGenerator()
+        //     .AddTransientWithAsyncInterceptor<EquipmentControlViewModel, ExceptionInterceptorAsync>();
+        // services.AddTransientWithAsyncInterceptor<AbsoluteLocationViewModel, ExceptionInterceptorAsync>();
+
+        var configurationBuilder = new ConfigurationManager()
+            .SetBasePath(AppDomain.CurrentDomain.BaseDirectory)
+            .AddInMemoryCollection().AddEnvironmentVariables()
+            .AddJsonFile("appsettings.json", false, true)
+            .AddJsonFile("appsettings.development.json", true, true);
+        var configuration = configurationBuilder.Build();
+
+        Log.Logger = new LoggerConfiguration()
+            .ReadFrom.Configuration(configuration)
+            .Enrich.FromLogContext()
+            .CreateLogger();
+
+        services.AddSingleton<IConfiguration>(configuration);
+        services.Configure<ProjectOption>(configuration.GetSection(nameof(ProjectOption)));
+        Encoding.GetEncoding("utf-8");
+
+        services.AddAutoMapper(expression => { });
+
+        // ViewModel
+        // services.AddScoped<LogPageViewModel>();
+
+
+        // Repositories
+        // services.AddTransient<IIORepository, IORepository>();
+        // services.AddTransient<IAlarmReository, AlarmRepository>();
+        // services.AddTransient<IWarningRepository, WarningRepository>();
+        // services.AddTransient<IEquiControlGroupRepository, EquiControlGroupRepository>();
+        // services.AddTransient<IJogControlGroupRepository, JogControlRepository>();
+        // services.AddTransient<IRealValGroupRepository, RealValGroupRepository>();
+        // services.AddTransient<IDIntValGroupRepository, DIntValGroupRepository>();
+    }
+
+    #region 配置
+
+    protected override void ConfigureViewModelLocator()
+    {
+        base.ConfigureViewModelLocator();
+    }
+
+    protected override void ConfigureModuleCatalog(IModuleCatalog moduleCatalog)
+    {
+        // moduleCatalog.AddModule<PubSubEventModule>();
+    }
+
+    protected override void ConfigureRegionAdapterMappings(RegionAdapterMappings regionAdapterMappings)
+    {
+        base.ConfigureRegionAdapterMappings(regionAdapterMappings);
+    }
+
+    protected override void ConfigureDefaultRegionBehaviors(IRegionBehaviorFactory regionBehaviors)
+    {
+        base.ConfigureDefaultRegionBehaviors(regionBehaviors);
+    }
+
+    #endregion
+
+    #region 杂项
+
+    public static Rules DefaultRules =>
+        Rules.Default
+            .WithConcreteTypeDynamicRegistrations(reuse: Reuse.Transient)
+            .With(Made.Of(FactoryMethod.ConstructorWithResolvableArguments))
+            .WithFuncAndLazyWithoutRegistration()
+            .WithTrackingDisposableTransients()
+            //.WithoutFastExpressionCompiler()
+            .WithFactorySelector(Rules.SelectLastRegisteredFactory());
+
+    protected override Rules CreateContainerRules()
+    {
+        return DefaultRules;
+    }
+
+    protected override Window CreateShell()
+    {
+        return Container.Resolve<MainWindowView>();
+    }
+
+    protected override IContainerExtension CreateContainerExtension()
+    {
+        var services = new ServiceCollection();
+        ConfigureServices(services);
+
+        var container = new Container(CreateContainerRules());
+        container.WithDependencyInjectionAdapter(services);
+
+        return new DryIocContainerExtension(container);
+    }
+
+    #endregion
+
+    #region 入口与回调处理
+
+    protected override void OnStartup(StartupEventArgs e)
+    {
+        try
         {
-            services.AddHostedService<ApplicationHostService>();
-            services.Configure<ProjectOption>(collection.Configuration.GetSection(nameof(ProjectOption)));
-            services.AddDbContextFactory<NeoContext>(options =>
+            base.OnStartup(e);
+            // 单实例检查
+            var ap = Process.GetCurrentProcess();
+            if (Process.GetProcessesByName(ap.ProcessName).Length > 1)
             {
-                options.UseSqlite(collection.Configuration.GetConnectionString("DefaultConnection"));
-            });
-            Encoding.GetEncoding("utf-8");
+                MessageBox.Show("程序已运行.", "提示", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
 
-            services.AddSingleton<SqliteConnectionFactory>();
-            services.AddTransient<XmlLoader>().AddTransient<SerialIdHelper>();
-
-            services.AddSingleton<LoggerViewModel>();
-
-            services.AddSingleton<MainWindow>()
-                .AddSingleton<MenuViewModel>()
-                .AddSingleton<ProjectViewModel>()
-                .AddSingleton<MainWindowViewModel>();
-
-            services.AddTransient<TabItem, AttackMode>().AddTransient<AttackModeViewModel>();
-
-            services.AddSingleton<EditTablePage>().AddSingleton<EditTableViewModel>();
-        }).ConfigureServices((
-            collection, services) =>
+            // 全局异常处理
+            ConfigureGlobalExceptionHandlers();
+        }
+        catch (Exception ex)
         {
-            services.AddAutoMapper(expression =>
-            {
-                expression.AddProfile(typeof(SerialRecordProfile));
-                expression.AddProfile(typeof(DtoProfile));
-            });
-        })
-        .Build();
-
-    public static IServiceProvider Services => Host.Services;
-
-    private async void Onstartup(object sender, StartupEventArgs e)
-    {
-        await Host.StartAsync();
+            Log.Logger.Error(ex, "应用程序错误");
+            MessageBox.Show(ex.Message, "应用程序错误", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
     }
 
-    private async void OnExit(object sender, ExitEventArgs e)
+    private void ConfigureGlobalExceptionHandlers()
     {
-        await Host.StopAsync();
-        Host.Dispose();
+        // 捕获UI线程未处理的异常
+        DispatcherUnhandledException += (sender, ex) =>
+        {
+            Log.Logger.Error($"捕获UI线程未处理的异常 {ex.Exception.Message}: {ex.Exception.StackTrace}");
+            ex.Handled = true;
+        };
+
+        // 捕获非UI线程未处理的异常
+        AppDomain.CurrentDomain.UnhandledException += (sender, ex) =>
+        {
+            if (ex.ExceptionObject is Exception exception)
+                Log.Logger.Error($"捕获非UI线程未处理的异常 {exception.Message}: {exception.StackTrace}");
+        };
+
+        // 捕获Task线程中未处理的异常
+        TaskScheduler.UnobservedTaskException += (sender, ex) =>
+        {
+            Log.Logger.Error($"捕获Task线程中未处理的异常 {ex.Exception.Message}: {ex.Exception.StackTrace}");
+        };
     }
 
-    private void OnDispatcherUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)
-    {
-        MessageBox.Show(e.ToString());
-    }
+    #endregion
 }

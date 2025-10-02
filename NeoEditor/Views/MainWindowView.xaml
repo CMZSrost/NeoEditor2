@@ -1,5 +1,5 @@
 ﻿<Window
-    x:Class="NeoEditor.Views.MainWindow"
+    x:Class="NeoEditor.Views.MainWindowView"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:avalon="clr-namespace:AvalonDock;assembly=AvalonDock"
@@ -24,7 +24,8 @@
         <Menu DataContext="{Binding MenuVm}">
             <MenuItem Header="File" StaysOpenOnClick="True">
                 <MenuItem Command="{Binding SetProjectCommand}" Header="Set" />
-                <MenuItem Command="{Binding LoadDataCommand}" Header="Load" />
+                <!-- <MenuItem Command="{Binding LoadFromXmlCommand}" Header="Load From Xml" /> -->
+                <!-- <MenuItem Command="{Binding LoadFromXlsCommand}" Header="Load From Excel" /> -->
             </MenuItem>
             <MenuItem Header="Config" StaysOpenOnClick="True">
                 <StackPanel Orientation="Horizontal">
@@ -52,7 +53,7 @@
                                             <GridView>
                                                 <GridViewColumn DisplayMemberBinding="{Binding ModIndex}" Header="ModIndex" />
                                                 <GridViewColumn DisplayMemberBinding="{Binding ModName}" Header="ModName" />
-                                                <GridViewColumn DisplayMemberBinding="{Binding ModDirectory}" Header="ModDirectory" />
+                                                <GridViewColumn DisplayMemberBinding="{Binding ModDirectoryName}" Header="ModDirectory" />
                                             </GridView>
                                         </ListView.View>
                                     </ListView>

@@ -2,28 +2,28 @@
 using System.IO;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using CommunityToolkit.Mvvm.Messaging;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using NeoEditor.Data.Messages;
 using NeoEditor.Data.Options;
 using NeoEditor.Helpers;
+using NeoEditor.Services.Worker;
 using NeoEditor.ViewModels.Data;
 
 namespace NeoEditor.ViewModels.Controls;
 
-public partial class ProjectViewModel : ObservableRecipient, IRecipient<SetProjectMessage>, IRecipient<LoadDataMessage>,
-    IRecipient<MainWindowLoadedMessage>
+public partial class ProjectViewModel : ObservableObject
 {
-    private readonly XmlLoader _loader;
-    private readonly SerialIdHelper _serialIdHelper;
+    private readonly IEventAggregator _eventAggregator;
+    private readonly ProjectLoadingWorker _worker;
 
-    public ProjectViewModel(IOptions<ProjectOption> projectOption, XmlLoader loader, SerialIdHelper serialIdHelper)
+    public ProjectViewModel(IOptions<ProjectOption> projectOption, ProjectLoadingWorker worker,
+        IEventAggregator eventAggregator)
     {
-        IsActive = true;
-        _loader = loader;
-        _serialIdHelper = serialIdHelper;
+        _worker = worker;
+        _eventAggregator = eventAggregator;
         ModConfigFilePath = projectOption.Value.ModConfigPath;
+        Subscribe();
     }
 
     [ObservableProperty] public partial string? ModConfigFilePath { get; set; }
@@ -33,53 +33,63 @@ public partial class ProjectViewModel : ObservableRecipient, IRecipient<SetProje
 
     public ObservableCollection<ModData> Mods { get; } = new();
 
-    public async void Receive(LoadDataMessage message)
+    private void Subscribe()
     {
+        _eventAggregator.GetEvent<MainWindowLoadedEvent>().Subscribe(Receive);
+        _eventAggregator.GetEvent<SetProjectEvent>().Subscribe(Receive);
+        _eventAggregator.GetEvent<LoadFromXmlEvent>().Subscribe(Receive);
+    }
+
+    private async void Receive(LoadFromXmlMessage message)
+    {
+        Console.WriteLine("Recv LoadData!");
         try
         {
-            await _loader.Clean();
-            foreach (var modData in Mods)
+            CancellationTokenSource cancellationTokenSource = new();
+            var token = cancellationTokenSource.Token;
+            foreach (var modData in Mods.Order())
             {
-                var offset = _loader.Idx;
                 var urls = Directory.EnumerateFiles(
                     Path.Join(ProjectRootDirectory, modData.ModDirectoryPath),
                     "*.xml",
                     SearchOption.AllDirectories
                 );
                 foreach (var url in urls)
-                    try
+                    _worker.Add(new ModXmlData
                     {
-                        await _loader.LoadXml(url, modData);
-                    }
-                    catch (Exception ex)
-                    {
-                        Messenger.Send(new LogMessage
-                            { Level = LogLevel.Warning, Message = $"load {url} error: {ex}" });
-                    }
-
-                Messenger.Send(new LogMessage { Message = $"{modData.ModName} loaded {_loader.Idx - offset} items" });
+                        ModIndex = modData.ModIndex,
+                        ModName = modData.ModName,
+                        XmlPath = url
+                    });
             }
 
-            await _serialIdHelper.ReorderAll();
-
-            // Console.WriteLine($"loaded {_loader.Idx} items");
-            Messenger.Send(new LogMessage { Message = $"loaded {_loader.Idx} items" });
+            await _worker.RunAsync(message.FilePath, token);
+            _eventAggregator.GetEvent<LoadFromXlsxEvent>()
+                .Publish(new LoadFromXlsxMessage { FilePath = message.FilePath });
         }
         catch (Exception ex)
         {
-            Messenger.Send(new LogMessage { Level = LogLevel.Error, Message = $"{ex}", MsgBox = true });
+            _eventAggregator.GetEvent<LoggingEvent>()
+                .Publish(new LogMessage
+                {
+                    Level = LogLevel.Error, Message = $"load from xml error: {ex.Message}\n{ex.StackTrace}",
+                    MsgBox = true
+                });
         }
     }
 
-    public void Receive(MainWindowLoadedMessage message)
+    private void Receive(MainWindowLoadedMessage message)
     {
         if (File.Exists(ModConfigFilePath))
-            Messenger.Send(new SetProjectMessage { ModConfigFilePath = ModConfigFilePath });
+            _eventAggregator.GetEvent<SetProjectEvent>()
+                .Publish(new SetProjectMessage { ModConfigFilePath = ModConfigFilePath });
     }
 
-    public async void Receive(SetProjectMessage message)
+    private async void Receive(SetProjectMessage message)
     {
-        Messenger.Send(new LogMessage { Message = $"recv OpenProjectMessage: {message}" });
+        Console.WriteLine(message.ModConfigFilePath);
+        _eventAggregator.GetEvent<LoggingEvent>()
+            .Publish(new LogMessage { Message = $"recv OpenProjectMessage: {message}" });
         ModConfigFilePath = message.ModConfigFilePath;
 
         var eModConfig = File.Exists(ModConfigFilePath);
@@ -89,12 +99,13 @@ public partial class ProjectViewModel : ObservableRecipient, IRecipient<SetProje
 
         if (!(eModConfig && eRootDirectory && eModDirectory && eDataDirectory))
         {
-            Messenger.Send(new LogMessage
-            {
-                Level = LogLevel.Warning,
-                Message =
-                    $"Invalid project path modConfig:{eModConfig} rootDir:{eRootDirectory} modDir:{eModDirectory} dataDir:{eDataDirectory}"
-            });
+            _eventAggregator.GetEvent<LoggingEvent>()
+                .Publish(new LogMessage
+                {
+                    Level = LogLevel.Warning,
+                    Message =
+                        $"Invalid project path modConfig:{eModConfig} rootDir:{eRootDirectory} modDir:{eModDirectory} dataDir:{eDataDirectory}"
+                });
             return;
         }
 
@@ -103,12 +114,12 @@ public partial class ProjectViewModel : ObservableRecipient, IRecipient<SetProje
         {
             ModName = "data",
             ModDirectoryPath = "data",
-            ModDirectory = "data",
+            ModDirectoryName = "data",
             ModIndex = -1
         });
         await foreach (var modData in PhPHelper.FileToList(ModConfigFilePath)) Mods.Add(modData);
 
-        Messenger.Send(new OpenEditTableMessage
+        _eventAggregator.GetEvent<OpenEditTableEvent>().Publish(new OpenEditTableMessage
         {
             ProjectRootDirectory = ProjectRootDirectory!,
             ProjectDataFolder = ProjectDataDirectory,
@@ -118,11 +129,11 @@ public partial class ProjectViewModel : ObservableRecipient, IRecipient<SetProje
     }
 
     [RelayCommand]
-    public void OpenEditTable()
+    private void OpenEditTable()
     {
         if (ModConfigFilePath is null)
         {
-            Messenger.Send(new LogMessage
+            _eventAggregator.GetEvent<LoggingEvent>().Publish(new LogMessage
             {
                 Level = LogLevel.Warning,
                 Message = "ModConfigFilePath is null! Open edit table failed."
@@ -130,13 +141,14 @@ public partial class ProjectViewModel : ObservableRecipient, IRecipient<SetProje
             return;
         }
 
-        Messenger.Send(new OpenEditTableMessage
-        {
-            ProjectRootDirectory = ProjectRootDirectory!,
-            ProjectDataFolder = ProjectDataDirectory,
-            ProjectModFolder = ProjectModDirectory,
-            ModConfigFilePath = ModConfigFilePath
-        });
+        _eventAggregator.GetEvent<OpenEditTableEvent>()
+            .Publish(new OpenEditTableMessage
+            {
+                ProjectRootDirectory = ProjectRootDirectory!,
+                ProjectDataFolder = ProjectDataDirectory,
+                ProjectModFolder = ProjectModDirectory,
+                ModConfigFilePath = ModConfigFilePath
+            });
     }
 
     [RelayCommand]

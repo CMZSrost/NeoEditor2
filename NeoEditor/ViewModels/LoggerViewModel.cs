@@ -1,23 +1,31 @@
 ﻿using System.Collections.ObjectModel;
 using System.Windows;
 using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Messaging;
 using Microsoft.Extensions.Logging;
 using NeoEditor.Data.Messages;
 
 namespace NeoEditor.ViewModels;
 
-public class LoggerViewModel : ObservableRecipient, IRecipient<LogMessage>
+public class LoggerViewModel : ObservableObject
 {
-    public ObservableCollection<LogMessage> Logs { get; } = new();
-    public LoggerViewModel(ILogger<App> logger)
+    private readonly IEventAggregator _eventAggregator;
+
+    public LoggerViewModel(ILogger<App> logger, IEventAggregator eventAggregator)
     {
         Console.WriteLine("loggerService!");
+        _eventAggregator = eventAggregator;
         Logger = logger;
-        IsActive = true;
+        Subscribe();
     }
 
+    public ObservableCollection<LogMessage> Logs { get; } = new();
+
     private ILogger<App> Logger { get; }
+
+    private void Subscribe()
+    {
+        _eventAggregator.GetEvent<LoggingEvent>().Subscribe(Receive);
+    }
 
     public async void Receive(LogMessage message)
     {
