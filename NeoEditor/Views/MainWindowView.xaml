@@ -12,6 +12,18 @@
     d:DataContext="{d:DesignInstance Type=vm:MainWindowViewModel}"
     Loaded="MainWindow_OnLoaded"
     mc:Ignorable="d">
+    <Window.Resources>
+        <InverseBoolToVisibilityConverter x:Key="InverseBoolToVisibilityConverter" />
+        <!--  文件夹图标几何图形  -->
+        <PathGeometry x:Key="FolderGeometry">
+            M10,4H4C2.89,4 2,4.89 2,6V18A2,2 0 0,0 4,20H20A2,2 0 0,0 22,18V8C22,6.89 21.1,6 20,6H12L10,4Z
+        </PathGeometry>
+
+        <!--  文件图标几何图形  -->
+        <PathGeometry x:Key="FileGeometry">
+            M13,9H18.5L13,3.5V9M6,2H14L20,8V20A2,2 0 0,1 18,22H6C4.89,22 4,21.1 4,20V4C4,2.89 4.89,2 6,2M15,18V16H6V18H15M18,14V12H6V14H18Z
+        </PathGeometry>
+    </Window.Resources>
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -44,11 +56,66 @@
                     <LayoutAnchorablePaneGroup DockWidth="Auto">
                         <LayoutAnchorablePane>
                             <LayoutAnchorable
+                                Title="FileSystemView"
+                                CanDockAsTabbedDocument="False"
+                                CanHide="False">
+
+                                <Grid DataContext="{Binding FileSystemVm}">
+                                    <TreeView
+                                        ItemsSource="{Binding Roots}"
+                                        VirtualizingPanel.IsVirtualizing="True"
+                                        VirtualizingPanel.VirtualizationMode="Recycling">
+                                        <TreeView.ItemContainerStyle>
+                                            <Style BasedOn="{StaticResource TreeViewItemBaseStyle}" TargetType="TreeViewItem">
+                                                <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}" />
+                                                <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}" />
+                                            </Style>
+                                        </TreeView.ItemContainerStyle>
+                                        <TreeView.ItemTemplate>
+                                            <HierarchicalDataTemplate ItemsSource="{Binding Children}">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <Path
+                                                        Width="14"
+                                                        Height="14"
+                                                        Margin="0,0,5,0"
+                                                        Data="{StaticResource FolderGeometry}"
+                                                        Fill="{DynamicResource PrimaryBrush}"
+                                                        Stretch="Uniform"
+                                                        Visibility="{Binding IsDirectory, Converter={StaticResource Boolean2VisibilityConverter}}" />
+                                                    <Path
+                                                        Width="14"
+                                                        Height="14"
+                                                        Margin="0,0,5,0"
+                                                        Data="{StaticResource FileGeometry}"
+                                                        Fill="{DynamicResource InfoBrush}"
+                                                        Stretch="Uniform"
+                                                        Visibility="{Binding IsDirectory, Converter={StaticResource InverseBoolToVisibilityConverter}}" />
+                                                    <TextBlock VerticalAlignment="Center" Text="{Binding Name}" />
+                                                    <Button
+                                                        Margin="5,0,0,0"
+                                                        Command="{Binding OpenCommand}"
+                                                        Content="打开"
+                                                        Visibility="{Binding IsDirectory, Converter={StaticResource InverseBoolToVisibilityConverter}}" />
+                                                </StackPanel>
+                                            </HierarchicalDataTemplate>
+                                        </TreeView.ItemTemplate>
+                                    </TreeView>
+                                    <!-- <StackPanel Orientation="Horizontal"> -->
+                                    <!--     <Button Command="{Binding OpenEditTableCommand}">打开编辑页</Button> -->
+                                    <!-- </StackPanel> -->
+                                </Grid>
+
+                            </LayoutAnchorable>
+                            <LayoutAnchorable
                                 Title="ProjectView"
                                 CanDockAsTabbedDocument="False"
                                 CanHide="False">
-                                <StackPanel DataContext="{Binding ProjectVm}">
-                                    <ListView ItemsSource="{Binding Mods}">
+
+                                <Grid DataContext="{Binding ProjectVm}">
+                                    <ListView
+                                        ItemsSource="{Binding Mods}"
+                                        VirtualizingPanel.IsVirtualizing="True"
+                                        VirtualizingPanel.VirtualizationMode="Recycling">
                                         <ListView.View>
                                             <GridView>
                                                 <GridViewColumn DisplayMemberBinding="{Binding ModIndex}" Header="ModIndex" />
@@ -57,23 +124,31 @@
                                             </GridView>
                                         </ListView.View>
                                     </ListView>
-                                    <StackPanel Orientation="Horizontal">
-                                        <Button Command="{Binding OpenEditTableCommand}">打开编辑页</Button>
-                                    </StackPanel>
-                                </StackPanel>
+                                    <!-- <StackPanel Orientation="Horizontal"> -->
+                                    <!--     <Button Command="{Binding OpenEditTableCommand}">打开编辑页</Button> -->
+                                    <!-- </StackPanel> -->
+                                </Grid>
+
                             </LayoutAnchorable>
                             <LayoutAnchorable
                                 Title="LogView"
                                 CanDockAsTabbedDocument="False"
                                 CanHide="False">
-                                <ListView DataContext="{Binding LoggerVm}" ItemsSource="{Binding Logs}">
-                                    <ListView.View>
-                                        <GridView>
-                                            <GridViewColumn DisplayMemberBinding="{Binding Level}" Header="Level" />
-                                            <GridViewColumn DisplayMemberBinding="{Binding Message}" Header="Message" />
-                                        </GridView>
-                                    </ListView.View>
-                                </ListView>
+                                <Grid DataContext="{Binding LoggerVm}">
+
+                                    <ListView
+                                        ItemsSource="{Binding Logs}"
+                                        VirtualizingPanel.IsVirtualizing="True"
+                                        VirtualizingPanel.VirtualizationMode="Recycling">
+                                        <ListView.View>
+                                            <GridView>
+                                                <GridViewColumn DisplayMemberBinding="{Binding Level}" Header="Level" />
+                                                <GridViewColumn DisplayMemberBinding="{Binding Message}" Header="Message" />
+                                            </GridView>
+                                        </ListView.View>
+                                    </ListView>
+                                </Grid>
+
                             </LayoutAnchorable>
                         </LayoutAnchorablePane>
                     </LayoutAnchorablePaneGroup>

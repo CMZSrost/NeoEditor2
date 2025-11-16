@@ -1,6 +1,7 @@
 ﻿using System.Data;
 using System.IO;
 using System.Text;
+using System.Xml.Linq;
 using System.Xml.Serialization;
 using NeoEditor.Data.Models;
 
@@ -25,7 +26,7 @@ public static class GameXmlLoader
     }
 
 
-    public static async Task<DataSet> LoadXml(string xmlFilePath)
+    public static async Task<DataSet> LoadXmlToDataSet(string xmlFilePath)
     {
         return await Task.Run(async () =>
             {
@@ -61,5 +62,18 @@ public static class GameXmlLoader
                 }
             }
         );
+    }
+
+    public static async Task<XDocument> LoadXmlToDom(string xmlFilePath)
+    {
+        return await Task.Run(async () =>
+        {
+            await FixEncodingHeader(xmlFilePath);
+            Console.WriteLine($"loading {xmlFilePath} to DOM...");
+
+            using var reader = new StreamReader(xmlFilePath, Encoding.UTF8, true);
+            var content = await reader.ReadToEndAsync();
+            return XDocument.Parse(content);
+        });
     }
 }

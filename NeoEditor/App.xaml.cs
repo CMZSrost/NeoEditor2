@@ -32,11 +32,12 @@ public partial class App : PrismApplication
         // containerRegistry.RegisterSingleton<MainWindowViewModel>();
         // containerRegistry.RegisterSingleton<EditTableViewModel>();
         containerRegistry.RegisterSingleton<ProjectViewModel>();
+        containerRegistry.RegisterSingleton<FileSystemViewModel>();
         containerRegistry.RegisterSingleton<ReoGridControlViewModel>();
         containerRegistry.RegisterSingleton<LoggerViewModel>();
 
         containerRegistry.RegisterForNavigation<MainWindowView, MainWindowViewModel>();
-        containerRegistry.RegisterForNavigation<EditTablePage, EditTableViewModel>();
+        containerRegistry.RegisterForNavigation<EditTableReoPage, EditTableViewModel>();
 
         containerRegistry.Register<SerialQueueProcess>();
         containerRegistry.Register<LoadXmlQueueProcess>();

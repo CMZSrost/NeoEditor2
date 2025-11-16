@@ -1,8 +1,6 @@
 ﻿using System.Data;
 using AutoMapper;
-using NeoEditor.Data.Models.Dto;
 using NeoEditor.Helpers;
-using NeoEditor.Helpers.Converters;
 using NeoEditor.ViewModels.Data;
 
 namespace NeoEditor.Services.QueueProcess;
@@ -14,15 +12,15 @@ public class LoadXmlQueueProcess(IEventAggregator eventAggregator, IMapper mappe
     {
         try
         {
-            var ds = await GameXmlLoader.LoadXml(modData!.XmlPath!);
-            foreach (DataTable dt in ds.Tables)
-            {
-                if (dt.TableName == "attackmodes")
-                {
-                    var res = DataTableToEntity<attackmode>.FillModel(dt);
-                    break;
-                }
-            }
+            var ds = await GameXmlLoader.LoadXmlToDataSet(modData!.XmlPath!);
+            // foreach (DataTable dt in ds.Tables)
+            // {
+            //     if (dt.TableName == "attackmodes")
+            //     {
+            //         var res = DataTableToEntity<attackmode>.FillModel(dt);
+            //         break;
+            //     }
+            // }
             return new Tuple<DataSet?, ModXmlData>(ds, modData);
         }
         catch (Exception ex)

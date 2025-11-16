@@ -119,13 +119,13 @@ public partial class ProjectViewModel : ObservableObject
         });
         await foreach (var modData in PhPHelper.FileToList(ModConfigFilePath)) Mods.Add(modData);
 
-        _eventAggregator.GetEvent<OpenEditTableEvent>().Publish(new OpenEditTableMessage
-        {
-            ProjectRootDirectory = ProjectRootDirectory!,
-            ProjectDataFolder = ProjectDataDirectory,
-            ProjectModFolder = ProjectModDirectory,
-            ModConfigFilePath = ModConfigFilePath
-        });
+        // _eventAggregator.GetEvent<OpenEditTableEvent>().Publish(new OpenEditTableMessage
+        // {
+        //     ProjectRootDirectory = ProjectRootDirectory!,
+        //     ProjectDataFolder = ProjectDataDirectory,
+        //     ProjectModFolder = ProjectModDirectory,
+        //     ModConfigFilePath = ModConfigFilePath
+        // });
     }
 
     [RelayCommand]

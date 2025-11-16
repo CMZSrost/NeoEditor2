@@ -6,6 +6,7 @@ using Microsoft.Extensions.Options;
 using NeoEditor.Data.Messages;
 using NeoEditor.Data.Options;
 using NeoEditor.ViewModels;
+using NeoEditor.ViewModels.Controls;
 using NeoEditor.Views.Controls;
 
 namespace NeoEditor.Views;
@@ -16,19 +17,23 @@ namespace NeoEditor.Views;
 public partial class MainWindowView : Window
 {
     private readonly string? _editExcelName;
-    private readonly Func<EditTablePage> _editTablePageFactory;
+    private readonly Func<EditTableReoPage> _editTablePageFactory;
+    private readonly Func<EditXmlPage> _editXmlPageFactory;
     private readonly IEventAggregator _eventAggregator;
 
     public MainWindowView(
         MainWindowViewModel vm,
         IOptions<ProjectOption> options,
         IEventAggregator eventAggregator,
-        Func<EditTablePage> editTablePageFactory)
+        Func<EditTableReoPage> editTablePageFactory,
+        Func<EditXmlPage> editXmlPageFactory
+    )
     {
         DataContext = vm;
         _editExcelName = options.Value.EditExcelName;
         _eventAggregator = eventAggregator;
         _editTablePageFactory = editTablePageFactory;
+        _editXmlPageFactory = editXmlPageFactory;
 
         InitializeComponent();
         Subscribe();
@@ -37,6 +42,7 @@ public partial class MainWindowView : Window
     private void Subscribe()
     {
         _eventAggregator.GetEvent<OpenEditTableEvent>().Subscribe(ReceiveLoadProject, ThreadOption.UIThread);
+        _eventAggregator.GetEvent<OpenXmlEvent>().Subscribe(ReceiveOpenXml, ThreadOption.UIThread);
     }
 
 
@@ -72,6 +78,23 @@ public partial class MainWindowView : Window
         {
             Title = "edit",
             Content = editTable
+        });
+    }
+
+    private void ReceiveOpenXml(OpenXmlMessage message)
+    {
+        var editXml = _editXmlPageFactory.Invoke();
+        editXml.Name = Path.GetFileNameWithoutExtension(message.FilePath);
+
+        editXml.Loaded += async (sender, args) =>
+        {
+            await ((EditXmlViewModel)editXml.DataContext).LoadXmlAsync(message.FilePath);
+        };
+
+        DocumentPane.Children?.Add(new LayoutDocument
+        {
+            Title = Path.GetFileName(message.FilePath),
+            Content = editXml
         });
     }
 

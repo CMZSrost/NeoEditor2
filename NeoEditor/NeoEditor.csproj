@@ -15,7 +15,12 @@
             <XamlRuntime>Wpf</XamlRuntime>
             <SubType>Designer</SubType>
         </Page>
-        <Page Update="Views\Controls\EditTablePage.xaml">
+        <Page Update="Views\Controls\EditTableReoPage.xaml">
+            <Generator>MSBuild:Compile</Generator>
+            <XamlRuntime>Wpf</XamlRuntime>
+            <SubType>Designer</SubType>
+        </Page>
+        <Page Update="Views\Controls\EditXmlPage.xaml">
             <Generator>MSBuild:Compile</Generator>
             <XamlRuntime>Wpf</XamlRuntime>
             <SubType>Designer</SubType>
@@ -68,7 +73,6 @@
 
     <ItemGroup>
         <Folder Include="Helpers\Interface\"/>
-        <Folder Include="ViewModels\Controls\Tabs\"/>
     </ItemGroup>
 
 </Project>

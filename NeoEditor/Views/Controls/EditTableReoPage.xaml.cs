@@ -8,11 +8,11 @@ using unvell.ReoGrid;
 
 namespace NeoEditor.Views.Controls;
 
-public partial class EditTablePage : UserControl
+public partial class EditTableReoPage : UserControl
 {
     private readonly IEventAggregator _eventAggregator;
 
-    public EditTablePage(IContainer container, IOptions<ProjectOption> option, IEventAggregator eventAggregator)
+    public EditTableReoPage(IContainer container, IOptions<ProjectOption> option, IEventAggregator eventAggregator)
     {
         _eventAggregator = eventAggregator;
         DataContext = container.GetService<EditTableViewModel>();

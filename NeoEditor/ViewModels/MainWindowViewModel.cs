@@ -9,19 +9,21 @@ public class MainWindowViewModel : ObservableRecipient
         MenuViewModel menuVm,
         EditTableViewModel editTableVm,
         ProjectViewModel projectVm,
-        LoggerViewModel loggerViewModel
-    )
+        LoggerViewModel loggerViewModel,
+        FileSystemViewModel fileSystemVm)
     {
         IsActive = true;
         MenuVm = menuVm;
         EditTableVm = editTableVm;
         ProjectVm = projectVm;
         LoggerVm = loggerViewModel;
+        FileSystemVm = fileSystemVm;
     }
-    
+
     public LoggerViewModel LoggerVm { get; set; }
 
     public MenuViewModel MenuVm { get; set; }
     public ProjectViewModel ProjectVm { get; set; }
+    public FileSystemViewModel FileSystemVm { get; set; }
     public EditTableViewModel EditTableVm { get; set; }
 }
