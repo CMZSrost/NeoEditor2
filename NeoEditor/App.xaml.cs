@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+﻿﻿using System.Diagnostics;
 using System.Text;
 using System.Windows;
 using DryIoc.Microsoft.DependencyInjection;
@@ -35,6 +35,8 @@ public partial class App : PrismApplication
         containerRegistry.RegisterSingleton<FileSystemViewModel>();
         containerRegistry.RegisterSingleton<ReoGridControlViewModel>();
         containerRegistry.RegisterSingleton<LoggerViewModel>();
+        // 改为 Transient，让每个 EditXmlPage 都有独立的 ViewModel 实例
+        containerRegistry.Register<EditXmlViewModel>();
 
         containerRegistry.RegisterForNavigation<MainWindowView, MainWindowViewModel>();
         containerRegistry.RegisterForNavigation<EditTableReoPage, EditTableViewModel>();

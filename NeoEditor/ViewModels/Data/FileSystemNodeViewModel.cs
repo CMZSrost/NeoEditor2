@@ -71,6 +71,11 @@ public partial class FileSystemNodeViewModel : ObservableObject
         if (!IsDirectory)
             // 调用自定义打开函数
             _fileSystemViewModel.OpenFile(FullPath);
+        else
+        {
+            // 展开目录
+            IsExpanded = !IsExpanded;
+        }
     }
 
     ~FileSystemNodeViewModel()

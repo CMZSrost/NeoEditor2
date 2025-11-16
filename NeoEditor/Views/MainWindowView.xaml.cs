@@ -1,5 +1,6 @@
 ﻿using System.IO;
 using System.Windows;
+using System.Windows.Input;
 using AvalonDock.Layout;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -7,6 +8,7 @@ using NeoEditor.Data.Messages;
 using NeoEditor.Data.Options;
 using NeoEditor.ViewModels;
 using NeoEditor.ViewModels.Controls;
+using NeoEditor.ViewModels.Data;
 using NeoEditor.Views.Controls;
 
 namespace NeoEditor.Views;
@@ -83,13 +85,26 @@ public partial class MainWindowView : Window
 
     private void ReceiveOpenXml(OpenXmlMessage message)
     {
+        // 检查是否已经打开了同样的文件
+        var existingDoc = DocumentPane.Children?
+            .OfType<LayoutDocument>()
+            .FirstOrDefault(doc => 
+                doc.Content is EditXmlPage page && 
+                page.XmlPath == message.FilePath);
+
+        if (existingDoc != null)
+        {
+            // 如果已存在，直接激活该标签，不重新加载
+            System.Diagnostics.Debug.WriteLine($"[MainWindowView] File already open, activating tab: {message.FilePath}");
+            existingDoc.IsSelected = true;
+            return;
+        }
+
+        // 创建新的标签页
+        System.Diagnostics.Debug.WriteLine($"[MainWindowView] Creating new tab for: {message.FilePath}");
         var editXml = _editXmlPageFactory.Invoke();
         editXml.Name = Path.GetFileNameWithoutExtension(message.FilePath);
-
-        editXml.Loaded += async (sender, args) =>
-        {
-            await ((EditXmlViewModel)editXml.DataContext).LoadXmlAsync(message.FilePath);
-        };
+        editXml.XmlPath = message.FilePath;
 
         DocumentPane.Children?.Add(new LayoutDocument
         {
@@ -102,4 +117,5 @@ public partial class MainWindowView : Window
     {
         _eventAggregator.GetEvent<MainWindowLoadedEvent>().Publish(new MainWindowLoadedMessage());
     }
+
 }

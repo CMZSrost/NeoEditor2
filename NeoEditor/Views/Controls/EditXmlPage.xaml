@@ -31,17 +31,20 @@
             </TextBox.Style>
         </TextBox>
 
-        <DataGrid
-            Grid.Row="1"
-            AutoGenerateColumns="False"
-            IsReadOnly="True"
-            ItemsSource="{Binding FilteredNodes}">
-            <DataGrid.Columns>
-                <DataGridTextColumn Binding="{Binding Name}" Header="节点名称" />
-                <DataGridTextColumn Binding="{Binding Value}" Header="值" />
-                <DataGridTextColumn Binding="{Binding Attributes}" Header="属性" />
-                <DataGridTextColumn Binding="{Binding Level}" Header="层级" />
-            </DataGrid.Columns>
-        </DataGrid>
+        <TabControl Grid.Row="1" ItemsSource="{Binding DtoTabs}">
+            <TabControl.ItemTemplate>
+                <DataTemplate>
+                    <TextBlock Text="{Binding Name}" />
+                </DataTemplate>
+            </TabControl.ItemTemplate>
+            <TabControl.ContentTemplate>
+                <DataTemplate>
+                    <DataGrid
+                        AutoGenerateColumns="True"
+                        IsReadOnly="False"
+                        ItemsSource="{Binding Items}" />
+                </DataTemplate>
+            </TabControl.ContentTemplate>
+        </TabControl>
     </Grid>
 </UserControl>

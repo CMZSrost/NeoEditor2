@@ -74,6 +74,9 @@
                                         <TreeView.ItemTemplate>
                                             <HierarchicalDataTemplate ItemsSource="{Binding Children}">
                                                 <StackPanel Orientation="Horizontal">
+                                                    <StackPanel.InputBindings>
+                                                        <MouseBinding Command="{Binding OpenCommand}" Gesture="LeftDoubleClick" />
+                                                    </StackPanel.InputBindings>
                                                     <Path
                                                         Width="14"
                                                         Height="14"
@@ -91,11 +94,6 @@
                                                         Stretch="Uniform"
                                                         Visibility="{Binding IsDirectory, Converter={StaticResource InverseBoolToVisibilityConverter}}" />
                                                     <TextBlock VerticalAlignment="Center" Text="{Binding Name}" />
-                                                    <Button
-                                                        Margin="5,0,0,0"
-                                                        Command="{Binding OpenCommand}"
-                                                        Content="打开"
-                                                        Visibility="{Binding IsDirectory, Converter={StaticResource InverseBoolToVisibilityConverter}}" />
                                                 </StackPanel>
                                             </HierarchicalDataTemplate>
                                         </TreeView.ItemTemplate>
