@@ -1,6 +1,7 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
+using NeoEditor.ViewModels.Controls;
 
-namespace NeoEditor.ViewModels.Controls;
+namespace NeoEditor.ViewModels;
 
 public class EditTableViewModel : ObservableRecipient
 {

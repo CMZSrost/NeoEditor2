@@ -1,11 +1,6 @@
-﻿using System.Data;
-using CommunityToolkit.Mvvm.ComponentModel;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace NeoEditor.Data.Models.Dto;
-
-public class abb : DataTable
-{
-}
 
 public class attackmode : ObservableObject
 {

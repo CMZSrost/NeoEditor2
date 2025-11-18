@@ -1,4 +1,4 @@
-﻿﻿using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Text;
 using System.Windows;
 using DryIoc.Microsoft.DependencyInjection;
@@ -11,8 +11,8 @@ using NeoEditor.Services.Worker;
 using NeoEditor.ViewModels;
 using NeoEditor.ViewModels.Controls;
 using NeoEditor.Views;
-using NeoEditor.Views.Controls;
 using Serilog;
+using EditXmlViewModel = NeoEditor.ViewModels.EditXmlViewModel;
 
 namespace NeoEditor;
 

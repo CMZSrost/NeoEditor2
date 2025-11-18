@@ -3,10 +3,10 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using NeoEditor.Data.Messages;
 using NeoEditor.Data.Options;
-using NeoEditor.ViewModels.Controls;
+using NeoEditor.ViewModels;
 using unvell.ReoGrid;
 
-namespace NeoEditor.Views.Controls;
+namespace NeoEditor.Views;
 
 public partial class EditTableReoPage : UserControl
 {

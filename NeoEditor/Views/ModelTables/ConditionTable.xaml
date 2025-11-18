@@ -1,0 +1,149 @@
+﻿<UserControl
+    x:Class="NeoEditor.Views.ModelTables.ConditionTable"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:modelTables="clr-namespace:NeoEditor.ViewModels.ModelTables"
+    d:DataContext="{d:DesignInstance Type=modelTables:ConditionTableViewModel}"
+    d:DesignHeight="300"
+    d:DesignWidth="1300"
+    mc:Ignorable="d">
+    <DockPanel>
+        <StackPanel
+            Margin="0,0,0,4"
+            DockPanel.Dock="Top"
+            Orientation="Horizontal">
+            <TextBlock VerticalAlignment="Center" Text="Filter:" />
+            <TextBox
+                Width="160"
+                Margin="4,0,8,0"
+                Text="{Binding FilterText, UpdateSourceTrigger=PropertyChanged}" />
+            <Button
+                Margin="0,0,4,0"
+                Command="{Binding AddCommand}"
+                Content="Add" />
+            <Button
+                Margin="0,0,4,0"
+                Command="{Binding DuplicateCommand}"
+                Content="Duplicate" />
+            <Button
+                Margin="0,0,4,0"
+                Command="{Binding DeleteCommand}"
+                Content="Delete" />
+            <Button
+                Margin="0,0,4,0"
+                Command="{Binding MoveUpCommand}"
+                Content="Up" />
+            <Button
+                Margin="0,0,4,0"
+                Command="{Binding MoveDownCommand}"
+                Content="Down" />
+            <Button
+                Margin="0,0,4,0"
+                Command="{Binding ReindexCommand}"
+                Content="Reindex" />
+            <TextBlock
+                Margin="12,0,4,0"
+                VerticalAlignment="Center"
+                Text="Selected:" />
+            <TextBlock VerticalAlignment="Center" Text="{Binding SelectedCondition.strName}" />
+        </StackPanel>
+        <DataGrid
+            Margin="0"
+            AutoGenerateColumns="False"
+            CanUserAddRows="False"
+            HeadersVisibility="Column"
+            IsReadOnly="False"
+            ItemsSource="{Binding FilteredConditions}"
+            SelectedItem="{Binding SelectedCondition, Mode=TwoWay}"
+            SelectionMode="Single">
+            <DataGrid.Columns>
+                <DataGridTextColumn
+                    Width="40"
+                    Binding="{Binding idx}"
+                    Header="Idx" />
+                <DataGridTextColumn
+                    Width="140"
+                    Binding="{Binding strName}"
+                    Header="Name" />
+                <DataGridTextColumn
+                    Width="200"
+                    Binding="{Binding strDesc}"
+                    Header="Desc" />
+                <DataGridTextColumn
+                    Width="180"
+                    Binding="{Binding aFieldNames}"
+                    Header="Fields" />
+                <DataGridTextColumn
+                    Width="180"
+                    Binding="{Binding aModifiers}"
+                    Header="Modifiers" />
+                <DataGridTextColumn
+                    Width="180"
+                    Binding="{Binding aEffects}"
+                    Header="Effects" />
+                <DataGridCheckBoxColumn
+                    Width="60"
+                    Binding="{Binding bFatal}"
+                    Header="Fatal" />
+                <DataGridTextColumn
+                    Width="120"
+                    Binding="{Binding vIDNext}"
+                    Header="Next IDs" />
+                <DataGridTextColumn
+                    Width="80"
+                    Binding="{Binding fDuration}"
+                    Header="Duration" />
+                <DataGridCheckBoxColumn
+                    Width="80"
+                    Binding="{Binding bPermanent}"
+                    Header="Permanent" />
+                <DataGridTextColumn
+                    Width="120"
+                    Binding="{Binding vChanceNext}"
+                    Header="Chance Next" />
+                <DataGridCheckBoxColumn
+                    Width="80"
+                    Binding="{Binding bStackable}"
+                    Header="Stackable" />
+                <DataGridCheckBoxColumn
+                    Width="70"
+                    Binding="{Binding bDisplay}"
+                    Header="Display" />
+                <DataGridCheckBoxColumn
+                    Width="100"
+                    Binding="{Binding bDisplayOther}"
+                    Header="Display Other" />
+                <DataGridCheckBoxColumn
+                    Width="120"
+                    Binding="{Binding bDisplayGameOver}"
+                    Header="Display GameOver" />
+                <DataGridTextColumn
+                    Width="70"
+                    Binding="{Binding nColor}"
+                    Header="Color" />
+                <DataGridCheckBoxColumn
+                    Width="100"
+                    Binding="{Binding bResetTimer}"
+                    Header="Reset Timer" />
+                <DataGridCheckBoxColumn
+                    Width="90"
+                    Binding="{Binding bRemoveAll}"
+                    Header="Remove All" />
+                <DataGridCheckBoxColumn
+                    Width="140"
+                    Binding="{Binding bRemovePostCombat}"
+                    Header="Remove PostCombat" />
+                <DataGridTextColumn
+                    Width="110"
+                    Binding="{Binding nTransferRange}"
+                    Header="Transfer Range" />
+                <DataGridTextColumn
+                    Width="180"
+                    Binding="{Binding aThresholds}"
+                    Header="Thresholds" />
+            </DataGrid.Columns>
+        </DataGrid>
+    </DockPanel>
+</UserControl>

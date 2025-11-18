@@ -1,15 +1,11 @@
 ﻿using System.IO;
 using System.Windows;
-using System.Windows.Input;
 using AvalonDock.Layout;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using NeoEditor.Data.Messages;
 using NeoEditor.Data.Options;
 using NeoEditor.ViewModels;
-using NeoEditor.ViewModels.Controls;
-using NeoEditor.ViewModels.Data;
-using NeoEditor.Views.Controls;
 
 namespace NeoEditor.Views;
 
@@ -68,10 +64,7 @@ public partial class MainWindowView : Window
 
             var excelPath = Path.Join(message.ProjectRootDirectory, _editExcelName);
 
-            if (File.Exists(excelPath))
-                _eventAggregator.GetEvent<LoadFromXlsxEvent>().Publish(new LoadFromXlsxMessage
-                    { FilePath = excelPath, TargetTable = "edit" });
-            else
+            if (!File.Exists(excelPath))
                 _eventAggregator.GetEvent<LoadFromXmlEvent>().Publish(new LoadFromXmlMessage { FilePath = excelPath });
         };
 
@@ -88,34 +81,35 @@ public partial class MainWindowView : Window
         // 检查是否已经打开了同样的文件
         var existingDoc = DocumentPane.Children?
             .OfType<LayoutDocument>()
-            .FirstOrDefault(doc => 
-                doc.Content is EditXmlPage page && 
+            .FirstOrDefault(doc =>
+                doc.Content is EditXmlPage page &&
                 page.XmlPath == message.FilePath);
 
         if (existingDoc != null)
         {
             // 如果已存在，直接激活该标签，不重新加载
-            System.Diagnostics.Debug.WriteLine($"[MainWindowView] File already open, activating tab: {message.FilePath}");
+            Console.WriteLine($"[MainWindowView] File already open, activating tab: {message.FilePath}");
             existingDoc.IsSelected = true;
             return;
         }
 
         // 创建新的标签页
-        System.Diagnostics.Debug.WriteLine($"[MainWindowView] Creating new tab for: {message.FilePath}");
+        Console.WriteLine($"[MainWindowView] Creating new tab for: {message.FilePath}");
         var editXml = _editXmlPageFactory.Invoke();
         editXml.Name = Path.GetFileNameWithoutExtension(message.FilePath);
         editXml.XmlPath = message.FilePath;
 
-        DocumentPane.Children?.Add(new LayoutDocument
+        var newDoc = new LayoutDocument
         {
             Title = Path.GetFileName(message.FilePath),
-            Content = editXml
-        });
+            Content = editXml,
+            IsSelected = true // auto select newly opened file
+        };
+        DocumentPane.Children?.Add(newDoc);
     }
 
     private void MainWindow_OnLoaded(object sender, RoutedEventArgs e)
     {
         _eventAggregator.GetEvent<MainWindowLoadedEvent>().Publish(new MainWindowLoadedMessage());
     }
-
 }

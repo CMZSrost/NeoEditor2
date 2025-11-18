@@ -1,68 +1,62 @@
-﻿﻿using System.Collections.ObjectModel;
-using System.Diagnostics;
+﻿using System.Collections.ObjectModel;
 using System.Reflection;
 using System.Xml.Linq;
 using CommunityToolkit.Mvvm.ComponentModel;
 using NeoEditor.Helpers;
+using NeoEditor.Helpers.Converters;
 
-namespace NeoEditor.ViewModels.Controls;
+namespace NeoEditor.ViewModels;
 
 public partial class EditXmlViewModel : ObservableObject
 {
-    [ObservableProperty] public partial ObservableCollection<XmlNodeItem> Nodes { get; set; } = [];
-    [ObservableProperty] public partial string SearchText { get; set; } = string.Empty;
-    [ObservableProperty] public partial ObservableCollection<XmlNodeItem> FilteredNodes { get; set; } = [];
-    [ObservableProperty] public partial ObservableCollection<DtoTabItem> DtoTabs { get; set; } = [];
-
     private string? _currentFilePath;
     private bool _isLoading;
-
-    partial void OnSearchTextChanged(string value)
-    {
-        FilterNodes();
-    }
+    [ObservableProperty] public partial ObservableCollection<XmlNodeItem> Nodes { get; set; } = [];
+    [ObservableProperty] public partial ObservableCollection<DtoTabItem> DtoTabs { get; set; } = [];
+    [ObservableProperty] private int _selectedTabIndex;
 
     public async Task LoadXmlAsync(string xmlFilePath)
     {
-        Debug.WriteLine($"[EditXmlViewModel {GetHashCode()}] LoadXmlAsync called for: {xmlFilePath}");
-        
+        Console.WriteLine($"[EditXmlViewModel {GetHashCode()}] LoadXmlAsync called for: {xmlFilePath}");
+
         // 防止重复加载同一文件
         if (_isLoading)
         {
-            Debug.WriteLine($"[EditXmlViewModel {GetHashCode()}] Already loading, skipping: {xmlFilePath}");
+            Console.WriteLine($"[EditXmlViewModel {GetHashCode()}] Already loading, skipping: {xmlFilePath}");
             return;
         }
 
         if (_currentFilePath == xmlFilePath && DtoTabs.Count > 0)
         {
-            Debug.WriteLine($"[EditXmlViewModel {GetHashCode()}] File already loaded: {xmlFilePath}");
+            Console.WriteLine($"[EditXmlViewModel {GetHashCode()}] File already loaded: {xmlFilePath}");
             return;
         }
 
         _isLoading = true;
         try
         {
-            Debug.WriteLine($"[EditXmlViewModel {GetHashCode()}] Loading XML from file: {xmlFilePath}");
+            Console.WriteLine($"[EditXmlViewModel {GetHashCode()}] Loading XML from file: {xmlFilePath}");
             var xDoc = await GameXmlLoader.LoadXmlToDom(xmlFilePath);
             Nodes.Clear();
-            FilteredNodes.Clear();
             DtoTabs.Clear();
+            SelectedTabIndex = -1; // reset selection before repopulating
 
             if (xDoc.Root is null) return;
 
             ParseElement(xDoc.Root, null, 0);
-            FilterNodes();
             ParseDtos(xDoc.Root);
+            SelectedTabIndex = DtoTabs.Count > 0 ? 0 : -1;
 
             _currentFilePath = xmlFilePath;
 
             // 调试输出
-            Debug.WriteLine($"[EditXmlViewModel {GetHashCode()}] DtoTabs Count: {DtoTabs.Count}");
-            foreach (var tab in DtoTabs) Debug.WriteLine($"[EditXmlViewModel {GetHashCode()}] Tab: {tab.Name}, Items: {tab.Items.Count}");
+            Console.WriteLine($"[EditXmlViewModel {GetHashCode()}] DtoTabs Count: {DtoTabs.Count}");
+            foreach (var tab in DtoTabs)
+                Console.WriteLine($"[EditXmlViewModel {GetHashCode()}] Tab: {tab.Name}, Items: {tab.Items.Count}");
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"[EditXmlViewModel {GetHashCode()}] Error loading XML: {ex.Message}");
+            Console.WriteLine($"[EditXmlViewModel {GetHashCode()}] Error loading XML: {ex.Message}");
             throw;
         }
         finally
@@ -74,53 +68,49 @@ public partial class EditXmlViewModel : ObservableObject
     private void ParseDtos(XElement root)
     {
         // 调试输出
-        Debug.WriteLine($"Root element: {root.Name.LocalName}");
+        Console.WriteLine($"Root element: {root.Name.LocalName}");
 
         // 尝试查找 database 元素（可能在根元素或子元素中）
         // 排除 structure_schemas 下的 database 元素（schema 定义）
         XElement? database;
         if (root.Name.LocalName == "database")
-        {
             database = root;
-        }
         else
-        {
             // 查找所有 database 元素，但排除在 structure_schemas 或任何带命名空间的父元素下的
             database = root.Descendants()
                 .Where(e => e.Name.LocalName == "database")
-                .FirstOrDefault(e => 
+                .FirstOrDefault(e =>
                     // 确保不在 structure_schemas 下
-                    !e.Ancestors().Any(a => a.Name.LocalName == "structure_schemas")
-                );
-        }
+                    e.Ancestors().All(a => a.Name.LocalName != "structure_schemas"));
 
         if (database == null)
         {
-            Debug.WriteLine("Database element not found!");
+            Console.WriteLine("Database element not found!");
             return;
         }
 
-        Debug.WriteLine($"Database element found: {database.Name.LocalName}, parent: {database.Parent?.Name.LocalName ?? "none"}");
+        Console.WriteLine(
+            $"Database element found: {database.Name.LocalName}, parent: {database.Parent?.Name.LocalName ?? "none"}");
 
         var groupedTables = database.Elements()
             .Where(e => e.Name.LocalName == "table")
             .GroupBy(t => t.Attribute("name")?.Value ?? "Unknown");
 
-        Debug.WriteLine($"Table groups count: {groupedTables.Count()}");
+        Console.WriteLine($"Table groups count: {groupedTables.Count()}");
 
         foreach (var group in groupedTables)
         {
             var tableName = group.Key;
-            Debug.WriteLine($"Processing table: {tableName}, count: {group.Count()}");
+            Console.WriteLine($"Processing table: {tableName}, count: {group.Count()}");
 
-            var dtoType = ResolveDtoType(tableName);
+            var dtoType = DictionaryModelConverter.GetType(tableName);
             if (dtoType == null)
             {
-                Debug.WriteLine($"  DTO type not found for: {tableName}");
+                Console.WriteLine($"  DTO type not found for: {tableName}");
                 continue;
             }
 
-            Debug.WriteLine($"  Found DTO type: {dtoType.Name}");
+            Console.WriteLine($"  Found DTO type: {dtoType.Name}");
 
             var instances = new List<object>();
 
@@ -143,7 +133,7 @@ public partial class EditXmlViewModel : ObservableObject
 
             if (instances.Count > 0)
             {
-                Debug.WriteLine($"  Adding tab with {instances.Count} instances");
+                Console.WriteLine($"  Adding tab with {instances.Count} instances");
                 DtoTabs.Add(new DtoTabItem
                 {
                     Name = dtoType.Name,
@@ -152,25 +142,6 @@ public partial class EditXmlViewModel : ObservableObject
                 });
             }
         }
-    }
-
-    private static Type? ResolveDtoType(string tableName)
-    {
-        var asm = Assembly.GetExecutingAssembly();
-
-        // 尝试多种命名变体
-        var candidates = new[]
-        {
-            tableName.ToLower(), // attackmodes -> attackmodes
-            tableName.ToLower().TrimEnd('s'), // attackmodes -> attackmode
-            tableName, // 保持原样
-            tableName.TrimEnd('s') // 移除末尾 s
-        };
-
-        var type = asm.GetTypes()
-            .FirstOrDefault(t => (t.Namespace == "NeoEditor.Data.Models.Dto" || t.Namespace == "NeoEditor.Dto") &&
-                                 candidates.Contains(t.Name, StringComparer.OrdinalIgnoreCase));
-        return type;
     }
 
 
@@ -186,9 +157,10 @@ public partial class EditXmlViewModel : ObservableObject
             var converted = ConvertTo(rawValue, prop.PropertyType);
             prop.SetValue(instance, converted);
         }
-        catch
+        catch (Exception ex)
         {
-            // 忽略转换错误
+            Console.WriteLine(
+                $"Error setting property '{propName} {prop.PropertyType}' on '{type.Name}': {ex.Message}");
         }
     }
 
@@ -227,19 +199,6 @@ public partial class EditXmlViewModel : ObservableObject
         Nodes.Add(item);
         foreach (var child in element.Elements())
             ParseElement(child, item, level + 1);
-    }
-
-    private void FilterNodes()
-    {
-        FilteredNodes.Clear();
-        var query = Nodes.AsEnumerable();
-        if (!string.IsNullOrWhiteSpace(SearchText))
-            query = query.Where(n =>
-                n.Name.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ||
-                n.Value.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ||
-                n.Attributes.Contains(SearchText, StringComparison.OrdinalIgnoreCase));
-        foreach (var node in query)
-            FilteredNodes.Add(node);
     }
 }
 
