@@ -3,26 +3,19 @@ using NeoEditor.Data.Models.Dto;
 
 namespace NeoEditor.ViewModels.ModelTables;
 
-public class ItemTypeTableViewModel : TypedTableViewModel<itemtype>
+public class ItemTypeTableViewModel(ObservableCollection<BaseDto> rawItems) : TypedTableViewModel<itemtype>(rawItems)
 {
-    public ItemTypeTableViewModel(ObservableCollection<object> rawItems) : base(rawItems) {}
-
-    public ObservableCollection<itemtype> ItemTypes => Items;
-    public ObservableCollection<itemtype> FilteredItemTypes => FilteredItems;
-
-    public itemtype? SelectedItemType
+    protected override bool ShouldRefilterOnPropertyChange(string? propertyName)
     {
-        get => SelectedItem;
-        set => SelectedItem = value;
+        return propertyName is nameof(itemtype.strName) or nameof(itemtype.strDesc) or nameof(itemtype.strDescAlt);
     }
 
-    protected override bool ShouldRefilterOnPropertyChange(string? propertyName) =>
-        propertyName is nameof(itemtype.strName) or nameof(itemtype.strDesc) or nameof(itemtype.strDescAlt);
-
-    protected override bool MatchesFilter(itemtype item, string filterText) =>
-        item.strName.Contains(filterText, StringComparison.OrdinalIgnoreCase) ||
-        item.strDesc.Contains(filterText, StringComparison.OrdinalIgnoreCase) ||
-        item.strDescAlt.Contains(filterText, StringComparison.OrdinalIgnoreCase);
+    protected override bool MatchesFilter(itemtype item, string filterText)
+    {
+        return item.strName.Contains(filterText, StringComparison.OrdinalIgnoreCase) ||
+               item.strDesc.Contains(filterText, StringComparison.OrdinalIgnoreCase) ||
+               item.strDescAlt.Contains(filterText, StringComparison.OrdinalIgnoreCase);
+    }
 
     protected override itemtype CreateNewItem()
     {
@@ -71,53 +64,71 @@ public class ItemTypeTableViewModel : TypedTableViewModel<itemtype>
         };
     }
 
-    protected override itemtype CloneItem(itemtype source) => new itemtype
+    protected override itemtype CloneItem(itemtype source)
     {
-        modName = source.modName,
-        modIndex = source.modIndex,
-        isLast_ = source.isLast_,
-        overId_ = -1,
-        id = source.id,
-        strName = source.strName + " Copy",
-        strDesc = source.strDesc,
-        strDescAlt = source.strDescAlt,
-        nGroupID = source.nGroupID,
-        nSubgroupID = source.nSubgroupID,
-        nCondID = source.nCondID,
-        vImageList = source.vImageList,
-        vSpriteList = source.vSpriteList,
-        vImageUsage = source.vImageUsage,
-        fWeight = source.fWeight,
-        fMonetaryValue = source.fMonetaryValue,
-        fMonetaryValueAlt = source.fMonetaryValueAlt,
-        fDurability = source.fDurability,
-        fDegradePerHour = source.fDegradePerHour,
-        fEquipDegradePerHour = source.fEquipDegradePerHour,
-        fDegradePerUse = source.fDegradePerUse,
-        vDegradeTreasureIDs = source.vDegradeTreasureIDs,
-        aEquipConditions = source.aEquipConditions,
-        aPossessConditions = source.aPossessConditions,
-        aUseConditions = source.aUseConditions,
-        aCapacities = source.aCapacities,
-        vEquipSlots = source.vEquipSlots,
-        vUseSlots = source.vUseSlots,
-        bSocketLocked = source.bSocketLocked,
-        vProperties = source.vProperties,
-        aContentIDs = source.aContentIDs,
-        nFormatID = source.nFormatID,
-        nTreasureID = source.nTreasureID,
-        nComponentID = source.nComponentID,
-        bMirrored = source.bMirrored,
-        nSlotDepth = source.nSlotDepth,
-        strChargeProfiles = source.strChargeProfiles,
-        aAttackModes = source.aAttackModes,
-        nStackLimit = source.nStackLimit,
-        aSwitchIDs = source.aSwitchIDs,
-        aSounds = source.aSounds
-    };
+        return new itemtype
+        {
+            modName = source.modName,
+            modIndex = source.modIndex,
+            isLast_ = source.isLast_,
+            overId_ = -1,
+            id = source.id,
+            strName = source.strName + " Copy",
+            strDesc = source.strDesc,
+            strDescAlt = source.strDescAlt,
+            nGroupID = source.nGroupID,
+            nSubgroupID = source.nSubgroupID,
+            nCondID = source.nCondID,
+            vImageList = source.vImageList,
+            vSpriteList = source.vSpriteList,
+            vImageUsage = source.vImageUsage,
+            fWeight = source.fWeight,
+            fMonetaryValue = source.fMonetaryValue,
+            fMonetaryValueAlt = source.fMonetaryValueAlt,
+            fDurability = source.fDurability,
+            fDegradePerHour = source.fDegradePerHour,
+            fEquipDegradePerHour = source.fEquipDegradePerHour,
+            fDegradePerUse = source.fDegradePerUse,
+            vDegradeTreasureIDs = source.vDegradeTreasureIDs,
+            aEquipConditions = source.aEquipConditions,
+            aPossessConditions = source.aPossessConditions,
+            aUseConditions = source.aUseConditions,
+            aCapacities = source.aCapacities,
+            vEquipSlots = source.vEquipSlots,
+            vUseSlots = source.vUseSlots,
+            bSocketLocked = source.bSocketLocked,
+            vProperties = source.vProperties,
+            aContentIDs = source.aContentIDs,
+            nFormatID = source.nFormatID,
+            nTreasureID = source.nTreasureID,
+            nComponentID = source.nComponentID,
+            bMirrored = source.bMirrored,
+            nSlotDepth = source.nSlotDepth,
+            strChargeProfiles = source.strChargeProfiles,
+            aAttackModes = source.aAttackModes,
+            nStackLimit = source.nStackLimit,
+            aSwitchIDs = source.aSwitchIDs,
+            aSounds = source.aSounds
+        };
+    }
 
-    protected override int GetItemIndex(itemtype item) => item.idx;
-    protected override void SetItemIndex(itemtype item, int index) => item.idx = index;
-    protected override int GetItemSerialId(itemtype item) => item.serialId_;
-    protected override void SetItemSerialId(itemtype item, int serialId) => item.serialId_ = serialId;
+    protected override int GetItemIndex(itemtype item)
+    {
+        return item.idx;
+    }
+
+    protected override void SetItemIndex(itemtype item, int index)
+    {
+        item.idx = index;
+    }
+
+    protected override int GetItemSerialId(itemtype item)
+    {
+        return item.serialId_;
+    }
+
+    protected override void SetItemSerialId(itemtype item, int serialId)
+    {
+        item.serialId_ = serialId;
+    }
 }

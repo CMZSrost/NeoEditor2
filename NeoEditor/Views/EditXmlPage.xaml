@@ -3,46 +3,12 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-    xmlns:dgx="urn:tom-englert.de/DataGridExtensions"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    xmlns:modelTables="clr-namespace:NeoEditor.Views.ModelTables"
     xmlns:viewModels="clr-namespace:NeoEditor.ViewModels"
     xmlns:views="clr-namespace:NeoEditor.Views"
     Name="editXml"
     d:DataContext="{d:DesignInstance Type=viewModels:EditXmlViewModel}"
     mc:Ignorable="d">
-    <UserControl.Resources>
-        <DataTemplate x:Key="AttackModeTemplate">
-            <modelTables:AttackModeTable ItemsSource="{Binding Items}" />
-        </DataTemplate>
-        <DataTemplate x:Key="BattleMoveTemplate">
-            <modelTables:BattleMoveTable ItemsSource="{Binding Items}" />
-        </DataTemplate>
-        <DataTemplate x:Key="RecipeTemplate">
-            <modelTables:RecipeTable ItemsSource="{Binding Items}" />
-        </DataTemplate>
-        <DataTemplate x:Key="GenericTemplate">
-            <modelTables:GenericEditableTable DtoType="{Binding DtoType}" ItemsSource="{Binding Items}" />
-        </DataTemplate>
-        <DataTemplate x:Key="ConditionTemplate">
-            <modelTables:ConditionTable ItemsSource="{Binding Items}" />
-        </DataTemplate>
-        <DataTemplate x:Key="CreatureTemplate">
-            <modelTables:CreatureTable ItemsSource="{Binding Items}" />
-        </DataTemplate>
-        <DataTemplate x:Key="ItemTypeTemplate">
-            <modelTables:ItemTypeTable ItemsSource="{Binding Items}" />
-        </DataTemplate>
-        <views:TabTemplateSelector
-            x:Key="TabTemplateSelector"
-            AttackModeTemplate="{StaticResource AttackModeTemplate}"
-            BattleMoveTemplate="{StaticResource BattleMoveTemplate}"
-            ConditionTemplate="{StaticResource ConditionTemplate}"
-            CreatureTemplate="{StaticResource CreatureTemplate}"
-            GenericTemplate="{StaticResource GenericTemplate}"
-            ItemTypeTemplate="{StaticResource ItemTypeTemplate}"
-            RecipeTemplate="{StaticResource RecipeTemplate}" />
-    </UserControl.Resources>
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -50,7 +16,6 @@
         </Grid.RowDefinitions>
         <TabControl
             Grid.Row="1"
-            ContentTemplateSelector="{StaticResource TabTemplateSelector}"
             ItemsSource="{Binding DtoTabs}"
             SelectedIndex="{Binding SelectedTabIndex, Mode=TwoWay}">
             <TabControl.ItemTemplate>
@@ -58,6 +23,14 @@
                     <TextBlock Text="{Binding Name}" />
                 </DataTemplate>
             </TabControl.ItemTemplate>
+            <TabControl.ContentTemplate>
+                <DataTemplate>
+                    <views:TableHostControl
+                        DtoType="{Binding DtoType}"
+                        ItemsSource="{Binding Items}"
+                        TableName="{Binding Name}" />
+                </DataTemplate>
+            </TabControl.ContentTemplate>
         </TabControl>
     </Grid>
 </UserControl>

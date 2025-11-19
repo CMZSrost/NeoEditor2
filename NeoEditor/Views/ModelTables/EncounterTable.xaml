@@ -1,0 +1,166 @@
+﻿<UserControl
+    x:Class="NeoEditor.Views.ModelTables.EncounterTable"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:modelTables="clr-namespace:NeoEditor.ViewModels.ModelTables"
+    d:DataContext="{d:DesignInstance Type=modelTables:EncounterTableViewModel}"
+    d:DesignHeight="300"
+    d:DesignWidth="1400"
+    mc:Ignorable="d">
+    <DockPanel>
+        <StackPanel
+            Margin="0,0,0,4"
+            DockPanel.Dock="Top"
+            Orientation="Horizontal">
+            <TextBlock VerticalAlignment="Center" Text="Filter:" />
+            <TextBox
+                Width="160"
+                Margin="4,0,8,0"
+                Text="{Binding FilterText, UpdateSourceTrigger=PropertyChanged}" />
+            <Button
+                Margin="0,0,4,0"
+                Command="{Binding AddCommand}"
+                Content="Add" />
+            <Button
+                Margin="0,0,4,0"
+                Command="{Binding DuplicateCommand}"
+                Content="Duplicate" />
+            <Button
+                Margin="0,0,4,0"
+                Command="{Binding DeleteCommand}"
+                Content="Delete" />
+            <Button
+                Margin="0,0,4,0"
+                Command="{Binding MoveUpCommand}"
+                Content="Up" />
+            <Button
+                Margin="0,0,4,0"
+                Command="{Binding MoveDownCommand}"
+                Content="Down" />
+            <Button
+                Margin="0,0,4,0"
+                Command="{Binding ReindexCommand}"
+                Content="Reindex" />
+            <TextBlock
+                Margin="12,0,4,0"
+                VerticalAlignment="Center"
+                Text="Selected:" />
+            <TextBlock VerticalAlignment="Center" Text="{Binding SelectedItem.strName}" />
+        </StackPanel>
+        <DataGrid
+            Margin="0"
+            AutoGenerateColumns="False"
+            CanUserAddRows="False"
+            HeadersVisibility="Column"
+            IsReadOnly="False"
+            ItemsSource="{Binding FilteredItems}"
+            SelectedItem="{Binding SelectedItem, Mode=TwoWay}"
+            SelectionMode="Single">
+            <DataGrid.Columns>
+                <DataGridTextColumn
+                    Width="40"
+                    Binding="{Binding idx}"
+                    Header="Idx" />
+                <DataGridTextColumn
+                    Width="60"
+                    Binding="{Binding id}"
+                    Header="ID" />
+                <DataGridTextColumn
+                    Width="140"
+                    Binding="{Binding strName}"
+                    Header="Name" />
+                <DataGridTextColumn
+                    Width="200"
+                    Binding="{Binding strDesc}"
+                    Header="Description" />
+                <DataGridTextColumn
+                    Width="120"
+                    Binding="{Binding strImg}"
+                    Header="Image" />
+                <DataGridTextColumn
+                    Width="90"
+                    Binding="{Binding nTreasureID}"
+                    Header="TreasureID" />
+                <DataGridTextColumn
+                    Width="120"
+                    Binding="{Binding nRemoveTreasureID}"
+                    Header="RemoveTreasureID" />
+                <DataGridTextColumn
+                    Width="150"
+                    Binding="{Binding aConditions}"
+                    Header="Conditions" />
+                <DataGridTextColumn
+                    Width="150"
+                    Binding="{Binding aPreConditions}"
+                    Header="PreConditions" />
+                <DataGridTextColumn
+                    Width="70"
+                    Binding="{Binding fPrice}"
+                    Header="Price" />
+                <DataGridTextColumn
+                    Width="150"
+                    Binding="{Binding aResponses}"
+                    Header="Responses" />
+                <DataGridTextColumn
+                    Width="140"
+                    Binding="{Binding aMinimapHexes}"
+                    Header="MinimapHexes" />
+                <DataGridCheckBoxColumn
+                    Width="120"
+                    Binding="{Binding bRemoveCreatures}"
+                    Header="RemoveCreatures" />
+                <DataGridCheckBoxColumn
+                    Width="100"
+                    Binding="{Binding bRemoveUsed}"
+                    Header="RemoveUsed" />
+                <DataGridTextColumn
+                    Width="80"
+                    Binding="{Binding nItemsID}"
+                    Header="ItemsID" />
+                <DataGridTextColumn
+                    Width="90"
+                    Binding="{Binding nCreatureID}"
+                    Header="CreatureID" />
+                <DataGridTextColumn
+                    Width="120"
+                    Binding="{Binding ptCreatureHex}"
+                    Header="CreatureHex" />
+                <DataGridTextColumn
+                    Width="120"
+                    Binding="{Binding ptTeleport}"
+                    Header="Teleport" />
+                <DataGridTextColumn
+                    Width="100"
+                    Binding="{Binding ptEditor}"
+                    Header="Editor" />
+                <DataGridTextColumn
+                    Width="60"
+                    Binding="{Binding nType}"
+                    Header="Type" />
+                <DataGridTextColumn
+                    Width="90"
+                    Binding="{Binding fLootChance}"
+                    Header="LootChance" />
+                <DataGridTextColumn
+                    Width="110"
+                    Binding="{Binding fAccidentChance}"
+                    Header="AccidentChance" />
+                <DataGridTextColumn
+                    Width="120"
+                    Binding="{Binding fCreatureChance}"
+                    Header="CreatureChance" />
+                <DataGridTextColumn
+                    Width="140"
+                    Binding="{Binding vAccidents}"
+                    Header="Accidents" />
+                <DataGridTextColumn
+                    Width="140"
+                    Binding="{Binding vLoot}"
+                    Header="Loot" />
+            </DataGrid.Columns>
+        </DataGrid>
+    </DockPanel>
+</UserControl>
+

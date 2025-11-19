@@ -1,6 +1,7 @@
 ﻿using System.Collections.ObjectModel;
 using System.Windows;
 using System.Windows.Controls;
+using NeoEditor.Data.Models.Dto;
 using NeoEditor.ViewModels.ModelTables;
 
 namespace NeoEditor.Views.ModelTables;
@@ -22,9 +23,9 @@ public partial class GenericEditableTable : UserControl
         InitializeComponent();
     }
 
-    public ObservableCollection<object>? ItemsSource
+    public ObservableCollection<BaseDto>? ItemsSource
     {
-        get => (ObservableCollection<object>?)GetValue(ItemsSourceProperty);
+        get => (ObservableCollection<BaseDto>?)GetValue(ItemsSourceProperty);
         set => SetValue(ItemsSourceProperty, value);
     }
 

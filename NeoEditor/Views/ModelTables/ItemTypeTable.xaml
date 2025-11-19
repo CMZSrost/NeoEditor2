@@ -47,7 +47,7 @@
                 Margin="12,0,4,0"
                 VerticalAlignment="Center"
                 Text="Selected:" />
-            <TextBlock VerticalAlignment="Center" Text="{Binding SelectedItemType.strName}" />
+            <TextBlock VerticalAlignment="Center" Text="{Binding SelectedItem.strName}" />
         </StackPanel>
         <DataGrid
             Margin="0"
@@ -55,8 +55,8 @@
             CanUserAddRows="False"
             HeadersVisibility="Column"
             IsReadOnly="False"
-            ItemsSource="{Binding FilteredItemTypes}"
-            SelectedItem="{Binding SelectedItemType, Mode=TwoWay}"
+            ItemsSource="{Binding FilteredItems}"
+            SelectedItem="{Binding SelectedItem, Mode=TwoWay}"
             SelectionMode="Single">
             <DataGrid.Columns>
                 <DataGridTextColumn

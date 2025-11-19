@@ -3,21 +3,9 @@ using NeoEditor.Data.Models.Dto;
 
 namespace NeoEditor.ViewModels.ModelTables;
 
-public class AttackModeTableViewModel : TypedTableViewModel<attackmode>
+public class AttackModeTableViewModel(ObservableCollection<BaseDto> rawItems)
+    : TypedTableViewModel<attackmode>(rawItems)
 {
-    public AttackModeTableViewModel(ObservableCollection<object> rawItems) : base(rawItems)
-    {
-    }
-
-    public ObservableCollection<attackmode> AttackModes => Items;
-    public ObservableCollection<attackmode> FilteredAttackModes => FilteredItems;
-
-    public attackmode? SelectedAttackMode
-    {
-        get => SelectedItem;
-        set => SelectedItem = value;
-    }
-
     protected override bool ShouldRefilterOnPropertyChange(string? propertyName)
     {
         return propertyName is nameof(attackmode.strName) or nameof(attackmode.strNotes);

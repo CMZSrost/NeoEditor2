@@ -3,26 +3,19 @@ using NeoEditor.Data.Models.Dto;
 
 namespace NeoEditor.ViewModels.ModelTables;
 
-public class CreatureTableViewModel : TypedTableViewModel<creature>
+public class CreatureTableViewModel(ObservableCollection<BaseDto> rawItems) : TypedTableViewModel<creature>(rawItems)
 {
-    public CreatureTableViewModel(ObservableCollection<object> rawItems) : base(rawItems) {}
-
-    public ObservableCollection<creature> Creatures => Items;
-    public ObservableCollection<creature> FilteredCreatures => FilteredItems;
-
-    public creature? SelectedCreature
+    protected override bool ShouldRefilterOnPropertyChange(string? propertyName)
     {
-        get => SelectedItem;
-        set => SelectedItem = value;
+        return propertyName is nameof(creature.strName) or nameof(creature.strNamePublic) or nameof(creature.strNotes);
     }
 
-    protected override bool ShouldRefilterOnPropertyChange(string? propertyName) =>
-        propertyName is nameof(creature.strName) or nameof(creature.strNamePublic) or nameof(creature.strNotes);
-
-    protected override bool MatchesFilter(creature item, string filterText) =>
-        item.strName.Contains(filterText, StringComparison.OrdinalIgnoreCase) ||
-        item.strNamePublic.Contains(filterText, StringComparison.OrdinalIgnoreCase) ||
-        item.strNotes.Contains(filterText, StringComparison.OrdinalIgnoreCase);
+    protected override bool MatchesFilter(creature item, string filterText)
+    {
+        return item.strName.Contains(filterText, StringComparison.OrdinalIgnoreCase) ||
+               item.strNamePublic.Contains(filterText, StringComparison.OrdinalIgnoreCase) ||
+               item.strNotes.Contains(filterText, StringComparison.OrdinalIgnoreCase);
+    }
 
     protected override creature CreateNewItem()
     {
@@ -47,29 +40,47 @@ public class CreatureTableViewModel : TypedTableViewModel<creature>
         };
     }
 
-    protected override creature CloneItem(creature source) => new creature
+    protected override creature CloneItem(creature source)
     {
-        modName = source.modName,
-        modIndex = source.modIndex,
-        isLast_ = source.isLast_,
-        overId_ = -1,
-        id = source.id,
-        strName = source.strName + " Copy",
-        strNamePublic = source.strNamePublic,
-        strNotes = source.strNotes,
-        strImg = source.strImg,
-        vEncounterIDs = source.vEncounterIDs,
-        nMovesPerTurn = source.nMovesPerTurn,
-        nTreasureID = source.nTreasureID,
-        nFaction = source.nFaction,
-        vAttackModes = source.vAttackModes,
-        vBaseConditions = source.vBaseConditions,
-        nCorpseID = source.nCorpseID,
-        vActivities = source.vActivities
-    };
+        return new creature
+        {
+            modName = source.modName,
+            modIndex = source.modIndex,
+            isLast_ = source.isLast_,
+            overId_ = -1,
+            id = source.id,
+            strName = source.strName + " Copy",
+            strNamePublic = source.strNamePublic,
+            strNotes = source.strNotes,
+            strImg = source.strImg,
+            vEncounterIDs = source.vEncounterIDs,
+            nMovesPerTurn = source.nMovesPerTurn,
+            nTreasureID = source.nTreasureID,
+            nFaction = source.nFaction,
+            vAttackModes = source.vAttackModes,
+            vBaseConditions = source.vBaseConditions,
+            nCorpseID = source.nCorpseID,
+            vActivities = source.vActivities
+        };
+    }
 
-    protected override int GetItemIndex(creature item) => item.idx;
-    protected override void SetItemIndex(creature item, int index) => item.idx = index;
-    protected override int GetItemSerialId(creature item) => item.serialId_;
-    protected override void SetItemSerialId(creature item, int serialId) => item.serialId_ = serialId;
+    protected override int GetItemIndex(creature item)
+    {
+        return item.idx;
+    }
+
+    protected override void SetItemIndex(creature item, int index)
+    {
+        item.idx = index;
+    }
+
+    protected override int GetItemSerialId(creature item)
+    {
+        return item.serialId_;
+    }
+
+    protected override void SetItemSerialId(creature item, int serialId)
+    {
+        item.serialId_ = serialId;
+    }
 }

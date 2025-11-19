@@ -3,21 +3,8 @@ using NeoEditor.Data.Models.Dto;
 
 namespace NeoEditor.ViewModels.ModelTables;
 
-public class RecipeTableViewModel : TypedTableViewModel<recipe>
+public class RecipeTableViewModel(ObservableCollection<BaseDto> rawItems) : TypedTableViewModel<recipe>(rawItems)
 {
-    public RecipeTableViewModel(ObservableCollection<object> rawItems) : base(rawItems)
-    {
-    }
-
-    public ObservableCollection<recipe> Recipes => Items;
-    public ObservableCollection<recipe> FilteredRecipes => FilteredItems;
-
-    public recipe? SelectedRecipe
-    {
-        get => SelectedItem;
-        set => SelectedItem = value;
-    }
-
     protected override bool ShouldRefilterOnPropertyChange(string? propertyName)
     {
         return propertyName is nameof(recipe.strName) or nameof(recipe.strSecretName) or nameof(recipe.strTools);
@@ -87,8 +74,23 @@ public class RecipeTableViewModel : TypedTableViewModel<recipe>
         };
     }
 
-    protected override int GetItemIndex(recipe item) => item.idx;
-    protected override void SetItemIndex(recipe item, int index) => item.idx = index;
-    protected override int GetItemSerialId(recipe item) => item.serialId_;
-    protected override void SetItemSerialId(recipe item, int serialId) => item.serialId_ = serialId;
+    protected override int GetItemIndex(recipe item)
+    {
+        return item.idx;
+    }
+
+    protected override void SetItemIndex(recipe item, int index)
+    {
+        item.idx = index;
+    }
+
+    protected override int GetItemSerialId(recipe item)
+    {
+        return item.serialId_;
+    }
+
+    protected override void SetItemSerialId(recipe item, int serialId)
+    {
+        item.serialId_ = serialId;
+    }
 }

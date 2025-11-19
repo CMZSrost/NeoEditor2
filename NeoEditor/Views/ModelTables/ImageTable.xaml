@@ -1,0 +1,61 @@
+<UserControl
+    x:Class="NeoEditor.Views.ModelTables.ImageTable"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:modelTables="clr-namespace:NeoEditor.ViewModels.ModelTables"
+    d:DataContext="{d:DesignInstance Type=modelTables:ImageTableViewModel}"
+    d:DesignHeight="300"
+    d:DesignWidth="1000"
+    mc:Ignorable="d">
+    <DockPanel>
+        <StackPanel
+            Margin="0,0,0,4"
+            DockPanel.Dock="Top"
+            Orientation="Horizontal">
+            <TextBlock VerticalAlignment="Center" Text="Filter:" />
+            <TextBox
+                Width="160"
+                Margin="4,0,8,0"
+                Text="{Binding FilterText, UpdateSourceTrigger=PropertyChanged}" />
+            <Button
+                Margin="0,0,4,0"
+                Command="{Binding AddCommand}"
+                Content="Add" />
+            <Button
+                Margin="0,0,4,0"
+                Command="{Binding DuplicateCommand}"
+                Content="Duplicate" />
+            <Button
+                Margin="0,0,4,0"
+                Command="{Binding DeleteCommand}"
+                Content="Delete" />
+            <Button
+                Margin="0,0,4,0"
+                Command="{Binding MoveUpCommand}"
+                Content="Up" />
+            <Button
+                Margin="0,0,4,0"
+                Command="{Binding MoveDownCommand}"
+                Content="Down" />
+            <Button
+                Margin="0,0,4,0"
+                Command="{Binding ReindexCommand}"
+                Content="Reindex" />
+            <TextBlock
+                Margin="12,0,4,0"
+                VerticalAlignment="Center"
+                Text="Selected:" />
+            <TextBlock VerticalAlignment="Center" Text="{Binding SelectedItem.imagePath}" />
+        </StackPanel>
+        <DataGrid
+            AutoGenerateColumns="True"
+            CanUserAddRows="False"
+            HeadersVisibility="Column"
+            IsReadOnly="False"
+            ItemsSource="{Binding FilteredItems}"
+            SelectedItem="{Binding SelectedItem, Mode=TwoWay}"
+            SelectionMode="Single" />
+    </DockPanel>
+</UserControl>

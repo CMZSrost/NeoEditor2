@@ -3,21 +3,9 @@ using NeoEditor.Data.Models.Dto;
 
 namespace NeoEditor.ViewModels.ModelTables;
 
-public class BattleMoveTableViewModel : TypedTableViewModel<battlemove>
+public class BattleMoveTableViewModel(ObservableCollection<BaseDto> rawItems)
+    : TypedTableViewModel<battlemove>(rawItems)
 {
-    public BattleMoveTableViewModel(ObservableCollection<object> rawItems) : base(rawItems)
-    {
-    }
-
-    public ObservableCollection<battlemove> BattleMoves => Items;
-    public ObservableCollection<battlemove> FilteredBattleMoves => FilteredItems;
-
-    public battlemove? SelectedBattleMove
-    {
-        get => SelectedItem;
-        set => SelectedItem = value;
-    }
-
     protected override bool ShouldRefilterOnPropertyChange(string? propertyName)
     {
         return propertyName is nameof(battlemove.strName) or nameof(battlemove.strNotes) or nameof(battlemove.strID);
@@ -125,8 +113,23 @@ public class BattleMoveTableViewModel : TypedTableViewModel<battlemove>
         };
     }
 
-    protected override int GetItemIndex(battlemove item) => item.idx;
-    protected override void SetItemIndex(battlemove item, int index) => item.idx = index;
-    protected override int GetItemSerialId(battlemove item) => item.serialId_;
-    protected override void SetItemSerialId(battlemove item, int serialId) => item.serialId_ = serialId;
+    protected override int GetItemIndex(battlemove item)
+    {
+        return item.idx;
+    }
+
+    protected override void SetItemIndex(battlemove item, int index)
+    {
+        item.idx = index;
+    }
+
+    protected override int GetItemSerialId(battlemove item)
+    {
+        return item.serialId_;
+    }
+
+    protected override void SetItemSerialId(battlemove item, int serialId)
+    {
+        item.serialId_ = serialId;
+    }
 }

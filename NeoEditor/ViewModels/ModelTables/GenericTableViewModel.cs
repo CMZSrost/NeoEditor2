@@ -1,84 +1,80 @@
 ﻿using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using NeoEditor.Data.Models.Dto;
+using NeoEditor.Interface;
 
 namespace NeoEditor.ViewModels.ModelTables;
 
 public partial class ReflectionTableViewModel : ObservableObject, ITableViewModel
 {
-    private readonly ObservableCollection<object> _rawItems;
     private readonly Type _dtoType;
+    private readonly ObservableCollection<BaseDto> _rawItems;
 
     [ObservableProperty] private string _filterText = string.Empty;
-    [ObservableProperty] private object? _selectedItem;
+    [ObservableProperty] private BaseDto? _selectedItem;
 
-    public ObservableCollection<object> ItemsObject { get; } = new();
-    public ObservableCollection<object> FilteredItemsObject { get; } = new();
-    public object? SelectedItemObject { get => SelectedItem; set => SelectedItem = value; }
-    public ObservableCollection<object> Items => ItemsObject; // backward compatibility
-    public ObservableCollection<object> FilteredItems => FilteredItemsObject; // backward compatibility
-
-    public string SelectedDisplay => SelectedItem?.ToString() ?? string.Empty;
-
-    public ReflectionTableViewModel(ObservableCollection<object> rawItems, Type dtoType)
+    public ReflectionTableViewModel(ObservableCollection<BaseDto> rawItems, Type dtoType)
     {
         _rawItems = rawItems;
         _dtoType = dtoType;
         foreach (var obj in rawItems.Where(o => o.GetType() == dtoType))
-            ItemsObject.Add(obj);
+            Items.Add(obj);
         ApplyFilter();
     }
 
-    partial void OnFilterTextChanged(string value) => ApplyFilter();
+    public string SelectedDisplay => SelectedItem?.ToString() ?? string.Empty;
+
+    public ObservableCollection<BaseDto> Items { get; } = new();
+    public ObservableCollection<BaseDto> FilteredItems { get; } = new();
+
+    partial void OnFilterTextChanged(string value)
+    {
+        ApplyFilter();
+    }
 
     private void ApplyFilter()
     {
-        FilteredItemsObject.Clear();
+        FilteredItems.Clear();
         var query = FilterText?.Trim();
-        foreach (var item in ItemsObject)
-        {
+        foreach (var item in Items)
             if (string.IsNullOrWhiteSpace(query) || ItemMatches(item, query))
-                FilteredItemsObject.Add(item);
-        }
-        if (SelectedItem != null && !FilteredItemsObject.Contains(SelectedItem))
-            SelectedItem = FilteredItemsObject.FirstOrDefault();
+                FilteredItems.Add(item);
+        if (SelectedItem != null && !FilteredItems.Contains(SelectedItem))
+            SelectedItem = FilteredItems.FirstOrDefault();
     }
 
     private bool ItemMatches(object item, string query)
     {
         foreach (var prop in _dtoType.GetProperties())
-        {
             if (prop.PropertyType == typeof(string))
             {
                 var str = prop.GetValue(item) as string;
                 if (!string.IsNullOrEmpty(str) && str.Contains(query, StringComparison.OrdinalIgnoreCase))
                     return true;
             }
-        }
+
         return false;
     }
 
-    private bool CanModify() => SelectedItem != null;
+    private bool CanModify()
+    {
+        return SelectedItem != null;
+    }
 
     [RelayCommand]
     private void Add()
     {
-        var instance = Activator.CreateInstance(_dtoType);
-        if (instance == null) return;
-        // attempt idx and serial assignment via reflection
-        var idxProp = _dtoType.GetProperty("idx");
-        var serialProp = _dtoType.GetProperty("serialId_");
-        if (idxProp != null && idxProp.CanWrite)
-        {
-            var maxIdx = ItemsObject.Select(i => idxProp.GetValue(i)).OfType<int?>().Max() ?? -1;
-            idxProp.SetValue(instance, maxIdx + 1);
-        }
-        if (serialProp != null && serialProp.CanWrite)
-        {
-            var maxSerial = ItemsObject.Select(i => serialProp.GetValue(i)).OfType<int?>().Max() ?? 0;
-            serialProp.SetValue(instance, maxSerial + 1);
-        }
-        ItemsObject.Add(instance);
+        var instanceObj = Activator.CreateInstance(_dtoType);
+        if (instanceObj as BaseDto is not { } instance) return;
+
+        // Use direct property access since all DTOs inherit from BaseDto
+        var maxIdx = Items.Count > 0 ? Items.Max(i => i.idx) : -1;
+        var maxSerial = Items.Count > 0 ? Items.Max(i => i.serialId_) : 0;
+        instance.idx = maxIdx + 1;
+        instance.serialId_ = maxSerial + 1;
+
+        Items.Add(instance);
         _rawItems.Add(instance);
         SelectedItem = instance;
         ApplyFilter();
@@ -89,7 +85,7 @@ public partial class ReflectionTableViewModel : ObservableObject, ITableViewMode
     {
         if (SelectedItem == null) return;
         _rawItems.Remove(SelectedItem);
-        ItemsObject.Remove(SelectedItem);
+        Items.Remove(SelectedItem);
         SelectedItem = null;
         Reindex();
     }
@@ -98,29 +94,32 @@ public partial class ReflectionTableViewModel : ObservableObject, ITableViewMode
     private void Duplicate()
     {
         if (SelectedItem == null) return;
-        var clone = Activator.CreateInstance(_dtoType);
-        if (clone == null) return;
+        var cloneObj = Activator.CreateInstance(_dtoType);
+        if (cloneObj is not BaseDto clone) return;
+
+        // Copy all specific DTO properties (not base class properties)
         foreach (var prop in _dtoType.GetProperties())
         {
             if (!prop.CanWrite) continue;
+            // Skip base class properties - we'll handle them separately
+            if (prop.DeclaringType == typeof(BaseDto)) continue;
             var value = prop.GetValue(SelectedItem);
-            // skip idx and serial will assign new
-            if (prop.Name is "idx" or "serialId_") continue;
             prop.SetValue(clone, value);
         }
-        var idxProp = _dtoType.GetProperty("idx");
-        var serialProp = _dtoType.GetProperty("serialId_");
-        if (idxProp != null && idxProp.CanWrite)
-        {
-            var maxIdx = ItemsObject.Select(i => idxProp.GetValue(i)).OfType<int?>().Max() ?? -1;
-            idxProp.SetValue(clone, maxIdx + 1);
-        }
-        if (serialProp != null && serialProp.CanWrite)
-        {
-            var maxSerial = ItemsObject.Select(i => serialProp.GetValue(i)).OfType<int?>().Max() ?? 0;
-            serialProp.SetValue(clone, maxSerial + 1);
-        }
-        ItemsObject.Add(clone);
+
+        // Copy base class properties
+        clone.modName = SelectedItem.modName;
+        clone.modIndex = SelectedItem.modIndex;
+        clone.overId_ = SelectedItem.overId_;
+        clone.isLast_ = SelectedItem.isLast_;
+
+        // Assign new idx and serialId
+        var maxIdx = Items.Count > 0 ? Items.Max(i => i.idx) : -1;
+        var maxSerial = Items.Count > 0 ? Items.Max(i => i.serialId_) : 0;
+        clone.idx = maxIdx + 1;
+        clone.serialId_ = maxSerial + 1;
+
+        Items.Add(clone);
         _rawItems.Add(clone);
         SelectedItem = clone;
         ApplyFilter();
@@ -130,11 +129,9 @@ public partial class ReflectionTableViewModel : ObservableObject, ITableViewMode
     private void MoveUp()
     {
         if (SelectedItem == null) return;
-        var idxProp = _dtoType.GetProperty("idx");
-        if (idxProp == null || !idxProp.CanWrite) return;
-        var index = ItemsObject.IndexOf(SelectedItem);
+        var index = Items.IndexOf(SelectedItem);
         if (index <= 0) return;
-        ItemsObject.Move(index, index - 1);
+        Items.Move(index, index - 1);
         Reindex();
     }
 
@@ -142,27 +139,20 @@ public partial class ReflectionTableViewModel : ObservableObject, ITableViewMode
     private void MoveDown()
     {
         if (SelectedItem == null) return;
-        var idxProp = _dtoType.GetProperty("idx");
-        if (idxProp == null || !idxProp.CanWrite) return;
-        var index = ItemsObject.IndexOf(SelectedItem);
-        if (index < 0 || index >= ItemsObject.Count - 1) return;
-        ItemsObject.Move(index, index + 1);
+        var index = Items.IndexOf(SelectedItem);
+        if (index < 0 || index >= Items.Count - 1) return;
+        Items.Move(index, index + 1);
         Reindex();
     }
 
     [RelayCommand]
     private void Reindex()
     {
-        var idxProp = _dtoType.GetProperty("idx");
-        if (idxProp == null || !idxProp.CanWrite) return;
-        for (var i = 0; i < ItemsObject.Count; i++)
-        {
-            idxProp.SetValue(ItemsObject[i], i);
-        }
+        for (var i = 0; i < Items.Count; i++) Items[i].idx = i;
         ApplyFilter();
     }
 
-    partial void OnSelectedItemChanged(object? value)
+    partial void OnSelectedItemChanged(BaseDto? value)
     {
         DeleteCommand.NotifyCanExecuteChanged();
         DuplicateCommand.NotifyCanExecuteChanged();
