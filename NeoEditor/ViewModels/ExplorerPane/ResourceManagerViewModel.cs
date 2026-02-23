@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.ComponentModel;
 using System.Configuration;
 using System.IO;
 using System.Linq;
@@ -10,34 +9,67 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Platform.Storage;
+using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using FluentIcons.Common;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using MsBox.Avalonia;
+using MsBox.Avalonia.Enums;
+using NeoEditor.Data;
+using NeoEditor.Services;
 using ConfigurationManager = System.Configuration.ConfigurationManager;
 
-namespace NeoEditor.ViewModels;
+namespace NeoEditor.ViewModels.ExplorerPane;
 
 public record FolderEntity(FileSystemInfo Info, ObservableCollection<FolderEntity>? Children = null);
 
-public partial class ExplorerPaneViewModel : ViewModelBase
+public partial class ResourceManagerViewModel : ViewModelBase
 {
-    private readonly ILogger<ExplorerPaneViewModel> _logger;
+    private readonly ILogger<ResourceManagerViewModel> _logger;
+    private readonly LocalizationService _localizationService;
     [ObservableProperty] public partial string? GameRootDir { get; set; }
     public ObservableCollection<FolderEntity> Folders { get; } = [];
 
-    public ExplorerPaneViewModel() : this(App.ServiceProvider!.GetRequiredService<ILogger<ExplorerPaneViewModel>>())
+    public ResourceManagerViewModel() : this(
+        App.ServiceProvider!.GetRequiredService<ILogger<ResourceManagerViewModel>>(),
+        App.ServiceProvider!.GetRequiredService<LocalizationService>())
     {
     }
 
-    public ExplorerPaneViewModel(ILogger<ExplorerPaneViewModel> logger)
+    public ResourceManagerViewModel(ILogger<ResourceManagerViewModel> logger, LocalizationService localizationService)
     {
         _logger = logger;
+        _localizationService = localizationService;
 
-        var rootDir = ConfigurationManager.AppSettings["ProjectSettings:GameRootDir"];
-        if (!string.IsNullOrWhiteSpace(rootDir) && Directory.Exists(rootDir))
+        var rootDir = ConfigurationManager.AppSettings[Constants.ProjectSettingsGameRootDir];
+
+        if (string.IsNullOrWhiteSpace(rootDir) || !Directory.Exists(rootDir))
+        {
+            if (Design.IsDesignMode) return;
+            // 如果配置无效，弹窗提示用户配置根目录，如果用户选择配置根目录，则打开文件夹选择器，否则关闭应用
+            _logger.LogWarning("GameRootDir is not set or does not exist. Please set it in the settings.");
+            Dispatcher.UIThread.InvokeAsync(async () =>
+            {
+                var result = await MessageBoxManager.GetMessageBoxStandard(_localizationService["Error"],
+                        _localizationService["GameRootDirNotSet"], ButtonEnum.YesNo)
+                    .ShowWindowAsync();
+                if (result == ButtonResult.Yes)
+                {
+                    await SetFolder();
+                }
+                else if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
+                {
+                    desktop.Shutdown();
+                }
+                else
+                {
+                    throw new InvalidOperationException(
+                        "Unsupported application lifetime. Cannot shutdown application.");
+                }
+            });
+        }
+        else
         {
             // 遍历目录
             GameRootDir = rootDir;
@@ -86,8 +118,8 @@ public partial class ExplorerPaneViewModel : ViewModelBase
             if (storageProvider == null) return;
             var folders = await storageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions()
             {
-                Title = "选择游戏根目录",
-                AllowMultiple = false, // 允许多选
+                Title = App.Localizor!["SelectGameRootDir"],
+                AllowMultiple = false
             });
 
             foreach (var folder in folders)
@@ -95,6 +127,7 @@ public partial class ExplorerPaneViewModel : ViewModelBase
                 var folderPath = folder.TryGetLocalPath();
                 if (folderPath != null)
                 {
+                    _logger.LogInformation($"Selected folder: {folderPath}");
                     GameRootDir = folderPath;
                     var configuration = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
                     if (configuration is null)
@@ -107,9 +140,9 @@ public partial class ExplorerPaneViewModel : ViewModelBase
                     }
                     else
                     {
-                        if (section["ProjectSettings:GameRootDir"] is not { } setting)
+                        if (section[Constants.ProjectSettingsGameRootDir] is not { } setting)
                         {
-                            section.Add("ProjectSettings:GameRootDir", GameRootDir);
+                            section.Add(Constants.ProjectSettingsGameRootDir, GameRootDir);
                         }
                         else
                         {
@@ -117,24 +150,22 @@ public partial class ExplorerPaneViewModel : ViewModelBase
                         }
 
                         configuration.Save(ConfigurationSaveMode.Modified);
-                        ConfigurationManager.RefreshSection("appSettings");
+                        ConfigurationManager.RefreshSection(Constants.AppSettingsSection);
                     }
+
+                    Folders.Clear();
+
+                    foreach (var entity in TraverseDirectory(new DirectoryInfo(GameRootDir)))
+                    {
+                        Folders.Add(entity);
+                    }
+
+                    return;
                 }
-
-                _logger.LogInformation($"Selected folder: {GameRootDir}");
-                Folders.Clear();
-
-                foreach (var entity in TraverseDirectory(new DirectoryInfo(GameRootDir)))
-                {
-                    Folders.Add(entity);
-                    _logger.LogDebug($"{entity.Info is FileInfo} {entity.Info.Name}");
-                }
-
-                return;
             }
-
-            _logger.LogWarning("Failed to get local path for selected folder.");
         }
+
+        _logger.LogWarning("Failed to get local path for selected folder.");
     }
 
 
@@ -158,19 +189,4 @@ public partial class ExplorerPaneViewModel : ViewModelBase
             _logger.LogError(ex, $"Failed to open folder: {GameRootDir}");
         }
     }
-}
-
-public class ModsIndexViewModel : ViewModelBase
-{
-    public ObservableCollection<string> RecentSearches { get; } = [];
-}
-
-public class SearchPaneViewModel : ViewModelBase
-{
-    public ObservableCollection<string> RecentSearches { get; } = [];
-}
-
-public class SettingsPaneViewModel : ViewModelBase
-{
-    // 设置选项
 }

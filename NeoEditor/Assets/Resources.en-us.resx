@@ -1173,4 +1173,41 @@
     <data name="SuppressDesc" xml:space="preserve">
         <value>Suppress content generation from items: when 1, water bottles won't have water, guns won't have bullets</value>
     </data>
+    <data name="SetFolder" xml:space="preserve">
+        <value>Set Folder</value>
+    </data>
+    <data name="OpenGameFolder" xml:space="preserve">
+        <value>Open Game Folder</value>
+    </data>
+    <data name="OpenModsFolder" xml:space="preserve">
+        <value>Open Mods Folder</value>
+    </data>
+    <data name="SetGameFolder" xml:space="preserve">
+        <value>Set Game Folder</value>
+    </data>
+    <data name="GameRootDirNotSet" xml:space="preserve">
+        <value>Game Root Dir Not Set 
+Exit if No</value>
+    </data>
+    <data name="ModDatabase" xml:space="preserve">
+        <value>Mod Database</value>
+    </data>
+    <data name="ImportMod" xml:space="preserve">
+        <value>Import Mod</value>
+    </data>
+    <data name="SelectGameRootDir" xml:space="preserve">
+        <value>Select Game Root Dir</value>
+    </data>
+    <data name="SelectModFolder" xml:space="preserve">
+        <value>Select Mod Folder</value>
+    </data>
+    <data name="IsBase" xml:space="preserve">
+        <value>IsBase</value>
+    </data>
+    <data name="LastModified" xml:space="preserve">
+        <value>LastModified</value>
+    </data>
+    <data name="LastImport" xml:space="preserve">
+        <value>LastImport</value>
+    </data>
 </root>

@@ -154,8 +154,8 @@ public class ProjectManager : IProjectManager
             {
                 Name = "BaseGame",
                 Path = baseDataPath,
-                LoadOrder = loadOrder++,
-                Type = ModType.Merge,
+                // LoadOrder = loadOrder++,
+                // Type = ModType.Merge,
                 IsBase = true
             });
 
@@ -171,8 +171,8 @@ public class ProjectManager : IProjectManager
             {
                 Name = entry.Name,
                 Path = fullPath,
-                LoadOrder = loadOrder++,
-                Type = entry.Type,
+                // LoadOrder = loadOrder++,
+                // Type = entry.Type,
                 IsBase = false
             });
         }
@@ -193,8 +193,8 @@ public class ProjectManager : IProjectManager
             {
                 Name = "BaseGame",
                 Path = baseDataPath,
-                LoadOrder = loadOrder++,
-                Type = ModType.Insert,
+                // LoadOrder = loadOrder++,
+                // Type = ModType.Insert,
                 IsBase = true
             });
         foreach (var entry in _parser.Parse(File.ReadAllText(Path.Combine(gameRootPath, "getmods.php"), Encoding.UTF8)))
@@ -209,8 +209,8 @@ public class ProjectManager : IProjectManager
             {
                 Name = entry.Name,
                 Path = fullPath,
-                LoadOrder = loadOrder++,
-                Type = entry.Type,
+                // LoadOrder = loadOrder++,
+                // Type = entry.Type,
                 IsBase = false
             });
         }

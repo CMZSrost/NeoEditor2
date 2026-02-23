@@ -4,6 +4,7 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:avalonia="clr-namespace:FluentIcons.Avalonia;assembly=FluentIcons.Avalonia"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:explorerPane="clr-namespace:NeoEditor.ViewModels.ExplorerPane"
     xmlns:game="clr-namespace:NeoEditor.Data.Model.Game"
     xmlns:io="clr-namespace:System.IO;assembly=System.Runtime"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -11,8 +12,8 @@
     xmlns:vm="using:NeoEditor.ViewModels"
     x:Name="MainWindowApp"
     Title="{Binding Loc[AppTitle]}"
-    d:DesignHeight="450"
-    d:DesignWidth="600"
+    d:DesignHeight="500"
+    d:DesignWidth="800"
     x:DataType="vm:MainWindowViewModel"
     Icon="/Assets/avalonia-logo.ico"
     mc:Ignorable="d">
@@ -41,8 +42,7 @@
             </MenuItem>
         </Menu>
         <StackPanel DockPanel.Dock="Bottom">
-            <NativeMenuBar />
-            <TextBlock Text="{Binding Loc[Status]}" />
+            <!-- <TextBlock Text="{Binding Loc[Status]}" /> -->
         </StackPanel>
         <!--  左侧垂直按钮条  -->
         <StackPanel
@@ -52,6 +52,9 @@
             Spacing="4">
             <Button Command="{Binding TogglePaneCommand}" CommandParameter="Explorer">
                 <avalonia:SymbolIcon IconVariant="Regular" Symbol="Folder" />
+            </Button>
+            <Button Command="{Binding TogglePaneCommand}" CommandParameter="ModDatabase">
+                <avalonia:SymbolIcon IconVariant="Regular" Symbol="Database" />
             </Button>
             <Button Command="{Binding TogglePaneCommand}" CommandParameter="Search">
                 <avalonia:SymbolIcon IconVariant="Regular" Symbol="Search" />
@@ -69,26 +72,19 @@
             <SplitView.Pane>
                 <ContentControl Content="{Binding CurrentPaneContent}">
                     <ContentControl.DataTemplates>
+
                         <!--  资源管理器面板模板  -->
-                        <DataTemplate DataType="{x:Type vm:ExplorerPaneViewModel}">
-                            <ScrollViewer>
+                        <DataTemplate DataType="{x:Type explorerPane:ResourceManagerViewModel}">
+                            <ScrollViewer Width="500">
                                 <StackPanel>
+                                    <TextBlock FontWeight="Bold" Text="{Binding DataContext.Loc[ResourceManager], ElementName=MainWindowApp}" />
                                     <StackPanel Orientation="Horizontal">
-                                        <TextBlock
-                                            Margin="8"
-                                            FontWeight="Bold"
-                                            Text="{Binding DataContext.Loc[ResourceManager], ElementName=MainWindowApp}" />
+                                        <Button Command="{Binding SetFolderCommand}" Content="{Binding DataContext.Loc[SetGameFolder], ElementName=MainWindowApp}" />
                                         <Button
-                                            Margin="8,0"
-                                            Command="{Binding SetFolderCommand}"
-                                            Content="{Binding DataContext.Loc[SetFolder], ElementName=MainWindowApp}" />
-                                        <Button
-                                            Margin="8,0"
                                             Command="{Binding OpenGameFolderCommand}"
                                             Content="{Binding DataContext.Loc[OpenGameFolder], ElementName=MainWindowApp}"
                                             IsCancel="{Binding GameRootDir, Converter={x:Static ObjectConverters.IsNull}}" />
                                         <Button
-                                            Margin="8,0"
                                             Command="{Binding OpenGameFolderCommand}"
                                             CommandParameter="Mods"
                                             Content="{Binding DataContext.Loc[OpenModsFolder], ElementName=MainWindowApp}"
@@ -105,31 +101,52 @@
                             </ScrollViewer>
                         </DataTemplate>
 
-                        <!--  getmods.php模板  -->
-
+                        <!--  Mod数据库  -->
+                        <DataTemplate DataType="explorerPane:ModDatabaseViewModel">
+                            <ScrollViewer Width="500">
+                                <StackPanel>
+                                    <TextBlock FontWeight="Bold" Text="{Binding DataContext.Loc[ModDatabase], ElementName=MainWindowApp}" />
+                                    <StackPanel Orientation="Horizontal">
+                                        <StackPanel Orientation="Horizontal">
+                                            <Button Command="{Binding ImportModCommand}" Content="{Binding DataContext.Loc[ImportMod], ElementName=MainWindowApp}" />
+                                        </StackPanel>
+                                    </StackPanel>
+                                    <TextBox
+                                        Margin="8"
+                                        ClearSelectionOnLostFocus="True"
+                                        Text="{Binding Filter}"
+                                        Watermark="{Binding DataContext.Loc[KeywordInput], ElementName=MainWindowApp}" />
+                                    <ListBox Margin="8" ItemsSource="{Binding Mods}">
+                                        <!-- <ListBox.ItemTemplate> -->
+                                        <!--     <DataTemplate> -->
+                                        <!--         <TextBlock Text="{Binding .}" /> -->
+                                        <!--     </DataTemplate> -->
+                                        <!-- </ListBox.ItemTemplate> -->
+                                    </ListBox>
+                                </StackPanel>
+                            </ScrollViewer>
+                        </DataTemplate>
                         <!--  搜索面板模板  -->
-                        <DataTemplate DataType="{x:Type vm:SearchPaneViewModel}">
-                            <ScrollViewer>
+                        <DataTemplate DataType="{x:Type explorerPane:SearchPaneViewModel}">
+                            <ScrollViewer Width="500">
                                 <StackPanel>
                                     <TextBlock
                                         Margin="8"
                                         FontWeight="Bold"
                                         Text="{Binding DataContext.Loc[Search], ElementName=MainWindowApp}" />
-                                    <TextBox Margin="8" Watermark="{Binding DataContext.Loc[KeywordInput], ElementName=MainWindowApp}" />
-                                    <ListBox Margin="8" ItemsSource="{Binding RecentSearches}">
-                                        <ListBox.ItemTemplate>
-                                            <DataTemplate>
-                                                <TextBlock Text="{Binding .}" />
-                                            </DataTemplate>
-                                        </ListBox.ItemTemplate>
-                                    </ListBox>
+                                    <AutoCompleteBox
+                                        Margin="8"
+                                        ClearSelectionOnLostFocus="True"
+                                        FilterMode="Contains"
+                                        ItemsSource="{Binding RecentSearches}"
+                                        Watermark="{Binding DataContext.Loc[KeywordInput], ElementName=MainWindowApp}" />
                                 </StackPanel>
                             </ScrollViewer>
                         </DataTemplate>
 
                         <!--  设置面板模板  -->
-                        <DataTemplate DataType="{x:Type vm:SettingsPaneViewModel}">
-                            <ScrollViewer>
+                        <DataTemplate DataType="{x:Type explorerPane:SettingsPaneViewModel}">
+                            <ScrollViewer Width="500">
                                 <StackPanel>
                                     <TextBlock
                                         Margin="8"

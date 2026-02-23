@@ -1,26 +1,45 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.EntityFrameworkCore;
 
 namespace NeoEditor.Data.Model;
 
 [Table("mod_info")]
+[Index(nameof(Path), Name = "u_index_path", IsUnique = true)]
 public class ModInfo
 {
-    [Key] public int Id { get; set; } // 自增主键（数据库内部）
+    [Key]
+    [Column("ModId")]
+    [Display(Name = "ModId")]
+    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+    public int ModId { get; set; } // 自增主键（数据库内部）
 
-    [Column("Name")] public string Name { get; set; } // Mod名称，如 "NSEg"
+    [Column("Name", TypeName = "varchar(255)")]
+    [StringLength(255)]
+    [Display(Name = "Name")]
+    [Required]
+    public string Name { get; set; } // Mod名称，如 "NSEg"
 
-    [Column("Path")] public string Path { get; set; } // 相对或绝对路径
+    [Column("Path", TypeName = "varchar(1000)")]
+    [StringLength(1000)]
+    [Required]
+    [Display(Name = "Path")]
+    public string Path { get; set; } // 相对或绝对路径
 
-    [Column("LoadOrder")] public int LoadOrder { get; set; } // 加载顺序（0-based，越大优先级越高）
-
-    [Column("Type")] public ModType Type { get; set; } // 插入或合并
-
-    [Column("IsBase")] public bool IsBase { get; set; } // 是否为基础数据（不可编辑）
+    [Column("IsBase")]
+    [Display(Name = "IsBase")]
+    public bool IsBase { get; set; } // 是否为基础数据（不可编辑）
 
     [Column("LastModified", TypeName = "datetime")]
-    public DateTime LastModified { get; set; } // 文件最后修改时间，用于增量导入
+    [Display(Name = "LastModified")]
+    [DatabaseGenerated(DatabaseGeneratedOption.Computed)]
+    public DateTime LastModified { get; set; } // 文件最后修改时间，记录从编辑器保存的时间点
+
+    [Column("LastImport", TypeName = "datetime")]
+    [Display(Name = "LastImport")]
+    [DatabaseGenerated(DatabaseGeneratedOption.Computed)]
+    public DateTime LastImport { get; set; } // 文件最后导入时间，记录从xml导入的时间点
 }
 
 public enum ModType

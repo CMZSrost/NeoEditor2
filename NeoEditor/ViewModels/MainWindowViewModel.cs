@@ -17,6 +17,7 @@ using NeoEditor.Data.DTO;
 using NeoEditor.Data.Model.Game;
 using NeoEditor.Data.Options;
 using NeoEditor.Helper;
+using NeoEditor.ViewModels.ExplorerPane;
 
 namespace NeoEditor.ViewModels;
 
@@ -88,9 +89,10 @@ public partial class MainWindowViewModel : ViewModelBase
     {
         return paneId switch
         {
-            "Explorer" => _serviceProvider.GetRequiredService<ExplorerPaneViewModel>(),
+            "Explorer" => _serviceProvider.GetRequiredService<ExplorerPane.ResourceManagerViewModel>(),
             "Search" => _serviceProvider.GetRequiredService<SearchPaneViewModel>(),
             "Settings" => _serviceProvider.GetRequiredService<SettingsPaneViewModel>(),
+            "ModDatabase" => _serviceProvider.GetRequiredService<ModDatabaseViewModel>(),
             _ => throw new NotSupportedException()
         };
     }
@@ -140,6 +142,7 @@ public partial class MainWindowViewModel : ViewModelBase
         {
             return;
         }
+
         Loc.SetCulture(culture);
         OnPropertyChanged(nameof(Loc));
         CurrentCultureInfo = culture;

@@ -8,6 +8,7 @@ using Microsoft.Extensions.DependencyInjection;
 using NeoEditor.Data.Model.Game;
 using NeoEditor.Helper;
 using NeoEditor.ViewModels;
+using NeoEditor.ViewModels.ExplorerPane;
 using Serilog;
 
 namespace NeoEditor.Views;
