@@ -4,22 +4,26 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:avalonia="clr-namespace:FluentIcons.Avalonia;assembly=FluentIcons.Avalonia"
     xmlns:game="clr-namespace:NeoEditor.Data.Model.Game"
+    xmlns:io="clr-namespace:System.IO;assembly=System.Runtime"
     xmlns:local="using:NeoEditor"
     xmlns:vm="clr-namespace:NeoEditor.ViewModels"
     RequestedThemeVariant="Default">
 
     <Application.DataTemplates>
-        <DataTemplate DataType="game:AttackMode">
-            <vm:SearchPaneViewModel />
+        <DataTemplate DataType="io:FileInfo">
+            <StackPanel Orientation="Horizontal" Spacing="4">
+                <avalonia:SymbolIcon IconVariant="Regular" Symbol="Document" />
+                <TextBlock Text="{Binding Name}" />
+            </StackPanel>
         </DataTemplate>
-        <!--  搜索面板模板  -->
-        <!-- <DataTemplate DataType="{x:Type vm:SearchPaneViewModel}"> -->
-        <!--     <ScrollViewer> -->
-        <!--     </ScrollViewer> -->
-        <!-- </DataTemplate> -->
-
+        <DataTemplate DataType="io:DirectoryInfo">
+            <StackPanel Orientation="Horizontal" Spacing="4">
+                <avalonia:SymbolIcon IconVariant="Regular" Symbol="Folder" />
+                <TextBlock Text="{Binding Name}" />
+            </StackPanel>
+        </DataTemplate>
         <!--  默认选项，根据ViewModel查找View，位置放最后，以免覆盖其他特定的模板  -->
-        <!-- <local:ViewLocator /> -->
+        <local:ViewLocator />
     </Application.DataTemplates>
 
     <Application.Styles>

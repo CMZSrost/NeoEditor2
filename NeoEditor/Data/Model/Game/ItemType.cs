@@ -8,7 +8,7 @@ namespace NeoEditor.Data.Model.Game;
 [Comment("物品详情 - 定义所有可交互物品的完整属性")]
 public class ItemType
 {
-    public int ModId { get; set; }
+    [NotMapped] public int ModId { get; set; }
 
     [Key] [Column("id")] [Comment("代码标号")] public int Id { get; set; }
 
@@ -88,105 +88,105 @@ public class ItemType
 
     [Column("aEquipConditions", TypeName = "longtext")]
     [Comment("该物品装备时会为你带来的状态")]
-    [Display(Name = "ItemType_EquipConditions")]
+    [Display(Name = "EquipConditions")]
     public string EquipConditions { get; set; } = "";
 
     [Column("aPossessConditions", TypeName = "longtext")]
     [Comment("该物品持有时会为你带来的永久性状态")]
-    [Display(Name = "ItemType_PossessConditions")]
+    [Display(Name = "PossessConditions")]
     public string PossessConditions { get; set; } = "";
 
     [Column("aUseConditions", TypeName = "longtext")]
     [Comment("使用该物品会为你带来的状态")]
-    [Display(Name = "ItemType_UseConditions")]
+    [Display(Name = "UseConditions")]
     public string UseConditions { get; set; } = "";
 
     [Column("aCapacities", TypeName = "varchar(255)")]
     [StringLength(255)]
     [Comment("如果该物品是容器，它的容积大小")]
-    [Display(Name = "ItemType_Capacities")]
+    [Display(Name = "Capacities")]
     public string Capacities { get; set; } = "";
 
     [Column("vEquipSlots", TypeName = "varchar(255)")]
     [StringLength(255)]
     [Comment("装备插槽，物品能放在身上的位置：20左手，21右手，22背部")]
-    [Display(Name = "ItemType_EquipSlots")]
+    [Display(Name = "EquipSlots")]
     public string EquipSlots { get; set; } = "";
 
     [Column("vUseSlots", TypeName = "varchar(255)")]
     [StringLength(255)]
     [Comment("使用位置，211为直接给自己使用（如吃药）")]
-    [Display(Name = "ItemType_UseSlots")]
+    [Display(Name = "UseSlots")]
     public string UseSlots { get; set; } = "";
 
     [Column("bSocketLocked", TypeName = "tinyint(1)")]
     [Comment("锁定属性，带此属性的物品无法被玩家移动")]
-    [Display(Name = "ItemType_SocketLocked")]
+    [Display(Name = "SocketLocked")]
     public bool SocketLocked { get; set; } = false;
 
     [Column("vProperties", TypeName = "varchar(255)")]
     [StringLength(255)]
     [Comment("该物品的属性ID列表，用于合成与检定")]
-    [Display(Name = "ItemType_Properties")]
+    [Display(Name = "Properties")]
     public string Properties { get; set; } = "";
 
     [Column("aContentIDs", TypeName = "varchar(255)")]
     [StringLength(255)]
     [Comment("该物品的空间属性，定义作为容器能存放的物品类型")]
-    [Display(Name = "ItemType_ContentIds")]
+    [Display(Name = "ContentIds")]
     public string ContentIds { get; set; } = "";
 
     [Column("nFormatID")]
     [Comment("该物品内部的战利品池ID")]
-    [Display(Name = "ItemType_FormatId")]
+    [Display(Name = "FormatId")]
     public int FormatId { get; set; } = 3;
 
     [Column("nTreasureID")]
     [Comment("用于给物品进行大体的分类，结合containertypes使用")]
-    [Display(Name = "ItemType_TreasureId")]
+    [Display(Name = "TreasureId")]
     public int TreasureId { get; set; } = 3;
 
     [Column("nComponentID")]
     [Comment("成分ID，结合treasuretable使用,可逆向合成的物品，如果由合成以外的方式获得，拆解时得到的物品ID")]
-    [Display(Name = "ItemType_ComponentId")]
+    [Display(Name = "ComponentId")]
     public int ComponentId { get; set; } = 3;
 
     [Column("bMirrored", TypeName = "tinyint(1)")]
     [Comment("镜像，专门用于鞋子")]
-    [Display(Name = "ItemType_Mirrored")]
+    [Display(Name = "Mirrored")]
     public bool Mirrored { get; set; } = false;
 
     [Column("nSlotDepth")]
     [Comment("决定多件衣服等哪件在上面")]
-    [Display(Name = "ItemType_SlotDepth")]
+    [Display(Name = "SlotDepth")]
     public int SlotDepth { get; set; } = 0;
 
     [Column("strChargeProfiles", TypeName = "varchar(255)")]
     [StringLength(255)]
     [Comment("耗电量ID")]
-    [Display(Name = "ItemType_ChargeProfiles")]
+    [Display(Name = "ChargeProfiles")]
     public string ChargeProfiles { get; set; } = "";
 
     [Column("aAttackModes", TypeName = "varchar(255)")]
     [StringLength(255)]
     [Comment("攻击模式ID列表")]
-    [Display(Name = "ItemType_AttackModes")]
+    [Display(Name = "AttackModes")]
     public string AttackModes { get; set; } = "";
 
     [Column("nStackLimit")]
     [Comment("最大堆叠数量")]
-    [Display(Name = "ItemType_StackLimit")]
+    [Display(Name = "StackLimit")]
     public int StackLimit { get; set; } = 1;
 
     [Column("aSwitchIDs", TypeName = "varchar(255)")]
     [StringLength(255)]
     [Comment("转变的ID，用于电子产品开关机状态切换")]
-    [Display(Name = "ItemType_SwitchIds")]
+    [Display(Name = "SwitchIds")]
     public string SwitchIds { get; set; } = "";
 
     [Column("aSounds", TypeName = "varchar(255)")]
     [StringLength(255)]
     [Comment("拿起放下该物品时的声音")]
-    [Display(Name = "ItemType_Sounds")]
+    [Display(Name = "Sounds")]
     public string Sounds { get; set; } = "cuePickup,cuePutdown";
 }

@@ -12,6 +12,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using NeoEditor.Data.Model.Game;
+using NeoEditor.Data.Options;
 using NeoEditor.Helper.Extensions;
 using NeoEditor.ViewModels;
 using NeoEditor.Views;
@@ -35,14 +36,22 @@ public partial class App : Application
                     .AddJsonFile("appsettings.Development.json", optional: true, reloadOnChange: true)
                     .Build()
             )
-            .ConfigureServices((_, services) =>
+            .ConfigureServices((context, services) =>
             {
+                // settings
                 services.AddSerilogLogging();
+                services.AddLocalization();
+                // options
+                services.Configure<CultureSettings>(context.Configuration.GetSection(nameof(CultureSettings)));
+
+                // services
                 services.AddSingleton<LocalizationService>();
                 services.AddSingleton<INotificationService, NotificationService>();
+
+                // window
                 services.AddTransient<MainWindow>()
                     .AddSingleton<MainWindowViewModel>()
-                    .AddSingleton<ExplorerPaneViewModel>()
+                    .AddScoped<ExplorerPaneViewModel>()
                     .AddSingleton<SearchPaneViewModel>()
                     .AddSingleton<SettingsPaneViewModel>();
                 services.AddTransient<SearchableDataGridViewModel<GameVar>, GameVarDataGridViewModel>();

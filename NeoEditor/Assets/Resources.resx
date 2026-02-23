@@ -15,811 +15,582 @@
             PublicKeyToken=b77a5c561934e089
         </value>
     </resheader>
-    <data name="MainLayout_Header" xml:space="preserve">
+    <data name="Header" xml:space="preserve">
         <value>Header</value>
     </data>
-    <data name="AttackMode_ModId" xml:space="preserve">
-        <value>ModId</value>
-    </data>
-    <data name="AttackMode_Id" xml:space="preserve">
-        <value>Id</value>
-    </data>
-    <data name="AttackMode_Name" xml:space="preserve">
-        <value>Name</value>
-    </data>
-    <data name="AttackMode_Notes" xml:space="preserve">
-        <value>Notes</value>
-    </data>
-    <data name="AttackMode_Range" xml:space="preserve">
+
+
+    <data name="Range" xml:space="preserve">
         <value>Range</value>
     </data>
-    <data name="AttackMode_DamageCut" xml:space="preserve">
+    <data name="DamageCut" xml:space="preserve">
         <value>DamageCut</value>
     </data>
-    <data name="AttackMode_DamageBlunt" xml:space="preserve">
+    <data name="DamageBlunt" xml:space="preserve">
         <value>DamageBlunt</value>
     </data>
-    <data name="AttackMode_ChargeProfiles" xml:space="preserve">
-        <value>ChargeProfiles</value>
-    </data>
-    <data name="AttackMode_Penetration" xml:space="preserve">
+
+    <data name="Penetration" xml:space="preserve">
         <value>Penetration</value>
     </data>
-    <data name="AttackMode_Type" xml:space="preserve">
-        <value>Type</value>
-    </data>
-    <data name="AttackMode_Sound" xml:space="preserve">
+
+    <data name="Sound" xml:space="preserve">
         <value>Sound</value>
     </data>
-    <data name="AttackMode_Transfer" xml:space="preserve">
+    <data name="Transfer" xml:space="preserve">
         <value>Transfer</value>
     </data>
-    <data name="AttackMode_AttackerConditions" xml:space="preserve">
+    <data name="AttackerConditions" xml:space="preserve">
         <value>AttackerConditions</value>
     </data>
-    <data name="AttackMode_Image" xml:space="preserve">
-        <value>Image</value>
-    </data>
-    <data name="AttackMode_Morale" xml:space="preserve">
+
+    <data name="Morale" xml:space="preserve">
         <value>Morale</value>
     </data>
-    <data name="AttackMode_WieldPhrase" xml:space="preserve">
+    <data name="WieldPhrase" xml:space="preserve">
         <value>WieldPhrase</value>
     </data>
-    <data name="AttackMode_AttackPhrases" xml:space="preserve">
+    <data name="AttackPhrases" xml:space="preserve">
         <value>AttackPhrases</value>
     </data>
-    <data name="BarterHex_ModId" xml:space="preserve">
-        <value>ModId</value>
-    </data>
-    <data name="BarterHex_Id" xml:space="preserve">
-        <value>Id</value>
-    </data>
-    <data name="BarterHex_X" xml:space="preserve">
-        <value>X</value>
-    </data>
-    <data name="BarterHex_Y" xml:space="preserve">
-        <value>Y</value>
-    </data>
-    <data name="BarterHex_Buys" xml:space="preserve">
+
+
+    <data name="Buys" xml:space="preserve">
         <value>Buys</value>
     </data>
-    <data name="BarterHex_RestockTreasureId" xml:space="preserve">
+    <data name="RestockTreasureId" xml:space="preserve">
         <value>RestockTreasureId</value>
     </data>
-    <data name="BattleMove_ModId" xml:space="preserve">
-        <value>ModId</value>
-    </data>
-    <data name="BattleMove_Id" xml:space="preserve">
-        <value>Id</value>
-    </data>
-    <data name="BattleMove_StrId" xml:space="preserve">
+
+
+    <data name="StrId" xml:space="preserve">
         <value>StrId</value>
     </data>
-    <data name="BattleMove_Name" xml:space="preserve">
-        <value>Name</value>
-    </data>
-    <data name="BattleMove_Notes" xml:space="preserve">
-        <value>Notes</value>
-    </data>
-    <data name="BattleMove_Success" xml:space="preserve">
+
+
+    <data name="Success" xml:space="preserve">
         <value>Success</value>
     </data>
-    <data name="BattleMove_Fail" xml:space="preserve">
+    <data name="Fail" xml:space="preserve">
         <value>Fail</value>
     </data>
-    <data name="BattleMove_PopUp" xml:space="preserve">
+    <data name="PopUp" xml:space="preserve">
         <value>PopUp</value>
     </data>
-    <data name="BattleMove_ChanceType" xml:space="preserve">
+    <data name="ChanceType" xml:space="preserve">
         <value>ChanceType</value>
     </data>
-    <data name="BattleMove_UsConditions" xml:space="preserve">
+    <data name="UsConditions" xml:space="preserve">
         <value>UsConditions</value>
     </data>
-    <data name="BattleMove_ThemConditions" xml:space="preserve">
+    <data name="ThemConditions" xml:space="preserve">
         <value>ThemConditions</value>
     </data>
-    <data name="BattleMove_PairConditions" xml:space="preserve">
+    <data name="PairConditions" xml:space="preserve">
         <value>PairConditions</value>
     </data>
-    <data name="BattleMove_UsFailConditions" xml:space="preserve">
+    <data name="UsFailConditions" xml:space="preserve">
         <value>UsFailConditions</value>
     </data>
-    <data name="BattleMove_ThemFailConditions" xml:space="preserve">
+    <data name="ThemFailConditions" xml:space="preserve">
         <value>ThemFailConditions</value>
     </data>
-    <data name="BattleMove_PairFailConditions" xml:space="preserve">
+    <data name="PairFailConditions" xml:space="preserve">
         <value>PairFailConditions</value>
     </data>
-    <data name="BattleMove_UsPreConditions" xml:space="preserve">
+    <data name="UsPreConditions" xml:space="preserve">
         <value>UsPreConditions</value>
     </data>
-    <data name="BattleMove_ThemPreConditions" xml:space="preserve">
+    <data name="ThemPreConditions" xml:space="preserve">
         <value>ThemPreConditions</value>
     </data>
-    <data name="BattleMove_SeeThem" xml:space="preserve">
+    <data name="SeeThem" xml:space="preserve">
         <value>SeeThem</value>
     </data>
-    <data name="BattleMove_SeeUs" xml:space="preserve">
+    <data name="SeeUs" xml:space="preserve">
         <value>SeeUs</value>
     </data>
-    <data name="BattleMove_AllOutOfRange" xml:space="preserve">
+    <data name="AllOutOfRange" xml:space="preserve">
         <value>AllOutOfRange</value>
     </data>
-    <data name="BattleMove_InAttackRange" xml:space="preserve">
+    <data name="InAttackRange" xml:space="preserve">
         <value>InAttackRange</value>
     </data>
-    <data name="BattleMove_MinCharges" xml:space="preserve">
+    <data name="MinCharges" xml:space="preserve">
         <value>MinCharges</value>
     </data>
-    <data name="BattleMove_MinRange" xml:space="preserve">
-        <value>MinRange</value>
-    </data>
-    <data name="BattleMove_MaxRange" xml:space="preserve">
-        <value>MaxRange</value>
-    </data>
-    <data name="BattleMove_AttackModeType" xml:space="preserve">
+
+
+    <data name="AttackModeType" xml:space="preserve">
         <value>AttackModeType</value>
     </data>
-    <data name="BattleMove_HexTypes" xml:space="preserve">
-        <value>HexTypes</value>
-    </data>
-    <data name="BattleMove_Chance" xml:space="preserve">
-        <value>Chance</value>
-    </data>
-    <data name="BattleMove_Priority" xml:space="preserve">
+
+
+    <data name="Priority" xml:space="preserve">
         <value>Priority</value>
     </data>
-    <data name="BattleMove_Detect" xml:space="preserve">
+    <data name="Detect" xml:space="preserve">
         <value>Detect</value>
     </data>
-    <data name="BattleMove_Order" xml:space="preserve">
+    <data name="Order" xml:space="preserve">
         <value>Order</value>
     </data>
-    <data name="BattleMove_Fatigue" xml:space="preserve">
+    <data name="Fatigue" xml:space="preserve">
         <value>Fatigue</value>
     </data>
-    <data name="BattleMove_Approach" xml:space="preserve">
+    <data name="Approach" xml:space="preserve">
         <value>Approach</value>
     </data>
-    <data name="BattleMove_Offense" xml:space="preserve">
+    <data name="Offense" xml:space="preserve">
         <value>Offense</value>
     </data>
-    <data name="BattleMove_FallBack" xml:space="preserve">
+    <data name="FallBack" xml:space="preserve">
         <value>FallBack</value>
     </data>
-    <data name="BattleMove_Retreat" xml:space="preserve">
+    <data name="Retreat" xml:space="preserve">
         <value>Retreat</value>
     </data>
-    <data name="BattleMove_Position" xml:space="preserve">
+    <data name="Position" xml:space="preserve">
         <value>Position</value>
     </data>
-    <data name="BattleMove_Passive" xml:space="preserve">
+    <data name="Passive" xml:space="preserve">
         <value>Passive</value>
     </data>
-    <data name="CampType_ModId" xml:space="preserve">
-        <value>ModId</value>
-    </data>
-    <data name="CampType_Id" xml:space="preserve">
-        <value>Id</value>
-    </data>
-    <data name="CampType_Description" xml:space="preserve">
-        <value>Description</value>
-    </data>
-    <data name="CampType_ImageList" xml:space="preserve">
+
+
+    <data name="ImageList" xml:space="preserve">
         <value>ImageList</value>
     </data>
-    <data name="CampType_Capacities" xml:space="preserve">
-        <value>Capacities</value>
-    </data>
-    <data name="CampType_TreasureId" xml:space="preserve">
-        <value>TreasureId</value>
-    </data>
-    <data name="CampType_Alertness" xml:space="preserve">
+
+
+    <data name="Alertness" xml:space="preserve">
         <value>Alertness</value>
     </data>
-    <data name="CampType_Visibility" xml:space="preserve">
+    <data name="Visibility" xml:space="preserve">
         <value>Visibility</value>
     </data>
-    <data name="CampType_WetTempAdjustMod" xml:space="preserve">
+    <data name="WetTempAdjustMod" xml:space="preserve">
         <value>WetTempAdjustMod</value>
     </data>
-    <data name="CampType_HealPerHourMod" xml:space="preserve">
+    <data name="HealPerHourMod" xml:space="preserve">
         <value>HealPerHourMod</value>
     </data>
-    <data name="CampType_SleepQuality" xml:space="preserve">
+    <data name="SleepQuality" xml:space="preserve">
         <value>SleepQuality</value>
     </data>
-    <data name="ChargeProfile_ModId" xml:space="preserve">
-        <value>ModId</value>
-    </data>
-    <data name="ChargeProfile_Id" xml:space="preserve">
-        <value>Id</value>
-    </data>
-    <data name="ChargeProfile_Name" xml:space="preserve">
-        <value>Name</value>
-    </data>
-    <data name="ChargeProfile_ItemId" xml:space="preserve">
+
+
+    <data name="ItemId" xml:space="preserve">
         <value>ItemId</value>
     </data>
-    <data name="ChargeProfile_PerUse" xml:space="preserve">
+    <data name="PerUse" xml:space="preserve">
         <value>PerUse</value>
     </data>
-    <data name="ChargeProfile_PerHour" xml:space="preserve">
+    <data name="PerHour" xml:space="preserve">
         <value>PerHour</value>
     </data>
-    <data name="ChargeProfile_PerHourEquipped" xml:space="preserve">
+    <data name="PerHourEquipped" xml:space="preserve">
         <value>PerHourEquipped</value>
     </data>
-    <data name="ChargeProfile_PerHex" xml:space="preserve">
+    <data name="PerHex" xml:space="preserve">
         <value>PerHex</value>
     </data>
-    <data name="ChargeProfile_Degrade" xml:space="preserve">
+    <data name="Degrade" xml:space="preserve">
         <value>Degrade</value>
     </data>
-    <data name="Condition_ModId" xml:space="preserve">
-        <value>ModId</value>
-    </data>
-    <data name="Condition_Id" xml:space="preserve">
-        <value>Id</value>
-    </data>
-    <data name="Condition_Name" xml:space="preserve">
-        <value>Name</value>
-    </data>
-    <data name="Condition_Description" xml:space="preserve">
-        <value>Description</value>
-    </data>
-    <data name="Condition_FieldNames" xml:space="preserve">
+
+
+    <data name="FieldNames" xml:space="preserve">
         <value>FieldNames</value>
     </data>
-    <data name="Condition_Modifiers" xml:space="preserve">
+    <data name="Modifiers" xml:space="preserve">
         <value>Modifiers</value>
     </data>
-    <data name="Condition_Effects" xml:space="preserve">
+    <data name="Effects" xml:space="preserve">
         <value>Effects</value>
     </data>
-    <data name="Condition_Fatal" xml:space="preserve">
+    <data name="Fatal" xml:space="preserve">
         <value>Fatal</value>
     </data>
-    <data name="Condition_IdNext" xml:space="preserve">
+    <data name="IdNext" xml:space="preserve">
         <value>IdNext</value>
     </data>
-    <data name="Condition_Duration" xml:space="preserve">
+    <data name="Duration" xml:space="preserve">
         <value>Duration</value>
     </data>
-    <data name="Condition_Permanent" xml:space="preserve">
+    <data name="Permanent" xml:space="preserve">
         <value>Permanent</value>
     </data>
-    <data name="Condition_ChanceNext" xml:space="preserve">
+    <data name="ChanceNext" xml:space="preserve">
         <value>ChanceNext</value>
     </data>
-    <data name="Condition_Stackable" xml:space="preserve">
+    <data name="Stackable" xml:space="preserve">
         <value>Stackable</value>
     </data>
-    <data name="Condition_Display" xml:space="preserve">
+    <data name="Display" xml:space="preserve">
         <value>Display</value>
     </data>
-    <data name="Condition_DisplayOther" xml:space="preserve">
+    <data name="DisplayOther" xml:space="preserve">
         <value>DisplayOther</value>
     </data>
-    <data name="Condition_DisplayGameOver" xml:space="preserve">
+    <data name="DisplayGameOver" xml:space="preserve">
         <value>DisplayGameOver</value>
     </data>
-    <data name="Condition_Color" xml:space="preserve">
+    <data name="Color" xml:space="preserve">
         <value>Color</value>
     </data>
-    <data name="Condition_ResetTimer" xml:space="preserve">
+    <data name="ResetTimer" xml:space="preserve">
         <value>ResetTimer</value>
     </data>
-    <data name="Condition_RemoveAll" xml:space="preserve">
+    <data name="RemoveAll" xml:space="preserve">
         <value>RemoveAll</value>
     </data>
-    <data name="Condition_RemovePostCombat" xml:space="preserve">
+    <data name="RemovePostCombat" xml:space="preserve">
         <value>RemovePostCombat</value>
     </data>
-    <data name="Condition_TransferRange" xml:space="preserve">
+    <data name="TransferRange" xml:space="preserve">
         <value>TransferRange</value>
     </data>
-    <data name="Condition_Thresholds" xml:space="preserve">
+    <data name="Thresholds" xml:space="preserve">
         <value>Thresholds</value>
     </data>
-    <data name="ContainerType_ModId" xml:space="preserve">
-        <value>ModId</value>
-    </data>
-    <data name="ContainerType_Id" xml:space="preserve">
-        <value>Id</value>
-    </data>
-    <data name="ContainerType_Name" xml:space="preserve">
-        <value>Name</value>
-    </data>
-    <data name="Creature_ModId" xml:space="preserve">
-        <value>ModId</value>
-    </data>
-    <data name="Creature_Id" xml:space="preserve">
-        <value>Id</value>
-    </data>
-    <data name="Creature_Name" xml:space="preserve">
-        <value>Name</value>
-    </data>
-    <data name="Creature_NamePublic" xml:space="preserve">
+
+
+    <data name="NamePublic" xml:space="preserve">
         <value>NamePublic</value>
     </data>
-    <data name="Creature_Notes" xml:space="preserve">
+    <data name="Notes" xml:space="preserve">
         <value>Notes</value>
     </data>
-    <data name="Creature_Image" xml:space="preserve">
-        <value>Image</value>
-    </data>
-    <data name="Creature_EncounterIds" xml:space="preserve">
+
+    <data name="EncounterIds" xml:space="preserve">
         <value>EncounterIds</value>
     </data>
-    <data name="Creature_MovesPerTurn" xml:space="preserve">
+    <data name="MovesPerTurn" xml:space="preserve">
         <value>MovesPerTurn</value>
     </data>
-    <data name="Creature_TreasureId" xml:space="preserve">
-        <value>TreasureId</value>
-    </data>
-    <data name="Creature_Faction" xml:space="preserve">
+
+    <data name="Faction" xml:space="preserve">
         <value>Faction</value>
     </data>
-    <data name="Creature_AttackModes" xml:space="preserve">
-        <value>AttackModes</value>
-    </data>
-    <data name="Creature_BaseConditions" xml:space="preserve">
+
+    <data name="BaseConditions" xml:space="preserve">
         <value>BaseConditions</value>
     </data>
-    <data name="Creature_CorpseId" xml:space="preserve">
+    <data name="CorpseId" xml:space="preserve">
         <value>CorpseId</value>
     </data>
-    <data name="Creature_Activities" xml:space="preserve">
+    <data name="Activities" xml:space="preserve">
         <value>Activities</value>
     </data>
-    <data name="CreatureSource_ModId" xml:space="preserve">
-        <value>ModId</value>
-    </data>
-    <data name="CreatureSource_Id" xml:space="preserve">
-        <value>Id</value>
-    </data>
-    <data name="CreatureSource_Name" xml:space="preserve">
-        <value>Name</value>
-    </data>
-    <data name="CreatureSource_X" xml:space="preserve">
-        <value>X</value>
-    </data>
-    <data name="CreatureSource_Y" xml:space="preserve">
-        <value>Y</value>
-    </data>
-    <data name="CreatureSource_CreatureId" xml:space="preserve">
-        <value>CreatureId</value>
-    </data>
-    <data name="CreatureSource_Min" xml:space="preserve">
+
+    <data name="Min" xml:space="preserve">
         <value>Min</value>
     </data>
-    <data name="CreatureSource_Max" xml:space="preserve">
+    <data name="Max" xml:space="preserve">
         <value>Max</value>
     </data>
-    <data name="CreatureSource_Weight" xml:space="preserve">
+    <data name="Weight" xml:space="preserve">
         <value>Weight</value>
     </data>
-    <data name="DataFile_ModId" xml:space="preserve">
-        <value>ModId</value>
-    </data>
-    <data name="DataFile_Id" xml:space="preserve">
-        <value>Id</value>
-    </data>
-    <data name="DataFile_Name" xml:space="preserve">
-        <value>Name</value>
-    </data>
-    <data name="DataFile_Description" xml:space="preserve">
-        <value>Description</value>
-    </data>
-    <data name="DataFile_Value" xml:space="preserve">
-        <value>Value</value>
-    </data>
-    <data name="DataFile_Image" xml:space="preserve">
+
+
+    <data name="Image" xml:space="preserve">
         <value>Image</value>
     </data>
-    <data name="DmcPlace_ModId" xml:space="preserve">
-        <value>ModId</value>
-    </data>
-    <data name="DmcPlace_Id" xml:space="preserve">
-        <value>Id</value>
-    </data>
-    <data name="DmcPlace_Image" xml:space="preserve">
-        <value>Image</value>
-    </data>
-    <data name="DmcPlace_EncounterId" xml:space="preserve">
-        <value>EncounterId</value>
-    </data>
-    <data name="DmcPlace_X" xml:space="preserve">
-        <value>X</value>
-    </data>
-    <data name="DmcPlace_Y" xml:space="preserve">
-        <value>Y</value>
-    </data>
-    <data name="Encounter_ModId" xml:space="preserve">
-        <value>ModId</value>
-    </data>
-    <data name="Encounter_Id" xml:space="preserve">
-        <value>Id</value>
-    </data>
-    <data name="Encounter_Name" xml:space="preserve">
-        <value>Name</value>
-    </data>
-    <data name="Encounter_Description" xml:space="preserve">
-        <value>Description</value>
-    </data>
-    <data name="Encounter_Image" xml:space="preserve">
-        <value>Image</value>
-    </data>
-    <data name="Encounter_TreasureId" xml:space="preserve">
-        <value>TreasureId</value>
-    </data>
-    <data name="Encounter_RemoveTreasureId" xml:space="preserve">
+
+    <data name="RemoveTreasureId" xml:space="preserve">
         <value>RemoveTreasureId</value>
     </data>
-    <data name="Encounter_Conditions" xml:space="preserve">
+    <data name="Conditions" xml:space="preserve">
         <value>Conditions</value>
     </data>
-    <data name="Encounter_PreConditions" xml:space="preserve">
+    <data name="PreConditions" xml:space="preserve">
         <value>PreConditions</value>
     </data>
-    <data name="Encounter_Price" xml:space="preserve">
+    <data name="Price" xml:space="preserve">
         <value>Price</value>
     </data>
-    <data name="Encounter_Responses" xml:space="preserve">
+    <data name="Responses" xml:space="preserve">
         <value>Responses</value>
     </data>
-    <data name="Encounter_MinimapHexes" xml:space="preserve">
+    <data name="MinimapHexes" xml:space="preserve">
         <value>MinimapHexes</value>
     </data>
-    <data name="Encounter_RemoveCreatures" xml:space="preserve">
+    <data name="RemoveCreatures" xml:space="preserve">
         <value>RemoveCreatures</value>
     </data>
-    <data name="Encounter_RemoveUsed" xml:space="preserve">
+    <data name="RemoveUsed" xml:space="preserve">
         <value>RemoveUsed</value>
     </data>
-    <data name="Encounter_ItemsId" xml:space="preserve">
+    <data name="ItemsId" xml:space="preserve">
         <value>ItemsId</value>
     </data>
-    <data name="Encounter_CreatureId" xml:space="preserve">
+    <data name="CreatureId" xml:space="preserve">
         <value>CreatureId</value>
     </data>
-    <data name="Encounter_CreatureHex" xml:space="preserve">
+    <data name="CreatureHex" xml:space="preserve">
         <value>CreatureHex</value>
     </data>
-    <data name="Encounter_Teleport" xml:space="preserve">
+    <data name="Teleport" xml:space="preserve">
         <value>Teleport</value>
     </data>
-    <data name="Encounter_Editor" xml:space="preserve">
+    <data name="Editor" xml:space="preserve">
         <value>Editor</value>
     </data>
-    <data name="Encounter_Type" xml:space="preserve">
-        <value>Type</value>
-    </data>
-    <data name="Encounter_LootChance" xml:space="preserve">
+
+    <data name="LootChance" xml:space="preserve">
         <value>LootChance</value>
     </data>
-    <data name="Encounter_AccidentChance" xml:space="preserve">
+    <data name="AccidentChance" xml:space="preserve">
         <value>AccidentChance</value>
     </data>
-    <data name="Encounter_CreatureChance" xml:space="preserve">
+    <data name="CreatureChance" xml:space="preserve">
         <value>CreatureChance</value>
     </data>
-    <data name="Encounter_Accidents" xml:space="preserve">
+    <data name="Accidents" xml:space="preserve">
         <value>Accidents</value>
     </data>
-    <data name="Encounter_Loot" xml:space="preserve">
+    <data name="Loot" xml:space="preserve">
         <value>Loot</value>
     </data>
-    <data name="EncounterTrigger_ModId" xml:space="preserve">
-        <value>ModId</value>
-    </data>
-    <data name="EncounterTrigger_Id" xml:space="preserve">
-        <value>Id</value>
-    </data>
-    <data name="EncounterTrigger_Name" xml:space="preserve">
-        <value>Name</value>
-    </data>
-    <data name="EncounterTrigger_EncounterId" xml:space="preserve">
+
+
+    <data name="EncounterId" xml:space="preserve">
         <value>EncounterId</value>
     </data>
-    <data name="EncounterTrigger_Chance" xml:space="preserve">
+    <data name="Chance" xml:space="preserve">
         <value>Chance</value>
     </data>
-    <data name="EncounterTrigger_LocBased" xml:space="preserve">
+    <data name="LocBased" xml:space="preserve">
         <value>LocBased</value>
     </data>
-    <data name="EncounterTrigger_DateBased" xml:space="preserve">
+    <data name="DateBased" xml:space="preserve">
         <value>DateBased</value>
     </data>
-    <data name="EncounterTrigger_HexBased" xml:space="preserve">
+    <data name="HexBased" xml:space="preserve">
         <value>HexBased</value>
     </data>
-    <data name="EncounterTrigger_Unique" xml:space="preserve">
+    <data name="Unique" xml:space="preserve">
         <value>Unique</value>
     </data>
-    <data name="EncounterTrigger_AIPassable" xml:space="preserve">
+    <data name="AIPassable" xml:space="preserve">
         <value>AIPassable</value>
     </data>
-    <data name="EncounterTrigger_Area" xml:space="preserve">
+    <data name="Area" xml:space="preserve">
         <value>Area</value>
     </data>
-    <data name="EncounterTrigger_DateMin" xml:space="preserve">
+    <data name="DateMin" xml:space="preserve">
         <value>DateMin</value>
     </data>
-    <data name="EncounterTrigger_DateMax" xml:space="preserve">
+    <data name="DateMax" xml:space="preserve">
         <value>DateMax</value>
     </data>
-    <data name="EncounterTrigger_HexTypes" xml:space="preserve">
+    <data name="HexTypes" xml:space="preserve">
         <value>HexTypes</value>
     </data>
-    <data name="Faction_ModId" xml:space="preserve">
-        <value>ModId</value>
-    </data>
-    <data name="Faction_Id" xml:space="preserve">
-        <value>Id</value>
-    </data>
-    <data name="Faction_Name" xml:space="preserve">
-        <value>Name</value>
-    </data>
-    <data name="Faction_DictFactions" xml:space="preserve">
+
+
+    <data name="DictFactions" xml:space="preserve">
         <value>DictFactions</value>
     </data>
-    <data name="ForbiddenHex_ModId" xml:space="preserve">
-        <value>ModId</value>
-    </data>
-    <data name="ForbiddenHex_Id" xml:space="preserve">
-        <value>Id</value>
-    </data>
-    <data name="ForbiddenHex_X" xml:space="preserve">
+
+
+    <data name="X" xml:space="preserve">
         <value>X</value>
     </data>
-    <data name="ForbiddenHex_Y" xml:space="preserve">
+    <data name="Y" xml:space="preserve">
         <value>Y</value>
     </data>
-    <data name="ForbiddenHex_Name" xml:space="preserve">
-        <value>Name</value>
-    </data>
-    <data name="GameVar_ModId" xml:space="preserve">
-        <value>ModId</value>
-    </data>
-    <data name="GameVar_Name" xml:space="preserve">
-        <value>Name</value>
-    </data>
-    <data name="GameVar_Type" xml:space="preserve">
-        <value>Type</value>
-    </data>
-    <data name="GameVar_Value" xml:space="preserve">
+
+
+    <data name="Value" xml:space="preserve">
         <value>Value</value>
     </data>
-    <data name="Headline_ModId" xml:space="preserve">
-        <value>ModId</value>
-    </data>
-    <data name="Headline_Id" xml:space="preserve">
-        <value>Id</value>
-    </data>
-    <data name="Headline_HeadlineText" xml:space="preserve">
+
+
+    <data name="HeadlineText" xml:space="preserve">
         <value>HeadlineText</value>
     </data>
-    <data name="HexType_ModId" xml:space="preserve">
-        <value>ModId</value>
-    </data>
-    <data name="HexType_Id" xml:space="preserve">
-        <value>Id</value>
-    </data>
-    <data name="HexType_Name" xml:space="preserve">
-        <value>Name</value>
-    </data>
-    <data name="HexType_Description" xml:space="preserve">
+
+
+    <data name="Description" xml:space="preserve">
         <value>Description</value>
     </data>
-    <data name="HexType_TerrainCost" xml:space="preserve">
+    <data name="TerrainCost" xml:space="preserve">
         <value>TerrainCost</value>
     </data>
-    <data name="HexType_VizLimiter" xml:space="preserve">
+    <data name="VizLimiter" xml:space="preserve">
         <value>VizLimiter</value>
     </data>
-    <data name="HexType_VizIncrease" xml:space="preserve">
+    <data name="VizIncrease" xml:space="preserve">
         <value>VizIncrease</value>
     </data>
-    <data name="HexType_TreasureId" xml:space="preserve">
-        <value>TreasureId</value>
-    </data>
-    <data name="HexType_Passable" xml:space="preserve">
+
+    <data name="Passable" xml:space="preserve">
         <value>Passable</value>
     </data>
-    <data name="HexType_ScavengeInitialId" xml:space="preserve">
+    <data name="ScavengeInitialId" xml:space="preserve">
         <value>ScavengeInitialId</value>
     </data>
-    <data name="HexType_ScavengeItemsIdPerHour" xml:space="preserve">
+    <data name="ScavengeItemsIdPerHour" xml:space="preserve">
         <value>ScavengeItemsIdPerHour</value>
     </data>
-    <data name="HexType_CampItems" xml:space="preserve">
+    <data name="CampItems" xml:space="preserve">
         <value>CampItems</value>
     </data>
-    <data name="HexType_LightLevels" xml:space="preserve">
+    <data name="LightLevels" xml:space="preserve">
         <value>LightLevels</value>
     </data>
-    <data name="HexType_DefaultCampId" xml:space="preserve">
+    <data name="DefaultCampId" xml:space="preserve">
         <value>DefaultCampId</value>
     </data>
-    <data name="HexType_MinRange" xml:space="preserve">
+    <data name="MinRange" xml:space="preserve">
         <value>MinRange</value>
     </data>
-    <data name="HexType_MaxRange" xml:space="preserve">
+    <data name="MaxRange" xml:space="preserve">
         <value>MaxRange</value>
     </data>
-    <data name="HexType_ConditionIds" xml:space="preserve">
+    <data name="ConditionIds" xml:space="preserve">
         <value>ConditionIds</value>
     </data>
-    <data name="Ingredient_ModId" xml:space="preserve">
-        <value>ModId</value>
-    </data>
-    <data name="Ingredient_Id" xml:space="preserve">
-        <value>Id</value>
-    </data>
-    <data name="Ingredient_Name" xml:space="preserve">
-        <value>Name</value>
-    </data>
-    <data name="Ingredient_RequiredProps" xml:space="preserve">
+
+
+    <data name="RequiredProps" xml:space="preserve">
         <value>RequiredProps</value>
     </data>
-    <data name="Ingredient_ForbidProps" xml:space="preserve">
+    <data name="ForbidProps" xml:space="preserve">
         <value>ForbidProps</value>
     </data>
-    <data name="ItemProp_ModId" xml:space="preserve">
-        <value>ModId</value>
-    </data>
-    <data name="ItemProp_Id" xml:space="preserve">
-        <value>Id</value>
-    </data>
-    <data name="ItemProp_PropertyName" xml:space="preserve">
+
+
+    <data name="PropertyName" xml:space="preserve">
         <value>PropertyName</value>
     </data>
-    <data name="ItemType_EquipConditions" xml:space="preserve">
+    <data name="EquipConditions" xml:space="preserve">
         <value>EquipConditions</value>
     </data>
-    <data name="ItemType_PossessConditions" xml:space="preserve">
+    <data name="PossessConditions" xml:space="preserve">
         <value>PossessConditions</value>
     </data>
-    <data name="ItemType_UseConditions" xml:space="preserve">
+    <data name="UseConditions" xml:space="preserve">
         <value>UseConditions</value>
     </data>
-    <data name="ItemType_Capacities" xml:space="preserve">
+    <data name="Capacities" xml:space="preserve">
         <value>Capacities</value>
     </data>
-    <data name="ItemType_EquipSlots" xml:space="preserve">
+    <data name="EquipSlots" xml:space="preserve">
         <value>EquipSlots</value>
     </data>
-    <data name="ItemType_UseSlots" xml:space="preserve">
+    <data name="UseSlots" xml:space="preserve">
         <value>UseSlots</value>
     </data>
-    <data name="ItemType_SocketLocked" xml:space="preserve">
+    <data name="SocketLocked" xml:space="preserve">
         <value>SocketLocked</value>
     </data>
-    <data name="ItemType_Properties" xml:space="preserve">
+    <data name="Properties" xml:space="preserve">
         <value>Properties</value>
     </data>
-    <data name="ItemType_ContentIds" xml:space="preserve">
+    <data name="ContentIds" xml:space="preserve">
         <value>ContentIds</value>
     </data>
-    <data name="ItemType_FormatId" xml:space="preserve">
+    <data name="FormatId" xml:space="preserve">
         <value>FormatId</value>
     </data>
-    <data name="ItemType_TreasureId" xml:space="preserve">
-        <value>TreasureId</value>
-    </data>
-    <data name="ItemType_ComponentId" xml:space="preserve">
+
+    <data name="ComponentId" xml:space="preserve">
         <value>ComponentId</value>
     </data>
-    <data name="ItemType_Mirrored" xml:space="preserve">
+    <data name="Mirrored" xml:space="preserve">
         <value>Mirrored</value>
     </data>
-    <data name="ItemType_SlotDepth" xml:space="preserve">
+    <data name="SlotDepth" xml:space="preserve">
         <value>SlotDepth</value>
     </data>
-    <data name="ItemType_ChargeProfiles" xml:space="preserve">
+    <data name="ChargeProfiles" xml:space="preserve">
         <value>ChargeProfiles</value>
     </data>
-    <data name="ItemType_AttackModes" xml:space="preserve">
+    <data name="AttackModes" xml:space="preserve">
         <value>AttackModes</value>
     </data>
-    <data name="ItemType_StackLimit" xml:space="preserve">
+    <data name="StackLimit" xml:space="preserve">
         <value>StackLimit</value>
     </data>
-    <data name="ItemType_SwitchIds" xml:space="preserve">
+    <data name="SwitchIds" xml:space="preserve">
         <value>SwitchIds</value>
     </data>
-    <data name="ItemType_Sounds" xml:space="preserve">
+    <data name="Sounds" xml:space="preserve">
         <value>Sounds</value>
     </data>
-    <data name="Map_ModId" xml:space="preserve">
-        <value>ModId</value>
-    </data>
-    <data name="Map_Id" xml:space="preserve">
-        <value>Id</value>
-    </data>
-    <data name="Map_Name" xml:space="preserve">
-        <value>Name</value>
-    </data>
-    <data name="Map_Definition" xml:space="preserve">
+
+
+    <data name="Definition" xml:space="preserve">
         <value>Definition</value>
     </data>
-    <data name="Recipe_ModId" xml:space="preserve">
-        <value>ModId</value>
-    </data>
-    <data name="Recipe_Id" xml:space="preserve">
-        <value>Id</value>
-    </data>
-    <data name="Recipe_Name" xml:space="preserve">
-        <value>Name</value>
-    </data>
-    <data name="Recipe_SecretName" xml:space="preserve">
+
+
+    <data name="SecretName" xml:space="preserve">
         <value>SecretName</value>
     </data>
-    <data name="Recipe_Tools" xml:space="preserve">
+    <data name="Tools" xml:space="preserve">
         <value>Tools</value>
     </data>
-    <data name="Recipe_Consumed" xml:space="preserve">
+    <data name="Consumed" xml:space="preserve">
         <value>Consumed</value>
     </data>
-    <data name="Recipe_Destroyed" xml:space="preserve">
+    <data name="Destroyed" xml:space="preserve">
         <value>Destroyed</value>
     </data>
-    <data name="Recipe_TreasureId" xml:space="preserve">
+    <data name="TreasureId" xml:space="preserve">
         <value>TreasureId</value>
     </data>
-    <data name="Recipe_Hours" xml:space="preserve">
+    <data name="Hours" xml:space="preserve">
         <value>Hours</value>
     </data>
-    <data name="Recipe_Reverse" xml:space="preserve">
+    <data name="Reverse" xml:space="preserve">
         <value>Reverse</value>
     </data>
-    <data name="Recipe_HiddenId" xml:space="preserve">
+    <data name="HiddenId" xml:space="preserve">
         <value>HiddenId</value>
     </data>
-    <data name="Recipe_Identify" xml:space="preserve">
-        <value>Identify</value>
-    </data>
-    <data name="Recipe_TransferComponents" xml:space="preserve">
+
+    <data name="TransferComponents" xml:space="preserve">
         <value>TransferComponents</value>
     </data>
-    <data name="Recipe_AlsoTry" xml:space="preserve">
+    <data name="AlsoTry" xml:space="preserve">
         <value>AlsoTry</value>
     </data>
-    <data name="Recipe_TempTreasureId" xml:space="preserve">
+    <data name="TempTreasureId" xml:space="preserve">
         <value>TempTreasureId</value>
     </data>
-    <data name="Recipe_DegradeOutput" xml:space="preserve">
+    <data name="DegradeOutput" xml:space="preserve">
         <value>DegradeOutput</value>
     </data>
-    <data name="Recipe_Type" xml:space="preserve">
+    <data name="Type" xml:space="preserve">
         <value>Type</value>
     </data>
-    <data name="Recipe_Scrap" xml:space="preserve">
+    <data name="Scrap" xml:space="preserve">
         <value>Scrap</value>
     </data>
-    <data name="TreasureTable_ModId" xml:space="preserve">
+    <data name="ModId" xml:space="preserve">
         <value>ModId</value>
     </data>
-    <data name="TreasureTable_Id" xml:space="preserve">
+    <data name="Id" xml:space="preserve">
         <value>Id</value>
     </data>
-    <data name="TreasureTable_Name" xml:space="preserve">
+    <data name="Name" xml:space="preserve">
         <value>Name</value>
     </data>
-    <data name="TreasureTable_Treasures" xml:space="preserve">
+    <data name="Treasures" xml:space="preserve">
         <value>Treasures</value>
     </data>
-    <data name="TreasureTable_Nested" xml:space="preserve">
+    <data name="Nested" xml:space="preserve">
         <value>Nested</value>
     </data>
-    <data name="TreasureTable_Suppress" xml:space="preserve">
+    <data name="Suppress" xml:space="preserve">
         <value>Suppress</value>
     </data>
-    <data name="TreasureTable_Identify" xml:space="preserve">
+    <data name="Identify" xml:space="preserve">
         <value>Identify</value>
     </data>
     <data name="OpenProject" xml:space="preserve">
@@ -836,7 +607,7 @@
         <comment>SelectFolder</comment>
     </data>
     <data name="GameRootDirectory" xml:space="preserve">
-        <value>GameRootDirectory</value>
+        <value>Game Root Directory</value>
         <comment>GameRootDirectory</comment>
     </data>
     <data name="Confirm" xml:space="preserve">
@@ -848,7 +619,7 @@
         <comment>Cancel</comment>
     </data>
     <data name="FolderIsEmpty" xml:space="preserve">
-        <value>FolderIsEmpty</value>
+        <value>Folder Is Empty</value>
         <comment>FolderIsEmpty</comment>
     </data>
     <data name="UpLevel" xml:space="preserve">
@@ -868,21 +639,539 @@
         <value>Close Project</value>
     </data>
     <data name="AppTitle" xml:space="preserve">
-        <value/>
+        <value>Neo Editor</value>
     </data>
     <data name="MainContent" xml:space="preserve">
-        <value/>
+        <value>Main Content</value>
     </data>
     <data name="Settings" xml:space="preserve">
-        <value/>
+        <value>Settings</value>
     </data>
     <data name="Search" xml:space="preserve">
-        <value/>
+        <value>Search</value>
     </data>
     <data name="ResourceManager" xml:space="preserve">
-        <value/>
+        <value>ResourceManager</value>
     </data>
     <data name="KeywordInput" xml:space="preserve">
-        <value/>
+        <value>Enter the keyword...</value>
+    </data>
+
+    <!-- Auto-generated description entries from Game models -->
+    <data name="IdDesc" xml:space="preserve">
+        <value>ID Code</value>
+    </data>
+    <data name="NameDesc" xml:space="preserve">
+        <value>Item Name</value>
+    </data>
+    <data name="NotesDesc" xml:space="preserve">
+        <value>Item notes, usually left blank, does not affect gameplay</value>
+    </data>
+    <data name="RangeDesc" xml:space="preserve">
+        <value>Attack range, 1 for melee, varies for ranged weapons</value>
+    </data>
+    <data name="DamageCutDesc" xml:space="preserve">
+        <value>Cutting damage value</value>
+    </data>
+    <data name="DamageBluntDesc" xml:space="preserve">
+        <value>Blunt damage value</value>
+    </data>
+    <data name="ChargeProfilesDesc" xml:space="preserve">
+        <value>Content/ammo ID code, used with chargeprofiles data, may be comma-separated like '6,31'</value>
+    </data>
+    <data name="PenetrationDesc" xml:space="preserve">
+        <value>Penetration level</value>
+    </data>
+    <data name="TypeDesc" xml:space="preserve">
+        <value>Attack type: 0 Melee, 1 Ranged</value>
+    </data>
+    <data name="SoundDesc" xml:space="preserve">
+        <value>Weapon sound category: Melee/Punch, Claws, Club, Blade, Rifle, Pistol, Laser, Bow, Throw, Choke, Grasp, Bite</value>
+    </data>
+    <data name="TransferDesc" xml:space="preserve">
+        <value>Transfer property: Whether attack can be converted to item, e.g., bow arrows can be recovered. 0 no transfer, 1 transfer (arrows, slingshot ammo stays on enemy or drops)</value>
+    </data>
+    <data name="AttackerConditionsDesc" xml:space="preserve">
+        <value>Conditions during attack, used with conditions data, e.g., '211x1.0,NSE:42x1'</value>
+    </data>
+    <data name="ImageDesc" xml:space="preserve">
+        <value>Weapon icon filename in lower right corner</value>
+    </data>
+    <data name="MoraleDesc" xml:space="preserve">
+        <value>Default morale bonus from this weapon, formula: (1+morale)*(1+melee/ranged morale bonus)*weapon damage=actual damage</value>
+    </data>
+    <data name="WieldPhraseDesc" xml:space="preserve">
+        <value>Text description when entering combat with this weapon</value>
+    </data>
+    <data name="AttackPhrasesDesc" xml:space="preserve">
+        <value>Text description when attacking with this weapon, multiple descriptions separated by commas</value>
+    </data>
+    <data name="XDesc" xml:space="preserve">
+        <value>X-axis coordinate</value>
+    </data>
+    <data name="YDesc" xml:space="preserve">
+        <value>Y-axis coordinate</value>
+    </data>
+    <data name="BuysDesc" xml:space="preserve">
+        <value>Whether player items can be purchased: 0 no, 1 yes</value>
+    </data>
+    <data name="RestockTreasureIdDesc" xml:space="preserve">
+        <value>Referenced treasure data, used with treasuretable. Note: Detroit C shop is an exception, uses treasure pool 3</value>
+    </data>
+    <data name="StrIdDesc" xml:space="preserve">
+        <value>Item ID, e.g., '90.35'</value>
+    </data>
+    <data name="SuccessDesc" xml:space="preserve">
+        <value>Text displayed in game after action succeeds, &lt;us&gt; represents self, &lt;them&gt; represents target</value>
+    </data>
+    <data name="FailDesc" xml:space="preserve">
+        <value>Text displayed in game after action fails</value>
+    </data>
+    <data name="PopUpDesc" xml:space="preserve">
+        <value>Action description in game, shown in action selection screen</value>
+    </data>
+    <data name="ChanceTypeDesc" xml:space="preserve">
+        <value>Chance type (currently unclear)</value>
+    </data>
+    <data name="UsConditionsDesc" xml:space="preserve">
+        <value>Required conditions for our side, minus sign means NOT, i.e., not in that state</value>
+    </data>
+    <data name="ThemConditionsDesc" xml:space="preserve">
+        <value>Required conditions for opponent, minus sign means NOT, i.e., not in that state</value>
+    </data>
+    <data name="PairConditionsDesc" xml:space="preserve">
+        <value>Effect this action brings to self</value>
+    </data>
+    <data name="UsFailConditionsDesc" xml:space="preserve">
+        <value>Conditions brought to self when action fails</value>
+    </data>
+    <data name="ThemFailConditionsDesc" xml:space="preserve">
+        <value>Conditions brought to opponent when action fails (all official data is empty)</value>
+    </data>
+    <data name="PairFailConditionsDesc" xml:space="preserve">
+        <value>Effect brought to self when action fails</value>
+    </data>
+    <data name="UsPreConditionsDesc" xml:space="preserve">
+        <value>Prerequisites for executing this action, format like '137,151,-143' (negative means cannot have that condition)</value>
+    </data>
+    <data name="ThemPreConditionsDesc" xml:space="preserve">
+        <value>Prerequisites opponent must meet</value>
+    </data>
+    <data name="SeeThemDesc" xml:space="preserve">
+        <value>Exposure level opponent needs to be at</value>
+    </data>
+    <data name="SeeUsDesc" xml:space="preserve">
+        <value>Exposure level self needs to be at</value>
+    </data>
+    <data name="AllOutOfRangeDesc" xml:space="preserve">
+        <value>Distance from all targets on field</value>
+    </data>
+    <data name="InAttackRangeDesc" xml:space="preserve">
+        <value>Attack range, possibly used to determine splash or weapon length</value>
+    </data>
+    <data name="MinChargesDesc" xml:space="preserve">
+        <value>Number of attacks (uncertain)</value>
+    </data>
+    <data name="MinRangeDesc" xml:space="preserve">
+        <value>Minimum range requirement, -1 for full field coverage</value>
+    </data>
+    <data name="MaxRangeDesc" xml:space="preserve">
+        <value>Maximum range requirement, -1 for full field coverage</value>
+    </data>
+    <data name="AttackModeTypeDesc" xml:space="preserve">
+        <value>Attack mode type: -1 non-attack action, 0 melee attack, 1 ranged attack</value>
+    </data>
+    <data name="HexTypesDesc" xml:space="preserve">
+        <value>Map hex type (all official data is empty)</value>
+    </data>
+    <data name="ChanceDesc" xml:space="preserve">
+        <value>Chance to use this skill (percentage)</value>
+    </data>
+    <data name="PriorityDesc" xml:space="preserve">
+        <value>Priority, no effect on player, Bot only, which side's action triggers first in same turn</value>
+    </data>
+    <data name="DetectDesc" xml:space="preserve">
+        <value>Chance of being detected when executing this action, 0 means won't be detected</value>
+    </data>
+    <data name="OrderDesc" xml:space="preserve">
+        <value>Unknown parameter</value>
+    </data>
+    <data name="FatigueDesc" xml:space="preserve">
+        <value>Fatigue cost</value>
+    </data>
+    <data name="ApproachDesc" xml:space="preserve">
+        <value>Whether this action makes you approach opponent</value>
+    </data>
+    <data name="OffenseDesc" xml:space="preserve">
+        <value>Whether this is an offensive action</value>
+    </data>
+    <data name="FallBackDesc" xml:space="preserve">
+        <value>Whether this action is a retreat action</value>
+    </data>
+    <data name="RetreatDesc" xml:space="preserve">
+        <value>Whether this action is a retreat action</value>
+    </data>
+    <data name="PositionDesc" xml:space="preserve">
+        <value>Whether this action is a position action</value>
+    </data>
+    <data name="PassiveDesc" xml:space="preserve">
+        <value>Whether this action is passive</value>
+    </data>
+    <data name="DescriptionDesc" xml:space="preserve">
+        <value>Camp description, e.g., 'Dark area of the region'</value>
+    </data>
+    <data name="ImageListDesc" xml:space="preserve">
+        <value>Image filename used by camp</value>
+    </data>
+    <data name="CapacitiesDesc" xml:space="preserve">
+        <value>Camp size, format like '34x26'</value>
+    </data>
+    <data name="TreasureIdDesc" xml:space="preserve">
+        <value>Treasure pool ID for this camp</value>
+    </data>
+    <data name="AlertnessDesc" xml:space="preserve">
+        <value>Default alertness value of camp (percentage)</value>
+    </data>
+    <data name="VisibilityDesc" xml:space="preserve">
+        <value>Default visibility value of camp (percentage), -0.05 means -5%</value>
+    </data>
+    <data name="WetTempAdjustModDesc" xml:space="preserve">
+        <value>Default temperature adjustment of camp</value>
+    </data>
+    <data name="HealPerHourModDesc" xml:space="preserve">
+        <value>Default recovery effect per hour from camp (percentage)</value>
+    </data>
+    <data name="SleepQualityDesc" xml:space="preserve">
+        <value>Default sleep quality from camp (percentage), -0.26 means -26%</value>
+    </data>
+    <data name="ItemIdDesc" xml:space="preserve">
+        <value>Item ID, e.g., '10.3'</value>
+    </data>
+    <data name="PerUseDesc" xml:space="preserve">
+        <value>Amount consumed per use</value>
+    </data>
+    <data name="PerHourDesc" xml:space="preserve">
+        <value>Amount consumed per hour, mainly for electrical power consumption</value>
+    </data>
+    <data name="PerHourEquippedDesc" xml:space="preserve">
+        <value>Durability consumed per hour when equipped, only for XM54 filter chip</value>
+    </data>
+    <data name="PerHexDesc" xml:space="preserve">
+        <value>Amount consumed per hex moved</value>
+    </data>
+    <data name="DegradeDesc" xml:space="preserve">
+        <value>Whether it degrades</value>
+    </data>
+    <data name="FieldNamesDesc" xml:space="preserve">
+        <value>Effect field list brought by this condition, e.g., 'm_fHealPerHourMod,m_fImmuneRestoreRate'</value>
+    </data>
+    <data name="ModifiersDesc" xml:space="preserve">
+        <value>Specific effect values brought by this condition, corresponding to FieldNames</value>
+    </data>
+    <data name="EffectsDesc" xml:space="preserve">
+        <value>Effects brought by condition, e.g., SetImmunity, ArmorWound. Like 'ArmorWound=100,0.1,0.05'</value>
+    </data>
+    <data name="FatalDesc" xml:space="preserve">
+        <value>Whether it brings death effect to player (will getting this condition kill you)</value>
+    </data>
+    <data name="IdNextDesc" xml:space="preserve">
+        <value>Next stage condition ID this condition brings, may be multiple comma-separated</value>
+    </data>
+    <data name="DurationDesc" xml:space="preserve">
+        <value>Duration (hours)</value>
+    </data>
+    <data name="PermanentDesc" xml:space="preserve">
+        <value>Whether it brings long-term effects (like medicine, cuts, etc.), true means won't auto-remove after turn ends</value>
+    </data>
+    <data name="ChanceNextDesc" xml:space="preserve">
+        <value>Chance of this condition bringing new condition in next stage</value>
+    </data>
+    <data name="StackableDesc" xml:space="preserve">
+        <value>Whether this condition is stackable</value>
+    </data>
+    <data name="DisplayDesc" xml:space="preserve">
+        <value>Whether this condition is visible</value>
+    </data>
+    <data name="DisplayOtherDesc" xml:space="preserve">
+        <value>Whether this condition can be seen by others</value>
+    </data>
+    <data name="DisplayGameOverDesc" xml:space="preserve">
+        <value>Whether this condition appears in game over summary</value>
+    </data>
+    <data name="ColorDesc" xml:space="preserve">
+        <value>Condition color: 0 white, 1 red, 2 green, 3 yellow</value>
+    </data>
+    <data name="ResetTimerDesc" xml:space="preserve">
+        <value>Refresh time, one rest in game equals one hour</value>
+    </data>
+    <data name="RemoveAllDesc" xml:space="preserve">
+        <value>Unknown parameter</value>
+    </data>
+    <data name="RemovePostCombatDesc" xml:space="preserve">
+        <value>Unknown parameter</value>
+    </data>
+    <data name="TransferRangeDesc" xml:space="preserve">
+        <value>Infection distance, -1 for no spread</value>
+    </data>
+    <data name="ThresholdsDesc" xml:space="preserve">
+        <value>Trigger threshold, currently used for legendary skill triggers</value>
+    </data>
+    <data name="NamePublicDesc" xml:space="preserve">
+        <value>Name displayed before contact</value>
+    </data>
+    <data name="EncounterIdsDesc" xml:space="preserve">
+        <value>List of condition IDs triggered when encountering this creature, comma-separated</value>
+    </data>
+    <data name="MovesPerTurnDesc" xml:space="preserve">
+        <value>Action points per turn</value>
+    </data>
+    <data name="FactionDesc" xml:space="preserve">
+        <value>Faction ID</value>
+    </data>
+    <data name="AttackModesDesc" xml:space="preserve">
+        <value>Attack mode ID, used with attackmodes, may be single ID or comma-separated</value>
+    </data>
+    <data name="BaseConditionsDesc" xml:space="preserve">
+        <value>Base conditions when creature spawns, format like '38=1,50=0.5'</value>
+    </data>
+    <data name="CorpseIdDesc" xml:space="preserve">
+        <value>Corpse ID (treasure pool ID)</value>
+    </data>
+    <data name="ActivitiesDesc" xml:space="preserve">
+        <value>Description of creature's activity pattern, possibly for notes only</value>
+    </data>
+    <data name="CreatureIdDesc" xml:space="preserve">
+        <value>Spawned creature ID, used with creatures table</value>
+    </data>
+    <data name="MinDesc" xml:space="preserve">
+        <value>Minimum spawn count</value>
+    </data>
+    <data name="MaxDesc" xml:space="preserve">
+        <value>Maximum spawn count (too large value causes many creatures to spawn in same hex)</value>
+    </data>
+    <data name="WeightDesc" xml:space="preserve">
+        <value>Weight, specific meaning unknown</value>
+    </data>
+    <data name="ValueDesc" xml:space="preserve">
+        <value>Value of this data</value>
+    </data>
+    <data name="EncounterIdDesc" xml:space="preserve">
+        <value>Called encounter ID, used with encounters</value>
+    </data>
+    <data name="RemoveTreasureIdDesc" xml:space="preserve">
+        <value>Treasure pool ID removed at player's feet when encounter occurs</value>
+    </data>
+    <data name="ConditionsDesc" xml:space="preserve">
+        <value>List of attached condition IDs for this encounter, comma-separated</value>
+    </data>
+    <data name="PreConditionsDesc" xml:space="preserve">
+        <value>Required preconditions for this encounter, negative means cannot have that condition</value>
+    </data>
+    <data name="PriceDesc" xml:space="preserve">
+        <value>Whether this encounter changes your assets</value>
+    </data>
+    <data name="ResponsesDesc" xml:space="preserve">
+        <value>Player response options during encounter, format like '=15x0.083x0x0x0,=16x0.083x0x0x0'</value>
+    </data>
+    <data name="MinimapHexesDesc" xml:space="preserve">
+        <value>Coordinates displayed on minimap</value>
+    </data>
+    <data name="RemoveCreaturesDesc" xml:space="preserve">
+        <value>Whether creatures need to be removed when this encounter occurs</value>
+    </data>
+    <data name="RemoveUsedDesc" xml:space="preserve">
+        <value>Whether this encounter removes your items</value>
+    </data>
+    <data name="ItemsIdDesc" xml:space="preserve">
+        <value>Item ID generated when this encounter occurs</value>
+    </data>
+    <data name="CreatureHexDesc" xml:space="preserve">
+        <value>Creature spawn position coordinates, format like '0,0'</value>
+    </data>
+    <data name="TeleportDesc" xml:space="preserve">
+        <value>Position player is teleported to when this encounter occurs, '0,0' for no teleport</value>
+    </data>
+    <data name="EditorDesc" xml:space="preserve">
+        <value>Unknown parameter, editor related</value>
+    </data>
+    <data name="LootChanceDesc" xml:space="preserve">
+        <value>Chance of successfully scavenging items</value>
+    </data>
+    <data name="AccidentChanceDesc" xml:space="preserve">
+        <value>Chance of accident occurring (e.g., building collapse)</value>
+    </data>
+    <data name="CreatureChanceDesc" xml:space="preserve">
+        <value>Unknown parameter</value>
+    </data>
+    <data name="AccidentsDesc" xml:space="preserve">
+        <value>Event ID when accident occurs (calls encounters)</value>
+    </data>
+    <data name="LootDesc" xml:space="preserve">
+        <value>Treasure type ID when scavenging succeeds</value>
+    </data>
+    <data name="LocBasedDesc" xml:space="preserve">
+        <value>Whether this trigger is location-based</value>
+    </data>
+    <data name="DateBasedDesc" xml:space="preserve">
+        <value>Whether this trigger is time-based</value>
+    </data>
+    <data name="HexBasedDesc" xml:space="preserve">
+        <value>Whether this trigger is hex-based</value>
+    </data>
+    <data name="UniqueDesc" xml:space="preserve">
+        <value>Whether this event is unique</value>
+    </data>
+    <data name="AIPassableDesc" xml:space="preserve">
+        <value>Whether this event can be triggered by AI</value>
+    </data>
+    <data name="AreaDesc" xml:space="preserve">
+        <value>Position coordinates where this event triggers, format like '20,164,0'</value>
+    </data>
+    <data name="DateMinDesc" xml:space="preserve">
+        <value>Minimum trigger time, format 'year-month-day-hour'</value>
+    </data>
+    <data name="DateMaxDesc" xml:space="preserve">
+        <value>Maximum trigger time, format 'year-month-day-hour'</value>
+    </data>
+    <data name="DictFactionsDesc" xml:space="preserve">
+        <value>Reputation relationship with other factions, format like '0=-100,1=1,2=-100'</value>
+    </data>
+    <data name="HeadlineTextDesc" xml:space="preserve">
+        <value>Headline text content</value>
+    </data>
+    <data name="TerrainCostDesc" xml:space="preserve">
+        <value>Action points consumed on this hex</value>
+    </data>
+    <data name="VizLimiterDesc" xml:space="preserve">
+        <value>Visibility reduced on this hex</value>
+    </data>
+    <data name="VizIncreaseDesc" xml:space="preserve">
+        <value>Visibility increased on this hex</value>
+    </data>
+    <data name="PassableDesc" xml:space="preserve">
+        <value>Whether can move to this terrain: 0 impassable, 1 passable</value>
+    </data>
+    <data name="ScavengeInitialIdDesc" xml:space="preserve">
+        <value>Treasure pool ID used when first scavenging this terrain</value>
+    </data>
+    <data name="ScavengeItemsIdPerHourDesc" xml:space="preserve">
+        <value>Treasure pool ID used when scavenging this terrain repeatedly</value>
+    </data>
+    <data name="CampItemsDesc" xml:space="preserve">
+        <value>Camp type ID</value>
+    </data>
+    <data name="LightLevelsDesc" xml:space="preserve">
+        <value>Light levels, corresponding to: dawn, morning, noon, afternoon, dusk, midnight, 6 floats</value>
+    </data>
+    <data name="DefaultCampIdDesc" xml:space="preserve">
+        <value>Default camp ID code, used with treasuretable</value>
+    </data>
+    <data name="ConditionIdsDesc" xml:space="preserve">
+        <value>Condition IDs brought to player when entering this hex</value>
+    </data>
+    <data name="RequiredPropsDesc" xml:space="preserve">
+        <value>Required property IDs for this ingredient, '&amp;' can be used for AND relationship</value>
+    </data>
+    <data name="ForbidPropsDesc" xml:space="preserve">
+        <value>Property IDs this ingredient cannot have</value>
+    </data>
+    <data name="PropertyNameDesc" xml:space="preserve">
+        <value>Property name, e.g., 'easily ignitable'</value>
+    </data>
+    <data name="EquipConditionsDesc" xml:space="preserve">
+        <value>Conditions brought to you when this item is equipped</value>
+    </data>
+    <data name="PossessConditionsDesc" xml:space="preserve">
+        <value>Permanent conditions brought to you when holding this item</value>
+    </data>
+    <data name="UseConditionsDesc" xml:space="preserve">
+        <value>Conditions brought to you when using this item</value>
+    </data>
+    <data name="EquipSlotsDesc" xml:space="preserve">
+        <value>Equipment slots, positions item can be placed on body: 20 left hand, 21 right hand, 22 back</value>
+    </data>
+    <data name="UseSlotsDesc" xml:space="preserve">
+        <value>Use position, 211 for direct self-use (like taking medicine)</value>
+    </data>
+    <data name="SocketLockedDesc" xml:space="preserve">
+        <value>Lock property, items with this property cannot be moved by player</value>
+    </data>
+    <data name="PropertiesDesc" xml:space="preserve">
+        <value>List of property IDs for this item, used for crafting and checks</value>
+    </data>
+    <data name="ContentIdsDesc" xml:space="preserve">
+        <value>Space property of this item, defines what items can be stored as container</value>
+    </data>
+    <data name="FormatIdDesc" xml:space="preserve">
+        <value>Internal treasure pool ID of this item</value>
+    </data>
+    <data name="ComponentIdDesc" xml:space="preserve">
+        <value>Component ID, used with treasuretable, for reverse-craftable items, items obtained by disassembling if acquired by non-crafting means</value>
+    </data>
+    <data name="MirroredDesc" xml:space="preserve">
+        <value>Mirrored, specifically for shoes</value>
+    </data>
+    <data name="SlotDepthDesc" xml:space="preserve">
+        <value>Determines which clothing is on top when wearing multiple items</value>
+    </data>
+    <data name="StackLimitDesc" xml:space="preserve">
+        <value>Maximum stack quantity</value>
+    </data>
+    <data name="SwitchIdsDesc" xml:space="preserve">
+        <value>Switch ID, used for electronic device on/off state switching</value>
+    </data>
+    <data name="SoundsDesc" xml:space="preserve">
+        <value>Sound when picking up or putting down this item</value>
+    </data>
+    <data name="DefinitionDesc" xml:space="preserve">
+        <value>Map definition data, terrain data composed of large amounts of numbers and commas</value>
+    </data>
+    <data name="SecretNameDesc" xml:space="preserve">
+        <value>Recipe's hidden name, used to distinguish human meat from animal meat, water toxicity, etc.</value>
+    </data>
+    <data name="ToolsDesc" xml:space="preserve">
+        <value>Tools required for crafting, format like '1x1'</value>
+    </data>
+    <data name="ConsumedDesc" xml:space="preserve">
+        <value>Items that will be consumed/degraded in crafting, format like '1x2+1x3'</value>
+    </data>
+    <data name="DestroyedDesc" xml:space="preserve">
+        <value>Destroyed items, used for extinguishing torches, etc.</value>
+    </data>
+    <data name="HoursDesc" xml:space="preserve">
+        <value>Action points consumed for crafting</value>
+    </data>
+    <data name="ReverseDesc" xml:space="preserve">
+        <value>Whether reverse engineering is possible: 0 irreversible, 1 reversible, 2, etc.</value>
+    </data>
+    <data name="HiddenIdDesc" xml:space="preserve">
+        <value>Whether it's a hidden recipe, needs to pick up paper to unlock</value>
+    </data>
+    <data name="IdentifyDesc" xml:space="preserve">
+        <value>Whether it can be identified, used with hidden name</value>
+    </data>
+    <data name="TransferComponentsDesc" xml:space="preserve">
+        <value>Unknown parameter</value>
+    </data>
+    <data name="AlsoTryDesc" xml:space="preserve">
+        <value>Other recipe IDs with different recipes but same result</value>
+    </data>
+    <data name="TempTreasureIdDesc" xml:space="preserve">
+        <value>Crafting result ID shown as ghost in result slot during crafting</value>
+    </data>
+    <data name="DegradeOutputDesc" xml:space="preserve">
+        <value>Whether crafted item durability is related to material durability: 1 related, 0 unrelated</value>
+    </data>
+    <data name="ScrapDesc" xml:space="preserve">
+        <value>Whether it can be disassembled</value>
+    </data>
+    <data name="TreasuresDesc" xml:space="preserve">
+        <value>Treasure pool content, format 'item IDxquantityxchance', pipe | means OR, comma , means AND</value>
+    </data>
+    <data name="NestedDesc" xml:space="preserve">
+        <value>Whether generated items will be placed in simultaneously generated containers</value>
+    </data>
+    <data name="SuppressDesc" xml:space="preserve">
+        <value>Suppress content generation from items: when 1, water bottles won't have water, guns won't have bullets</value>
     </data>
 </root>

@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using Avalonia;
 using Avalonia.Controls;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging;
+using NeoEditor.Assets;
 using NeoEditor.Helper;
 using NeoEditor.Services;
 using NeoEditor.ViewModels;
@@ -46,7 +48,7 @@ public partial class SearchableDataGrid : UserControl
         var loc = locProperty?.GetValue(vm);
         if (loc != null)
         {
-            GenericDataGridHelper.ConfigureColumn(null, key => Loc?[key] ?? key, vmType);
+            GenericDataGridHelper.ConfigureColumn(null, key => Loc[key], vmType);
         }
     }
 }

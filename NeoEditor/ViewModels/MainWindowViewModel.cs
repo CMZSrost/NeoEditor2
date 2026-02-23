@@ -9,9 +9,13 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using NeoEditor.Assets;
 using NeoEditor.Data.DTO;
 using NeoEditor.Data.Model.Game;
+using NeoEditor.Data.Options;
 using NeoEditor.Helper;
 
 namespace NeoEditor.ViewModels;
@@ -32,13 +36,12 @@ public partial class MainWindowViewModel : ViewModelBase
     {
         _serviceProvider = serviceProvider;
         Loc = serviceProvider.GetRequiredService<LocalizationService>();
-        CurrentCultureInfo = new CultureInfo(serviceProvider.GetRequiredService<IConfiguration>()
-            .GetValue<string>("DefaultCulture:Code") ?? "en-us");
-        SupportedCultures = new ObservableCollection<CultureInfo>(serviceProvider.GetRequiredService<IConfiguration>()
-            .GetSection("Cultures")
-            .Get<List<LanguageInfo>>()?
-            .Select(c => new CultureInfo(c.Code))
-            .ToList() ?? new List<CultureInfo> { new("en-us") });
+        var cultureSettings = serviceProvider.GetRequiredService<IOptions<CultureSettings>>();
+        CurrentCultureInfo = new CultureInfo(cultureSettings.Value?.DefaultCulture.Code ?? "en-us");
+        SupportedCultures = new ObservableCollection<CultureInfo>(
+            cultureSettings.Value?.Cultures.Select((info => new CultureInfo(info.Code))) ??
+            [new CultureInfo("en-us"), new CultureInfo("zh")]
+        );
         _notificationService = serviceProvider.GetRequiredService<INotificationService>();
         _logger = serviceProvider.GetRequiredService<ILogger<MainWindowViewModel>>();
     }
@@ -137,7 +140,6 @@ public partial class MainWindowViewModel : ViewModelBase
         {
             return;
         }
-
         Loc.SetCulture(culture);
         OnPropertyChanged(nameof(Loc));
         CurrentCultureInfo = culture;

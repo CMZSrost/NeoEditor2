@@ -1,19 +1,26 @@
 ﻿using System;
 using System.Globalization;
-using System.Reflection;
-using System.Resources;
 using System.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
-using Avalonia;
-using Avalonia.Data;
-using Avalonia.Threading;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Localization;
+using NeoEditor.Assets;
 
 namespace NeoEditor.Services;
 
 public sealed class LocalizationService : ObservableObject
 {
-    private static readonly ResourceManager ResourceManager =
-        new("NeoEditor.Assets.Resources", Assembly.GetExecutingAssembly());
+    public LocalizationService() : this(App.ServiceProvider!.GetRequiredService<IStringLocalizer<Resources>>())
+    {
+    }
+
+    public LocalizationService(IStringLocalizer<Resources> localizer)
+    {
+        ResourceManager = localizer;
+    }
+
+
+    private readonly IStringLocalizer<Resources> ResourceManager;
 
     public CultureInfo CurrentCulture => CultureInfo.CurrentUICulture;
 

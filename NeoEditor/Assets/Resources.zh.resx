@@ -15,809 +15,578 @@
             PublicKeyToken=b77a5c561934e089
         </value>
     </resheader>
-    <data name="MainLayout_Header" xml:space="preserve">
+    <data name="Header" xml:space="preserve">
         <value>标题头</value>
     </data>
-    <data name="AttackMode_ModId" xml:space="preserve">
-        <value>模组ID</value>
+
+    <data name="Range" xml:space="preserve">
+        <value>攻击距离</value>
     </data>
-    <data name="AttackMode_Id" xml:space="preserve">
-        <value>代码标号，唯一标识每种攻击方式</value>
-    </data>
-    <data name="AttackMode_Name" xml:space="preserve">
-        <value>当前物品名称，如'拳头'、'.308步枪'等</value>
-    </data>
-    <data name="AttackMode_Notes" xml:space="preserve">
-        <value>物品注释，一般留空，对游戏无影响</value>
-    </data>
-    <data name="AttackMode_Range" xml:space="preserve">
-        <value>攻击距离，近战为1，远程武器根据类型不同</value>
-    </data>
-    <data name="AttackMode_DamageCut" xml:space="preserve">
+    <data name="DamageCut" xml:space="preserve">
         <value>切割伤害值</value>
     </data>
-    <data name="AttackMode_DamageBlunt" xml:space="preserve">
+    <data name="DamageBlunt" xml:space="preserve">
         <value>钝器伤害值</value>
     </data>
-    <data name="AttackMode_ChargeProfiles" xml:space="preserve">
-        <value>内容物/弹药的代码标号，结合chargeprofiles数据类别使用，可能为逗号分隔如'6,31'</value>
-    </data>
-    <data name="AttackMode_Penetration" xml:space="preserve">
+
+    <data name="Penetration" xml:space="preserve">
         <value>穿透等级</value>
     </data>
-    <data name="AttackMode_Type" xml:space="preserve">
-        <value>攻击类别：0 近战，1 远程</value>
+
+    <data name="Transfer" xml:space="preserve">
+        <value>转移性</value>
     </data>
-    <data name="AttackMode_Transfer" xml:space="preserve">
-        <value>转移性：攻击能否转化为物品，例如弓箭的攻击能够回收箭枝, 弹药位置转移：0为不转移，1为转移（弓箭、弹弓等弹药会留在敌人身上或掉落地面）</value>
+    <data name="AttackerConditions" xml:space="preserve">
+        <value>攻击时的状态</value>
     </data>
-    <data name="AttackMode_AttackerConditions" xml:space="preserve">
-        <value>攻击时的状态，结合conditions数据类别使用，如'211x1.0,NSE:42x1'</value>
+
+    <data name="Morale" xml:space="preserve">
+        <value>该武器默认为你带来的士气补正</value>
     </data>
-    <data name="AttackMode_Image" xml:space="preserve">
-        <value>右下角武器图标文件名</value>
-    </data>
-    <data name="AttackMode_Morale" xml:space="preserve">
-        <value>该武器默认为你带来的士气补正，计算公式：(1+士气)*(1+近战/远程士气加成)*武器伤害=实际伤害</value>
-    </data>
-    <data name="AttackMode_WieldPhrase" xml:space="preserve">
+    <data name="WieldPhrase" xml:space="preserve">
         <value>使用该武器进入战斗时的文字描述</value>
     </data>
-    <data name="AttackMode_AttackPhrases" xml:space="preserve">
-        <value>使用该武器攻击敌人时的文字描述，多个描述用逗号分隔</value>
+    <data name="AttackPhrases" xml:space="preserve">
+        <value>使用该武器攻击敌人时的文字描述</value>
     </data>
-    <data name="BarterHex_ModId" xml:space="preserve">
-        <value>模组ID</value>
+
+
+    <data name="Buys" xml:space="preserve">
+        <value>是否可以购买玩家的物品</value>
     </data>
-    <data name="BarterHex_Id" xml:space="preserve">
-        <value>代码标号</value>
+    <data name="RestockTreasureId" xml:space="preserve">
+        <value>引用的战利品数据</value>
     </data>
-    <data name="BarterHex_X" xml:space="preserve">
-        <value>X轴坐标</value>
+
+
+    <data name="StrId" xml:space="preserve">
+        <value>物品标号</value>
     </data>
-    <data name="BarterHex_Y" xml:space="preserve">
-        <value>Y轴坐标</value>
+
+
+    <data name="Success" xml:space="preserve">
+        <value>动作执行成功后在游戏中显示的文本</value>
     </data>
-    <data name="BarterHex_Buys" xml:space="preserve">
-        <value>是否可以购买玩家的物品：0为不可以，1为可以</value>
-    </data>
-    <data name="BarterHex_RestockTreasureId" xml:space="preserve">
-        <value>引用的战利品数据，结合treasuretable使用。注意：底特律C商店是个例外，使用3号战利品池</value>
-    </data>
-    <data name="BattleMove_ModId" xml:space="preserve">
-        <value>模组ID</value>
-    </data>
-    <data name="BattleMove_Id" xml:space="preserve">
-        <value>代码标号</value>
-    </data>
-    <data name="BattleMove_StrId" xml:space="preserve">
-        <value>物品标号，如'90.35'</value>
-    </data>
-    <data name="BattleMove_Name" xml:space="preserve">
-        <value>动作名称，如'掩体中后退'</value>
-    </data>
-    <data name="BattleMove_Notes" xml:space="preserve">
-        <value>动作注释，一般留空，对游戏无影响</value>
-    </data>
-    <data name="BattleMove_Success" xml:space="preserve">
-        <value>动作执行成功后在游戏中显示的文本，&amp;lt;us&amp;gt;代表自己，&amp;lt;them&amp;gt;代表目标</value>
-    </data>
-    <data name="BattleMove_Fail" xml:space="preserve">
+    <data name="Fail" xml:space="preserve">
         <value>动作执行失败后在游戏中显示的文本</value>
     </data>
-    <data name="BattleMove_PopUp" xml:space="preserve">
-        <value>游戏内的动作说明，显示在动作选择界面</value>
+    <data name="PopUp" xml:space="preserve">
+        <value>游戏内的动作说明</value>
     </data>
-    <data name="BattleMove_ChanceType" xml:space="preserve">
-        <value>几率类型（目前未明）</value>
+    <data name="ChanceType" xml:space="preserve">
+        <value>几率类型</value>
     </data>
-    <data name="BattleMove_UsConditions" xml:space="preserve">
-        <value>需要我方处于的状态，负号表示非，即不处于该状态'</value>
+    <data name="UsConditions" xml:space="preserve">
+        <value>需要我方处于的状态</value>
     </data>
-    <data name="BattleMove_ThemConditions" xml:space="preserve">
-        <value>需要对方处于的状态，负号表示非，即不处于该状态</value>
+    <data name="ThemConditions" xml:space="preserve">
+        <value>需要对方处于的状态</value>
     </data>
-    <data name="BattleMove_PairConditions" xml:space="preserve">
+    <data name="PairConditions" xml:space="preserve">
         <value>该行动对自己带来的影响</value>
     </data>
-    <data name="BattleMove_UsFailConditions" xml:space="preserve">
+    <data name="UsFailConditions" xml:space="preserve">
         <value>行动失败时会为自己带来的状态</value>
     </data>
-    <data name="BattleMove_ThemFailConditions" xml:space="preserve">
-        <value>行动失败时会为敌方带来的状态（官方所有数据均未填写）</value>
+    <data name="ThemFailConditions" xml:space="preserve">
+        <value>行动失败时会为敌方带来的状态</value>
     </data>
-    <data name="BattleMove_PairFailConditions" xml:space="preserve">
+    <data name="PairFailConditions" xml:space="preserve">
         <value>行动失败时会为自己带来的影响</value>
     </data>
-    <data name="BattleMove_UsPreConditions" xml:space="preserve">
-        <value>执行该行动的前置要求，格式如'137,151,-143'（负数表示不可拥有该状态）</value>
+    <data name="UsPreConditions" xml:space="preserve">
+        <value>执行该行动的前置要求</value>
     </data>
-    <data name="BattleMove_ThemPreConditions" xml:space="preserve">
+    <data name="ThemPreConditions" xml:space="preserve">
         <value>敌方需要满足的前置条件</value>
     </data>
-    <data name="BattleMove_SeeThem" xml:space="preserve">
+    <data name="SeeThem" xml:space="preserve">
         <value>对方需要处于的暴露等级</value>
     </data>
-    <data name="BattleMove_SeeUs" xml:space="preserve">
+    <data name="SeeUs" xml:space="preserve">
         <value>自己需要处于的暴露等级</value>
     </data>
-    <data name="BattleMove_AllOutOfRange" xml:space="preserve">
+    <data name="AllOutOfRange" xml:space="preserve">
         <value>离开所有场上目标距离</value>
     </data>
-    <data name="BattleMove_InAttackRange" xml:space="preserve">
-        <value>攻击范围，可能用于判定溅射或武器长度</value>
+    <data name="InAttackRange" xml:space="preserve">
+        <value>攻击范围</value>
     </data>
-    <data name="BattleMove_MinCharges" xml:space="preserve">
-        <value>攻击次数（存疑）</value>
+    <data name="MinCharges" xml:space="preserve">
+        <value>攻击次数</value>
     </data>
-    <data name="BattleMove_MinRange" xml:space="preserve">
-        <value>距离最小需求，-1为全场覆盖</value>
+
+
+    <data name="AttackModeType" xml:space="preserve">
+        <value>攻击模式类型</value>
     </data>
-    <data name="BattleMove_MaxRange" xml:space="preserve">
-        <value>距离最大需求，-1为全场覆盖</value>
+
+
+    <data name="Priority" xml:space="preserve">
+        <value>优先级</value>
     </data>
-    <data name="BattleMove_AttackModeType" xml:space="preserve">
-        <value>攻击模式类型：-1非攻击动作，0近战攻击，1远程攻击</value>
+    <data name="Detect" xml:space="preserve">
+        <value>执行该动作使你被发现的几率</value>
     </data>
-    <data name="BattleMove_HexTypes" xml:space="preserve">
-        <value>所在地图格子类型（官方所有数据均留空）</value>
-    </data>
-    <data name="BattleMove_Chance" xml:space="preserve">
-        <value>可以使用该技能的几率（百分比）</value>
-    </data>
-    <data name="BattleMove_Priority" xml:space="preserve">
-        <value>优先级，对玩家无效，Bot专用，同一回合中哪边的战斗行动先触发</value>
-    </data>
-    <data name="BattleMove_Detect" xml:space="preserve">
-        <value>执行该动作使你被发现的几率，设为0则不会被发现</value>
-    </data>
-    <data name="BattleMove_Order" xml:space="preserve">
+    <data name="Order" xml:space="preserve">
         <value>未知参数</value>
     </data>
-    <data name="BattleMove_Fatigue" xml:space="preserve">
+    <data name="Fatigue" xml:space="preserve">
         <value>疲劳值消耗</value>
     </data>
-    <data name="BattleMove_Approach" xml:space="preserve">
+    <data name="Approach" xml:space="preserve">
         <value>该动作是否会使你接近对方</value>
     </data>
-    <data name="BattleMove_Offense" xml:space="preserve">
+    <data name="Offense" xml:space="preserve">
         <value>是否是攻击性动作</value>
     </data>
-    <data name="BattleMove_FallBack" xml:space="preserve">
+    <data name="FallBack" xml:space="preserve">
         <value>该动作是否为远离动作</value>
     </data>
-    <data name="BattleMove_Retreat" xml:space="preserve">
+    <data name="Retreat" xml:space="preserve">
         <value>该动作是否为撤退动作</value>
     </data>
-    <data name="BattleMove_Position" xml:space="preserve">
+    <data name="Position" xml:space="preserve">
         <value>该动作是否为姿势动作</value>
     </data>
-    <data name="BattleMove_Passive" xml:space="preserve">
+    <data name="Passive" xml:space="preserve">
         <value>该动作是否为被动</value>
     </data>
-    <data name="CampType_ModId" xml:space="preserve">
-        <value>模组ID</value>
-    </data>
-    <data name="CampType_Id" xml:space="preserve">
-        <value>代码标号</value>
-    </data>
-    <data name="CampType_Description" xml:space="preserve">
-        <value>营地的描述，如'区域的暗处'</value>
-    </data>
-    <data name="CampType_ImageList" xml:space="preserve">
+
+
+    <data name="ImageList" xml:space="preserve">
         <value>营地调用的图片文件名</value>
     </data>
-    <data name="CampType_Capacities" xml:space="preserve">
-        <value>营地大小，格式如'34x26'</value>
+
+
+    <data name="Alertness" xml:space="preserve">
+        <value>营地的默认警戒值</value>
     </data>
-    <data name="CampType_TreasureId" xml:space="preserve">
-        <value>该营地的战利品池ID</value>
+    <data name="Visibility" xml:space="preserve">
+        <value>营地的默认可见值</value>
     </data>
-    <data name="CampType_Alertness" xml:space="preserve">
-        <value>营地的默认警戒值（百分比）</value>
-    </data>
-    <data name="CampType_Visibility" xml:space="preserve">
-        <value>营地的默认可见值（百分比），-0.05表示-5%</value>
-    </data>
-    <data name="CampType_WetTempAdjustMod" xml:space="preserve">
+    <data name="WetTempAdjustMod" xml:space="preserve">
         <value>营地的默认温度调节</value>
     </data>
-    <data name="CampType_HealPerHourMod" xml:space="preserve">
-        <value>营地默认每小时带来的恢复效果（百分比）</value>
+    <data name="HealPerHourMod" xml:space="preserve">
+        <value>营地默认每小时带来的恢复效果</value>
     </data>
-    <data name="CampType_SleepQuality" xml:space="preserve">
-        <value>营地默认为你带来的睡眠质量（百分比），-0.26表示-26%</value>
+    <data name="SleepQuality" xml:space="preserve">
+        <value>营地默认为你带来的睡眠质量</value>
     </data>
-    <data name="ChargeProfile_ModId" xml:space="preserve">
-        <value>模组ID</value>
+
+
+    <data name="ItemId" xml:space="preserve">
+        <value>物品ID</value>
     </data>
-    <data name="ChargeProfile_Id" xml:space="preserve">
-        <value>代码标号</value>
-    </data>
-    <data name="ChargeProfile_Name" xml:space="preserve">
-        <value>物品名称，如'纳米医疗箱电量'</value>
-    </data>
-    <data name="ChargeProfile_ItemId" xml:space="preserve">
-        <value>物品ID，如'10.3'</value>
-    </data>
-    <data name="ChargeProfile_PerUse" xml:space="preserve">
+    <data name="PerUse" xml:space="preserve">
         <value>每次使用所消耗的数量</value>
     </data>
-    <data name="ChargeProfile_PerHour" xml:space="preserve">
-        <value>每小时所消耗数量，基本用于电器的电力消耗</value>
+    <data name="PerHour" xml:space="preserve">
+        <value>每小时所消耗数量</value>
     </data>
-    <data name="ChargeProfile_PerHourEquipped" xml:space="preserve">
-        <value>装备在身上时每小时的消耗耐久，仅用于XM54过滤芯片</value>
+    <data name="PerHourEquipped" xml:space="preserve">
+        <value>装备在身上时每小时的消耗耐久</value>
     </data>
-    <data name="ChargeProfile_PerHex" xml:space="preserve">
+    <data name="PerHex" xml:space="preserve">
         <value>每移动一格所消耗的数量</value>
     </data>
-    <data name="ChargeProfile_Degrade" xml:space="preserve">
+    <data name="Degrade" xml:space="preserve">
         <value>是否会降解</value>
     </data>
-    <data name="Condition_ModId" xml:space="preserve">
-        <value>模组ID</value>
+
+
+    <data name="FieldNames" xml:space="preserve">
+        <value>该状态为你带来的效果字段列表</value>
     </data>
-    <data name="Condition_Id" xml:space="preserve">
-        <value>代码标号</value>
+    <data name="Modifiers" xml:space="preserve">
+        <value>该状态为你带来的效果的具体影响数值</value>
     </data>
-    <data name="Condition_Name" xml:space="preserve">
-        <value>状态名称，如'饥肠辘辘'</value>
+    <data name="Effects" xml:space="preserve">
+        <value>状态带来的效果</value>
     </data>
-    <data name="Condition_Description" xml:space="preserve">
-        <value>状态注释/描述，如'&amp;lt;us&amp;gt; 正在挨饿。'</value>
+    <data name="Fatal" xml:space="preserve">
+        <value>是否为玩家带来死亡效果</value>
     </data>
-    <data name="Condition_FieldNames" xml:space="preserve">
-        <value>该状态为你带来的效果字段列表，如'm_fHealPerHourMod,m_fImmuneRestoreRate'等</value>
+    <data name="IdNext" xml:space="preserve">
+        <value>该状态下一阶段为你带来的新状态ID</value>
     </data>
-    <data name="Condition_Modifiers" xml:space="preserve">
-        <value>该状态为你带来的效果的具体影响数值，与FieldNames对应</value>
+    <data name="Duration" xml:space="preserve">
+        <value>持续时间</value>
     </data>
-    <data name="Condition_Effects" xml:space="preserve">
-        <value>状态带来的效果，如SetImmunity免疫力，ArmorWound护甲。如'ArmorWound=100,0.1,0.05'，</value>
+    <data name="Permanent" xml:space="preserve">
+        <value>是否为会为你带来长期影响</value>
     </data>
-    <data name="Condition_Fatal" xml:space="preserve">
-        <value>是否为玩家带来死亡效果（得到这个状态会不会暴毙）</value>
-    </data>
-    <data name="Condition_IdNext" xml:space="preserve">
-        <value>该状态下一阶段为你带来的新状态ID，可能为多个逗号分隔</value>
-    </data>
-    <data name="Condition_Duration" xml:space="preserve">
-        <value>持续时间（小时）</value>
-    </data>
-    <data name="Condition_Permanent" xml:space="preserve">
-        <value>是否为会为你带来长期影响（如吃药、割伤等），为true表示回合结束不会自动消失</value>
-    </data>
-    <data name="Condition_ChanceNext" xml:space="preserve">
+    <data name="ChanceNext" xml:space="preserve">
         <value>有多大几率该状态在下个阶段为你带来新的状态</value>
     </data>
-    <data name="Condition_Stackable" xml:space="preserve">
+    <data name="Stackable" xml:space="preserve">
         <value>该状态是否可以堆叠</value>
     </data>
-    <data name="Condition_Display" xml:space="preserve">
+    <data name="Display" xml:space="preserve">
         <value>该状态是否可见</value>
     </data>
-    <data name="Condition_DisplayOther" xml:space="preserve">
+    <data name="DisplayOther" xml:space="preserve">
         <value>该状态是否可被其他人看见</value>
     </data>
-    <data name="Condition_DisplayGameOver" xml:space="preserve">
+    <data name="DisplayGameOver" xml:space="preserve">
         <value>该状态是否会在你的游戏总结中出现</value>
     </data>
-    <data name="Condition_Color" xml:space="preserve">
-        <value>状态颜色：0白色，1红色，2绿色，3黄色</value>
+    <data name="Color" xml:space="preserve">
+        <value>状态颜色</value>
     </data>
-    <data name="Condition_ResetTimer" xml:space="preserve">
-        <value>刷新时间，游戏中休息一次为一小时</value>
+    <data name="ResetTimer" xml:space="preserve">
+        <value>刷新时间</value>
     </data>
-    <data name="Condition_RemoveAll" xml:space="preserve">
+    <data name="RemoveAll" xml:space="preserve">
         <value>未知参数</value>
     </data>
-    <data name="Condition_RemovePostCombat" xml:space="preserve">
+    <data name="RemovePostCombat" xml:space="preserve">
         <value>未知参数</value>
     </data>
-    <data name="Condition_TransferRange" xml:space="preserve">
-        <value>传染距离，-1为不传播</value>
+    <data name="TransferRange" xml:space="preserve">
+        <value>传染距离</value>
     </data>
-    <data name="Condition_Thresholds" xml:space="preserve">
-        <value>触发阈值，目前用于传奇技能的触发</value>
+    <data name="Thresholds" xml:space="preserve">
+        <value>触发阈值</value>
     </data>
-    <data name="ContainerType_ModId" xml:space="preserve">
-        <value>模组ID</value>
-    </data>
-    <data name="ContainerType_Id" xml:space="preserve">
-        <value>代码标号</value>
-    </data>
-    <data name="ContainerType_Name" xml:space="preserve">
-        <value>属性名称，如'防水'、'精'、'粗'等</value>
-    </data>
-    <data name="Creature_ModId" xml:space="preserve">
-        <value>模组ID</value>
-    </data>
-    <data name="Creature_Id" xml:space="preserve">
-        <value>代码标号</value>
-    </data>
-    <data name="Creature_Name" xml:space="preserve">
-        <value>生物名称，如'狗人'</value>
-    </data>
-    <data name="Creature_NamePublic" xml:space="preserve">
+
+
+    <data name="NamePublic" xml:space="preserve">
         <value>未接触时显示的名称</value>
     </data>
-    <data name="Creature_Notes" xml:space="preserve">
+    <data name="Notes" xml:space="preserve">
         <value>注释</value>
     </data>
-    <data name="Creature_Image" xml:space="preserve">
-        <value>该生物在地图上调用的图片文件名</value>
+
+    <data name="EncounterIds" xml:space="preserve">
+        <value>遇到该生物会触发的状态ID列表</value>
     </data>
-    <data name="Creature_EncounterIds" xml:space="preserve">
-        <value>遇到该生物会触发的状态ID列表，逗号分隔</value>
-    </data>
-    <data name="Creature_MovesPerTurn" xml:space="preserve">
+    <data name="MovesPerTurn" xml:space="preserve">
         <value>每回合的行动点数</value>
     </data>
-    <data name="Creature_TreasureId" xml:space="preserve">
-        <value>战利品池ID（击杀掉落）</value>
-    </data>
-    <data name="Creature_Faction" xml:space="preserve">
+
+    <data name="Faction" xml:space="preserve">
         <value>所属阵营ID</value>
     </data>
-    <data name="Creature_AttackModes" xml:space="preserve">
-        <value>攻击方式ID，结合attackmodes使用，可能为单个ID或逗号分隔</value>
+
+    <data name="BaseConditions" xml:space="preserve">
+        <value>该生物生成时的基础状态</value>
     </data>
-    <data name="Creature_BaseConditions" xml:space="preserve">
-        <value>该生物生成时的基础状态，格式如'38=1,50=0.5'</value>
+    <data name="CorpseId" xml:space="preserve">
+        <value>尸体编号</value>
     </data>
-    <data name="Creature_CorpseId" xml:space="preserve">
-        <value>尸体编号（战利品池编号）</value>
+    <data name="Activities" xml:space="preserve">
+        <value>该生物的活动方式描述</value>
     </data>
-    <data name="Creature_Activities" xml:space="preserve">
-        <value>该生物的活动方式描述，可能仅为注释用途</value>
-    </data>
-    <data name="CreatureSource_ModId" xml:space="preserve">
-        <value>模组ID</value>
-    </data>
-    <data name="CreatureSource_Id" xml:space="preserve">
-        <value>代码标号</value>
-    </data>
-    <data name="CreatureSource_Name" xml:space="preserve">
-        <value>生物名称，如'来自东南方的掠夺者'</value>
-    </data>
-    <data name="CreatureSource_X" xml:space="preserve">
-        <value>X轴坐标</value>
-    </data>
-    <data name="CreatureSource_Y" xml:space="preserve">
-        <value>Y轴坐标</value>
-    </data>
-    <data name="CreatureSource_CreatureId" xml:space="preserve">
-        <value>刷新的生物编号，结合creatures中的标号</value>
-    </data>
-    <data name="CreatureSource_Min" xml:space="preserve">
+
+    <data name="Min" xml:space="preserve">
         <value>最小刷新数量</value>
     </data>
-    <data name="CreatureSource_Max" xml:space="preserve">
-        <value>最大刷新数量（数值过大会导致大量生物刷新在同一区块）</value>
+    <data name="Max" xml:space="preserve">
+        <value>最大刷新数量</value>
     </data>
-    <data name="CreatureSource_Weight" xml:space="preserve">
-        <value>权重，具体含义未知</value>
+    <data name="Weight" xml:space="preserve">
+        <value>权重</value>
     </data>
-    <data name="DataFile_ModId" xml:space="preserve">
-        <value>模组ID</value>
+
+    <data name="Image" xml:space="preserve">
+        <value>建筑图标名称</value>
     </data>
-    <data name="DataFile_Id" xml:space="preserve">
-        <value>代码标号</value>
-    </data>
-    <data name="DataFile_Name" xml:space="preserve">
-        <value>数据名称，如'数据库'、'文本文件'等</value>
-    </data>
-    <data name="DataFile_Description" xml:space="preserve">
-        <value>数据详情，如'某人的地址簿'</value>
-    </data>
-    <data name="DataFile_Value" xml:space="preserve">
-        <value>该资料的价值</value>
-    </data>
-    <data name="DataFile_Image" xml:space="preserve">
-        <value>该数据所调用的图片文件名</value>
-    </data>
-    <data name="DmcPlace_ModId" xml:space="preserve">
-        <value>模组ID</value>
-    </data>
-    <data name="DmcPlace_Id" xml:space="preserve">
-        <value>代码标号</value>
-    </data>
-    <data name="DmcPlace_Image" xml:space="preserve">
-        <value>建筑图标名称，如'btn_dmc_diner'</value>
-    </data>
-    <data name="DmcPlace_EncounterId" xml:space="preserve">
-        <value>调用的剧情代码ID，结合encounters使用</value>
-    </data>
-    <data name="DmcPlace_X" xml:space="preserve">
-        <value>X轴坐标</value>
-    </data>
-    <data name="DmcPlace_Y" xml:space="preserve">
-        <value>Y轴坐标</value>
-    </data>
-    <data name="Encounter_ModId" xml:space="preserve">
-        <value>模组ID</value>
-    </data>
-    <data name="Encounter_Id" xml:space="preserve">
-        <value>代码标号</value>
-    </data>
-    <data name="Encounter_Name" xml:space="preserve">
-        <value>该剧情的名称，如'魔迦怨灵出现'</value>
-    </data>
-    <data name="Encounter_Description" xml:space="preserve">
-        <value>剧情文本描述</value>
-    </data>
-    <data name="Encounter_Image" xml:space="preserve">
-        <value>该剧情调用的图片文件名</value>
-    </data>
-    <data name="Encounter_TreasureId" xml:space="preserve">
-        <value>剧情发生时在玩家脚下生成的战利品池ID</value>
-    </data>
-    <data name="Encounter_RemoveTreasureId" xml:space="preserve">
+
+    <data name="RemoveTreasureId" xml:space="preserve">
         <value>剧情发生时在玩家脚下移除的战利品池ID</value>
     </data>
-    <data name="Encounter_Conditions" xml:space="preserve">
-        <value>该剧情的附带状态ID列表，逗号分隔</value>
+    <data name="Conditions" xml:space="preserve">
+        <value>该剧情的附带状态ID列表</value>
     </data>
-    <data name="Encounter_PreConditions" xml:space="preserve">
-        <value>出现该剧情时必要的前置状态，负数表示不可拥有该状态</value>
+    <data name="PreConditions" xml:space="preserve">
+        <value>出现该剧情时必要的前置状态</value>
     </data>
-    <data name="Encounter_Price" xml:space="preserve">
+    <data name="Price" xml:space="preserve">
         <value>该剧情是否会让你的资产变动</value>
     </data>
-    <data name="Encounter_Responses" xml:space="preserve">
-        <value>玩家在经历该剧情时的回应选项，格式如'=15x0.083x0x0x0,=16x0.083x0x0x0'</value>
+    <data name="Responses" xml:space="preserve">
+        <value>玩家在经历该剧情时的回应选项</value>
     </data>
-    <data name="Encounter_MinimapHexes" xml:space="preserve">
+    <data name="MinimapHexes" xml:space="preserve">
         <value>小地图上显示的点坐标</value>
     </data>
-    <data name="Encounter_RemoveCreatures" xml:space="preserve">
+    <data name="RemoveCreatures" xml:space="preserve">
         <value>该剧情发生时是否需要移除生物</value>
     </data>
-    <data name="Encounter_RemoveUsed" xml:space="preserve">
+    <data name="RemoveUsed" xml:space="preserve">
         <value>该剧情是否会移除你的物品</value>
     </data>
-    <data name="Encounter_ItemsId" xml:space="preserve">
+    <data name="ItemsId" xml:space="preserve">
         <value>发生该剧情时产生的物品ID</value>
     </data>
-    <data name="Encounter_CreatureId" xml:space="preserve">
-        <value>该剧情发生时需要增加的生物ID</value>
+    <data name="CreatureId" xml:space="preserve">
+        <value>刷新的生物编号</value>
     </data>
-    <data name="Encounter_CreatureHex" xml:space="preserve">
-        <value>生物出现位置坐标，格式如'0,0'</value>
+    <data name="CreatureHex" xml:space="preserve">
+        <value>生物出现位置坐标</value>
     </data>
-    <data name="Encounter_Teleport" xml:space="preserve">
-        <value>发生该剧情时将玩家传送到的位置，'0,0'为不传送</value>
+    <data name="Teleport" xml:space="preserve">
+        <value>发生该剧情时将玩家传送到的位置</value>
     </data>
-    <data name="Encounter_Editor" xml:space="preserve">
-        <value>未知参数，编辑器相关</value>
+    <data name="Editor" xml:space="preserve">
+        <value>未知参数</value>
     </data>
-    <data name="Encounter_Type" xml:space="preserve">
-        <value>剧情类型：0普通剧情，1搜刮剧情</value>
-    </data>
-    <data name="Encounter_LootChance" xml:space="preserve">
+
+    <data name="LootChance" xml:space="preserve">
         <value>成功搜刮到物品的几率</value>
     </data>
-    <data name="Encounter_AccidentChance" xml:space="preserve">
-        <value>发生意外的几率（如破楼倒塌）</value>
+    <data name="AccidentChance" xml:space="preserve">
+        <value>发生意外的几率</value>
     </data>
-    <data name="Encounter_CreatureChance" xml:space="preserve">
+    <data name="CreatureChance" xml:space="preserve">
         <value>未知参数</value>
     </data>
-    <data name="Encounter_Accidents" xml:space="preserve">
-        <value>出现意外时发生的事件ID（调用encounters）</value>
+    <data name="Accidents" xml:space="preserve">
+        <value>出现意外时发生的事件ID</value>
     </data>
-    <data name="Encounter_Loot" xml:space="preserve">
+    <data name="Loot" xml:space="preserve">
         <value>搜刮成功时的战利品种类ID</value>
     </data>
-    <data name="EncounterTrigger_ModId" xml:space="preserve">
-        <value>模组ID</value>
-    </data>
-    <data name="EncounterTrigger_Id" xml:space="preserve">
-        <value>代码标号</value>
-    </data>
-    <data name="EncounterTrigger_Name" xml:space="preserve">
-        <value>触发的剧情名称，如'在冷冻睡眠舱内醒来'</value>
-    </data>
-    <data name="EncounterTrigger_EncounterId" xml:space="preserve">
+
+
+    <data name="EncounterId" xml:space="preserve">
         <value>触发器的代码标号</value>
     </data>
-    <data name="EncounterTrigger_Chance" xml:space="preserve">
+    <data name="Chance" xml:space="preserve">
         <value>触发几率</value>
     </data>
-    <data name="EncounterTrigger_LocBased" xml:space="preserve">
+    <data name="LocBased" xml:space="preserve">
         <value>该触发器是否为固定位置触发</value>
     </data>
-    <data name="EncounterTrigger_DateBased" xml:space="preserve">
+    <data name="DateBased" xml:space="preserve">
         <value>该触发器是否为固定时间触发</value>
     </data>
-    <data name="EncounterTrigger_HexBased" xml:space="preserve">
+    <data name="HexBased" xml:space="preserve">
         <value>该触发器是否为固定场景触发</value>
     </data>
-    <data name="EncounterTrigger_Unique" xml:space="preserve">
+    <data name="Unique" xml:space="preserve">
         <value>该事件是否是独一无二的</value>
     </data>
-    <data name="EncounterTrigger_AIPassable" xml:space="preserve">
+    <data name="AIPassable" xml:space="preserve">
         <value>该事件是否能被AI触发</value>
     </data>
-    <data name="EncounterTrigger_Area" xml:space="preserve">
-        <value>该事件触发的位置坐标，格式如'20,164,0'</value>
+    <data name="Area" xml:space="preserve">
+        <value>该事件触发的位置坐标</value>
     </data>
-    <data name="EncounterTrigger_DateMin" xml:space="preserve">
-        <value>最小触发时间，格式'年-月-日-小时'</value>
+    <data name="DateMin" xml:space="preserve">
+        <value>最小触发时间</value>
     </data>
-    <data name="EncounterTrigger_DateMax" xml:space="preserve">
-        <value>最大触发时间，格式'年-月-日-小时'</value>
+    <data name="DateMax" xml:space="preserve">
+        <value>最大触发时间</value>
     </data>
-    <data name="EncounterTrigger_HexTypes" xml:space="preserve">
-        <value>可触发该触发器的固定场景ID列表，结合hextypes使用</value>
+    <data name="HexTypes" xml:space="preserve">
+        <value>所在地图格子类型</value>
     </data>
-    <data name="Faction_ModId" xml:space="preserve">
-        <value>模组ID</value>
+
+
+    <data name="DictFactions" xml:space="preserve">
+        <value>与其他派系的声望关系</value>
     </data>
-    <data name="Faction_Id" xml:space="preserve">
-        <value>代码标号/阵营标号</value>
+
+
+    <data name="X" xml:space="preserve">
+        <value>X</value>
     </data>
-    <data name="Faction_Name" xml:space="preserve">
-        <value>阵营名称，如'狗人'</value>
+    <data name="Y" xml:space="preserve">
+        <value>Y</value>
     </data>
-    <data name="Faction_DictFactions" xml:space="preserve">
-        <value>与其他派系的声望关系，格式如'0=-100,1=1,2=-100'</value>
-    </data>
-    <data name="ForbiddenHex_ModId" xml:space="preserve">
-        <value>模组ID</value>
-    </data>
-    <data name="ForbiddenHex_Id" xml:space="preserve">
-        <value>代码标号</value>
-    </data>
-    <data name="ForbiddenHex_X" xml:space="preserve">
-        <value>X轴坐标</value>
-    </data>
-    <data name="ForbiddenHex_Y" xml:space="preserve">
-        <value>Y轴坐标</value>
-    </data>
-    <data name="ForbiddenHex_Name" xml:space="preserve">
-        <value>保护区所属阵营或名称，如'阿尼什纳比部族'</value>
-    </data>
-    <data name="GameVar_ModId" xml:space="preserve">
-        <value>模组ID</value>
-    </data>
-    <data name="GameVar_Name" xml:space="preserve">
-        <value>变量名称，如'nSkillPoints'（技能点数）</value>
-    </data>
-    <data name="GameVar_Type" xml:space="preserve">
-        <value>数值类型，如'int'、'Number'等</value>
-    </data>
-    <data name="GameVar_Value" xml:space="preserve">
+
+
+    <data name="Value" xml:space="preserve">
         <value>具体数值</value>
     </data>
-    <data name="Headline_ModId" xml:space="preserve">
-        <value>模组ID</value>
-    </data>
-    <data name="Headline_Id" xml:space="preserve">
-        <value>代码标号</value>
-    </data>
-    <data name="Headline_HeadlineText" xml:space="preserve">
+
+
+    <data name="HeadlineText" xml:space="preserve">
         <value>头版头条具体文本内容</value>
     </data>
-    <data name="HexType_ModId" xml:space="preserve">
-        <value>模组ID</value>
+
+
+    <data name="Description" xml:space="preserve">
+        <value>数据详情</value>
     </data>
-    <data name="HexType_Id" xml:space="preserve">
-        <value>代码标号</value>
-    </data>
-    <data name="HexType_Name" xml:space="preserve">
-        <value>地块名称，如'海洋'</value>
-    </data>
-    <data name="HexType_Description" xml:space="preserve">
-        <value>地块在游戏中显示的名称，如'深水'</value>
-    </data>
-    <data name="HexType_TerrainCost" xml:space="preserve">
+    <data name="TerrainCost" xml:space="preserve">
         <value>在该地块上消耗的行动点数</value>
     </data>
-    <data name="HexType_VizLimiter" xml:space="preserve">
+    <data name="VizLimiter" xml:space="preserve">
         <value>在该地块上减少的视距</value>
     </data>
-    <data name="HexType_VizIncrease" xml:space="preserve">
+    <data name="VizIncrease" xml:space="preserve">
         <value>在该地块上增加的视距</value>
     </data>
-    <data name="HexType_TreasureId" xml:space="preserve">
-        <value>在该地块上生成的战利品池ID</value>
+
+    <data name="Passable" xml:space="preserve">
+        <value>是否可以移动到该地形</value>
     </data>
-    <data name="HexType_Passable" xml:space="preserve">
-        <value>是否可以移动到该地形：0不可通行，1可通行</value>
-    </data>
-    <data name="HexType_ScavengeInitialId" xml:space="preserve">
+    <data name="ScavengeInitialId" xml:space="preserve">
         <value>初次搜刮该地形时调用的战利品池ID</value>
     </data>
-    <data name="HexType_ScavengeItemsIdPerHour" xml:space="preserve">
+    <data name="ScavengeItemsIdPerHour" xml:space="preserve">
         <value>多次搜刮该地形时调用的战利品池ID</value>
     </data>
-    <data name="HexType_CampItems" xml:space="preserve">
+    <data name="CampItems" xml:space="preserve">
         <value>营地类型ID</value>
     </data>
-    <data name="HexType_LightLevels" xml:space="preserve">
-        <value>亮度等级，对应：凌晨,上午,中午,下午,傍晚,半夜，6个浮点数</value>
+    <data name="LightLevels" xml:space="preserve">
+        <value>亮度等级</value>
     </data>
-    <data name="HexType_DefaultCampId" xml:space="preserve">
-        <value>默认营地的代码标号，结合treasuretable使用</value>
+    <data name="DefaultCampId" xml:space="preserve">
+        <value>默认营地的代码标号</value>
     </data>
-    <data name="HexType_MinRange" xml:space="preserve">
-        <value>遇到生物时，玩家距离此生物的最小距离</value>
+    <data name="MinRange" xml:space="preserve">
+        <value>遇到生物时</value>
     </data>
-    <data name="HexType_MaxRange" xml:space="preserve">
-        <value>遇到生物时，玩家距离此生物的最大距离</value>
+    <data name="MaxRange" xml:space="preserve">
+        <value>遇到生物时</value>
     </data>
-    <data name="HexType_ConditionIds" xml:space="preserve">
+    <data name="ConditionIds" xml:space="preserve">
         <value>进入该地块会为玩家带来的状态ID</value>
     </data>
-    <data name="Ingredient_ModId" xml:space="preserve">
-        <value>模组ID</value>
+
+
+    <data name="RequiredProps" xml:space="preserve">
+        <value>合成项所需的属性ID</value>
     </data>
-    <data name="Ingredient_Id" xml:space="preserve">
-        <value>合成项目标号，用于合成表</value>
-    </data>
-    <data name="Ingredient_Name" xml:space="preserve">
-        <value>合成项名称，如'火源'</value>
-    </data>
-    <data name="Ingredient_RequiredProps" xml:space="preserve">
-        <value>合成项所需的属性ID，可用'&amp;'表示'与'关系</value>
-    </data>
-    <data name="Ingredient_ForbidProps" xml:space="preserve">
+    <data name="ForbidProps" xml:space="preserve">
         <value>合成项不可拥有的属性ID</value>
     </data>
-    <data name="ItemProp_ModId" xml:space="preserve">
-        <value>模组ID</value>
+
+
+    <data name="PropertyName" xml:space="preserve">
+        <value>属性名称</value>
     </data>
-    <data name="ItemProp_Id" xml:space="preserve">
-        <value>合成项属性标号</value>
-    </data>
-    <data name="ItemProp_PropertyName" xml:space="preserve">
-        <value>属性名称，如'easily ignitable'（易燃物）</value>
-    </data>
-    <data name="ItemType_EquipConditions" xml:space="preserve">
+    <data name="EquipConditions" xml:space="preserve">
         <value>该物品装备时会为你带来的状态</value>
     </data>
-    <data name="ItemType_PossessConditions" xml:space="preserve">
+    <data name="PossessConditions" xml:space="preserve">
         <value>该物品持有时会为你带来的永久性状态</value>
     </data>
-    <data name="ItemType_UseConditions" xml:space="preserve">
+    <data name="UseConditions" xml:space="preserve">
         <value>使用该物品会为你带来的状态</value>
     </data>
-    <data name="ItemType_Capacities" xml:space="preserve">
-        <value>如果该物品是容器，它的容积大小</value>
+    <data name="Capacities" xml:space="preserve">
+        <value>营地大小</value>
     </data>
-    <data name="ItemType_EquipSlots" xml:space="preserve">
-        <value>装备插槽，物品能放在身上的位置：20左手，21右手，22背部</value>
+    <data name="EquipSlots" xml:space="preserve">
+        <value>装备插槽</value>
     </data>
-    <data name="ItemType_UseSlots" xml:space="preserve">
-        <value>使用位置，211为直接给自己使用（如吃药）</value>
+    <data name="UseSlots" xml:space="preserve">
+        <value>使用位置</value>
     </data>
-    <data name="ItemType_SocketLocked" xml:space="preserve">
-        <value>锁定属性，带此属性的物品无法被玩家移动</value>
+    <data name="SocketLocked" xml:space="preserve">
+        <value>锁定属性</value>
     </data>
-    <data name="ItemType_Properties" xml:space="preserve">
-        <value>该物品的属性ID列表，用于合成与检定</value>
+    <data name="Properties" xml:space="preserve">
+        <value>该物品的属性ID列表</value>
     </data>
-    <data name="ItemType_ContentIds" xml:space="preserve">
-        <value>该物品的空间属性，定义作为容器能存放的物品类型</value>
+    <data name="ContentIds" xml:space="preserve">
+        <value>该物品的空间属性</value>
     </data>
-    <data name="ItemType_FormatId" xml:space="preserve">
+    <data name="FormatId" xml:space="preserve">
         <value>该物品内部的战利品池ID</value>
     </data>
-    <data name="ItemType_TreasureId" xml:space="preserve">
-        <value>用于给物品进行大体的分类，结合containertypes使用</value>
+
+    <data name="ComponentId" xml:space="preserve">
+        <value>成分ID</value>
     </data>
-    <data name="ItemType_ComponentId" xml:space="preserve">
-        <value>成分ID，结合treasuretable使用,可逆向合成的物品，如果由合成以外的方式获得，拆解时得到的物品ID</value>
+    <data name="Mirrored" xml:space="preserve">
+        <value>镜像</value>
     </data>
-    <data name="ItemType_Mirrored" xml:space="preserve">
-        <value>镜像，专门用于鞋子</value>
-    </data>
-    <data name="ItemType_SlotDepth" xml:space="preserve">
+    <data name="SlotDepth" xml:space="preserve">
         <value>决定多件衣服等哪件在上面</value>
     </data>
-    <data name="ItemType_ChargeProfiles" xml:space="preserve">
+    <data name="ChargeProfiles" xml:space="preserve">
         <value>耗电量ID</value>
     </data>
-    <data name="ItemType_AttackModes" xml:space="preserve">
-        <value>攻击模式ID列表</value>
+    <data name="AttackModes" xml:space="preserve">
+        <value>攻击方式ID</value>
     </data>
-    <data name="ItemType_StackLimit" xml:space="preserve">
+    <data name="StackLimit" xml:space="preserve">
         <value>最大堆叠数量</value>
     </data>
-    <data name="ItemType_SwitchIds" xml:space="preserve">
-        <value>转变的ID，用于电子产品开关机状态切换</value>
+    <data name="SwitchIds" xml:space="preserve">
+        <value>转变的ID</value>
     </data>
-    <data name="ItemType_Sounds" xml:space="preserve">
+    <data name="Sounds" xml:space="preserve">
         <value>拿起放下该物品时的声音</value>
     </data>
-    <data name="Map_ModId" xml:space="preserve">
-        <value>模组ID</value>
+
+
+    <data name="Definition" xml:space="preserve">
+        <value>地图定义数据</value>
     </data>
-    <data name="Map_Id" xml:space="preserve">
-        <value>代码标号</value>
+
+
+    <data name="SecretName" xml:space="preserve">
+        <value>配方的隐藏名称</value>
     </data>
-    <data name="Map_Name" xml:space="preserve">
-        <value>调用的图片文件名</value>
+    <data name="Tools" xml:space="preserve">
+        <value>合成需要的工具</value>
     </data>
-    <data name="Map_Definition" xml:space="preserve">
-        <value>地图定义数据，大量数字和逗号组成的地形数据</value>
+    <data name="Consumed" xml:space="preserve">
+        <value>合成会消耗/损耗掉的物品</value>
     </data>
-    <data name="Recipe_ModId" xml:space="preserve">
-        <value>模组ID</value>
+    <data name="Destroyed" xml:space="preserve">
+        <value>摧毁的物品</value>
     </data>
-    <data name="Recipe_Id" xml:space="preserve">
-        <value>代码标号</value>
+    <data name="TreasureId" xml:space="preserve">
+        <value>战利品池ID</value>
     </data>
-    <data name="Recipe_Name" xml:space="preserve">
-        <value>配方名称，如'中等营火（点燃）'</value>
-    </data>
-    <data name="Recipe_SecretName" xml:space="preserve">
-        <value>配方的隐藏名称，用于区分人肉和动物肉、水的毒性等</value>
-    </data>
-    <data name="Recipe_Tools" xml:space="preserve">
-        <value>合成需要的工具，格式如'1x1'</value>
-    </data>
-    <data name="Recipe_Consumed" xml:space="preserve">
-        <value>合成会消耗/损耗掉的物品，格式如'1x2+1x3'</value>
-    </data>
-    <data name="Recipe_Destroyed" xml:space="preserve">
-        <value>摧毁的物品，用于熄灭火把等</value>
-    </data>
-    <data name="Recipe_TreasureId" xml:space="preserve">
-        <value>调用的战利品池ID，即合成出的物品</value>
-    </data>
-    <data name="Recipe_Hours" xml:space="preserve">
+    <data name="Hours" xml:space="preserve">
         <value>合成需要消耗的行动点数</value>
     </data>
-    <data name="Recipe_Reverse" xml:space="preserve">
-        <value>是否可以逆向工程：0不可逆，1可逆，2等</value>
+    <data name="Reverse" xml:space="preserve">
+        <value>是否可以逆向工程</value>
     </data>
-    <data name="Recipe_HiddenId" xml:space="preserve">
-        <value>是否为隐藏配方，需要捡纸片解锁</value>
+    <data name="HiddenId" xml:space="preserve">
+        <value>是否为隐藏配方</value>
     </data>
-    <data name="Recipe_Identify" xml:space="preserve">
-        <value>是否能被鉴别，用于配合隐藏名称</value>
-    </data>
-    <data name="Recipe_TransferComponents" xml:space="preserve">
+
+    <data name="TransferComponents" xml:space="preserve">
         <value>未知参数</value>
     </data>
-    <data name="Recipe_AlsoTry" xml:space="preserve">
+    <data name="AlsoTry" xml:space="preserve">
         <value>使用其他不同配方但相同成品的配方ID</value>
     </data>
-    <data name="Recipe_TempTreasureId" xml:space="preserve">
+    <data name="TempTreasureId" xml:space="preserve">
         <value>合成时在成品栏以虚影显示的合成结果ID</value>
     </data>
-    <data name="Recipe_DegradeOutput" xml:space="preserve">
-        <value>合成出的物品耐久是否和材料耐久关联：1有关，0无关</value>
+    <data name="DegradeOutput" xml:space="preserve">
+        <value>合成出的物品耐久是否和材料耐久关联</value>
     </data>
-    <data name="Recipe_Type" xml:space="preserve">
-        <value>配方类型，如'工具'、'食物'、'医务'、'武器'、'载具'、'杂项'</value>
+    <data name="Type" xml:space="preserve">
+        <value>配方类型</value>
     </data>
-    <data name="Recipe_Scrap" xml:space="preserve">
+    <data name="Scrap" xml:space="preserve">
         <value>是否可分解</value>
     </data>
-    <data name="TreasureTable_ModId" xml:space="preserve">
+    <data name="ModId" xml:space="preserve">
         <value>模组ID</value>
     </data>
-    <data name="TreasureTable_Id" xml:space="preserve">
+    <data name="Id" xml:space="preserve">
         <value>代码标号</value>
     </data>
-    <data name="TreasureTable_Name" xml:space="preserve">
-        <value>战利品名称，如'瓮内容'</value>
+    <data name="Name" xml:space="preserve">
+        <value>配方名称</value>
     </data>
-    <data name="TreasureTable_Treasures" xml:space="preserve">
-        <value>战利品池的内容，格式'物品IDx数量x几率'，竖线|表示或，逗号,表示和</value>
+    <data name="Treasures" xml:space="preserve">
+        <value>战利品池的内容</value>
     </data>
-    <data name="TreasureTable_Nested" xml:space="preserve">
+    <data name="Nested" xml:space="preserve">
         <value>生成物品是否会装在同时生成的容器里</value>
     </data>
-    <data name="TreasureTable_Suppress" xml:space="preserve">
-        <value>抑制物品可能产生的内容物生成：1时水瓶里不会有水，枪里不会有子弹</value>
+    <data name="Suppress" xml:space="preserve">
+        <value>抑制物品可能产生的内容物生成</value>
     </data>
-    <data name="TreasureTable_Identify" xml:space="preserve">
-        <value>生成的物品是否被辨识，是否显示隐藏名称</value>
+    <data name="Identify" xml:space="preserve">
+        <value>是否能被鉴别</value>
     </data>
     <data name="OpenProject" xml:space="preserve">
         <value>打开项目</value>
@@ -828,7 +597,7 @@
     <data name="ProjectName" xml:space="preserve">
         <value>项目名称</value>
     </data>
-    <data name="AttackMode_Sound" xml:space="preserve">
+    <data name="Sound" xml:space="preserve">
         <value>声音</value>
     </data>
     <data name="SelectFolder" xml:space="preserve">
@@ -840,11 +609,11 @@
         <comment>GameRootDirectory</comment>
     </data>
     <data name="Confirm" xml:space="preserve">
-        <value>Confirm</value>
+        <value>确认</value>
         <comment>Confirm</comment>
     </data>
     <data name="Cancel" xml:space="preserve">
-        <value>Cancel</value>
+        <value>取消</value>
         <comment>Cancel</comment>
     </data>
     <data name="FolderIsEmpty" xml:space="preserve">
@@ -884,5 +653,523 @@
     </data>
     <data name="Search" xml:space="preserve">
         <value>搜索</value>
+    </data>
+
+    <!-- Auto-generated description entries from Game models -->
+    <data name="IdDesc" xml:space="preserve">
+        <value>代码标号</value>
+    </data>
+    <data name="NameDesc" xml:space="preserve">
+        <value>物品名称</value>
+    </data>
+    <data name="NotesDesc" xml:space="preserve">
+        <value>物品注释，一般留空，对游戏无影响</value>
+    </data>
+    <data name="RangeDesc" xml:space="preserve">
+        <value>攻击距离，近战为1，远程武器根据类型不同</value>
+    </data>
+    <data name="DamageCutDesc" xml:space="preserve">
+        <value>切割伤害值</value>
+    </data>
+    <data name="DamageBluntDesc" xml:space="preserve">
+        <value>钝器伤害值</value>
+    </data>
+    <data name="ChargeProfilesDesc" xml:space="preserve">
+        <value>内容物/弹药的代码标号，结合chargeprofiles数据类别使用，可能为逗号分隔如'6,31'</value>
+    </data>
+    <data name="PenetrationDesc" xml:space="preserve">
+        <value>穿透等级</value>
+    </data>
+    <data name="TypeDesc" xml:space="preserve">
+        <value>攻击类别：0 近战，1 远程</value>
+    </data>
+    <data name="SoundDesc" xml:space="preserve">
+        <value>武器分类声音：近战/Punch、爪子/Claws、棍棒类/Club、利刃/Blade、长枪/Rifle、短枪/Pistol、激光/Laser、弓箭类/Bow、投掷/Throw、勒死/Choke、抓住/Grasp、撕咬/Bite</value>
+    </data>
+    <data name="TransferDesc" xml:space="preserve">
+        <value>转移性：攻击能否转化为物品，例如弓箭的攻击能够回收箭枝, 弹药位置转移：0为不转移，1为转移（弓箭、弹弓等弹药会留在敌人身上或掉落地面）</value>
+    </data>
+    <data name="AttackerConditionsDesc" xml:space="preserve">
+        <value>攻击时的状态，结合conditions数据类别使用，如'211x1.0,NSE:42x1'</value>
+    </data>
+    <data name="ImageDesc" xml:space="preserve">
+        <value>右下角武器图标文件名</value>
+    </data>
+    <data name="MoraleDesc" xml:space="preserve">
+        <value>该武器默认为你带来的士气补正，计算公式：(1+士气)*(1+近战/远程士气加成)*武器伤害=实际伤害</value>
+    </data>
+    <data name="WieldPhraseDesc" xml:space="preserve">
+        <value>使用该武器进入战斗时的文字描述</value>
+    </data>
+    <data name="AttackPhrasesDesc" xml:space="preserve">
+        <value>使用该武器攻击敌人时的文字描述，多个描述用逗号分隔</value>
+    </data>
+    <data name="XDesc" xml:space="preserve">
+        <value>X轴坐标</value>
+    </data>
+    <data name="YDesc" xml:space="preserve">
+        <value>Y轴坐标</value>
+    </data>
+    <data name="BuysDesc" xml:space="preserve">
+        <value>是否可以购买玩家的物品：0为不可以，1为可以</value>
+    </data>
+    <data name="RestockTreasureIdDesc" xml:space="preserve">
+        <value>引用的战利品数据，结合treasuretable使用。注意：底特律C商店是个例外，使用3号战利品池</value>
+    </data>
+    <data name="StrIdDesc" xml:space="preserve">
+        <value>物品标号，如'90.35'</value>
+    </data>
+    <data name="SuccessDesc" xml:space="preserve">
+        <value>动作执行成功后在游戏中显示的文本，&lt;us&gt;代表自己，&lt;them&gt;代表目标</value>
+    </data>
+    <data name="FailDesc" xml:space="preserve">
+        <value>动作执行失败后在游戏中显示的文本</value>
+    </data>
+    <data name="PopUpDesc" xml:space="preserve">
+        <value>游戏内的动作说明，显示在动作选择界面</value>
+    </data>
+    <data name="ChanceTypeDesc" xml:space="preserve">
+        <value>几率类型（目前未明）</value>
+    </data>
+    <data name="UsConditionsDesc" xml:space="preserve">
+        <value>需要我方处于的状态，负号表示非，即不处于该状态'</value>
+    </data>
+    <data name="ThemConditionsDesc" xml:space="preserve">
+        <value>需要对方处于的状态，负号表示非，即不处于该状态</value>
+    </data>
+    <data name="PairConditionsDesc" xml:space="preserve">
+        <value>该行动对自己带来的影响</value>
+    </data>
+    <data name="UsFailConditionsDesc" xml:space="preserve">
+        <value>行动失败时会为自己带来的状态</value>
+    </data>
+    <data name="ThemFailConditionsDesc" xml:space="preserve">
+        <value>行动失败时会为敌方带来的状态（官方所有数据均未填写）</value>
+    </data>
+    <data name="PairFailConditionsDesc" xml:space="preserve">
+        <value>行动失败时会为自己带来的影响</value>
+    </data>
+    <data name="UsPreConditionsDesc" xml:space="preserve">
+        <value>执行该行动的前置要求，格式如'137,151,-143'（负数表示不可拥有该状态）</value>
+    </data>
+    <data name="ThemPreConditionsDesc" xml:space="preserve">
+        <value>敌方需要满足的前置条件</value>
+    </data>
+    <data name="SeeThemDesc" xml:space="preserve">
+        <value>对方需要处于的暴露等级</value>
+    </data>
+    <data name="SeeUsDesc" xml:space="preserve">
+        <value>自己需要处于的暴露等级</value>
+    </data>
+    <data name="AllOutOfRangeDesc" xml:space="preserve">
+        <value>离开所有场上目标距离</value>
+    </data>
+    <data name="InAttackRangeDesc" xml:space="preserve">
+        <value>攻击范围，可能用于判定溅射或武器长度</value>
+    </data>
+    <data name="MinChargesDesc" xml:space="preserve">
+        <value>攻击次数（存疑）</value>
+    </data>
+    <data name="MinRangeDesc" xml:space="preserve">
+        <value>距离最小需求，-1为全场覆盖</value>
+    </data>
+    <data name="MaxRangeDesc" xml:space="preserve">
+        <value>距离最大需求，-1为全场覆盖</value>
+    </data>
+    <data name="AttackModeTypeDesc" xml:space="preserve">
+        <value>攻击模式类型：-1非攻击动作，0近战攻击，1远程攻击</value>
+    </data>
+    <data name="HexTypesDesc" xml:space="preserve">
+        <value>所在地图格子类型（官方所有数据均留空）</value>
+    </data>
+    <data name="ChanceDesc" xml:space="preserve">
+        <value>可以使用该技能的几率（百分比）</value>
+    </data>
+    <data name="PriorityDesc" xml:space="preserve">
+        <value>优先级，对玩家无效，Bot专用，同一回合中哪边的战斗行动先触发</value>
+    </data>
+    <data name="DetectDesc" xml:space="preserve">
+        <value>执行该动作使你被发现的几率，设为0则不会被发现</value>
+    </data>
+    <data name="OrderDesc" xml:space="preserve">
+        <value>未知参数</value>
+    </data>
+    <data name="FatigueDesc" xml:space="preserve">
+        <value>疲劳值消耗</value>
+    </data>
+    <data name="ApproachDesc" xml:space="preserve">
+        <value>该动作是否会使你接近对方</value>
+    </data>
+    <data name="OffenseDesc" xml:space="preserve">
+        <value>是否是攻击性动作</value>
+    </data>
+    <data name="FallBackDesc" xml:space="preserve">
+        <value>该动作是否为远离动作</value>
+    </data>
+    <data name="RetreatDesc" xml:space="preserve">
+        <value>该动作是否为撤退动作</value>
+    </data>
+    <data name="PositionDesc" xml:space="preserve">
+        <value>该动作是否为姿势动作</value>
+    </data>
+    <data name="PassiveDesc" xml:space="preserve">
+        <value>该动作是否为被动</value>
+    </data>
+    <data name="DescriptionDesc" xml:space="preserve">
+        <value>营地的描述，如'区域的暗处'</value>
+    </data>
+    <data name="ImageListDesc" xml:space="preserve">
+        <value>营地调用的图片文件名</value>
+    </data>
+    <data name="CapacitiesDesc" xml:space="preserve">
+        <value>营地大小，格式如'34x26'</value>
+    </data>
+    <data name="TreasureIdDesc" xml:space="preserve">
+        <value>该营地的战利品池ID</value>
+    </data>
+    <data name="AlertnessDesc" xml:space="preserve">
+        <value>营地的默认警戒值（百分比）</value>
+    </data>
+    <data name="VisibilityDesc" xml:space="preserve">
+        <value>营地的默认可见值（百分比），-0.05表示-5%</value>
+    </data>
+    <data name="WetTempAdjustModDesc" xml:space="preserve">
+        <value>营地的默认温度调节</value>
+    </data>
+    <data name="HealPerHourModDesc" xml:space="preserve">
+        <value>营地默认每小时带来的恢复效果（百分比）</value>
+    </data>
+    <data name="SleepQualityDesc" xml:space="preserve">
+        <value>营地默认为你带来的睡眠质量（百分比），-0.26表示-26%</value>
+    </data>
+    <data name="ItemIdDesc" xml:space="preserve">
+        <value>物品ID，如'10.3'</value>
+    </data>
+    <data name="PerUseDesc" xml:space="preserve">
+        <value>每次使用所消耗的数量</value>
+    </data>
+    <data name="PerHourDesc" xml:space="preserve">
+        <value>每小时所消耗数量，基本用于电器的电力消耗</value>
+    </data>
+    <data name="PerHourEquippedDesc" xml:space="preserve">
+        <value>装备在身上时每小时的消耗耐久，仅用于XM54过滤芯片</value>
+    </data>
+    <data name="PerHexDesc" xml:space="preserve">
+        <value>每移动一格所消耗的数量</value>
+    </data>
+    <data name="DegradeDesc" xml:space="preserve">
+        <value>是否会降解</value>
+    </data>
+    <data name="FieldNamesDesc" xml:space="preserve">
+        <value>该状态为你带来的效果字段列表，如'm_fHealPerHourMod,m_fImmuneRestoreRate'等</value>
+    </data>
+    <data name="ModifiersDesc" xml:space="preserve">
+        <value>该状态为你带来的效果的具体影响数值，与FieldNames对应</value>
+    </data>
+    <data name="EffectsDesc" xml:space="preserve">
+        <value>状态带来的效果，如SetImmunity免疫力，ArmorWound护甲。如'ArmorWound=100,0.1,0.05'，</value>
+    </data>
+    <data name="FatalDesc" xml:space="preserve">
+        <value>是否为玩家带来死亡效果（得到这个状态会不会暴毙）</value>
+    </data>
+    <data name="IdNextDesc" xml:space="preserve">
+        <value>该状态下一阶段为你带来的新状态ID，可能为多个逗号分隔</value>
+    </data>
+    <data name="DurationDesc" xml:space="preserve">
+        <value>持续时间（小时）</value>
+    </data>
+    <data name="PermanentDesc" xml:space="preserve">
+        <value>是否为会为你带来长期影响（如吃药、割伤等），为true表示回合结束不会自动消失</value>
+    </data>
+    <data name="ChanceNextDesc" xml:space="preserve">
+        <value>有多大几率该状态在下个阶段为你带来新的状态</value>
+    </data>
+    <data name="StackableDesc" xml:space="preserve">
+        <value>该状态是否可以堆叠</value>
+    </data>
+    <data name="DisplayDesc" xml:space="preserve">
+        <value>该状态是否可见</value>
+    </data>
+    <data name="DisplayOtherDesc" xml:space="preserve">
+        <value>该状态是否可被其他人看见</value>
+    </data>
+    <data name="DisplayGameOverDesc" xml:space="preserve">
+        <value>该状态是否会在你的游戏总结中出现</value>
+    </data>
+    <data name="ColorDesc" xml:space="preserve">
+        <value>状态颜色：0白色，1红色，2绿色，3黄色</value>
+    </data>
+    <data name="ResetTimerDesc" xml:space="preserve">
+        <value>刷新时间，游戏中休息一次为一小时</value>
+    </data>
+    <data name="RemoveAllDesc" xml:space="preserve">
+        <value>未知参数</value>
+    </data>
+    <data name="RemovePostCombatDesc" xml:space="preserve">
+        <value>未知参数</value>
+    </data>
+    <data name="TransferRangeDesc" xml:space="preserve">
+        <value>传染距离，-1为不传播</value>
+    </data>
+    <data name="ThresholdsDesc" xml:space="preserve">
+        <value>触发阈值，目前用于传奇技能的触发</value>
+    </data>
+    <data name="NamePublicDesc" xml:space="preserve">
+        <value>未接触时显示的名称</value>
+    </data>
+    <data name="EncounterIdsDesc" xml:space="preserve">
+        <value>遇到该生物会触发的状态ID列表，逗号分隔</value>
+    </data>
+    <data name="MovesPerTurnDesc" xml:space="preserve">
+        <value>每回合的行动点数</value>
+    </data>
+    <data name="FactionDesc" xml:space="preserve">
+        <value>所属阵营ID</value>
+    </data>
+    <data name="AttackModesDesc" xml:space="preserve">
+        <value>攻击方式ID，结合attackmodes使用，可能为单个ID或逗号分隔</value>
+    </data>
+    <data name="BaseConditionsDesc" xml:space="preserve">
+        <value>该生物生成时的基础状态，格式如'38=1,50=0.5'</value>
+    </data>
+    <data name="CorpseIdDesc" xml:space="preserve">
+        <value>尸体编号（战利品池编号）</value>
+    </data>
+    <data name="ActivitiesDesc" xml:space="preserve">
+        <value>该生物的活动方式描述，可能仅为注释用途</value>
+    </data>
+    <data name="CreatureIdDesc" xml:space="preserve">
+        <value>刷新的生物编号，结合creatures中的标号</value>
+    </data>
+    <data name="MinDesc" xml:space="preserve">
+        <value>最小刷新数量</value>
+    </data>
+    <data name="MaxDesc" xml:space="preserve">
+        <value>最大刷新数量（数值过大会导致大量生物刷新在同一区块）</value>
+    </data>
+    <data name="WeightDesc" xml:space="preserve">
+        <value>权重，具体含义未知</value>
+    </data>
+    <data name="ValueDesc" xml:space="preserve">
+        <value>该资料的价值</value>
+    </data>
+    <data name="EncounterIdDesc" xml:space="preserve">
+        <value>调用的剧情代码ID，结合encounters使用</value>
+    </data>
+    <data name="RemoveTreasureIdDesc" xml:space="preserve">
+        <value>剧情发生时在玩家脚下移除的战利品池ID</value>
+    </data>
+    <data name="ConditionsDesc" xml:space="preserve">
+        <value>该剧情的附带状态ID列表，逗号分隔</value>
+    </data>
+    <data name="PreConditionsDesc" xml:space="preserve">
+        <value>出现该剧情时必要的前置状态，负数表示不可拥有该状态</value>
+    </data>
+    <data name="PriceDesc" xml:space="preserve">
+        <value>该剧情是否会让你的资产变动</value>
+    </data>
+    <data name="ResponsesDesc" xml:space="preserve">
+        <value>玩家在经历该剧情时的回应选项，格式如'=15x0.083x0x0x0,=16x0.083x0x0x0'</value>
+    </data>
+    <data name="MinimapHexesDesc" xml:space="preserve">
+        <value>小地图上显示的点坐标</value>
+    </data>
+    <data name="RemoveCreaturesDesc" xml:space="preserve">
+        <value>该剧情发生时是否需要移除生物</value>
+    </data>
+    <data name="RemoveUsedDesc" xml:space="preserve">
+        <value>该剧情是否会移除你的物品</value>
+    </data>
+    <data name="ItemsIdDesc" xml:space="preserve">
+        <value>发生该剧情时产生的物品ID</value>
+    </data>
+    <data name="CreatureHexDesc" xml:space="preserve">
+        <value>生物出现位置坐标，格式如'0,0'</value>
+    </data>
+    <data name="TeleportDesc" xml:space="preserve">
+        <value>发生该剧情时将玩家传送到的位置，'0,0'为不传送</value>
+    </data>
+    <data name="EditorDesc" xml:space="preserve">
+        <value>未知参数，编辑器相关</value>
+    </data>
+    <data name="LootChanceDesc" xml:space="preserve">
+        <value>成功搜刮到物品的几率</value>
+    </data>
+    <data name="AccidentChanceDesc" xml:space="preserve">
+        <value>发生意外的几率（如破楼倒塌）</value>
+    </data>
+    <data name="CreatureChanceDesc" xml:space="preserve">
+        <value>未知参数</value>
+    </data>
+    <data name="AccidentsDesc" xml:space="preserve">
+        <value>出现意外时发生的事件ID（调用encounters）</value>
+    </data>
+    <data name="LootDesc" xml:space="preserve">
+        <value>搜刮成功时的战利品种类ID</value>
+    </data>
+    <data name="LocBasedDesc" xml:space="preserve">
+        <value>该触发器是否为固定位置触发</value>
+    </data>
+    <data name="DateBasedDesc" xml:space="preserve">
+        <value>该触发器是否为固定时间触发</value>
+    </data>
+    <data name="HexBasedDesc" xml:space="preserve">
+        <value>该触发器是否为固定场景触发</value>
+    </data>
+    <data name="UniqueDesc" xml:space="preserve">
+        <value>该事件是否是独一无二的</value>
+    </data>
+    <data name="AIPassableDesc" xml:space="preserve">
+        <value>该事件是否能被AI触发</value>
+    </data>
+    <data name="AreaDesc" xml:space="preserve">
+        <value>该事件触发的位置坐标，格式如'20,164,0'</value>
+    </data>
+    <data name="DateMinDesc" xml:space="preserve">
+        <value>最小触发时间，格式'年-月-日-小时'</value>
+    </data>
+    <data name="DateMaxDesc" xml:space="preserve">
+        <value>最大触发时间，格式'年-月-日-小时'</value>
+    </data>
+    <data name="DictFactionsDesc" xml:space="preserve">
+        <value>与其他派系的声望关系，格式如'0=-100,1=1,2=-100'</value>
+    </data>
+    <data name="HeadlineTextDesc" xml:space="preserve">
+        <value>头版头条具体文本内容</value>
+    </data>
+    <data name="TerrainCostDesc" xml:space="preserve">
+        <value>在该地块上消耗的行动点数</value>
+    </data>
+    <data name="VizLimiterDesc" xml:space="preserve">
+        <value>在该地块上减少的视距</value>
+    </data>
+    <data name="VizIncreaseDesc" xml:space="preserve">
+        <value>在该地块上增加的视距</value>
+    </data>
+    <data name="PassableDesc" xml:space="preserve">
+        <value>是否可以移动到该地形：0不可通行，1可通行</value>
+    </data>
+    <data name="ScavengeInitialIdDesc" xml:space="preserve">
+        <value>初次搜刮该地形时调用的战利品池ID</value>
+    </data>
+    <data name="ScavengeItemsIdPerHourDesc" xml:space="preserve">
+        <value>多次搜刮该地形时调用的战利品池ID</value>
+    </data>
+    <data name="CampItemsDesc" xml:space="preserve">
+        <value>营地类型ID</value>
+    </data>
+    <data name="LightLevelsDesc" xml:space="preserve">
+        <value>亮度等级，对应：凌晨,上午,中午,下午,傍晚,半夜，6个浮点数</value>
+    </data>
+    <data name="DefaultCampIdDesc" xml:space="preserve">
+        <value>默认营地的代码标号，结合treasuretable使用</value>
+    </data>
+    <data name="ConditionIdsDesc" xml:space="preserve">
+        <value>进入该地块会为玩家带来的状态ID</value>
+    </data>
+    <data name="RequiredPropsDesc" xml:space="preserve">
+        <value>合成项所需的属性ID，可用'&amp;'表示'与'关系</value>
+    </data>
+    <data name="ForbidPropsDesc" xml:space="preserve">
+        <value>合成项不可拥有的属性ID</value>
+    </data>
+    <data name="PropertyNameDesc" xml:space="preserve">
+        <value>属性名称，如'easily ignitable'（易燃物）</value>
+    </data>
+    <data name="EquipConditionsDesc" xml:space="preserve">
+        <value>该物品装备时会为你带来的状态</value>
+    </data>
+    <data name="PossessConditionsDesc" xml:space="preserve">
+        <value>该物品持有时会为你带来的永久性状态</value>
+    </data>
+    <data name="UseConditionsDesc" xml:space="preserve">
+        <value>使用该物品会为你带来的状态</value>
+    </data>
+    <data name="EquipSlotsDesc" xml:space="preserve">
+        <value>装备插槽，物品能放在身上的位置：20左手，21右手，22背部</value>
+    </data>
+    <data name="UseSlotsDesc" xml:space="preserve">
+        <value>使用位置，211为直接给自己使用（如吃药）</value>
+    </data>
+    <data name="SocketLockedDesc" xml:space="preserve">
+        <value>锁定属性，带此属性的物品无法被玩家移动</value>
+    </data>
+    <data name="PropertiesDesc" xml:space="preserve">
+        <value>该物品的属性ID列表，用于合成与检定</value>
+    </data>
+    <data name="ContentIdsDesc" xml:space="preserve">
+        <value>该物品的空间属性，定义作为容器能存放的物品类型</value>
+    </data>
+    <data name="FormatIdDesc" xml:space="preserve">
+        <value>该物品内部的战利品池ID</value>
+    </data>
+    <data name="ComponentIdDesc" xml:space="preserve">
+        <value>成分ID，结合treasuretable使用,可逆向合成的物品，如果由合成以外的方式获得，拆解时得到的物品ID</value>
+    </data>
+    <data name="MirroredDesc" xml:space="preserve">
+        <value>镜像，专门用于鞋子</value>
+    </data>
+    <data name="SlotDepthDesc" xml:space="preserve">
+        <value>决定多件衣服等哪件在上面</value>
+    </data>
+    <data name="StackLimitDesc" xml:space="preserve">
+        <value>最大堆叠数量</value>
+    </data>
+    <data name="SwitchIdsDesc" xml:space="preserve">
+        <value>转变的ID，用于电子产品开关机状态切换</value>
+    </data>
+    <data name="SoundsDesc" xml:space="preserve">
+        <value>拿起放下该物品时的声音</value>
+    </data>
+    <data name="DefinitionDesc" xml:space="preserve">
+        <value>地图定义数据，大量数字和逗号组成的地形数据</value>
+    </data>
+    <data name="SecretNameDesc" xml:space="preserve">
+        <value>配方的隐藏名称，用于区分人肉和动物肉、水的毒性等</value>
+    </data>
+    <data name="ToolsDesc" xml:space="preserve">
+        <value>合成需要的工具，格式如'1x1'</value>
+    </data>
+    <data name="ConsumedDesc" xml:space="preserve">
+        <value>合成会消耗/损耗掉的物品，格式如'1x2+1x3'</value>
+    </data>
+    <data name="DestroyedDesc" xml:space="preserve">
+        <value>摧毁的物品，用于熄灭火把等</value>
+    </data>
+    <data name="HoursDesc" xml:space="preserve">
+        <value>合成需要消耗的行动点数</value>
+    </data>
+    <data name="ReverseDesc" xml:space="preserve">
+        <value>是否可以逆向工程：0不可逆，1可逆，2等</value>
+    </data>
+    <data name="HiddenIdDesc" xml:space="preserve">
+        <value>是否为隐藏配方，需要捡纸片解锁</value>
+    </data>
+    <data name="IdentifyDesc" xml:space="preserve">
+        <value>是否能被鉴别，用于配合隐藏名称</value>
+    </data>
+    <data name="TransferComponentsDesc" xml:space="preserve">
+        <value>未知参数</value>
+    </data>
+    <data name="AlsoTryDesc" xml:space="preserve">
+        <value>使用其他不同配方但相同成品的配方ID</value>
+    </data>
+    <data name="TempTreasureIdDesc" xml:space="preserve">
+        <value>合成时在成品栏以虚影显示的合成结果ID</value>
+    </data>
+    <data name="DegradeOutputDesc" xml:space="preserve">
+        <value>合成出的物品耐久是否和材料耐久关联：1有关，0无关</value>
+    </data>
+    <data name="ScrapDesc" xml:space="preserve">
+        <value>是否可分解</value>
+    </data>
+    <data name="TreasuresDesc" xml:space="preserve">
+        <value>战利品池的内容，格式'物品IDx数量x几率'，竖线|表示或，逗号,表示和</value>
+    </data>
+    <data name="NestedDesc" xml:space="preserve">
+        <value>生成物品是否会装在同时生成的容器里</value>
+    </data>
+    <data name="SuppressDesc" xml:space="preserve">
+        <value>抑制物品可能产生的内容物生成：1时水瓶里不会有水，枪里不会有子弹</value>
     </data>
 </root>
