@@ -1,0 +1,162 @@
+<Window
+    x:Class="NeoEditor.Views.MainWindow"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:avalonia="clr-namespace:FluentIcons.Avalonia;assembly=FluentIcons.Avalonia"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:game="clr-namespace:NeoEditor.Data.Model.Game"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:userControls="clr-namespace:NeoEditor.Views.UserControls"
+    xmlns:vm="using:NeoEditor.ViewModels"
+    x:Name="MainWindowApp"
+    Title="{Binding Loc[AppTitle]}"
+    d:DesignHeight="450"
+    d:DesignWidth="600"
+    x:DataType="vm:MainWindowViewModel"
+    Icon="/Assets/avalonia-logo.ico"
+    mc:Ignorable="d">
+    <Design.DataContext>
+        <vm:MainWindowViewModel />
+    </Design.DataContext>
+    <DockPanel>
+        <!--  菜单栏  -->
+        <Menu DockPanel.Dock="Top">
+            <!--  项目  -->
+            <MenuItem Header="{Binding Loc[MenuProject]}">
+                <MenuItem Command="{Binding CreateProjectCommand}" Header="{Binding Loc[MenuProjectCreate]}" />
+                <MenuItem Command="{Binding OpenProjectCommand}" Header="{Binding Loc[MenuProjectOpen]}" />
+                <MenuItem Command="{Binding CloseProjectCommand}" Header="{Binding Loc[MenuProjectClose]}" />
+            </MenuItem>
+            <!--  语言  -->
+            <MenuItem Header="{Binding Path=CurrentCultureInfo.DisplayName}" ItemsSource="{Binding SupportedCultures}">
+                <MenuItem.ItemTemplate>
+                    <DataTemplate>
+                        <MenuItem
+                            Command="{Binding ElementName=MainWindowApp, Path=DataContext.ChangeCultureCommand}"
+                            CommandParameter="{Binding}"
+                            Header="{Binding DisplayName}" />
+                    </DataTemplate>
+                </MenuItem.ItemTemplate>
+            </MenuItem>
+        </Menu>
+        <StackPanel DockPanel.Dock="Bottom">
+            <NativeMenuBar />
+            <TextBlock Text="{Binding Loc[Status]}" />
+        </StackPanel>
+        <!--  左侧垂直按钮条  -->
+        <StackPanel
+            Grid.Column="0"
+            Margin="4"
+            Orientation="Vertical"
+            Spacing="4">
+            <Button Command="{Binding TogglePaneCommand}" CommandParameter="Explorer">
+                <avalonia:SymbolIcon IconVariant="Regular" Symbol="Folder" />
+            </Button>
+            <Button Command="{Binding TogglePaneCommand}" CommandParameter="Search">
+                <avalonia:SymbolIcon IconVariant="Regular" Symbol="Search" />
+            </Button>
+            <Button Command="{Binding TogglePaneCommand}" CommandParameter="Settings">
+                <avalonia:SymbolIcon IconVariant="Regular" Symbol="Settings" />
+            </Button>
+        </StackPanel>
+        <!--  分割视图  -->
+        <SplitView
+            DisplayMode="Inline"
+            IsPaneOpen="{Binding SideBarExpanded}"
+            OpenPaneLength="500">
+            <!--  侧边栏内容区域  -->
+            <SplitView.Pane>
+                <ContentControl Content="{Binding CurrentPaneContent}">
+                    <ContentControl.DataTemplates>
+                        <!--  资源管理器面板模板  -->
+                        <DataTemplate DataType="{x:Type vm:ExplorerPaneViewModel}">
+                            <ScrollViewer>
+                                <StackPanel>
+                                    <TextBlock
+                                        Margin="8"
+                                        FontWeight="Bold"
+                                        Text="{Binding DataContext.Loc[ResourceManager], ElementName=MainWindowApp}" />
+                                    <TreeView ItemsSource="{Binding Folders}">
+                                        <TreeView.ItemTemplate>
+                                            <TreeDataTemplate ItemsSource="{Binding Children}">
+                                                <StackPanel Orientation="Horizontal" Spacing="4">
+                                                    <avalonia:SymbolIcon IconVariant="Regular" Symbol="Folder" />
+                                                    <TextBlock Text="{Binding Name}" />
+                                                </StackPanel>
+                                            </TreeDataTemplate>
+                                        </TreeView.ItemTemplate>
+                                    </TreeView>
+                                </StackPanel>
+                            </ScrollViewer>
+                        </DataTemplate>
+
+                        <!--  搜索面板模板  -->
+                        <DataTemplate DataType="{x:Type vm:SearchPaneViewModel}">
+                            <ScrollViewer>
+                                <StackPanel>
+                                    <TextBlock
+                                        Margin="8"
+                                        FontWeight="Bold"
+                                        Text="{Binding DataContext.Loc[Search], ElementName=MainWindowApp}" />
+                                    <TextBox Margin="8" Watermark="{Binding DataContext.Loc[KeywordInput], ElementName=MainWindowApp}" />
+                                    <ListBox Margin="8" ItemsSource="{Binding RecentSearches}">
+                                        <ListBox.ItemTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="{Binding .}" />
+                                            </DataTemplate>
+                                        </ListBox.ItemTemplate>
+                                    </ListBox>
+                                </StackPanel>
+                            </ScrollViewer>
+                        </DataTemplate>
+
+                        <!--  设置面板模板  -->
+                        <DataTemplate DataType="{x:Type vm:SettingsPaneViewModel}">
+                            <ScrollViewer>
+                                <StackPanel>
+                                    <TextBlock
+                                        Margin="8"
+                                        FontWeight="Bold"
+                                        Text="{Binding DataContext.Loc[Settings], ElementName=MainWindowApp}" />
+                                    <!-- <CheckBox Margin="8" Content="启用功能A" /> -->
+                                    <!-- <CheckBox Margin="8" Content="启用功能B" /> -->
+                                </StackPanel>
+                            </ScrollViewer>
+                        </DataTemplate>
+                    </ContentControl.DataTemplates>
+                </ContentControl>
+            </SplitView.Pane>
+
+            <!--  主内容区（右侧）  -->
+            <SplitView.Content>
+                <Grid ColumnDefinitions="*" RowDefinitions="*,*,*">
+
+                    <WindowNotificationManager
+                        Name="NotificationManager"
+                        Grid.Row="0"
+                        Grid.RowSpan="2"
+                        MaxItems="3"
+                        Position="TopRight" />
+                    <TextBlock
+                        Grid.Row="0"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Text="{Binding Loc[MainContent]}" />
+                    <DataGrid
+                        Grid.Row="1"
+                        MinWidth="200"
+                        MinHeight="200"
+                        AutoGenerateColumns="True"
+                        AutoGeneratingColumn="OnAutoGeneratingColumn"
+                        CanUserReorderColumns="True"
+                        CanUserResizeColumns="True"
+                        CanUserSortColumns="True"
+                        ItemsSource="{Binding SampleData}" />
+
+                    <userControls:GameVarDataGrid Grid.Row="2" ItemsSource="{Binding DataContext.SampleData, ElementName=MainWindowApp}" />
+                </Grid>
+
+            </SplitView.Content>
+        </SplitView>
+    </DockPanel>
+</Window>

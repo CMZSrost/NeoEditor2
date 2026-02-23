@@ -1,0 +1,66 @@
+﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.EntityFrameworkCore;
+
+namespace NeoEditor.Data.Model.Game;
+
+[Table("camptypes")]
+[Comment("营地类型 - 定义各种营地的属性和效果")]
+public class CampType
+{
+    [Display(Name = "CampType_ModId")] public int ModId { get; set; }
+
+    [Key]
+    [Column("id")]
+    [Comment("代码标号")]
+    [Display(Name = "CampType_Id")]
+    public int Id { get; set; }
+
+    [Column("strDesc", TypeName = "varchar(255)")]
+    [StringLength(255)]
+    [Comment("营地的描述，如'区域的暗处'")]
+    [Display(Name = "CampType_Description")]
+    public string Description { get; set; } = "";
+
+    [Column("vImageList", TypeName = "varchar(255)")]
+    [StringLength(255)]
+    [Comment("营地调用的图片文件名")]
+    [Display(Name = "CampType_ImageList")]
+    public string ImageList { get; set; } = "ItmScavengeGrass01.png";
+
+    [Column("aCapacities", TypeName = "varchar(255)")]
+    [StringLength(255)]
+    [Comment("营地大小，格式如'34x26'")]
+    [Display(Name = "CampType_Capacities")]
+    public string Capacities { get; set; } = "30x30";
+
+    [Column("nTreasureID")]
+    [Comment("该营地的战利品池ID")]
+    [Display(Name = "CampType_TreasureId")]
+    public int TreasureId { get; set; } = 3;
+
+    [Column("m_fAlertness", TypeName = "float")]
+    [Comment("营地的默认警戒值（百分比）")]
+    [Display(Name = "CampType_Alertness")]
+    public double Alertness { get; set; } = 0;
+
+    [Column("m_fVisibility", TypeName = "float")]
+    [Comment("营地的默认可见值（百分比），-0.05表示-5%")]
+    [Display(Name = "CampType_Visibility")]
+    public double Visibility { get; set; } = -0.05;
+
+    [Column("WetTempAdjustMod", TypeName = "float")]
+    [Comment("营地的默认温度调节")]
+    [Display(Name = "CampType_WetTempAdjustMod")]
+    public double WetTempAdjustMod { get; set; } = 0;
+
+    [Column("m_fHealPerHourMod", TypeName = "float")]
+    [Comment("营地默认每小时带来的恢复效果（百分比）")]
+    [Display(Name = "CampType_HealPerHourMod")]
+    public double HealPerHourMod { get; set; } = 0;
+
+    [Column("fSleepQuality", TypeName = "float")]
+    [Comment("营地默认为你带来的睡眠质量（百分比），-0.26表示-26%")]
+    [Display(Name = "CampType_SleepQuality")]
+    public double SleepQuality { get; set; } = 0;
+}

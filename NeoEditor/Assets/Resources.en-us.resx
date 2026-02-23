@@ -1,0 +1,888 @@
+﻿<root>
+    <resheader name="resmimetype">
+        <value>text/microsoft-resx</value>
+    </resheader>
+    <resheader name="version">
+        <value>1.3</value>
+    </resheader>
+    <resheader name="reader">
+        <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=2.0.0.0, Culture=neutral,
+            PublicKeyToken=b77a5c561934e089
+        </value>
+    </resheader>
+    <resheader name="writer">
+        <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral,
+            PublicKeyToken=b77a5c561934e089
+        </value>
+    </resheader>
+    <data name="MainLayout_Header" xml:space="preserve">
+        <value>Header</value>
+    </data>
+    <data name="AttackMode_ModId" xml:space="preserve">
+        <value>ModId</value>
+    </data>
+    <data name="AttackMode_Id" xml:space="preserve">
+        <value>Id</value>
+    </data>
+    <data name="AttackMode_Name" xml:space="preserve">
+        <value>Name</value>
+    </data>
+    <data name="AttackMode_Notes" xml:space="preserve">
+        <value>Notes</value>
+    </data>
+    <data name="AttackMode_Range" xml:space="preserve">
+        <value>Range</value>
+    </data>
+    <data name="AttackMode_DamageCut" xml:space="preserve">
+        <value>DamageCut</value>
+    </data>
+    <data name="AttackMode_DamageBlunt" xml:space="preserve">
+        <value>DamageBlunt</value>
+    </data>
+    <data name="AttackMode_ChargeProfiles" xml:space="preserve">
+        <value>ChargeProfiles</value>
+    </data>
+    <data name="AttackMode_Penetration" xml:space="preserve">
+        <value>Penetration</value>
+    </data>
+    <data name="AttackMode_Type" xml:space="preserve">
+        <value>Type</value>
+    </data>
+    <data name="AttackMode_Sound" xml:space="preserve">
+        <value>Sound</value>
+    </data>
+    <data name="AttackMode_Transfer" xml:space="preserve">
+        <value>Transfer</value>
+    </data>
+    <data name="AttackMode_AttackerConditions" xml:space="preserve">
+        <value>AttackerConditions</value>
+    </data>
+    <data name="AttackMode_Image" xml:space="preserve">
+        <value>Image</value>
+    </data>
+    <data name="AttackMode_Morale" xml:space="preserve">
+        <value>Morale</value>
+    </data>
+    <data name="AttackMode_WieldPhrase" xml:space="preserve">
+        <value>WieldPhrase</value>
+    </data>
+    <data name="AttackMode_AttackPhrases" xml:space="preserve">
+        <value>AttackPhrases</value>
+    </data>
+    <data name="BarterHex_ModId" xml:space="preserve">
+        <value>ModId</value>
+    </data>
+    <data name="BarterHex_Id" xml:space="preserve">
+        <value>Id</value>
+    </data>
+    <data name="BarterHex_X" xml:space="preserve">
+        <value>X</value>
+    </data>
+    <data name="BarterHex_Y" xml:space="preserve">
+        <value>Y</value>
+    </data>
+    <data name="BarterHex_Buys" xml:space="preserve">
+        <value>Buys</value>
+    </data>
+    <data name="BarterHex_RestockTreasureId" xml:space="preserve">
+        <value>RestockTreasureId</value>
+    </data>
+    <data name="BattleMove_ModId" xml:space="preserve">
+        <value>ModId</value>
+    </data>
+    <data name="BattleMove_Id" xml:space="preserve">
+        <value>Id</value>
+    </data>
+    <data name="BattleMove_StrId" xml:space="preserve">
+        <value>StrId</value>
+    </data>
+    <data name="BattleMove_Name" xml:space="preserve">
+        <value>Name</value>
+    </data>
+    <data name="BattleMove_Notes" xml:space="preserve">
+        <value>Notes</value>
+    </data>
+    <data name="BattleMove_Success" xml:space="preserve">
+        <value>Success</value>
+    </data>
+    <data name="BattleMove_Fail" xml:space="preserve">
+        <value>Fail</value>
+    </data>
+    <data name="BattleMove_PopUp" xml:space="preserve">
+        <value>PopUp</value>
+    </data>
+    <data name="BattleMove_ChanceType" xml:space="preserve">
+        <value>ChanceType</value>
+    </data>
+    <data name="BattleMove_UsConditions" xml:space="preserve">
+        <value>UsConditions</value>
+    </data>
+    <data name="BattleMove_ThemConditions" xml:space="preserve">
+        <value>ThemConditions</value>
+    </data>
+    <data name="BattleMove_PairConditions" xml:space="preserve">
+        <value>PairConditions</value>
+    </data>
+    <data name="BattleMove_UsFailConditions" xml:space="preserve">
+        <value>UsFailConditions</value>
+    </data>
+    <data name="BattleMove_ThemFailConditions" xml:space="preserve">
+        <value>ThemFailConditions</value>
+    </data>
+    <data name="BattleMove_PairFailConditions" xml:space="preserve">
+        <value>PairFailConditions</value>
+    </data>
+    <data name="BattleMove_UsPreConditions" xml:space="preserve">
+        <value>UsPreConditions</value>
+    </data>
+    <data name="BattleMove_ThemPreConditions" xml:space="preserve">
+        <value>ThemPreConditions</value>
+    </data>
+    <data name="BattleMove_SeeThem" xml:space="preserve">
+        <value>SeeThem</value>
+    </data>
+    <data name="BattleMove_SeeUs" xml:space="preserve">
+        <value>SeeUs</value>
+    </data>
+    <data name="BattleMove_AllOutOfRange" xml:space="preserve">
+        <value>AllOutOfRange</value>
+    </data>
+    <data name="BattleMove_InAttackRange" xml:space="preserve">
+        <value>InAttackRange</value>
+    </data>
+    <data name="BattleMove_MinCharges" xml:space="preserve">
+        <value>MinCharges</value>
+    </data>
+    <data name="BattleMove_MinRange" xml:space="preserve">
+        <value>MinRange</value>
+    </data>
+    <data name="BattleMove_MaxRange" xml:space="preserve">
+        <value>MaxRange</value>
+    </data>
+    <data name="BattleMove_AttackModeType" xml:space="preserve">
+        <value>AttackModeType</value>
+    </data>
+    <data name="BattleMove_HexTypes" xml:space="preserve">
+        <value>HexTypes</value>
+    </data>
+    <data name="BattleMove_Chance" xml:space="preserve">
+        <value>Chance</value>
+    </data>
+    <data name="BattleMove_Priority" xml:space="preserve">
+        <value>Priority</value>
+    </data>
+    <data name="BattleMove_Detect" xml:space="preserve">
+        <value>Detect</value>
+    </data>
+    <data name="BattleMove_Order" xml:space="preserve">
+        <value>Order</value>
+    </data>
+    <data name="BattleMove_Fatigue" xml:space="preserve">
+        <value>Fatigue</value>
+    </data>
+    <data name="BattleMove_Approach" xml:space="preserve">
+        <value>Approach</value>
+    </data>
+    <data name="BattleMove_Offense" xml:space="preserve">
+        <value>Offense</value>
+    </data>
+    <data name="BattleMove_FallBack" xml:space="preserve">
+        <value>FallBack</value>
+    </data>
+    <data name="BattleMove_Retreat" xml:space="preserve">
+        <value>Retreat</value>
+    </data>
+    <data name="BattleMove_Position" xml:space="preserve">
+        <value>Position</value>
+    </data>
+    <data name="BattleMove_Passive" xml:space="preserve">
+        <value>Passive</value>
+    </data>
+    <data name="CampType_ModId" xml:space="preserve">
+        <value>ModId</value>
+    </data>
+    <data name="CampType_Id" xml:space="preserve">
+        <value>Id</value>
+    </data>
+    <data name="CampType_Description" xml:space="preserve">
+        <value>Description</value>
+    </data>
+    <data name="CampType_ImageList" xml:space="preserve">
+        <value>ImageList</value>
+    </data>
+    <data name="CampType_Capacities" xml:space="preserve">
+        <value>Capacities</value>
+    </data>
+    <data name="CampType_TreasureId" xml:space="preserve">
+        <value>TreasureId</value>
+    </data>
+    <data name="CampType_Alertness" xml:space="preserve">
+        <value>Alertness</value>
+    </data>
+    <data name="CampType_Visibility" xml:space="preserve">
+        <value>Visibility</value>
+    </data>
+    <data name="CampType_WetTempAdjustMod" xml:space="preserve">
+        <value>WetTempAdjustMod</value>
+    </data>
+    <data name="CampType_HealPerHourMod" xml:space="preserve">
+        <value>HealPerHourMod</value>
+    </data>
+    <data name="CampType_SleepQuality" xml:space="preserve">
+        <value>SleepQuality</value>
+    </data>
+    <data name="ChargeProfile_ModId" xml:space="preserve">
+        <value>ModId</value>
+    </data>
+    <data name="ChargeProfile_Id" xml:space="preserve">
+        <value>Id</value>
+    </data>
+    <data name="ChargeProfile_Name" xml:space="preserve">
+        <value>Name</value>
+    </data>
+    <data name="ChargeProfile_ItemId" xml:space="preserve">
+        <value>ItemId</value>
+    </data>
+    <data name="ChargeProfile_PerUse" xml:space="preserve">
+        <value>PerUse</value>
+    </data>
+    <data name="ChargeProfile_PerHour" xml:space="preserve">
+        <value>PerHour</value>
+    </data>
+    <data name="ChargeProfile_PerHourEquipped" xml:space="preserve">
+        <value>PerHourEquipped</value>
+    </data>
+    <data name="ChargeProfile_PerHex" xml:space="preserve">
+        <value>PerHex</value>
+    </data>
+    <data name="ChargeProfile_Degrade" xml:space="preserve">
+        <value>Degrade</value>
+    </data>
+    <data name="Condition_ModId" xml:space="preserve">
+        <value>ModId</value>
+    </data>
+    <data name="Condition_Id" xml:space="preserve">
+        <value>Id</value>
+    </data>
+    <data name="Condition_Name" xml:space="preserve">
+        <value>Name</value>
+    </data>
+    <data name="Condition_Description" xml:space="preserve">
+        <value>Description</value>
+    </data>
+    <data name="Condition_FieldNames" xml:space="preserve">
+        <value>FieldNames</value>
+    </data>
+    <data name="Condition_Modifiers" xml:space="preserve">
+        <value>Modifiers</value>
+    </data>
+    <data name="Condition_Effects" xml:space="preserve">
+        <value>Effects</value>
+    </data>
+    <data name="Condition_Fatal" xml:space="preserve">
+        <value>Fatal</value>
+    </data>
+    <data name="Condition_IdNext" xml:space="preserve">
+        <value>IdNext</value>
+    </data>
+    <data name="Condition_Duration" xml:space="preserve">
+        <value>Duration</value>
+    </data>
+    <data name="Condition_Permanent" xml:space="preserve">
+        <value>Permanent</value>
+    </data>
+    <data name="Condition_ChanceNext" xml:space="preserve">
+        <value>ChanceNext</value>
+    </data>
+    <data name="Condition_Stackable" xml:space="preserve">
+        <value>Stackable</value>
+    </data>
+    <data name="Condition_Display" xml:space="preserve">
+        <value>Display</value>
+    </data>
+    <data name="Condition_DisplayOther" xml:space="preserve">
+        <value>DisplayOther</value>
+    </data>
+    <data name="Condition_DisplayGameOver" xml:space="preserve">
+        <value>DisplayGameOver</value>
+    </data>
+    <data name="Condition_Color" xml:space="preserve">
+        <value>Color</value>
+    </data>
+    <data name="Condition_ResetTimer" xml:space="preserve">
+        <value>ResetTimer</value>
+    </data>
+    <data name="Condition_RemoveAll" xml:space="preserve">
+        <value>RemoveAll</value>
+    </data>
+    <data name="Condition_RemovePostCombat" xml:space="preserve">
+        <value>RemovePostCombat</value>
+    </data>
+    <data name="Condition_TransferRange" xml:space="preserve">
+        <value>TransferRange</value>
+    </data>
+    <data name="Condition_Thresholds" xml:space="preserve">
+        <value>Thresholds</value>
+    </data>
+    <data name="ContainerType_ModId" xml:space="preserve">
+        <value>ModId</value>
+    </data>
+    <data name="ContainerType_Id" xml:space="preserve">
+        <value>Id</value>
+    </data>
+    <data name="ContainerType_Name" xml:space="preserve">
+        <value>Name</value>
+    </data>
+    <data name="Creature_ModId" xml:space="preserve">
+        <value>ModId</value>
+    </data>
+    <data name="Creature_Id" xml:space="preserve">
+        <value>Id</value>
+    </data>
+    <data name="Creature_Name" xml:space="preserve">
+        <value>Name</value>
+    </data>
+    <data name="Creature_NamePublic" xml:space="preserve">
+        <value>NamePublic</value>
+    </data>
+    <data name="Creature_Notes" xml:space="preserve">
+        <value>Notes</value>
+    </data>
+    <data name="Creature_Image" xml:space="preserve">
+        <value>Image</value>
+    </data>
+    <data name="Creature_EncounterIds" xml:space="preserve">
+        <value>EncounterIds</value>
+    </data>
+    <data name="Creature_MovesPerTurn" xml:space="preserve">
+        <value>MovesPerTurn</value>
+    </data>
+    <data name="Creature_TreasureId" xml:space="preserve">
+        <value>TreasureId</value>
+    </data>
+    <data name="Creature_Faction" xml:space="preserve">
+        <value>Faction</value>
+    </data>
+    <data name="Creature_AttackModes" xml:space="preserve">
+        <value>AttackModes</value>
+    </data>
+    <data name="Creature_BaseConditions" xml:space="preserve">
+        <value>BaseConditions</value>
+    </data>
+    <data name="Creature_CorpseId" xml:space="preserve">
+        <value>CorpseId</value>
+    </data>
+    <data name="Creature_Activities" xml:space="preserve">
+        <value>Activities</value>
+    </data>
+    <data name="CreatureSource_ModId" xml:space="preserve">
+        <value>ModId</value>
+    </data>
+    <data name="CreatureSource_Id" xml:space="preserve">
+        <value>Id</value>
+    </data>
+    <data name="CreatureSource_Name" xml:space="preserve">
+        <value>Name</value>
+    </data>
+    <data name="CreatureSource_X" xml:space="preserve">
+        <value>X</value>
+    </data>
+    <data name="CreatureSource_Y" xml:space="preserve">
+        <value>Y</value>
+    </data>
+    <data name="CreatureSource_CreatureId" xml:space="preserve">
+        <value>CreatureId</value>
+    </data>
+    <data name="CreatureSource_Min" xml:space="preserve">
+        <value>Min</value>
+    </data>
+    <data name="CreatureSource_Max" xml:space="preserve">
+        <value>Max</value>
+    </data>
+    <data name="CreatureSource_Weight" xml:space="preserve">
+        <value>Weight</value>
+    </data>
+    <data name="DataFile_ModId" xml:space="preserve">
+        <value>ModId</value>
+    </data>
+    <data name="DataFile_Id" xml:space="preserve">
+        <value>Id</value>
+    </data>
+    <data name="DataFile_Name" xml:space="preserve">
+        <value>Name</value>
+    </data>
+    <data name="DataFile_Description" xml:space="preserve">
+        <value>Description</value>
+    </data>
+    <data name="DataFile_Value" xml:space="preserve">
+        <value>Value</value>
+    </data>
+    <data name="DataFile_Image" xml:space="preserve">
+        <value>Image</value>
+    </data>
+    <data name="DmcPlace_ModId" xml:space="preserve">
+        <value>ModId</value>
+    </data>
+    <data name="DmcPlace_Id" xml:space="preserve">
+        <value>Id</value>
+    </data>
+    <data name="DmcPlace_Image" xml:space="preserve">
+        <value>Image</value>
+    </data>
+    <data name="DmcPlace_EncounterId" xml:space="preserve">
+        <value>EncounterId</value>
+    </data>
+    <data name="DmcPlace_X" xml:space="preserve">
+        <value>X</value>
+    </data>
+    <data name="DmcPlace_Y" xml:space="preserve">
+        <value>Y</value>
+    </data>
+    <data name="Encounter_ModId" xml:space="preserve">
+        <value>ModId</value>
+    </data>
+    <data name="Encounter_Id" xml:space="preserve">
+        <value>Id</value>
+    </data>
+    <data name="Encounter_Name" xml:space="preserve">
+        <value>Name</value>
+    </data>
+    <data name="Encounter_Description" xml:space="preserve">
+        <value>Description</value>
+    </data>
+    <data name="Encounter_Image" xml:space="preserve">
+        <value>Image</value>
+    </data>
+    <data name="Encounter_TreasureId" xml:space="preserve">
+        <value>TreasureId</value>
+    </data>
+    <data name="Encounter_RemoveTreasureId" xml:space="preserve">
+        <value>RemoveTreasureId</value>
+    </data>
+    <data name="Encounter_Conditions" xml:space="preserve">
+        <value>Conditions</value>
+    </data>
+    <data name="Encounter_PreConditions" xml:space="preserve">
+        <value>PreConditions</value>
+    </data>
+    <data name="Encounter_Price" xml:space="preserve">
+        <value>Price</value>
+    </data>
+    <data name="Encounter_Responses" xml:space="preserve">
+        <value>Responses</value>
+    </data>
+    <data name="Encounter_MinimapHexes" xml:space="preserve">
+        <value>MinimapHexes</value>
+    </data>
+    <data name="Encounter_RemoveCreatures" xml:space="preserve">
+        <value>RemoveCreatures</value>
+    </data>
+    <data name="Encounter_RemoveUsed" xml:space="preserve">
+        <value>RemoveUsed</value>
+    </data>
+    <data name="Encounter_ItemsId" xml:space="preserve">
+        <value>ItemsId</value>
+    </data>
+    <data name="Encounter_CreatureId" xml:space="preserve">
+        <value>CreatureId</value>
+    </data>
+    <data name="Encounter_CreatureHex" xml:space="preserve">
+        <value>CreatureHex</value>
+    </data>
+    <data name="Encounter_Teleport" xml:space="preserve">
+        <value>Teleport</value>
+    </data>
+    <data name="Encounter_Editor" xml:space="preserve">
+        <value>Editor</value>
+    </data>
+    <data name="Encounter_Type" xml:space="preserve">
+        <value>Type</value>
+    </data>
+    <data name="Encounter_LootChance" xml:space="preserve">
+        <value>LootChance</value>
+    </data>
+    <data name="Encounter_AccidentChance" xml:space="preserve">
+        <value>AccidentChance</value>
+    </data>
+    <data name="Encounter_CreatureChance" xml:space="preserve">
+        <value>CreatureChance</value>
+    </data>
+    <data name="Encounter_Accidents" xml:space="preserve">
+        <value>Accidents</value>
+    </data>
+    <data name="Encounter_Loot" xml:space="preserve">
+        <value>Loot</value>
+    </data>
+    <data name="EncounterTrigger_ModId" xml:space="preserve">
+        <value>ModId</value>
+    </data>
+    <data name="EncounterTrigger_Id" xml:space="preserve">
+        <value>Id</value>
+    </data>
+    <data name="EncounterTrigger_Name" xml:space="preserve">
+        <value>Name</value>
+    </data>
+    <data name="EncounterTrigger_EncounterId" xml:space="preserve">
+        <value>EncounterId</value>
+    </data>
+    <data name="EncounterTrigger_Chance" xml:space="preserve">
+        <value>Chance</value>
+    </data>
+    <data name="EncounterTrigger_LocBased" xml:space="preserve">
+        <value>LocBased</value>
+    </data>
+    <data name="EncounterTrigger_DateBased" xml:space="preserve">
+        <value>DateBased</value>
+    </data>
+    <data name="EncounterTrigger_HexBased" xml:space="preserve">
+        <value>HexBased</value>
+    </data>
+    <data name="EncounterTrigger_Unique" xml:space="preserve">
+        <value>Unique</value>
+    </data>
+    <data name="EncounterTrigger_AIPassable" xml:space="preserve">
+        <value>AIPassable</value>
+    </data>
+    <data name="EncounterTrigger_Area" xml:space="preserve">
+        <value>Area</value>
+    </data>
+    <data name="EncounterTrigger_DateMin" xml:space="preserve">
+        <value>DateMin</value>
+    </data>
+    <data name="EncounterTrigger_DateMax" xml:space="preserve">
+        <value>DateMax</value>
+    </data>
+    <data name="EncounterTrigger_HexTypes" xml:space="preserve">
+        <value>HexTypes</value>
+    </data>
+    <data name="Faction_ModId" xml:space="preserve">
+        <value>ModId</value>
+    </data>
+    <data name="Faction_Id" xml:space="preserve">
+        <value>Id</value>
+    </data>
+    <data name="Faction_Name" xml:space="preserve">
+        <value>Name</value>
+    </data>
+    <data name="Faction_DictFactions" xml:space="preserve">
+        <value>DictFactions</value>
+    </data>
+    <data name="ForbiddenHex_ModId" xml:space="preserve">
+        <value>ModId</value>
+    </data>
+    <data name="ForbiddenHex_Id" xml:space="preserve">
+        <value>Id</value>
+    </data>
+    <data name="ForbiddenHex_X" xml:space="preserve">
+        <value>X</value>
+    </data>
+    <data name="ForbiddenHex_Y" xml:space="preserve">
+        <value>Y</value>
+    </data>
+    <data name="ForbiddenHex_Name" xml:space="preserve">
+        <value>Name</value>
+    </data>
+    <data name="GameVar_ModId" xml:space="preserve">
+        <value>ModId</value>
+    </data>
+    <data name="GameVar_Name" xml:space="preserve">
+        <value>Name</value>
+    </data>
+    <data name="GameVar_Type" xml:space="preserve">
+        <value>Type</value>
+    </data>
+    <data name="GameVar_Value" xml:space="preserve">
+        <value>Value</value>
+    </data>
+    <data name="Headline_ModId" xml:space="preserve">
+        <value>ModId</value>
+    </data>
+    <data name="Headline_Id" xml:space="preserve">
+        <value>Id</value>
+    </data>
+    <data name="Headline_HeadlineText" xml:space="preserve">
+        <value>HeadlineText</value>
+    </data>
+    <data name="HexType_ModId" xml:space="preserve">
+        <value>ModId</value>
+    </data>
+    <data name="HexType_Id" xml:space="preserve">
+        <value>Id</value>
+    </data>
+    <data name="HexType_Name" xml:space="preserve">
+        <value>Name</value>
+    </data>
+    <data name="HexType_Description" xml:space="preserve">
+        <value>Description</value>
+    </data>
+    <data name="HexType_TerrainCost" xml:space="preserve">
+        <value>TerrainCost</value>
+    </data>
+    <data name="HexType_VizLimiter" xml:space="preserve">
+        <value>VizLimiter</value>
+    </data>
+    <data name="HexType_VizIncrease" xml:space="preserve">
+        <value>VizIncrease</value>
+    </data>
+    <data name="HexType_TreasureId" xml:space="preserve">
+        <value>TreasureId</value>
+    </data>
+    <data name="HexType_Passable" xml:space="preserve">
+        <value>Passable</value>
+    </data>
+    <data name="HexType_ScavengeInitialId" xml:space="preserve">
+        <value>ScavengeInitialId</value>
+    </data>
+    <data name="HexType_ScavengeItemsIdPerHour" xml:space="preserve">
+        <value>ScavengeItemsIdPerHour</value>
+    </data>
+    <data name="HexType_CampItems" xml:space="preserve">
+        <value>CampItems</value>
+    </data>
+    <data name="HexType_LightLevels" xml:space="preserve">
+        <value>LightLevels</value>
+    </data>
+    <data name="HexType_DefaultCampId" xml:space="preserve">
+        <value>DefaultCampId</value>
+    </data>
+    <data name="HexType_MinRange" xml:space="preserve">
+        <value>MinRange</value>
+    </data>
+    <data name="HexType_MaxRange" xml:space="preserve">
+        <value>MaxRange</value>
+    </data>
+    <data name="HexType_ConditionIds" xml:space="preserve">
+        <value>ConditionIds</value>
+    </data>
+    <data name="Ingredient_ModId" xml:space="preserve">
+        <value>ModId</value>
+    </data>
+    <data name="Ingredient_Id" xml:space="preserve">
+        <value>Id</value>
+    </data>
+    <data name="Ingredient_Name" xml:space="preserve">
+        <value>Name</value>
+    </data>
+    <data name="Ingredient_RequiredProps" xml:space="preserve">
+        <value>RequiredProps</value>
+    </data>
+    <data name="Ingredient_ForbidProps" xml:space="preserve">
+        <value>ForbidProps</value>
+    </data>
+    <data name="ItemProp_ModId" xml:space="preserve">
+        <value>ModId</value>
+    </data>
+    <data name="ItemProp_Id" xml:space="preserve">
+        <value>Id</value>
+    </data>
+    <data name="ItemProp_PropertyName" xml:space="preserve">
+        <value>PropertyName</value>
+    </data>
+    <data name="ItemType_EquipConditions" xml:space="preserve">
+        <value>EquipConditions</value>
+    </data>
+    <data name="ItemType_PossessConditions" xml:space="preserve">
+        <value>PossessConditions</value>
+    </data>
+    <data name="ItemType_UseConditions" xml:space="preserve">
+        <value>UseConditions</value>
+    </data>
+    <data name="ItemType_Capacities" xml:space="preserve">
+        <value>Capacities</value>
+    </data>
+    <data name="ItemType_EquipSlots" xml:space="preserve">
+        <value>EquipSlots</value>
+    </data>
+    <data name="ItemType_UseSlots" xml:space="preserve">
+        <value>UseSlots</value>
+    </data>
+    <data name="ItemType_SocketLocked" xml:space="preserve">
+        <value>SocketLocked</value>
+    </data>
+    <data name="ItemType_Properties" xml:space="preserve">
+        <value>Properties</value>
+    </data>
+    <data name="ItemType_ContentIds" xml:space="preserve">
+        <value>ContentIds</value>
+    </data>
+    <data name="ItemType_FormatId" xml:space="preserve">
+        <value>FormatId</value>
+    </data>
+    <data name="ItemType_TreasureId" xml:space="preserve">
+        <value>TreasureId</value>
+    </data>
+    <data name="ItemType_ComponentId" xml:space="preserve">
+        <value>ComponentId</value>
+    </data>
+    <data name="ItemType_Mirrored" xml:space="preserve">
+        <value>Mirrored</value>
+    </data>
+    <data name="ItemType_SlotDepth" xml:space="preserve">
+        <value>SlotDepth</value>
+    </data>
+    <data name="ItemType_ChargeProfiles" xml:space="preserve">
+        <value>ChargeProfiles</value>
+    </data>
+    <data name="ItemType_AttackModes" xml:space="preserve">
+        <value>AttackModes</value>
+    </data>
+    <data name="ItemType_StackLimit" xml:space="preserve">
+        <value>StackLimit</value>
+    </data>
+    <data name="ItemType_SwitchIds" xml:space="preserve">
+        <value>SwitchIds</value>
+    </data>
+    <data name="ItemType_Sounds" xml:space="preserve">
+        <value>Sounds</value>
+    </data>
+    <data name="Map_ModId" xml:space="preserve">
+        <value>ModId</value>
+    </data>
+    <data name="Map_Id" xml:space="preserve">
+        <value>Id</value>
+    </data>
+    <data name="Map_Name" xml:space="preserve">
+        <value>Name</value>
+    </data>
+    <data name="Map_Definition" xml:space="preserve">
+        <value>Definition</value>
+    </data>
+    <data name="Recipe_ModId" xml:space="preserve">
+        <value>ModId</value>
+    </data>
+    <data name="Recipe_Id" xml:space="preserve">
+        <value>Id</value>
+    </data>
+    <data name="Recipe_Name" xml:space="preserve">
+        <value>Name</value>
+    </data>
+    <data name="Recipe_SecretName" xml:space="preserve">
+        <value>SecretName</value>
+    </data>
+    <data name="Recipe_Tools" xml:space="preserve">
+        <value>Tools</value>
+    </data>
+    <data name="Recipe_Consumed" xml:space="preserve">
+        <value>Consumed</value>
+    </data>
+    <data name="Recipe_Destroyed" xml:space="preserve">
+        <value>Destroyed</value>
+    </data>
+    <data name="Recipe_TreasureId" xml:space="preserve">
+        <value>TreasureId</value>
+    </data>
+    <data name="Recipe_Hours" xml:space="preserve">
+        <value>Hours</value>
+    </data>
+    <data name="Recipe_Reverse" xml:space="preserve">
+        <value>Reverse</value>
+    </data>
+    <data name="Recipe_HiddenId" xml:space="preserve">
+        <value>HiddenId</value>
+    </data>
+    <data name="Recipe_Identify" xml:space="preserve">
+        <value>Identify</value>
+    </data>
+    <data name="Recipe_TransferComponents" xml:space="preserve">
+        <value>TransferComponents</value>
+    </data>
+    <data name="Recipe_AlsoTry" xml:space="preserve">
+        <value>AlsoTry</value>
+    </data>
+    <data name="Recipe_TempTreasureId" xml:space="preserve">
+        <value>TempTreasureId</value>
+    </data>
+    <data name="Recipe_DegradeOutput" xml:space="preserve">
+        <value>DegradeOutput</value>
+    </data>
+    <data name="Recipe_Type" xml:space="preserve">
+        <value>Type</value>
+    </data>
+    <data name="Recipe_Scrap" xml:space="preserve">
+        <value>Scrap</value>
+    </data>
+    <data name="TreasureTable_ModId" xml:space="preserve">
+        <value>ModId</value>
+    </data>
+    <data name="TreasureTable_Id" xml:space="preserve">
+        <value>Id</value>
+    </data>
+    <data name="TreasureTable_Name" xml:space="preserve">
+        <value>Name</value>
+    </data>
+    <data name="TreasureTable_Treasures" xml:space="preserve">
+        <value>Treasures</value>
+    </data>
+    <data name="TreasureTable_Nested" xml:space="preserve">
+        <value>Nested</value>
+    </data>
+    <data name="TreasureTable_Suppress" xml:space="preserve">
+        <value>Suppress</value>
+    </data>
+    <data name="TreasureTable_Identify" xml:space="preserve">
+        <value>Identify</value>
+    </data>
+    <data name="OpenProject" xml:space="preserve">
+        <value>Open Project</value>
+    </data>
+    <data name="CreateProject" xml:space="preserve">
+        <value>Create Project</value>
+    </data>
+    <data name="ProjectName" xml:space="preserve">
+        <value>ProjectName</value>
+    </data>
+    <data name="SelectFolder" xml:space="preserve">
+        <value>SelectFolder</value>
+        <comment>SelectFolder</comment>
+    </data>
+    <data name="GameRootDirectory" xml:space="preserve">
+        <value>Game Root Directory</value>
+        <comment>GameRootDirectory</comment>
+    </data>
+    <data name="Confirm" xml:space="preserve">
+        <value>Confirm</value>
+        <comment>Confirm</comment>
+    </data>
+    <data name="Cancel" xml:space="preserve">
+        <value>Cancel</value>
+        <comment>Cancel</comment>
+    </data>
+    <data name="FolderIsEmpty" xml:space="preserve">
+        <value>Folder Is Empty</value>
+        <comment>FolderIsEmpty</comment>
+    </data>
+    <data name="UpLevel" xml:space="preserve">
+        <value>UpLevel</value>
+        <comment>UpLevel</comment>
+    </data>
+    <data name="MenuProject" xml:space="preserve">
+        <value>Project</value>
+    </data>
+    <data name="MenuProjectCreate" xml:space="preserve">
+        <value>Create Project</value>
+    </data>
+    <data name="MenuProjectOpen" xml:space="preserve">
+        <value>Open Project</value>
+    </data>
+    <data name="MenuProjectClose" xml:space="preserve">
+        <value>Close Project</value>
+    </data>
+    <data name="AppTitle" xml:space="preserve">
+        <value>Neo Editor</value>
+    </data>
+    <data name="MainContent" xml:space="preserve">
+        <value>Main Content</value>
+    </data>
+    <data name="Settings" xml:space="preserve">
+        <value>Settings</value>
+    </data>
+    <data name="Search" xml:space="preserve">
+        <value>Search</value>
+    </data>
+    <data name="ResourceManager" xml:space="preserve">
+        <value>ResourceManager</value>
+    </data>
+    <data name="KeywordInput" xml:space="preserve">
+        <value>Enter the keyword...</value>
+    </data>
+</root>

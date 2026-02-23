@@ -1,0 +1,29 @@
+<Application
+    x:Class="NeoEditor.App"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:avalonia="clr-namespace:FluentIcons.Avalonia;assembly=FluentIcons.Avalonia"
+    xmlns:game="clr-namespace:NeoEditor.Data.Model.Game"
+    xmlns:local="using:NeoEditor"
+    xmlns:vm="clr-namespace:NeoEditor.ViewModels"
+    RequestedThemeVariant="Default">
+
+    <Application.DataTemplates>
+        <DataTemplate DataType="game:AttackMode">
+            <vm:SearchPaneViewModel />
+        </DataTemplate>
+        <!--  搜索面板模板  -->
+        <!-- <DataTemplate DataType="{x:Type vm:SearchPaneViewModel}"> -->
+        <!--     <ScrollViewer> -->
+        <!--     </ScrollViewer> -->
+        <!-- </DataTemplate> -->
+
+        <!--  默认选项，根据ViewModel查找View，位置放最后，以免覆盖其他特定的模板  -->
+        <!-- <local:ViewLocator /> -->
+    </Application.DataTemplates>
+
+    <Application.Styles>
+        <FluentTheme />
+        <StyleInclude Source="avares://Avalonia.Controls.DataGrid/Themes/Fluent.xaml" />
+    </Application.Styles>
+</Application>

@@ -1,0 +1,7 @@
+﻿services:
+  neoeditorweb:
+    image: neoeditorweb
+    build:
+      context: .
+      dockerfile: NeoEditorWeb/Dockerfile
+
