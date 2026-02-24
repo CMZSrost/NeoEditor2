@@ -21,6 +21,7 @@ using NeoEditor.ViewModels;
 using NeoEditor.Views;
 using NeoEditor.Services;
 using NeoEditor.ViewModels.ExplorerPane;
+using NeoEditor.Views.UserControls;
 
 namespace NeoEditor;
 
@@ -69,7 +70,8 @@ public partial class App : Application
                     .AddScoped<SearchPaneViewModel>()
                     .AddScoped<ModDatabaseViewModel>()
                     .AddScoped<SettingsPaneViewModel>();
-                services.AddTransient<SearchableDataGridViewModel<GameVar>, GameVarDataGridViewModel>();
+                services.AddTransient<SearchableDataGrid>()
+                    .AddTransient<SearchableDataGridViewModel>();
             })
             .Build();
     }

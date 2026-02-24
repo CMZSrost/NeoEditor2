@@ -181,7 +181,7 @@
                         CanUserSortColumns="True"
                         ItemsSource="{Binding SampleData}" />
 
-                    <userControls:GameVarDataGrid Grid.Row="1" ItemsSource="{Binding DataContext.SampleData, ElementName=MainWindowApp}" />
+                    <userControls:SearchableDataGrid Grid.Row="1" ItemsSource="{Binding SampleData}" />
                 </Grid>
 
             </SplitView.Content>

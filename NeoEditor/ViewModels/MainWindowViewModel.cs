@@ -26,7 +26,7 @@ public partial class MainWindowViewModel : ViewModelBase
     private INotificationService _notificationService;
     private readonly ILogger<MainWindowViewModel> _logger;
 
-    public ObservableCollection<GameVar> SampleData { get; } =
+    public ObservableCollection<GameVar> SampleData { get; set; } =
         [new() { ModId = 1, Name = "Sample Var", Value = "123", Type = "int" }];
 
     public MainWindowViewModel() : this(App.ServiceProvider!)
