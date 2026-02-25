@@ -5,10 +5,13 @@
     xmlns:avalonia="clr-namespace:FluentIcons.Avalonia;assembly=FluentIcons.Avalonia"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:explorerPane="clr-namespace:NeoEditor.ViewModels.ExplorerPane"
-    xmlns:game="clr-namespace:NeoEditor.Data.Model.Game"
-    xmlns:io="clr-namespace:System.IO;assembly=System.Runtime"
+    xmlns:i="clr-namespace:Avalonia.Xaml.Interactivity;assembly=Avalonia.Xaml.Interactivity"
+    xmlns:ia="clr-namespace:Avalonia.Xaml.Interactions.Core;assembly=Avalonia.Xaml.Interactions"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    xmlns:userControls="clr-namespace:NeoEditor.Views.UserControls"
+    xmlns:model="clr-namespace:NeoEditor.Data.Model"
+    xmlns:services="clr-namespace:NeoEditor.Services"
+    xmlns:system="clr-namespace:System;assembly=System.Runtime"
+    xmlns:visualBasic="clr-namespace:Microsoft.VisualBasic;assembly=Microsoft.VisualBasic.Core"
     xmlns:vm="using:NeoEditor.ViewModels"
     x:Name="MainWindowApp"
     Title="{Binding Loc[AppTitle]}"
@@ -20,6 +23,36 @@
     <Design.DataContext>
         <vm:MainWindowViewModel />
     </Design.DataContext>
+    <Window.Resources>
+        <StaticResource x:Key="Loc" ResourceKey="Loc" />
+    </Window.Resources>
+    <Window.DataTemplates>
+        <DataTemplate DataType="model:ProfileInfo">
+            <Expander>
+                <i:Interaction.Behaviors>
+                    <ia:EventTriggerBehavior EventName="Expanded">
+                        <ia:InvokeCommandAction Command="{Binding DataContext.ProfileExpandedCommand, ElementName=MainWindowApp}" CommandParameter="{Binding}" />
+                    </ia:EventTriggerBehavior>
+                </i:Interaction.Behaviors>
+                <Expander.Header>
+                    <StackPanel>
+                        <TextBlock Text="{Binding Name}" />
+                        <TextBlock
+                            FontSize="11"
+                            Text="{Binding Path}"
+                            TextWrapping="Wrap" />
+                    </StackPanel>
+                </Expander.Header>
+                <StackPanel>
+                    <TextBlock
+                        FontSize="11"
+                        Text="{Binding Description}"
+                        TextWrapping="Wrap" />
+                    <ContentControl Content="{Binding ModIndexInfo}" />
+                </StackPanel>
+            </Expander>
+        </DataTemplate>
+    </Window.DataTemplates>
     <DockPanel>
         <!--  菜单栏  -->
         <Menu DockPanel.Dock="Top">
@@ -46,7 +79,6 @@
         </StackPanel>
         <!--  左侧垂直按钮条  -->
         <StackPanel
-            Grid.Column="0"
             Margin="4"
             Orientation="Vertical"
             Spacing="4">
@@ -55,6 +87,9 @@
             </Button>
             <Button Command="{Binding TogglePaneCommand}" CommandParameter="ModDatabase">
                 <avalonia:SymbolIcon IconVariant="Regular" Symbol="Database" />
+            </Button>
+            <Button Command="{Binding TogglePaneCommand}" CommandParameter="Profiles">
+                <avalonia:SymbolIcon IconVariant="Regular" Symbol="Edit" />
             </Button>
             <Button Command="{Binding TogglePaneCommand}" CommandParameter="Search">
                 <avalonia:SymbolIcon IconVariant="Regular" Symbol="Search" />
@@ -109,6 +144,7 @@
                                     <StackPanel Orientation="Horizontal">
                                         <StackPanel Orientation="Horizontal">
                                             <Button Command="{Binding ImportModCommand}" Content="{Binding DataContext.Loc[ImportMod], ElementName=MainWindowApp}" />
+                                            <Button Command="{Binding ClearModsCommand}" Content="{Binding DataContext.Loc[ClearAllMods], ElementName=MainWindowApp}" />
                                         </StackPanel>
                                     </StackPanel>
                                     <TextBox
@@ -116,13 +152,55 @@
                                         ClearSelectionOnLostFocus="True"
                                         Text="{Binding Filter}"
                                         Watermark="{Binding DataContext.Loc[KeywordInput], ElementName=MainWindowApp}" />
-                                    <ListBox Margin="8" ItemsSource="{Binding Mods}">
-                                        <!-- <ListBox.ItemTemplate> -->
-                                        <!--     <DataTemplate> -->
-                                        <!--         <TextBlock Text="{Binding .}" /> -->
-                                        <!--     </DataTemplate> -->
-                                        <!-- </ListBox.ItemTemplate> -->
-                                    </ListBox>
+                                    <ListBox Margin="8" ItemsSource="{Binding Mods}" />
+                                </StackPanel>
+                            </ScrollViewer>
+                        </DataTemplate>
+                        <!--  php配置文件  -->
+                        <DataTemplate DataType="explorerPane:ModIndexViewModel">
+                            <ScrollViewer Width="500">
+                                <StackPanel Margin="8" Spacing="5">
+                                    <TextBlock FontWeight="Bold" Text="{Binding DataContext.Loc[ProfileDatabase], ElementName=MainWindowApp}" />
+                                    <StackPanel Orientation="Horizontal">
+                                        <Button
+                                            Command="{Binding AddProfileCommand}"
+                                            Content="{Binding DataContext.Loc[AddProfile], ElementName=MainWindowApp}"
+                                            IsCancel="{Binding GameRootDir, Converter={x:Static ObjectConverters.IsNull}}" />
+                                        <Button Command="{Binding RefreshProfilesCommand}" Content="{Binding DataContext.Loc[RefreshProfile], ElementName=MainWindowApp}" />
+                                        <Button
+                                            Command="{Binding LoadProfilesCommand}"
+                                            Content="{Binding DataContext.Loc[LoadProfiles], ElementName=MainWindowApp}"
+                                            IsCancel="{Binding GameRootDir, Converter={x:Static ObjectConverters.IsNull}}" />
+                                    </StackPanel>
+
+                                    <Expander HorizontalAlignment="Stretch">
+                                        <Expander.Header>
+                                            <StackPanel
+                                                VerticalAlignment="Center"
+                                                Orientation="Horizontal"
+                                                Spacing="5">
+                                                <avalonia:SymbolIcon Symbol="Games" />
+                                                <TextBlock Text="Game" />
+                                            </StackPanel>
+                                        </Expander.Header>
+                                        <ContentControl Content="{Binding Info}" />
+                                    </Expander>
+                                    <GridSplitter />
+                                    <!--  <AutoCompleteBox  -->
+                                    <!--  Margin="8"  -->
+                                    <!--  ClearSelectionOnLostFocus="True"  -->
+                                    <!--  FilterMode="Contains"  -->
+                                    <!--  ItemsSource="{Binding ProfilesPaths}"  -->
+                                    <!--  Watermark="{Binding DataContext.Loc[KeywordInput], ElementName=MainWindowApp}" />  -->
+
+                                    <StackPanel
+                                        VerticalAlignment="Center"
+                                        Orientation="Horizontal"
+                                        Spacing="5">
+                                        <avalonia:SymbolIcon Symbol="Edit" />
+                                        <TextBlock Text="{Binding DataContext.Loc[OtherProfiles], ElementName=MainWindowApp}" />
+                                    </StackPanel>
+                                    <ListBox ItemsSource="{Binding Profiles}" />
                                 </StackPanel>
                             </ScrollViewer>
                         </DataTemplate>
@@ -163,25 +241,22 @@
 
             <!--  主内容区（右侧）  -->
             <SplitView.Content>
-                <Grid ColumnDefinitions="*" RowDefinitions="*,*">
+                <Grid ColumnDefinitions="*" RowDefinitions="*">
                     <WindowNotificationManager
                         Name="NotificationManager"
                         Grid.Row="0"
-                        Grid.RowSpan="2"
-                        MaxItems="3"
                         Position="TopRight" />
-                    <DataGrid
-                        Grid.Row="0"
-                        MinWidth="200"
-                        MinHeight="200"
-                        AutoGenerateColumns="True"
-                        AutoGeneratingColumn="OnAutoGeneratingColumn"
-                        CanUserReorderColumns="True"
-                        CanUserResizeColumns="True"
-                        CanUserSortColumns="True"
-                        ItemsSource="{Binding SampleData}" />
-
-                    <userControls:SearchableDataGrid Grid.Row="1" ItemsSource="{Binding SampleData}" />
+                    <Border>
+                        <ContentControl Content="{Binding CurrentMainContent}">
+                            <ContentControl.DataTemplates />
+                        </ContentControl>
+                    </Border>
+                    <!-- <TabControl> -->
+                    <!--     <TabItem Header="{Binding Loc[Welcome]}"> -->
+                    <!--         <TextBlock></TextBlock> -->
+                    <!--     </TabItem> -->
+                    <!-- </TabControl> -->
+                    <!-- <userControls:SearchableDataGrid Grid.Row="0" ItemsSource="{Binding SampleData}" /> -->
                 </Grid>
 
             </SplitView.Content>

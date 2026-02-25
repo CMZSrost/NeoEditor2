@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
@@ -39,11 +40,24 @@ public class ModInfo
     [Column("LastImport", TypeName = "datetime")]
     [Display(Name = "LastImport")]
     [DatabaseGenerated(DatabaseGeneratedOption.Computed)]
-    public DateTime LastImport { get; set; } // 文件最后导入时间，记录从xml导入的时间点
+    public DateTime? LastImport { get; set; } // 文件最后导入时间，记录从xml导入的时间点
+}
+
+public class ModLoadInfo
+{
+    public ModType Type { get; set; } // 文件路径
+    public ModInfo Info { get; set; } = null!;
+}
+
+public class ModIndexInfo
+{
+    public string? FilePath { get; set; } // 文件路径
+    public List<ModLoadInfo> Mods { get; set; } = []; // 包含的Mod列表
 }
 
 public enum ModType
 {
     Insert, // 插入模式，主键自增
-    Merge // 合并模式，使用原有主键覆盖
+    Merge, // 合并模式，使用原有主键覆盖
+    Unknown, // 未知状态，未导入过
 }

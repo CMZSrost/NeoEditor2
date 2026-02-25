@@ -16,6 +16,7 @@ public class EditorDbContext : DbContext
     }
 
     public DbSet<ModInfo> ModInfos { get; set; }
+    public DbSet<ProfileInfo> ProfileInfos { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -27,8 +28,16 @@ public class EditorDbContext : DbContext
             e.HasKey(m => m.ModId);
             e.Property(m => m.Name).IsRequired();
             e.HasIndex(m => m.Path).IsUnique(); // 以Path作为业务唯一键
-            e.Property(m => m.LastImport).ValueGeneratedOnAdd().HasDefaultValueSql("CURRENT_TIMESTAMP");
+            e.Property(m => m.LastImport).ValueGeneratedOnAdd();
             e.Property(m => m.LastModified).ValueGeneratedOnAdd().HasDefaultValueSql("CURRENT_TIMESTAMP");
+        });
+        modelBuilder.Entity<ProfileInfo>(e =>
+        {
+            e.HasKey(m => m.ProfileId);
+            e.Property(m => m.Name).IsRequired();
+            e.HasIndex(m => m.Path).IsUnique(); // 以Path作为业务唯一键
+            e.Property(m => m.UpdateTime).ValueGeneratedOnAddOrUpdate().HasDefaultValueSql("CURRENT_TIMESTAMP");
+            e.Property(m => m.CreateTime).ValueGeneratedOnAdd().HasDefaultValueSql("CURRENT_TIMESTAMP");
         });
     }
 }

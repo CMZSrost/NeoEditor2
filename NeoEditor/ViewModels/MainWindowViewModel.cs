@@ -6,18 +6,24 @@ using Avalonia.Controls;
 using System.Globalization;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.IO;
 using System.Linq;
+using Avalonia.Interactivity;
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Messaging;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using NeoEditor.Assets;
 using NeoEditor.Data.DTO;
+using NeoEditor.Data.Messages;
+using NeoEditor.Data.Model;
 using NeoEditor.Data.Model.Game;
 using NeoEditor.Data.Options;
 using NeoEditor.Helper;
 using NeoEditor.ViewModels.ExplorerPane;
+using ModIndexViewModel = NeoEditor.ViewModels.ExplorerPane.ModIndexViewModel;
 
 namespace NeoEditor.ViewModels;
 
@@ -45,6 +51,12 @@ public partial class MainWindowViewModel : ViewModelBase
         );
         _notificationService = serviceProvider.GetRequiredService<INotificationService>();
         _logger = serviceProvider.GetRequiredService<ILogger<MainWindowViewModel>>();
+
+        _serviceProvider.GetRequiredService<ResourceManagerViewModel>();
+        _serviceProvider.GetRequiredService<SearchPaneViewModel>();
+        _serviceProvider.GetRequiredService<ModIndexViewModel>();
+        _serviceProvider.GetRequiredService<SettingsPaneViewModel>();
+        _serviceProvider.GetRequiredService<ModDatabaseViewModel>();
     }
 
     #region SideBar
@@ -55,6 +67,7 @@ public partial class MainWindowViewModel : ViewModelBase
 
     [ObservableProperty] public partial bool SideBarExpanded { get; set; } = false;
     [ObservableProperty] public partial object? CurrentPaneContent { get; set; }
+    [ObservableProperty] public partial object? CurrentMainContent { get; set; }
 
     private string _currentPaneId = ""; // 当前打开的面板标识
 
@@ -89,10 +102,11 @@ public partial class MainWindowViewModel : ViewModelBase
     {
         return paneId switch
         {
-            "Explorer" => _serviceProvider.GetRequiredService<ExplorerPane.ResourceManagerViewModel>(),
+            "Explorer" => _serviceProvider.GetRequiredService<ResourceManagerViewModel>(),
             "Search" => _serviceProvider.GetRequiredService<SearchPaneViewModel>(),
             "Settings" => _serviceProvider.GetRequiredService<SettingsPaneViewModel>(),
             "ModDatabase" => _serviceProvider.GetRequiredService<ModDatabaseViewModel>(),
+            "Profiles" => _serviceProvider.GetRequiredService<ModIndexViewModel>(),
             _ => throw new NotSupportedException()
         };
     }
@@ -149,6 +163,29 @@ public partial class MainWindowViewModel : ViewModelBase
     }
 
     #endregion
+
+    #endregion
+
+    #region Profile
+
+    [RelayCommand]
+    private void ProfileExpanded(ProfileInfo? profileInfo)
+    {
+        if (profileInfo is null)
+        {
+            _logger.LogWarning("ProfileInfo is null in ProfileExpandedCommand");
+            return;
+        }
+
+        if (profileInfo.ModIndexInfo is not null)
+        {
+            _logger.LogInformation($"Profile {profileInfo.Name} already loaded");
+            return;
+        }
+
+        _logger.LogInformation($"Loading profile: {profileInfo.Name}");
+        Messenger.Send(new LoadProfileMessage(profileInfo));
+    }
 
     #endregion
 }

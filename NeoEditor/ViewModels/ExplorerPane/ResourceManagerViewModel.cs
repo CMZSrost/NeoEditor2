@@ -12,11 +12,13 @@ using Avalonia.Platform.Storage;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Messaging;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using MsBox.Avalonia;
 using MsBox.Avalonia.Enums;
 using NeoEditor.Data;
+using NeoEditor.Data.Messages;
 using NeoEditor.Services;
 using ConfigurationManager = System.Configuration.ConfigurationManager;
 
@@ -43,6 +45,11 @@ public partial class ResourceManagerViewModel : ViewModelBase
         _localizationService = localizationService;
 
         var rootDir = ConfigurationManager.AppSettings[Constants.ProjectSettingsGameRootDir];
+
+        if (Design.IsDesignMode)
+        {
+            rootDir = "D:\\software\\Steam\\steamapps\\common\\Neo Scavenger";
+        }
 
         if (string.IsNullOrWhiteSpace(rootDir) || !Directory.Exists(rootDir))
         {
@@ -73,6 +80,7 @@ public partial class ResourceManagerViewModel : ViewModelBase
         {
             // 遍历目录
             GameRootDir = rootDir;
+            Messenger.Send(new SetGameFolderMessage(GameRootDir ?? ""));
             Folders.Clear();
             foreach (var entity in TraverseDirectory(new DirectoryInfo(GameRootDir)))
             {
@@ -129,6 +137,7 @@ public partial class ResourceManagerViewModel : ViewModelBase
                 {
                     _logger.LogInformation($"Selected folder: {folderPath}");
                     GameRootDir = folderPath;
+                    Messenger.Send(new SetGameFolderMessage(GameRootDir));
                     var configuration = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
                     if (configuration is null)
                     {

@@ -8,11 +8,15 @@
     xmlns:io="clr-namespace:System.IO;assembly=System.Runtime"
     xmlns:local="using:NeoEditor"
     xmlns:model="clr-namespace:NeoEditor.Data.Model"
+    xmlns:services="clr-namespace:NeoEditor.Services"
+    xmlns:system="clr-namespace:System;assembly=System.Runtime"
     xmlns:vm="clr-namespace:NeoEditor.ViewModels"
     RequestedThemeVariant="Default">
 
     <Application.Resources>
         <conv:ModBaseBackgroundConverter x:Key="ModBaseBackgroundConverter" />
+        <conv:ModLoadTypeIconConverter x:Key="ModLoadTypeIconConverter" />
+        <services:LocalizationService x:Key="Loc" />
     </Application.Resources>
 
     <Application.DataTemplates>
@@ -31,11 +35,6 @@
         <DataTemplate DataType="model:ModInfo">
             <StackPanel>
                 <StackPanel Background="{Binding IsBase, Converter={StaticResource ModBaseBackgroundConverter}}" Orientation="Horizontal">
-                    <!--  <TextBlock  -->
-                    <!--  Margin="0,0,5,0"  -->
-                    <!--  FontWeight="Bold"  -->
-                    <!--  Text="{Binding ModId}" />  -->
-                    <!--  如果ModInfo.IsBase为true，则标记为Grey  -->
                     <TextBlock FontWeight="Bold" Text="{Binding Name}" />
                 </StackPanel>
                 <TextBlock
@@ -44,6 +43,23 @@
                     TextWrapping="Wrap" />
             </StackPanel>
         </DataTemplate>
+        <DataTemplate DataType="model:ModLoadInfo">
+            <StackPanel VerticalAlignment="Center" Orientation="Horizontal">
+                <avalonia:SymbolIcon Symbol="{Binding Type, Converter={StaticResource ModLoadTypeIconConverter}}" />
+                <ContentControl Content="{Binding Info}" />
+            </StackPanel>
+        </DataTemplate>
+        <DataTemplate DataType="model:ModIndexInfo">
+            <StackPanel>
+                <TextBlock
+                    FontWeight="Bold"
+                    Text="{Binding FilePath}"
+                    TextWrapping="Wrap" />
+                <ListBox ItemsSource="{Binding Mods}" />
+            </StackPanel>
+        </DataTemplate>
+
+
         <!--  默认选项，根据ViewModel查找View，位置放最后，以免覆盖其他特定的模板  -->
         <local:ViewLocator />
     </Application.DataTemplates>

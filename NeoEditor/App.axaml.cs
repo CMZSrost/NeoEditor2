@@ -7,6 +7,7 @@ using Avalonia.Data.Core.Plugins;
 using System.Linq;
 using System.Threading;
 using Avalonia.Markup.Xaml;
+using CommunityToolkit.Mvvm.Messaging;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -16,12 +17,14 @@ using NeoEditor.Data;
 using NeoEditor.Data.Context;
 using NeoEditor.Data.Model.Game;
 using NeoEditor.Data.Options;
+using NeoEditor.Helper;
 using NeoEditor.Helper.Extensions;
 using NeoEditor.ViewModels;
 using NeoEditor.Views;
 using NeoEditor.Services;
 using NeoEditor.ViewModels.ExplorerPane;
 using NeoEditor.Views.UserControls;
+using ModIndexViewModel = NeoEditor.ViewModels.ExplorerPane.ModIndexViewModel;
 
 namespace NeoEditor;
 
@@ -60,18 +63,23 @@ public partial class App : Application
                         .EnableDetailedErrors());
 
                 // services
+                services.AddScoped<IMessenger, WeakReferenceMessenger>();
                 services.AddSingleton<LocalizationService>();
                 services.AddSingleton<INotificationService, NotificationService>();
+                services.AddSingleton<PhpParser>();
+                services.AddAutoMapper((expression => { }));
 
                 // window
                 services.AddTransient<MainWindow>()
                     .AddScoped<MainWindowViewModel>()
+                    // Panes
                     .AddScoped<ResourceManagerViewModel>()
                     .AddScoped<SearchPaneViewModel>()
                     .AddScoped<ModDatabaseViewModel>()
-                    .AddScoped<SettingsPaneViewModel>();
-                services.AddTransient<SearchableDataGrid>()
-                    .AddTransient<SearchableDataGridViewModel>();
+                    .AddScoped<SettingsPaneViewModel>()
+                    // MainContents
+                    .AddScoped<ModIndexViewModel>();
+                services.AddTransient<SearchableDataGrid>();
             })
             .Build();
     }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Configuration;
 using System.IO;
 using System.Linq;
@@ -10,22 +11,26 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Platform.Storage;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Messaging;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using NeoEditor.Data;
 using NeoEditor.Data.Context;
+using NeoEditor.Data.Messages;
 using NeoEditor.Data.Model;
 using NeoEditor.Services;
 
 namespace NeoEditor.ViewModels.ExplorerPane;
 
-public partial class ModDatabaseViewModel : ViewModelBase
+public partial class ModDatabaseViewModel : ViewModelBase, IRecipient<SetGameFolderMessage>
 {
+    [ObservableProperty] public partial string? GameRootDir { get; set; }
     private ProjectDbContextFactory _gameContextFactory;
     private IDbContextFactory<EditorDbContext> _editorContextFactory;
     private readonly EditorDbContext _editorDbContext;
     private readonly ILogger<ModDatabaseViewModel> _logger;
-    public ObservableCollection<ModInfo> Mods { get; }
+    public ObservableCollection<ModInfo> Mods { get; set; } = [];
 
     [ObservableProperty] public partial string Filter { get; set; } = "";
 
@@ -45,7 +50,14 @@ public partial class ModDatabaseViewModel : ViewModelBase
         _editorContextFactory = editorContextFactory;
         _editorDbContext = editorDbContext;
         editorDbContext.ModInfos.Load();
-        Mods = _editorDbContext.ModInfos.Local.ToObservableCollection();
+        foreach (var mod in _editorDbContext.ModInfos.ToList())
+            Mods.Add(mod);
+
+        GameRootDir = ConfigurationManager.AppSettings[Constants.ProjectSettingsGameRootDir];
+        if (Design.IsDesignMode)
+        {
+            GameRootDir = "D:\\software\\Steam\\steamapps\\common\\Neo Scavenger";
+        }
     }
 
     [RelayCommand]
@@ -68,12 +80,14 @@ public partial class ModDatabaseViewModel : ViewModelBase
             {
                 if (folder.TryGetLocalPath() is { } folderPath)
                 {
-                    await AddNewMod(folderPath, dbContext);
+                    await AddNewMod(folderPath.Replace(GameRootDir ?? "", "").Replace("\\", "/").TrimStart('/'),
+                        dbContext);
                 }
             }
 
-            dbContext.ModInfos.Local.Clear();
-            await dbContext.ModInfos.LoadAsync();
+            Mods.Clear();
+            foreach (var modInfo in dbContext.ModInfos.ToList())
+                Mods.Add(modInfo);
         }
     }
 
@@ -100,6 +114,30 @@ public partial class ModDatabaseViewModel : ViewModelBase
         catch (Exception e)
         {
             App.Notification!.ShowWarning($"mod {modFolder} not imported: {e.Message}", "Import Warning");
+        }
+    }
+
+    public void Receive(SetGameFolderMessage message)
+    {
+        GameRootDir = message.GameRootDir;
+        Console.WriteLine($"ModDatabase received game folder: {GameRootDir}");
+    }
+
+
+    [RelayCommand]
+    public async Task ClearMods(int? modId = null)
+    {
+        if (modId is null)
+        {
+            _editorDbContext.ModInfos.Local.Clear();
+            await _editorDbContext.SaveChangesAsync();
+            Mods.Clear();
+        }
+        else if (await _editorDbContext.FindAsync<ModInfo>(modId!) is { } modInfo)
+        {
+            _editorDbContext.ModInfos.Remove(modInfo);
+            await _editorDbContext.SaveChangesAsync();
+            Mods.Remove(Mods.First(m => m.ModId == modInfo.ModId));
         }
     }
 }

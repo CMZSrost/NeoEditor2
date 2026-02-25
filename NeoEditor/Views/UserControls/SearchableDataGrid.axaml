@@ -10,17 +10,13 @@
     d:DesignHeight="450"
     d:DesignWidth="800"
     mc:Ignorable="d">
-    <UserControl.Styles>
-        <StyleInclude Source="avares://Avalonia.Controls.DataGrid/Themes/Fluent.xaml" />
-    </UserControl.Styles>
     <DockPanel>
-        <TextBlock>test</TextBlock>
         <!--  过滤文本框  -->
-        <!--  <TextBox  -->
-        <!--  Margin="5"  -->
-        <!--  DockPanel.Dock="Top"  -->
-        <!--  Text="{Binding FilterText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"  -->
-        <!--  Watermark="搜索..." />  -->
+        <TextBox
+            Margin="5"
+            DockPanel.Dock="Top"
+            Text="{Binding FilterText, Mode=TwoWay, ElementName=GameDataGrid}"
+            Watermark="搜索..." />
 
         <!--  DataGrid  -->
         <DataGrid
