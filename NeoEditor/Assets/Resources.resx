@@ -662,7 +662,7 @@
         <value>ID Code</value>
     </data>
     <data name="NameDesc" xml:space="preserve">
-        <value>Item Name</value>
+        <value>Name</value>
     </data>
     <data name="NotesDesc" xml:space="preserve">
         <value>Item notes, usually left blank, does not affect gameplay</value>
@@ -1211,5 +1211,8 @@ Exit if No</value>
     </data>
     <data name="LastImport" xml:space="preserve">
         <value>LastImport</value>
+    </data>
+    <data name="Path" xml:space="preserve">
+        <value>Path</value>
     </data>
 </root>

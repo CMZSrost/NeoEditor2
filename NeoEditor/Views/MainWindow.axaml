@@ -9,15 +9,13 @@
     xmlns:ia="clr-namespace:Avalonia.Xaml.Interactions.Core;assembly=Avalonia.Xaml.Interactions"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:model="clr-namespace:NeoEditor.Data.Model"
-    xmlns:services="clr-namespace:NeoEditor.Services"
-    xmlns:system="clr-namespace:System;assembly=System.Runtime"
-    xmlns:visualBasic="clr-namespace:Microsoft.VisualBasic;assembly=Microsoft.VisualBasic.Core"
     xmlns:vm="using:NeoEditor.ViewModels"
     x:Name="MainWindowApp"
     Title="{Binding Loc[AppTitle]}"
     d:DesignHeight="500"
     d:DesignWidth="800"
     x:DataType="vm:MainWindowViewModel"
+    ClosingBehavior="OwnerAndChildWindows"
     Icon="/Assets/avalonia-logo.ico"
     mc:Ignorable="d">
     <Design.DataContext>
@@ -43,6 +41,14 @@
                             TextWrapping="Wrap" />
                     </StackPanel>
                 </Expander.Header>
+                <Expander.ContextMenu>
+                    <ContextMenu>
+                        <MenuItem
+                            Command="{Binding DataContext.EditProfileCommand, ElementName=MainWindowApp}"
+                            CommandParameter="{Binding}"
+                            Header="{Binding DataContext.Loc[EditProfile], ElementName=MainWindowApp}" />
+                    </ContextMenu>
+                </Expander.ContextMenu>
                 <StackPanel>
                     <TextBlock
                         FontSize="11"
@@ -58,6 +64,7 @@
         <Menu DockPanel.Dock="Top">
             <!--  项目  -->
             <MenuItem Header="{Binding Loc[MenuProject]}">
+                <MenuItem Command="{Binding SetFolderCommand}" Header="{Binding Loc[SetFolder]}" />
                 <MenuItem Command="{Binding CreateProjectCommand}" Header="{Binding Loc[MenuProjectCreate]}" />
                 <MenuItem Command="{Binding OpenProjectCommand}" Header="{Binding Loc[MenuProjectOpen]}" />
                 <MenuItem Command="{Binding CloseProjectCommand}" Header="{Binding Loc[MenuProjectClose]}" />
@@ -114,16 +121,16 @@
                                 <StackPanel>
                                     <TextBlock FontWeight="Bold" Text="{Binding DataContext.Loc[ResourceManager], ElementName=MainWindowApp}" />
                                     <StackPanel Orientation="Horizontal">
-                                        <Button Command="{Binding SetFolderCommand}" Content="{Binding DataContext.Loc[SetGameFolder], ElementName=MainWindowApp}" />
+                                        <Button Command="{Binding ReloadFolderCommand}" Content="{Binding DataContext.Loc[ReloadGameFolder], ElementName=MainWindowApp}" />
                                         <Button
                                             Command="{Binding OpenGameFolderCommand}"
                                             Content="{Binding DataContext.Loc[OpenGameFolder], ElementName=MainWindowApp}"
-                                            IsCancel="{Binding GameRootDir, Converter={x:Static ObjectConverters.IsNull}}" />
+                                            IsCancel="{Binding Config.GameRootDir, Converter={x:Static ObjectConverters.IsNull}}" />
                                         <Button
                                             Command="{Binding OpenGameFolderCommand}"
                                             CommandParameter="Mods"
                                             Content="{Binding DataContext.Loc[OpenModsFolder], ElementName=MainWindowApp}"
-                                            IsCancel="{Binding GameRootDir, Converter={x:Static ObjectConverters.IsNull}}" />
+                                            IsCancel="{Binding Config.GameRootDir, Converter={x:Static ObjectConverters.IsNull}}" />
                                     </StackPanel>
                                     <TreeView DoubleTapped="FolderEntity_OnDoubleTapped" ItemsSource="{Binding Folders}">
                                         <TreeView.ItemTemplate>
@@ -165,12 +172,12 @@
                                         <Button
                                             Command="{Binding AddProfileCommand}"
                                             Content="{Binding DataContext.Loc[AddProfile], ElementName=MainWindowApp}"
-                                            IsCancel="{Binding GameRootDir, Converter={x:Static ObjectConverters.IsNull}}" />
+                                            IsCancel="{Binding Config.GameRootDir, Converter={x:Static ObjectConverters.IsNull}}" />
                                         <Button Command="{Binding RefreshProfilesCommand}" Content="{Binding DataContext.Loc[RefreshProfile], ElementName=MainWindowApp}" />
                                         <Button
                                             Command="{Binding LoadProfilesCommand}"
                                             Content="{Binding DataContext.Loc[LoadProfiles], ElementName=MainWindowApp}"
-                                            IsCancel="{Binding GameRootDir, Converter={x:Static ObjectConverters.IsNull}}" />
+                                            IsCancel="{Binding Config.GameRootDir, Converter={x:Static ObjectConverters.IsNull}}" />
                                     </StackPanel>
 
                                     <Expander HorizontalAlignment="Stretch">
@@ -230,8 +237,18 @@
                                         Margin="8"
                                         FontWeight="Bold"
                                         Text="{Binding DataContext.Loc[Settings], ElementName=MainWindowApp}" />
-                                    <!-- <CheckBox Margin="8" Content="启用功能A" /> -->
-                                    <!-- <CheckBox Margin="8" Content="启用功能B" /> -->
+                                    <GridSplitter />
+                                    <ContentControl Content="{Binding Config}">
+                                        <ContentControl.DataTemplates>
+                                            <DataTemplate DataType="vm:AppConfig">
+                                                <StackPanel>
+                                                    <TextBlock Text="{Binding DataContext.Loc[GameRootDir], ElementName=MainWindowApp}" />
+                                                    <TextBox IsReadOnly="True" Text="{Binding GameRootDir}" />
+                                                </StackPanel>
+
+                                            </DataTemplate>
+                                        </ContentControl.DataTemplates>
+                                    </ContentControl>
                                 </StackPanel>
                             </ScrollViewer>
                         </DataTemplate>

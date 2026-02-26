@@ -8,10 +8,15 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
+using Avalonia;
+using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Interactivity;
+using Avalonia.Platform.Storage;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Messaging;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Hosting.Internal;
 using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -23,17 +28,17 @@ using NeoEditor.Data.Model.Game;
 using NeoEditor.Data.Options;
 using NeoEditor.Helper;
 using NeoEditor.ViewModels.ExplorerPane;
+using NeoEditor.Views;
 using ModIndexViewModel = NeoEditor.ViewModels.ExplorerPane.ModIndexViewModel;
 
 namespace NeoEditor.ViewModels;
 
 public partial class MainWindowViewModel : ViewModelBase
 {
+    private readonly IConfigService _config;
+    public AppConfig Config => _config.Config;
     private INotificationService _notificationService;
     private readonly ILogger<MainWindowViewModel> _logger;
-
-    public ObservableCollection<GameVar> SampleData { get; set; } =
-        [new() { ModId = 1, Name = "Sample Var", Value = "123", Type = "int" }];
 
     public MainWindowViewModel() : this(App.ServiceProvider!)
     {
@@ -51,12 +56,13 @@ public partial class MainWindowViewModel : ViewModelBase
         );
         _notificationService = serviceProvider.GetRequiredService<INotificationService>();
         _logger = serviceProvider.GetRequiredService<ILogger<MainWindowViewModel>>();
+        _config = serviceProvider.GetRequiredService<IConfigService>();
 
-        _serviceProvider.GetRequiredService<ResourceManagerViewModel>();
-        _serviceProvider.GetRequiredService<SearchPaneViewModel>();
-        _serviceProvider.GetRequiredService<ModIndexViewModel>();
-        _serviceProvider.GetRequiredService<SettingsPaneViewModel>();
-        _serviceProvider.GetRequiredService<ModDatabaseViewModel>();
+        // _serviceProvider.GetRequiredService<ResourceManagerViewModel>();
+        // _serviceProvider.GetRequiredService<SearchPaneViewModel>();
+        // _serviceProvider.GetRequiredService<ModIndexViewModel>();
+        // _serviceProvider.GetRequiredService<SettingsPaneViewModel>();
+        // _serviceProvider.GetRequiredService<ModDatabaseViewModel>();
     }
 
     #region SideBar
@@ -118,6 +124,34 @@ public partial class MainWindowViewModel : ViewModelBase
     #region Menu
 
     #region Project
+
+    [RelayCommand]
+    public async Task SetFolder()
+    {
+        if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
+        {
+            var topLevel = TopLevel.GetTopLevel(desktop.MainWindow); // 获取顶层窗口
+            var storageProvider = topLevel?.StorageProvider;
+            if (storageProvider == null) return;
+            var folders = await storageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions()
+            {
+                Title = Loc!["SelectGameRootDir"],
+                AllowMultiple = false
+            });
+
+            foreach (var folder in folders)
+            {
+                var folderPath = folder.TryGetLocalPath();
+                if (folderPath != null)
+                {
+                    _logger.LogInformation($"Selected folder: {folderPath}");
+                    Config.GameRootDir = folderPath;
+                }
+
+                return;
+            }
+        }
+    }
 
     [RelayCommand]
     private void CreateProject()
@@ -185,6 +219,24 @@ public partial class MainWindowViewModel : ViewModelBase
 
         _logger.LogInformation($"Loading profile: {profileInfo.Name}");
         Messenger.Send(new LoadProfileMessage(profileInfo));
+    }
+
+    [RelayCommand]
+    private void EditProfile(ProfileInfo? profileInfo)
+    {
+        if (profileInfo is null)
+        {
+            _logger.LogWarning("ProfileInfo is null in ProfileExpandedCommand");
+            return;
+        }
+
+        _logger.LogInformation($"Loading profile: {profileInfo.Name}");
+        var editWindow = new EditProfileWindow(profileInfo);
+        if (App.Current.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime
+            {
+                MainWindow: { } mainWindow
+            })
+            editWindow.ShowDialog(mainWindow);
     }
 
     #endregion

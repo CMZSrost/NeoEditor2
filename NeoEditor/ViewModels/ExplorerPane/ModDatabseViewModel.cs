@@ -23,12 +23,15 @@ using NeoEditor.Services;
 
 namespace NeoEditor.ViewModels.ExplorerPane;
 
-public partial class ModDatabaseViewModel : ViewModelBase, IRecipient<SetGameFolderMessage>
+public partial class ModDatabaseViewModel : ViewModelBase, IRecipient<GameRootDirChangedMessage>
 {
-    [ObservableProperty] public partial string? GameRootDir { get; set; }
+    private readonly IConfigService _config;
+    public AppConfig Config => _config.Config;
+
     private ProjectDbContextFactory _gameContextFactory;
     private IDbContextFactory<EditorDbContext> _editorContextFactory;
     private readonly EditorDbContext _editorDbContext;
+
     private readonly ILogger<ModDatabaseViewModel> _logger;
     public ObservableCollection<ModInfo> Mods { get; set; } = [];
 
@@ -38,13 +41,17 @@ public partial class ModDatabaseViewModel : ViewModelBase, IRecipient<SetGameFol
         App.ServiceProvider!.GetRequiredService<ProjectDbContextFactory>(),
         App.ServiceProvider!.GetRequiredService<ILogger<ModDatabaseViewModel>>(),
         App.ServiceProvider!.GetRequiredService<IDbContextFactory<EditorDbContext>>(),
-        App.ServiceProvider!.GetRequiredService<EditorDbContext>())
+        App.ServiceProvider!.GetRequiredService<EditorDbContext>(),
+        App.ServiceProvider!.GetRequiredService<IConfigService>()
+    )
     {
     }
 
     public ModDatabaseViewModel(ProjectDbContextFactory gameContextFactory, ILogger<ModDatabaseViewModel> logger,
-        IDbContextFactory<EditorDbContext> editorContextFactory, EditorDbContext editorDbContext)
+        IDbContextFactory<EditorDbContext> editorContextFactory, EditorDbContext editorDbContext,
+        IConfigService configService)
     {
+        _config = configService;
         _gameContextFactory = gameContextFactory;
         _logger = logger;
         _editorContextFactory = editorContextFactory;
@@ -52,12 +59,6 @@ public partial class ModDatabaseViewModel : ViewModelBase, IRecipient<SetGameFol
         editorDbContext.ModInfos.Load();
         foreach (var mod in _editorDbContext.ModInfos.ToList())
             Mods.Add(mod);
-
-        GameRootDir = ConfigurationManager.AppSettings[Constants.ProjectSettingsGameRootDir];
-        if (Design.IsDesignMode)
-        {
-            GameRootDir = "D:\\software\\Steam\\steamapps\\common\\Neo Scavenger";
-        }
     }
 
     [RelayCommand]
@@ -80,7 +81,7 @@ public partial class ModDatabaseViewModel : ViewModelBase, IRecipient<SetGameFol
             {
                 if (folder.TryGetLocalPath() is { } folderPath)
                 {
-                    await AddNewMod(folderPath.Replace(GameRootDir ?? "", "").Replace("\\", "/").TrimStart('/'),
+                    await AddNewMod(folderPath.Replace(Config.GameRootDir ?? "", "").Replace("\\", "/").TrimStart('/'),
                         dbContext);
                 }
             }
@@ -117,13 +118,6 @@ public partial class ModDatabaseViewModel : ViewModelBase, IRecipient<SetGameFol
         }
     }
 
-    public void Receive(SetGameFolderMessage message)
-    {
-        GameRootDir = message.GameRootDir;
-        Console.WriteLine($"ModDatabase received game folder: {GameRootDir}");
-    }
-
-
     [RelayCommand]
     public async Task ClearMods(int? modId = null)
     {
@@ -139,5 +133,10 @@ public partial class ModDatabaseViewModel : ViewModelBase, IRecipient<SetGameFol
             await _editorDbContext.SaveChangesAsync();
             Mods.Remove(Mods.First(m => m.ModId == modInfo.ModId));
         }
+    }
+
+    public void Receive(GameRootDirChangedMessage message)
+    {
+        ClearMods().Wait();
     }
 }

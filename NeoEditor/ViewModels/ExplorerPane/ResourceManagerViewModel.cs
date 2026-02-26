@@ -1,93 +1,44 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Configuration;
 using System.IO;
 using System.Linq;
-using System.Threading.Tasks;
-using Avalonia;
-using Avalonia.Controls;
-using Avalonia.Controls.ApplicationLifetimes;
-using Avalonia.Platform.Storage;
-using Avalonia.Threading;
-using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using MsBox.Avalonia;
-using MsBox.Avalonia.Enums;
-using NeoEditor.Data;
 using NeoEditor.Data.Messages;
 using NeoEditor.Services;
-using ConfigurationManager = System.Configuration.ConfigurationManager;
 
 namespace NeoEditor.ViewModels.ExplorerPane;
 
 public record FolderEntity(FileSystemInfo Info, ObservableCollection<FolderEntity>? Children = null);
 
-public partial class ResourceManagerViewModel : ViewModelBase
+public partial class ResourceManagerViewModel : ViewModelBase, IRecipient<GameRootDirChangedMessage>
 {
+    private readonly IConfigService _config;
+    public AppConfig Config => _config.Config;
+
     private readonly ILogger<ResourceManagerViewModel> _logger;
     private readonly LocalizationService _localizationService;
-    [ObservableProperty] public partial string? GameRootDir { get; set; }
     public ObservableCollection<FolderEntity> Folders { get; } = [];
 
     public ResourceManagerViewModel() : this(
         App.ServiceProvider!.GetRequiredService<ILogger<ResourceManagerViewModel>>(),
-        App.ServiceProvider!.GetRequiredService<LocalizationService>())
+        App.ServiceProvider!.GetRequiredService<LocalizationService>(),
+        App.ServiceProvider!.GetRequiredService<IConfigService>())
     {
     }
 
-    public ResourceManagerViewModel(ILogger<ResourceManagerViewModel> logger, LocalizationService localizationService)
+    public ResourceManagerViewModel(ILogger<ResourceManagerViewModel> logger, LocalizationService localizationService,
+        IConfigService configService)
     {
+        _config = configService;
         _logger = logger;
         _localizationService = localizationService;
 
-        var rootDir = ConfigurationManager.AppSettings[Constants.ProjectSettingsGameRootDir];
-
-        if (Design.IsDesignMode)
-        {
-            rootDir = "D:\\software\\Steam\\steamapps\\common\\Neo Scavenger";
-        }
-
-        if (string.IsNullOrWhiteSpace(rootDir) || !Directory.Exists(rootDir))
-        {
-            if (Design.IsDesignMode) return;
-            // 如果配置无效，弹窗提示用户配置根目录，如果用户选择配置根目录，则打开文件夹选择器，否则关闭应用
-            _logger.LogWarning("GameRootDir is not set or does not exist. Please set it in the settings.");
-            Dispatcher.UIThread.InvokeAsync(async () =>
-            {
-                var result = await MessageBoxManager.GetMessageBoxStandard(_localizationService["Error"],
-                        _localizationService["GameRootDirNotSet"], ButtonEnum.YesNo)
-                    .ShowWindowAsync();
-                if (result == ButtonResult.Yes)
-                {
-                    await SetFolder();
-                }
-                else if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
-                {
-                    desktop.Shutdown();
-                }
-                else
-                {
-                    throw new InvalidOperationException(
-                        "Unsupported application lifetime. Cannot shutdown application.");
-                }
-            });
-        }
-        else
-        {
-            // 遍历目录
-            GameRootDir = rootDir;
-            Messenger.Send(new SetGameFolderMessage(GameRootDir ?? ""));
-            Folders.Clear();
-            foreach (var entity in TraverseDirectory(new DirectoryInfo(GameRootDir)))
-            {
-                Folders.Add(entity);
-                _logger.LogDebug($"{entity.Info is FileInfo} {entity.Info.Name}");
-            }
-        }
+        ReloadFolder();
     }
 
     private ObservableCollection<FolderEntity> TraverseDirectory(DirectoryInfo dirInfo)
@@ -117,73 +68,31 @@ public partial class ResourceManagerViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    public async Task SetFolder()
+    public void ReloadFolder()
     {
-        if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
+        // 遍历目录
+        Folders.Clear();
+        if (string.IsNullOrWhiteSpace(Config.GameRootDir) || !Directory.Exists(Config.GameRootDir))
         {
-            var topLevel = TopLevel.GetTopLevel(desktop.MainWindow); // 获取顶层窗口
-            var storageProvider = topLevel?.StorageProvider;
-            if (storageProvider == null) return;
-            var folders = await storageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions()
-            {
-                Title = App.Localizor!["SelectGameRootDir"],
-                AllowMultiple = false
-            });
-
-            foreach (var folder in folders)
-            {
-                var folderPath = folder.TryGetLocalPath();
-                if (folderPath != null)
-                {
-                    _logger.LogInformation($"Selected folder: {folderPath}");
-                    GameRootDir = folderPath;
-                    Messenger.Send(new SetGameFolderMessage(GameRootDir));
-                    var configuration = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
-                    if (configuration is null)
-                    {
-                        _logger.LogWarning("Failed to get configuration for updating GameRootDir.");
-                    }
-                    else if (configuration.AppSettings.Settings is not { } section)
-                    {
-                        _logger.LogWarning("Failed to get section for updating GameRootDir.");
-                    }
-                    else
-                    {
-                        if (section[Constants.ProjectSettingsGameRootDir] is not { } setting)
-                        {
-                            section.Add(Constants.ProjectSettingsGameRootDir, GameRootDir);
-                        }
-                        else
-                        {
-                            setting.Value = GameRootDir;
-                        }
-
-                        configuration.Save(ConfigurationSaveMode.Modified);
-                        ConfigurationManager.RefreshSection(Constants.AppSettingsSection);
-                    }
-
-                    Folders.Clear();
-
-                    foreach (var entity in TraverseDirectory(new DirectoryInfo(GameRootDir)))
-                    {
-                        Folders.Add(entity);
-                    }
-
-                    return;
-                }
-            }
+            _logger.LogWarning($"Game root directory is not set or does not exist: {Config.GameRootDir}");
+            return;
         }
 
-        _logger.LogWarning("Failed to get local path for selected folder.");
+        foreach (var entity in TraverseDirectory(new DirectoryInfo(Config.GameRootDir)))
+        {
+            Folders.Add(entity);
+            _logger.LogDebug($"{entity.Info is FileInfo} {entity.Info.Name}");
+        }
     }
 
-
     [RelayCommand]
-    public void OpenGameFolder(string? suffix)
+    public void OpenGameFolder(string? suffix = null)
     {
-        var openPath = string.IsNullOrWhiteSpace(suffix) ? GameRootDir : Path.Combine(GameRootDir ?? "", suffix);
+        var openPath = string.IsNullOrWhiteSpace(suffix)
+            ? Config.GameRootDir
+            : Path.Combine(Config.GameRootDir ?? "", suffix);
         // 打开对应文件夹
-        if (!Directory.Exists(GameRootDir) || !Directory.Exists(openPath)) return;
+        if (!Directory.Exists(Config.GameRootDir) || !Directory.Exists(openPath)) return;
         // 这里可以使用系统默认的文件资源管理器打开目录
         try
         {
@@ -195,7 +104,12 @@ public partial class ResourceManagerViewModel : ViewModelBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, $"Failed to open folder: {GameRootDir}");
+            _logger.LogError(ex, $"Failed to open folder: {Config.GameRootDir}");
         }
+    }
+
+    public void Receive(GameRootDirChangedMessage message)
+    {
+        ReloadFolder();
     }
 }

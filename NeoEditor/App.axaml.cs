@@ -1,4 +1,5 @@
 using System;
+using System.Configuration;
 using System.Globalization;
 using System.IO;
 using Avalonia;
@@ -6,15 +7,22 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Data.Core.Plugins;
 using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
+using Avalonia.Controls;
 using Avalonia.Markup.Xaml;
+using Avalonia.Platform.Storage;
+using Avalonia.Threading;
 using CommunityToolkit.Mvvm.Messaging;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using MsBox.Avalonia;
+using MsBox.Avalonia.Enums;
 using NeoEditor.Data;
 using NeoEditor.Data.Context;
+using NeoEditor.Data.Messages;
 using NeoEditor.Data.Model.Game;
 using NeoEditor.Data.Options;
 using NeoEditor.Helper;
@@ -24,6 +32,7 @@ using NeoEditor.Views;
 using NeoEditor.Services;
 using NeoEditor.ViewModels.ExplorerPane;
 using NeoEditor.Views.UserControls;
+using ConfigurationManager = Microsoft.Extensions.Configuration.ConfigurationManager;
 using ModIndexViewModel = NeoEditor.ViewModels.ExplorerPane.ModIndexViewModel;
 
 namespace NeoEditor;
@@ -32,9 +41,11 @@ public partial class App : Application
 {
     public IHost _host;
 
-    public static IServiceProvider? ServiceProvider { get; set; }
-    public static LocalizationService? Localizor { get; set; }
-    public static INotificationService? Notification { get; set; }
+    public static IServiceProvider ServiceProvider { get; set; } = null!;
+    public static ILogger<App> Logger { get; set; } = null!;
+    public static IConfigService ConfigService { get; set; } = null!;
+    public static LocalizationService Localizor { get; set; } = null!;
+    public static INotificationService Notification { get; set; } = null!;
 
     public override void Initialize()
     {
@@ -52,6 +63,7 @@ public partial class App : Application
                 services.AddSerilogLogging();
                 services.AddLocalization();
                 // options
+                services.AddSingleton<IConfigService, ConfigService>();
                 services.Configure<CultureSettings>(context.Configuration.GetSection(nameof(CultureSettings)));
 
                 // database
@@ -80,6 +92,9 @@ public partial class App : Application
                     // MainContents
                     .AddScoped<ModIndexViewModel>();
                 services.AddTransient<SearchableDataGrid>();
+
+                services.AddTransient<EditProfileWindow>()
+                    .AddTransient<EditProfileWindowViewModel>();
             })
             .Build();
     }
@@ -104,6 +119,11 @@ public partial class App : Application
 
         // 从 collection 提供的 IServiceCollection 中创建包含服务的 ServiceProvider
         ServiceProvider = _host.Services;
+        Logger = _host.Services.GetRequiredService<ILogger<App>>();
+        ConfigService = _host.Services.GetRequiredService<IConfigService>();
+        Localizor = _host.Services.GetRequiredService<LocalizationService>();
+        Notification = _host.Services.GetRequiredService<INotificationService>();
+        Dispatcher.UIThread.InvokeAsync(ConfigService.LoadAsync);
 
         if (!File.Exists(Constants.EditorDatabasePath))
         {
@@ -115,13 +135,11 @@ public partial class App : Application
             // Avoid duplicate validations from both Avalonia and the CommunityToolkit. 
             // More info: https://docs.avaloniaui.net/docs/guides/development-guides/data-validation#manage-validationplugins
             DisableAvaloniaDataAnnotationValidation();
-            var mainWindow = _host.Services.GetRequiredService<MainWindow>();
-            var notificationService = _host.Services.GetRequiredService<INotificationService>() as NotificationService;
-            notificationService!.SetNotificationManager(mainWindow.NotificationManager);
-            Notification = notificationService;
-            Localizor = _host.Services.GetRequiredService<LocalizationService>();
 
+            var mainWindow = _host.Services.GetRequiredService<MainWindow>();
             desktop.MainWindow = mainWindow;
+            (Notification as NotificationService)!.SetNotificationManager(mainWindow.NotificationManager);
+            mainWindow.Closing += (sender, args) => { Dispatcher.UIThread.InvokeAsync(ConfigService.SaveAsync); };
         }
 
         base.OnFrameworkInitializationCompleted();

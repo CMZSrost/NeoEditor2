@@ -20,13 +20,16 @@ using NeoEditor.Data.Context;
 using NeoEditor.Data.Messages;
 using NeoEditor.Data.Model;
 using NeoEditor.Helper;
+using NeoEditor.Services;
 
 namespace NeoEditor.ViewModels.ExplorerPane;
 
 public partial class ModIndexViewModel : ViewModelBase, IRecipient<InitProfileMessage>, IRecipient<LoadProfileMessage>,
-    IRecipient<SetGameFolderMessage>
+    IRecipient<SaveProfileMessage>,
+    IRecipient<GameRootDirChangedMessage>
 {
-    [ObservableProperty] public partial string? GameRootDir { get; set; }
+    private readonly IConfigService _config;
+    public AppConfig Config => _config.Config;
     [ObservableProperty] public partial ModIndexInfo? Info { get; set; }
     public ObservableCollection<ProfileInfo> Profiles { get; set; } = [];
 
@@ -39,21 +42,19 @@ public partial class ModIndexViewModel : ViewModelBase, IRecipient<InitProfileMe
     public ModIndexViewModel() : this(
         App.ServiceProvider!.GetRequiredService<PhpParser>(),
         App.ServiceProvider!.GetRequiredService<IDbContextFactory<EditorDbContext>>(),
-        App.ServiceProvider!.GetRequiredService<IMapper>()
+        App.ServiceProvider!.GetRequiredService<IMapper>(),
+        App.ServiceProvider!.GetRequiredService<IConfigService>()
     )
     {
     }
 
-    public ModIndexViewModel(PhpParser phpParser, IDbContextFactory<EditorDbContext> factory, IMapper mapper)
+    public ModIndexViewModel(PhpParser phpParser, IDbContextFactory<EditorDbContext> factory, IMapper mapper,
+        IConfigService configService)
     {
         _phpParser = phpParser;
         _factory = factory;
         _mapper = mapper;
-        GameRootDir = ConfigurationManager.AppSettings[Constants.ProjectSettingsGameRootDir];
-        if (Design.IsDesignMode)
-        {
-            GameRootDir = "D:\\software\\Steam\\steamapps\\common\\Neo Scavenger";
-        }
+        _config = configService;
 
         Dispatcher.UIThread.InvokeAsync(() => RefreshProfiles());
     }
@@ -128,11 +129,6 @@ public partial class ModIndexViewModel : ViewModelBase, IRecipient<InitProfileMe
         }
     }
 
-    public void Receive(SetGameFolderMessage message)
-    {
-        GameRootDir = message.GameRootDir;
-        Console.WriteLine($"ModDatabase received game folder: {GameRootDir}");
-    }
 
     [RelayCommand]
     public async Task AddProfile()
@@ -192,7 +188,7 @@ public partial class ModIndexViewModel : ViewModelBase, IRecipient<InitProfileMe
     [RelayCommand]
     public async Task LoadProfiles(ProfileInfo? profileInfo = null)
     {
-        if (string.IsNullOrWhiteSpace(GameRootDir))
+        if (string.IsNullOrWhiteSpace(Config.GameRootDir))
         {
             App.Notification!.ShowWarning("Game root directory is not set. Please set it before loading mods.",
                 "Load Warning");
@@ -200,7 +196,30 @@ public partial class ModIndexViewModel : ViewModelBase, IRecipient<InitProfileMe
         }
 
         Messenger.Send(profileInfo is null
-            ? new InitProfileMessage(Path.Combine(GameRootDir, "getmods.php"))
+            ? new InitProfileMessage(Path.Combine(Config.GameRootDir, "getmods.php"))
             : new InitProfileMessage(profileInfo.Path));
+    }
+
+    public void Receive(GameRootDirChangedMessage message)
+    {
+        RefreshProfiles().Wait();
+    }
+
+    public void Receive(SaveProfileMessage message)
+    {
+        try
+        {
+            // 写入数据库
+            using var db = _factory.CreateDbContext();
+            db.Update(message.ProfileInfo);
+            db.SaveChanges();
+            
+            App.Notification!.ShowSuccess($"Profile {message.ProfileInfo.Name} saved successfully.");
+            Dispatcher.UIThread.InvokeAsync(()=>RefreshProfiles());
+        }
+        catch (Exception e)
+        {
+            App.Notification!.ShowError($"Failed to save profile: {e.Message}");
+        }
     }
 }

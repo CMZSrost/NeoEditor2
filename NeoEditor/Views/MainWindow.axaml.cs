@@ -26,15 +26,13 @@ public partial class MainWindow : Window
         InitializeComponent();
         DataContext = App.ServiceProvider!.GetRequiredService<MainWindowViewModel>();
     }
-    
+
     private void FolderEntity_OnDoubleTapped(object? sender, TappedEventArgs e)
     {
-        Console.WriteLine($"double-tapped on {sender.GetType()}");
         if (sender is not TreeView
             {
                 SelectedItem: FolderEntity { Info: FileInfo fileInfo } folderEntity
             } treeView) return;
-        Console.WriteLine($"Double-tapped on file: {fileInfo.FullName}");
         // 打开文件
         try
         {

@@ -4,13 +4,10 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:avalonia="clr-namespace:FluentIcons.Avalonia;assembly=FluentIcons.Avalonia"
     xmlns:conv="clr-namespace:NeoEditor.Helper.Converter"
-    xmlns:game="clr-namespace:NeoEditor.Data.Model.Game"
     xmlns:io="clr-namespace:System.IO;assembly=System.Runtime"
     xmlns:local="using:NeoEditor"
     xmlns:model="clr-namespace:NeoEditor.Data.Model"
     xmlns:services="clr-namespace:NeoEditor.Services"
-    xmlns:system="clr-namespace:System;assembly=System.Runtime"
-    xmlns:vm="clr-namespace:NeoEditor.ViewModels"
     RequestedThemeVariant="Default">
 
     <Application.Resources>

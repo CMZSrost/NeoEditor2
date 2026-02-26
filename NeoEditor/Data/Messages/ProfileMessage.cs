@@ -6,3 +6,4 @@ namespace NeoEditor.Data.Messages;
 public record InitProfileMessage(string FilePath);
 
 public record LoadProfileMessage(ProfileInfo ProfileInfo);
+public record SaveProfileMessage(ProfileInfo ProfileInfo);
