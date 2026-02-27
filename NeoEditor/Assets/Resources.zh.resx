@@ -1212,4 +1212,22 @@ No则退出</value>
     <data name="Path" xml:space="preserve">
         <value>路径</value>
     </data>
+    <data name="Add" xml:space="preserve">
+        <value>新增</value>
+    </data>
+    <data name="Delete" xml:space="preserve">
+        <value>删除</value>
+    </data>
+    <data name="Save" xml:space="preserve">
+        <value>保存</value>
+    </data>
+    <data name="MoveUp" xml:space="preserve">
+        <value>上移</value>
+    </data>
+    <data name="MoveDown" xml:space="preserve">
+        <value>下移</value>
+    </data>
+    <data name="EditProfileWindowTitle" xml:space="preserve">
+        <value>编辑配置</value>
+    </data>
 </root>

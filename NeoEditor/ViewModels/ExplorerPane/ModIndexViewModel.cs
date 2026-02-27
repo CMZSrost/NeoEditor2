@@ -30,7 +30,7 @@ public partial class ModIndexViewModel : ViewModelBase, IRecipient<InitProfileMe
 {
     private readonly IConfigService _config;
     public AppConfig Config => _config.Config;
-    [ObservableProperty] public partial ModIndexInfo? Info { get; set; }
+    [ObservableProperty] public partial ProfileInfo? Info { get; set; }
     public ObservableCollection<ProfileInfo> Profiles { get; set; } = [];
 
     private readonly PhpParser _phpParser;
@@ -63,29 +63,39 @@ public partial class ModIndexViewModel : ViewModelBase, IRecipient<InitProfileMe
     {
         try
         {
-            var entities = _phpParser.Parse(message.FilePath);
+            var content = File.ReadAllText(message.FilePath).Replace("\r\n", "");
+            var entities = _phpParser.ParseContent(content);
             using var db = _factory.CreateDbContext();
             var existedMods = db.ModInfos.ToDictionary(m => m.Path, m => m);
 
-            Info = new ModIndexInfo
+            Info = new ProfileInfo()
             {
-                FilePath = message.FilePath,
-                Mods = entities.Select(entry => new ModLoadInfo()
+                ProfileId = -1,
+                Name = "Game",
+                Path = message.FilePath,
+                Content = content,
+                ModIndexInfo = new ModIndexInfo
                 {
-                    Type = existedMods.ContainsKey(entry.Path) ? entry.Type : ModType.Unknown,
-                    Info = existedMods.ContainsKey(entry.Path) switch
+                    FilePath = message.FilePath,
+                    Mods = entities.Select(entry => new ModLoadInfo()
                     {
-                        true => existedMods[entry.Path],
-                        false => new ModInfo()
+                        Type = existedMods.ContainsKey(entry.Path) ? entry.Type : ModType.Unknown,
+                        Info = existedMods.ContainsKey(entry.Path) switch
                         {
-                            Name = entry.Name,
-                            Path = entry.Path,
-                            IsBase = false,
-                            LastImport = DateTime.Now,
-                            LastModified = DateTime.Now
+                            true => existedMods[entry.Path],
+                            false => new ModInfo()
+                            {
+                                Name = entry.Name,
+                                Path = entry.Path,
+                                IsBase = false,
+                                LastImport = DateTime.Now,
+                                LastModified = DateTime.Now
+                            }
                         }
-                    }
-                }).ToList()
+                    }).ToList()
+                },
+                CreateTime = DateTime.Now,
+                UpdateTime = DateTime.Now
             };
         }
         catch (Exception e)
@@ -213,9 +223,9 @@ public partial class ModIndexViewModel : ViewModelBase, IRecipient<InitProfileMe
             using var db = _factory.CreateDbContext();
             db.Update(message.ProfileInfo);
             db.SaveChanges();
-            
+
             App.Notification!.ShowSuccess($"Profile {message.ProfileInfo.Name} saved successfully.");
-            Dispatcher.UIThread.InvokeAsync(()=>RefreshProfiles());
+            Dispatcher.UIThread.InvokeAsync(() => RefreshProfiles());
         }
         catch (Exception e)
         {

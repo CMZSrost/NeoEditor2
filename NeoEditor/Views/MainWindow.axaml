@@ -6,7 +6,6 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:explorerPane="clr-namespace:NeoEditor.ViewModels.ExplorerPane"
     xmlns:i="clr-namespace:Avalonia.Xaml.Interactivity;assembly=Avalonia.Xaml.Interactivity"
-    xmlns:ia="clr-namespace:Avalonia.Xaml.Interactions.Core;assembly=Avalonia.Xaml.Interactions"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:model="clr-namespace:NeoEditor.Data.Model"
     xmlns:vm="using:NeoEditor.ViewModels"
@@ -26,37 +25,39 @@
     </Window.Resources>
     <Window.DataTemplates>
         <DataTemplate DataType="model:ProfileInfo">
-            <Expander>
-                <i:Interaction.Behaviors>
-                    <ia:EventTriggerBehavior EventName="Expanded">
-                        <ia:InvokeCommandAction Command="{Binding DataContext.ProfileExpandedCommand, ElementName=MainWindowApp}" CommandParameter="{Binding}" />
-                    </ia:EventTriggerBehavior>
-                </i:Interaction.Behaviors>
-                <Expander.Header>
+            <StackPanel Margin="4">
+                <Expander HorizontalAlignment="Stretch">
+                    <Interaction.Behaviors>
+                        <EventTriggerBehavior EventName="Expanded">
+                            <InvokeCommandAction Command="{Binding DataContext.ProfileExpandedCommand, ElementName=MainWindowApp}" CommandParameter="{Binding}" />
+                        </EventTriggerBehavior>
+                    </Interaction.Behaviors>
+                    <Expander.Header>
+                        <StackPanel>
+                            <TextBlock Text="{Binding Name}" />
+                            <TextBlock
+                                FontSize="11"
+                                Text="{Binding Path}"
+                                TextWrapping="Wrap" />
+                        </StackPanel>
+                    </Expander.Header>
+                    <Expander.ContextMenu>
+                        <ContextMenu>
+                            <MenuItem
+                                Command="{Binding DataContext.EditProfileCommand, ElementName=MainWindowApp}"
+                                CommandParameter="{Binding}"
+                                Header="{Binding DataContext.Loc[EditProfile], ElementName=MainWindowApp}" />
+                        </ContextMenu>
+                    </Expander.ContextMenu>
                     <StackPanel>
-                        <TextBlock Text="{Binding Name}" />
                         <TextBlock
                             FontSize="11"
-                            Text="{Binding Path}"
+                            Text="{Binding Description}"
                             TextWrapping="Wrap" />
+                        <ContentControl Content="{Binding ModIndexInfo}" />
                     </StackPanel>
-                </Expander.Header>
-                <Expander.ContextMenu>
-                    <ContextMenu>
-                        <MenuItem
-                            Command="{Binding DataContext.EditProfileCommand, ElementName=MainWindowApp}"
-                            CommandParameter="{Binding}"
-                            Header="{Binding DataContext.Loc[EditProfile], ElementName=MainWindowApp}" />
-                    </ContextMenu>
-                </Expander.ContextMenu>
-                <StackPanel>
-                    <TextBlock
-                        FontSize="11"
-                        Text="{Binding Description}"
-                        TextWrapping="Wrap" />
-                    <ContentControl Content="{Binding ModIndexInfo}" />
-                </StackPanel>
-            </Expander>
+                </Expander>
+            </StackPanel>
         </DataTemplate>
     </Window.DataTemplates>
     <DockPanel>
@@ -114,7 +115,6 @@
             <SplitView.Pane>
                 <ContentControl Content="{Binding CurrentPaneContent}">
                     <ContentControl.DataTemplates>
-
                         <!--  资源管理器面板模板  -->
                         <DataTemplate DataType="{x:Type explorerPane:ResourceManagerViewModel}">
                             <ScrollViewer Width="500">
@@ -180,18 +180,24 @@
                                             IsCancel="{Binding Config.GameRootDir, Converter={x:Static ObjectConverters.IsNull}}" />
                                     </StackPanel>
 
-                                    <Expander HorizontalAlignment="Stretch">
-                                        <Expander.Header>
-                                            <StackPanel
-                                                VerticalAlignment="Center"
-                                                Orientation="Horizontal"
-                                                Spacing="5">
-                                                <avalonia:SymbolIcon Symbol="Games" />
-                                                <TextBlock Text="Game" />
-                                            </StackPanel>
-                                        </Expander.Header>
-                                        <ContentControl Content="{Binding Info}" />
-                                    </Expander>
+                                    <StackPanel
+                                        VerticalAlignment="Center"
+                                        Orientation="Horizontal"
+                                        Spacing="5">
+                                        <avalonia:SymbolIcon Symbol="Games" />
+                                        <TextBlock Text="Game" />
+                                    </StackPanel>
+                                    <!-- <Expander HorizontalAlignment="Stretch"> -->
+                                    <!--     <Expander.Header> -->
+                                    <!--         <StackPanel> -->
+                                    <!--  <TextBlock  -->
+                                    <!--  FontSize="11"  -->
+                                    <!--  Text="{Binding Config.GameRootDir}"  -->
+                                    <!--  TextWrapping="Wrap" />  -->
+                                    <!--         </StackPanel> -->
+                                    <!--     </Expander.Header> -->
+                                    <ContentControl Content="{Binding Info}" />
+                                    <!-- </Expander> -->
                                     <GridSplitter />
                                     <!--  <AutoCompleteBox  -->
                                     <!--  Margin="8"  -->
@@ -245,7 +251,6 @@
                                                     <TextBlock Text="{Binding DataContext.Loc[GameRootDir], ElementName=MainWindowApp}" />
                                                     <TextBox IsReadOnly="True" Text="{Binding GameRootDir}" />
                                                 </StackPanel>
-
                                             </DataTemplate>
                                         </ContentControl.DataTemplates>
                                     </ContentControl>
@@ -264,9 +269,7 @@
                         Grid.Row="0"
                         Position="TopRight" />
                     <Border>
-                        <ContentControl Content="{Binding CurrentMainContent}">
-                            <ContentControl.DataTemplates />
-                        </ContentControl>
+                        <ContentControl Content="{Binding CurrentMainContent}" />
                     </Border>
                     <!-- <TabControl> -->
                     <!--     <TabItem Header="{Binding Loc[Welcome]}"> -->

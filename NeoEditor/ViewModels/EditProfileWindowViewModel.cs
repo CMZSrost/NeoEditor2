@@ -4,6 +4,8 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using Avalonia.Controls;
+using Avalonia.Input;
+using Avalonia.Interactivity;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
@@ -68,6 +70,36 @@ public partial class EditProfileWindowViewModel : ViewModelBase
     {
         if (SelectedEntry != null)
             Entries.Remove(SelectedEntry);
+    }
+
+    [RelayCommand]
+    public void MoveUp()
+    {
+        if (SelectedEntry == null) return;
+
+        var index = Entries.IndexOf(SelectedEntry);
+        if (index > 0)
+        {
+            var item = SelectedEntry;
+            Entries.RemoveAt(index);
+            Entries.Insert(index - 1, item);
+            SelectedEntry = item; // Keep selection
+        }
+    }
+
+    [RelayCommand]
+    public void MoveDown()
+    {
+        if (SelectedEntry == null) return;
+
+        var index = Entries.IndexOf(SelectedEntry);
+        if (index < Entries.Count - 1)
+        {
+            var item = SelectedEntry;
+            Entries.RemoveAt(index);
+            Entries.Insert(index + 1, item);
+            SelectedEntry = item; // Keep selection
+        }
     }
 
     [RelayCommand]

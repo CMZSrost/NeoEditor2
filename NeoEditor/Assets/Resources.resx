@@ -1215,4 +1215,22 @@ Exit if No</value>
     <data name="Path" xml:space="preserve">
         <value>Path</value>
     </data>
+    <data name="Add" xml:space="preserve">
+        <value>Add</value>
+    </data>
+    <data name="Delete" xml:space="preserve">
+        <value>Delete</value>
+    </data>
+    <data name="Save" xml:space="preserve">
+        <value>Save</value>
+    </data>
+    <data name="MoveUp" xml:space="preserve">
+        <value>Move Up</value>
+    </data>
+    <data name="MoveDown" xml:space="preserve">
+        <value>Move Down</value>
+    </data>
+    <data name="EditProfileWindowTitle" xml:space="preserve">
+        <value>Edit Profile</value>
+    </data>
 </root>
