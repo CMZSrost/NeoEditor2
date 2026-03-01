@@ -1,10 +1,13 @@
 ﻿using System;
 using System.Globalization;
+using System.Net.Mime;
 using System.Threading;
+using Avalonia;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Localization;
 using NeoEditor.Assets;
+using Semi.Avalonia;
 
 namespace NeoEditor.Services;
 
@@ -37,6 +40,7 @@ public sealed class LocalizationService : ObservableObject
         CultureInfo.CurrentUICulture = culture;
         CultureInfo.CurrentCulture = culture;
         Thread.CurrentThread.CurrentCulture = culture;
+        SemiTheme.OverrideLocaleResources(Application.Current, culture);
         Console.WriteLine($"Set Culture to {culture.Name}");
 
         OnPropertyChanged(nameof(CurrentCulture));

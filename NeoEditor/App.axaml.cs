@@ -14,6 +14,11 @@ using Avalonia.Platform.Storage;
 using Avalonia.Threading;
 using Avalonia.Xaml.Interactions.DragAndDrop;
 using CommunityToolkit.Mvvm.Messaging;
+using Dock.Model;
+using Dock.Model.Avalonia;
+using Dock.Model.Controls;
+using Dock.Model.Core;
+using Dock.Serializer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -23,6 +28,7 @@ using MsBox.Avalonia;
 using MsBox.Avalonia.Enums;
 using NeoEditor.Data;
 using NeoEditor.Data.Context;
+using NeoEditor.Data.DTO;
 using NeoEditor.Data.Messages;
 using NeoEditor.Data.Model.Game;
 using NeoEditor.Data.Options;
@@ -76,6 +82,14 @@ public partial class App : Application
                         .LogTo(Console.WriteLine, LogLevel.Warning)
                         .EnableDetailedErrors());
 
+                // DockServices
+                services.AddSingleton<IDockState, DockState>();
+                services.AddSingleton<Factory>();
+                services.AddSingleton<IFactory>(static sp => sp.GetRequiredService<Factory>());
+
+                services.AddSingleton<DockSerializer>();
+                services.AddSingleton<IDockSerializer>(static sp => sp.GetRequiredService<DockSerializer>());
+
                 // services
                 services.AddScoped<IMessenger, WeakReferenceMessenger>();
                 services.AddSingleton<LocalizationService>();
@@ -94,6 +108,7 @@ public partial class App : Application
                     // MainContents
                     .AddScoped<ModIndexViewModel>();
                 services.AddTransient<SearchableDataGrid>();
+                services.AddTransient<ModEntryDropHandler>();
 
                 services.AddTransient<EditProfileWindow>()
                     .AddTransient<EditProfileWindowViewModel>();

@@ -5,7 +5,7 @@
     xmlns:avalonia="clr-namespace:FluentIcons.Avalonia;assembly=FluentIcons.Avalonia"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:explorerPane="clr-namespace:NeoEditor.ViewModels.ExplorerPane"
-    xmlns:i="clr-namespace:Avalonia.Xaml.Interactivity;assembly=Avalonia.Xaml.Interactivity"
+    xmlns:mainContent="clr-namespace:NeoEditor.ViewModels.MainContent"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:model="clr-namespace:NeoEditor.Data.Model"
     xmlns:vm="using:NeoEditor.ViewModels"
@@ -20,9 +20,6 @@
     <Design.DataContext>
         <vm:MainWindowViewModel />
     </Design.DataContext>
-    <Window.Resources>
-        <StaticResource x:Key="Loc" ResourceKey="Loc" />
-    </Window.Resources>
     <Window.DataTemplates>
         <DataTemplate DataType="model:ProfileInfo">
             <StackPanel Margin="4">
@@ -121,16 +118,32 @@
                                 <StackPanel>
                                     <TextBlock FontWeight="Bold" Text="{Binding DataContext.Loc[ResourceManager], ElementName=MainWindowApp}" />
                                     <StackPanel Orientation="Horizontal">
-                                        <Button Command="{Binding ReloadFolderCommand}" Content="{Binding DataContext.Loc[ReloadGameFolder], ElementName=MainWindowApp}" />
-                                        <Button
-                                            Command="{Binding OpenGameFolderCommand}"
-                                            Content="{Binding DataContext.Loc[OpenGameFolder], ElementName=MainWindowApp}"
-                                            IsCancel="{Binding Config.GameRootDir, Converter={x:Static ObjectConverters.IsNull}}" />
+                                        <Button Command="{Binding ReloadFolderCommand}">
+                                            <avalonia:SymbolIcon Symbol="FolderSync" ToolTip.Tip="{Binding DataContext.Loc[ReloadGameFolder], ElementName=MainWindowApp}" />
+                                        </Button>
+                                        <Button Command="{Binding OpenGameFolderCommand}" IsCancel="{Binding Config.GameRootDir, Converter={x:Static ObjectConverters.IsNull}}">
+                                            <StackPanel
+                                                VerticalAlignment="Center"
+                                                Orientation="Horizontal"
+                                                Spacing="4"
+                                                ToolTip.Tip="{Binding DataContext.Loc[OpenGameFolder], ElementName=MainWindowApp}">
+                                                <avalonia:SymbolIcon Symbol="FolderOpen" />
+                                                <TextBlock Text="{Binding DataContext.Loc[Games], ElementName=MainWindowApp}" />
+                                            </StackPanel>
+                                        </Button>
                                         <Button
                                             Command="{Binding OpenGameFolderCommand}"
                                             CommandParameter="Mods"
-                                            Content="{Binding DataContext.Loc[OpenModsFolder], ElementName=MainWindowApp}"
-                                            IsCancel="{Binding Config.GameRootDir, Converter={x:Static ObjectConverters.IsNull}}" />
+                                            IsCancel="{Binding Config.GameRootDir, Converter={x:Static ObjectConverters.IsNull}}">
+                                            <StackPanel
+                                                VerticalAlignment="Center"
+                                                Orientation="Horizontal"
+                                                Spacing="4"
+                                                ToolTip.Tip="{Binding DataContext.Loc[OpenModsFolder], ElementName=MainWindowApp}">
+                                                <avalonia:SymbolIcon Symbol="FolderOpen" />
+                                                <TextBlock Text="{Binding DataContext.Loc[Mods], ElementName=MainWindowApp}" />
+                                            </StackPanel>
+                                        </Button>
                                     </StackPanel>
                                     <TreeView DoubleTapped="FolderEntity_OnDoubleTapped" ItemsSource="{Binding Folders}">
                                         <TreeView.ItemTemplate>
@@ -150,8 +163,15 @@
                                     <TextBlock FontWeight="Bold" Text="{Binding DataContext.Loc[ModDatabase], ElementName=MainWindowApp}" />
                                     <StackPanel Orientation="Horizontal">
                                         <StackPanel Orientation="Horizontal">
-                                            <Button Command="{Binding ImportModCommand}" Content="{Binding DataContext.Loc[ImportMod], ElementName=MainWindowApp}" />
-                                            <Button Command="{Binding ClearModsCommand}" Content="{Binding DataContext.Loc[ClearAllMods], ElementName=MainWindowApp}" />
+                                            <Button Command="{Binding ImportModCommand}">
+                                                <avalonia:SymbolIcon Symbol="ArrowCircleDownRight" ToolTip.Tip="{Binding DataContext.Loc[ImportMod], ElementName=MainWindowApp}" />
+                                            </Button>
+                                            <Button Command="{Binding ClearModsCommand}" CommandParameter="{Binding SelectedItem}">
+                                                <avalonia:SymbolIcon Symbol="Delete" ToolTip.Tip="{Binding DataContext.Loc[ClearSelected], ElementName=MainWindowApp}" />
+                                            </Button>
+                                            <Button Command="{Binding ClearModsCommand}">
+                                                <avalonia:SymbolIcon Symbol="DeleteLines" ToolTip.Tip="{Binding DataContext.Loc[ClearAllMods], ElementName=MainWindowApp}" />
+                                            </Button>
                                         </StackPanel>
                                     </StackPanel>
                                     <TextBox
@@ -159,7 +179,10 @@
                                         ClearSelectionOnLostFocus="True"
                                         Text="{Binding Filter}"
                                         Watermark="{Binding DataContext.Loc[KeywordInput], ElementName=MainWindowApp}" />
-                                    <ListBox Margin="8" ItemsSource="{Binding Mods}" />
+                                    <ListBox
+                                        Margin="8"
+                                        ItemsSource="{Binding Mods}"
+                                        SelectedItem="{Binding SelectedItem}" />
                                 </StackPanel>
                             </ScrollViewer>
                         </DataTemplate>
@@ -263,20 +286,105 @@
 
             <!--  主内容区（右侧）  -->
             <SplitView.Content>
-                <Grid ColumnDefinitions="*" RowDefinitions="*">
-                    <WindowNotificationManager
-                        Name="NotificationManager"
+                <Grid ColumnDefinitions="*" RowDefinitions="Auto,*">
+                    <StackPanel
                         Grid.Row="0"
-                        Position="TopRight" />
-                    <Border>
-                        <ContentControl Content="{Binding CurrentMainContent}" />
-                    </Border>
+                        Margin="6,4"
+                        Orientation="Horizontal"
+                        Spacing="6">
+
+                        <Button Command="{Binding AddDocumentCommand}">
+                            <avalonia:SymbolIcon Symbol="TabAdd" ToolTip.Tip="{Binding DataContext.Loc[AddTab], ElementName=MainWindowApp}" />
+                        </Button>
+                        <Button Command="{Binding AddDocumentCommand}">
+                            <avalonia:SymbolIcon Symbol="Save" ToolTip.Tip="{Binding DataContext.Loc[Save], ElementName=MainWindowApp}" />
+                        </Button>
+                        <GridSplitter />
+                        <DropDownButton>
+                            <DropDownButton.Content>
+                                <StackPanel>
+                                    <avalonia:SymbolIcon Symbol="Tab" />
+                                </StackPanel>
+                            </DropDownButton.Content>
+                            <DropDownButton.Flyout>
+                                <MenuFlyout>
+                                    <MenuItem Command="{Binding AddDocumentCommand}">
+                                        <MenuItem.Header>
+                                            <StackPanel>
+                                                <avalonia:SymbolIcon Symbol="TabAdd" />
+                                            </StackPanel>
+                                        </MenuItem.Header>
+                                    </MenuItem>
+                                </MenuFlyout>
+                            </DropDownButton.Flyout>
+                        </DropDownButton>
+
+                    </StackPanel>
+                    <DockControl
+                        Grid.Row="1"
+                        InitializeFactory="True"
+                        InitializeLayout="True">
+                        <DockControl.Factory>
+                            <Factory />
+                        </DockControl.Factory>
+                        <RootDock Id="Root" IsCollapsable="True">
+                            <!--  <ToolDock  -->
+                            <!--  Alignment="Left"  -->
+                            <!--  Id="ToolsPane"  -->
+                            <!--  ItemsSource="{Binding Tools}">  -->
+                            <!--     <ToolDock.ToolTemplate> -->
+                            <!--         <ToolTemplate> -->
+                            <!--             <StackPanel Margin="10" x:DataType="Tool"> -->
+                            <!--                 <TextBlock FontWeight="Bold" Text="{Binding Title}" /> -->
+                            <!--                 <StackPanel x:DataType="mainContent:ReadOnlyToolViewModel" DataContext="{Binding Context}"> -->
+                            <!--                     <TextBlock Text="{Binding Description}" TextWrapping="Wrap" /> -->
+                            <!--                     <TextBlock Opacity="0.75" Text="{Binding Status}" /> -->
+                            <!--                 </StackPanel> -->
+                            <!--             </StackPanel> -->
+                            <!--         </ToolTemplate> -->
+                            <!--     </ToolDock.ToolTemplate> -->
+                            <!-- </ToolDock> -->
+                            <DocumentDock
+                                CanCloseLastDockable="True"
+                                CanUpdateItemsSourceOnUnregister="True"
+                                Id="DocumentsPane"
+                                ItemsSource="{Binding DataContext.Documents, ElementName=MainWindowApp}"
+                                LayoutMode="Tabbed">
+                                <!--  Define how each document should be displayed  -->
+                                <DocumentDock.DocumentTemplate>
+                                    <DocumentTemplate>
+                                        <StackPanel Margin="10" x:DataType="Document">
+                                            <TextBlock FontWeight="Bold" Text="Document Title:" />
+                                            <TextBlock Margin="0,0,0,10" Text="{Binding ((mainContent:DocumentBase)Context).Title}" />
+                                            <TextBlock FontWeight="Bold" Text="Content:" />
+                                            <TextBlock
+                                                Height="200"
+                                                Text="{Binding ((mainContent:DocumentBase)Context).Content}"
+                                                TextWrapping="Wrap" />
+                                        </StackPanel>
+                                    </DocumentTemplate>
+                                </DocumentDock.DocumentTemplate>
+                            </DocumentDock>
+                        </RootDock>
+                    </DockControl>
+                    <!-- <Border> -->
+                    <!-- <ContentControl Content="{Binding CurrentMainContent}" /> -->
+                    <!-- </Border> -->
                     <!-- <TabControl> -->
                     <!--     <TabItem Header="{Binding Loc[Welcome]}"> -->
                     <!--         <TextBlock></TextBlock> -->
                     <!--     </TabItem> -->
                     <!-- </TabControl> -->
                     <!-- <userControls:SearchableDataGrid Grid.Row="0" ItemsSource="{Binding SampleData}" /> -->
+
+
+                    <WindowNotificationManager
+                        Name="NotificationManager"
+                        Grid.Row="0"
+                        Grid.RowSpan="{Binding $parent[Grid].RowDefinitions.Count}"
+                        Grid.Column="0"
+                        Grid.ColumnSpan="{Binding $parent[Grid].ColumnDefinitions.Count}"
+                        Position="TopRight" />
                 </Grid>
 
             </SplitView.Content>

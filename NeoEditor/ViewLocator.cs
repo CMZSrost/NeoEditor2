@@ -1,7 +1,12 @@
 using System;
+using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using Avalonia.Controls;
 using Avalonia.Controls.Templates;
+using CommunityToolkit.Mvvm.ComponentModel;
+using Dock.Model.Avalonia.Controls;
+using Dock.Model.Core;
+using NeoEditor.Data.DTO;
 using NeoEditor.ViewModels;
 
 namespace NeoEditor;
@@ -19,7 +24,12 @@ public class ViewLocator : IDataTemplate
         if (param is null)
             return null;
 
-        var name = param.GetType().FullName!.Replace("ViewModel", "View", StringComparison.Ordinal);
+        if (param is string s)
+        {
+            return new TextBlock { Text = s };
+        }
+
+        var name = param.GetType().FullName!.Replace("ViewModel", "View");
         var type = Type.GetType(name);
 
         if (type != null)
@@ -32,6 +42,16 @@ public class ViewLocator : IDataTemplate
 
     public bool Match(object? data)
     {
+        if (data is null)
+        {
+            return false;
+        }
+
+        if (data is IDockable)
+            return true;
+        if (data is INotifyPropertyChanged)
+            return true;
+
         return data is ViewModelBase;
     }
 }

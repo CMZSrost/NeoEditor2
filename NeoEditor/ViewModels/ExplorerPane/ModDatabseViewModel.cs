@@ -36,6 +36,7 @@ public partial class ModDatabaseViewModel : ViewModelBase, IRecipient<GameRootDi
     public ObservableCollection<ModInfo> Mods { get; set; } = [];
 
     [ObservableProperty] public partial string Filter { get; set; } = "";
+    [ObservableProperty] public partial ModInfo? SelectedItem { get; set; }
 
     public ModDatabaseViewModel() : this(
         App.ServiceProvider!.GetRequiredService<ProjectDbContextFactory>(),
@@ -119,19 +120,19 @@ public partial class ModDatabaseViewModel : ViewModelBase, IRecipient<GameRootDi
     }
 
     [RelayCommand]
-    public async Task ClearMods(int? modId = null)
+    public async Task ClearMods(ModInfo? selectedItem = null)
     {
-        if (modId is null)
+        if (selectedItem is null)
         {
             _editorDbContext.ModInfos.Local.Clear();
             await _editorDbContext.SaveChangesAsync();
             Mods.Clear();
         }
-        else if (await _editorDbContext.FindAsync<ModInfo>(modId!) is { } modInfo)
+        else
         {
-            _editorDbContext.ModInfos.Remove(modInfo);
+            _editorDbContext.ModInfos.Remove(selectedItem);
             await _editorDbContext.SaveChangesAsync();
-            Mods.Remove(Mods.First(m => m.ModId == modInfo.ModId));
+            Mods.Remove(Mods.First(m => m.ModId == selectedItem.ModId));
         }
     }
 

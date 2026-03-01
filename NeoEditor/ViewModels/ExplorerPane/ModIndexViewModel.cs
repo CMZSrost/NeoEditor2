@@ -166,18 +166,25 @@ public partial class ModIndexViewModel : ViewModelBase, IRecipient<InitProfileMe
             {
                 if (folder.TryGetLocalPath() is { } folderPath && !folderPath.Contains("getimages.php"))
                 {
-                    var profile = new ProfileInfo()
+                    try
                     {
-                        Name = Path.GetFileNameWithoutExtension(folderPath.Replace("\\", "/")),
-                        Description = "",
-                        Path = folderPath.Replace("\\", "/"),
-                        Content = await File.ReadAllTextAsync(folderPath),
-                        CreateTime = DateTime.Now,
-                        UpdateTime = DateTime.Now
-                    };
-                    db.ProfileInfos.Add(profile);
-                    await db.SaveChangesAsync();
-                    Profiles.Add(profile);
+                        var profile = new ProfileInfo()
+                        {
+                            Name = Path.GetFileNameWithoutExtension(folderPath.Replace("\\", "/")),
+                            Description = "",
+                            Path = folderPath.Replace("\\", "/"),
+                            Content = await File.ReadAllTextAsync(folderPath),
+                            CreateTime = DateTime.Now,
+                            UpdateTime = DateTime.Now
+                        };
+                        db.ProfileInfos.Add(profile);
+                        await db.SaveChangesAsync();
+                        Profiles.Add(profile);
+                    }
+                    catch (Exception e)
+                    {
+                        App.Notification.ShowWarning($"Add {folderPath} failed: {e.Message}");
+                    }
                 }
             }
         }

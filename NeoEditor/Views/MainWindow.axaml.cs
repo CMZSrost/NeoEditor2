@@ -1,18 +1,8 @@
 using System;
 using System.IO;
-using System.Linq;
 using Avalonia.Controls;
 using Avalonia.Input;
-using Avalonia.Interactivity;
-using Avalonia.LogicalTree;
-using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Messaging;
 using Microsoft.Extensions.DependencyInjection;
-using NeoEditor.Data.Messages;
-using NeoEditor.Data.Model;
-using NeoEditor.Data.Model.Game;
-using NeoEditor.Helper;
-using NeoEditor.Services;
 using NeoEditor.ViewModels;
 using NeoEditor.ViewModels.ExplorerPane;
 using Serilog;
@@ -24,7 +14,8 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
-        DataContext = App.ServiceProvider!.GetRequiredService<MainWindowViewModel>();
+        var vm = App.ServiceProvider!.GetRequiredService<MainWindowViewModel>();
+        DataContext = vm;
     }
 
     private void FolderEntity_OnDoubleTapped(object? sender, TappedEventArgs e)

@@ -12,8 +12,7 @@
     x:DataType="viewModels:EditProfileWindowViewModel"
     mc:Ignorable="d">
     <Window.Resources>
-        <dragDropHandler:ModEntryDropHandler x:Key="DataGridDropHandler" x:Shared="False" />
-        <ContextDragBehavior x:Key="DataGridDrag" x:Shared="False" />
+        <dragDropHandler:ModEntryDropHandler x:Key="DataGridDropHandler" x:Shared="True" />
     </Window.Resources>
     <Design.DataContext>
         <viewModels:EditProfileWindowViewModel />
@@ -45,12 +44,11 @@
             Grid.Row="1"
             AutoGenerateColumns="False"
             CanUserReorderColumns="False"
-            Classes="DragAndDrop"
+            Classes="DragAndDrop ItemDragAndDrop"
             ItemsSource="{Binding Entries}"
             LoadingRow="OnEntriesLoadingRow"
             SelectedItem="{Binding SelectedEntry}">
             <Interaction.Behaviors>
-                <!--  Make DataGrid a drop target  -->
                 <ContextDropBehavior Handler="{StaticResource DataGridDropHandler}" />
             </Interaction.Behaviors>
             <DataGrid.Columns>

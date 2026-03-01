@@ -6,6 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using NeoEditor.Data.Model;
 using NeoEditor.ViewModels;
 using System.Linq;
+using Avalonia.Input;
 using NeoEditor.Helper.DragDropHandler;
 
 namespace NeoEditor.Views;
@@ -41,5 +42,10 @@ public partial class EditProfileWindow : Window
         {
             behaviors.Add(new ContextDragBehavior());
         }
+    }
+
+    private void InputElement_OnPointerReleased(object? sender, PointerReleasedEventArgs e)
+    {
+        throw new NotImplementedException();
     }
 }

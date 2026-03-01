@@ -4,31 +4,29 @@ using NeoEditor.Services;
 using CommunityToolkit.Mvvm.Input;
 using Avalonia.Controls;
 using System.Globalization;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Windows.Input;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
-using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
+using AvaloniaEdit.Utils;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Messaging;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Hosting.Internal;
-using Microsoft.Extensions.Localization;
+using Dock.Model.Avalonia;
+using Dock.Model.Avalonia.Controls;
+using Dock.Model.Controls;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using NeoEditor.Assets;
 using NeoEditor.Data.DTO;
 using NeoEditor.Data.Messages;
 using NeoEditor.Data.Model;
-using NeoEditor.Data.Model.Game;
 using NeoEditor.Data.Options;
-using NeoEditor.Helper;
 using NeoEditor.ViewModels.ExplorerPane;
+using NeoEditor.ViewModels.MainContent;
 using NeoEditor.Views;
+using Newtonsoft.Json;
 using ModIndexViewModel = NeoEditor.ViewModels.ExplorerPane.ModIndexViewModel;
 
 namespace NeoEditor.ViewModels;
@@ -39,6 +37,15 @@ public partial class MainWindowViewModel : ViewModelBase
     public AppConfig Config => _config.Config;
     private INotificationService _notificationService;
     private readonly ILogger<MainWindowViewModel> _logger;
+
+    public ObservableCollection<DocumentBase> Documents { get; } =
+    [
+    ];
+
+    public ObservableCollection<ViewModelBase> Tools { get; } =
+    [
+    ];
+
 
     public MainWindowViewModel() : this(App.ServiceProvider!)
     {
@@ -237,6 +244,22 @@ public partial class MainWindowViewModel : ViewModelBase
                 MainWindow: { } mainWindow
             })
             editWindow.ShowDialog(mainWindow);
+    }
+
+    #endregion
+
+    #region Document
+
+    [RelayCommand]
+    private void AddDocument()
+    {
+        var index = Documents.Count + 1;
+        Documents.Add(new FileDocument()
+        {
+            Title = $"Document {index}",
+            Content = $"Content of document {index}"
+        });
+        Console.WriteLine($"Document {index} created");
     }
 
     #endregion
