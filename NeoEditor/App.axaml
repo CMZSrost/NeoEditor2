@@ -5,6 +5,7 @@
     xmlns:avalonia="clr-namespace:FluentIcons.Avalonia;assembly=FluentIcons.Avalonia"
     xmlns:conv="clr-namespace:NeoEditor.Helper.Converter"
     xmlns:dock="https://irihi.tech/semi"
+    xmlns:dragDropHandler="clr-namespace:NeoEditor.Helper.DragDropHandler"
     xmlns:io="clr-namespace:System.IO;assembly=System.Runtime"
     xmlns:local="using:NeoEditor"
     xmlns:model="clr-namespace:NeoEditor.Data.Model"
@@ -12,9 +13,16 @@
     RequestedThemeVariant="Default">
 
     <Application.Resources>
-        <conv:ModBaseBackgroundConverter x:Key="ModBaseBackgroundConverter" />
-        <conv:ModLoadTypeIconConverter x:Key="ModLoadTypeIconConverter" />
-        <services:LocalizationService x:Key="Loc" />
+        <ResourceDictionary>
+            <conv:ModBaseBackgroundConverter x:Key="ModBaseBackgroundConverter" />
+            <conv:ModLoadTypeIconConverter x:Key="ModLoadTypeIconConverter" />
+            <services:LocalizationService x:Key="Loc" />
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceInclude Source="/Templates/EditProfileTemplate.axaml" />
+                <ResourceInclude Source="/Templates/DocumentTemplate.axaml" />
+                <ResourceInclude Source="/Templates/PaneTemplates.axaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
     </Application.Resources>
 
     <Application.DataTemplates>

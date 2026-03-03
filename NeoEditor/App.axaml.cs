@@ -30,6 +30,7 @@ using NeoEditor.Data;
 using NeoEditor.Data.Context;
 using NeoEditor.Data.DTO;
 using NeoEditor.Data.Messages;
+using NeoEditor.Data.Model;
 using NeoEditor.Data.Model.Game;
 using NeoEditor.Data.Options;
 using NeoEditor.Helper;
@@ -39,6 +40,7 @@ using NeoEditor.ViewModels;
 using NeoEditor.Views;
 using NeoEditor.Services;
 using NeoEditor.ViewModels.ExplorerPane;
+using NeoEditor.Views.Dialog;
 using NeoEditor.Views.UserControls;
 using ConfigurationManager = Microsoft.Extensions.Configuration.ConfigurationManager;
 using ModIndexViewModel = NeoEditor.ViewModels.ExplorerPane.ModIndexViewModel;
@@ -109,9 +111,17 @@ public partial class App : Application
                     .AddScoped<ModIndexViewModel>();
                 services.AddTransient<SearchableDataGrid>();
                 services.AddTransient<ModEntryDropHandler>();
-
-                services.AddTransient<EditProfileWindow>()
-                    .AddTransient<EditProfileWindowViewModel>();
+                // DocumentView
+                services.AddTransient<EditProfileViewModel>()
+                    .AddSingleton<Func<ProfileInfo, EditProfileViewModel>>((info =>
+                    {
+                        var vm = ServiceProvider.GetRequiredService<EditProfileViewModel>();
+                        vm.ProfileInfo = info;
+                        vm.LoadEntries();
+                        return vm;
+                    }));
+                // Dialog
+                services.AddTransient<CreateModDialog>();
             })
             .Build();
     }
@@ -138,7 +148,7 @@ public partial class App : Application
         ServiceProvider = _host.Services;
         Logger = _host.Services.GetRequiredService<ILogger<App>>();
         ConfigService = _host.Services.GetRequiredService<IConfigService>();
-        Localizor = _host.Services.GetRequiredService<LocalizationService>();
+        Resources["Loc"] = Localizor = _host.Services.GetRequiredService<LocalizationService>();
         Notification = _host.Services.GetRequiredService<INotificationService>();
         Dispatcher.UIThread.InvokeAsync(ConfigService.LoadAsync);
 

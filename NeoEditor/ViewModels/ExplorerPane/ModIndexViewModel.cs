@@ -63,7 +63,7 @@ public partial class ModIndexViewModel : ViewModelBase, IRecipient<InitProfileMe
     {
         try
         {
-            var content = File.ReadAllText(message.FilePath).Replace("\r\n", "");
+            var content = File.ReadAllText(message.FilePath).ReplaceLineEndings("");
             var entities = _phpParser.ParseContent(content);
             using var db = _factory.CreateDbContext();
             var existedMods = db.ModInfos.ToDictionary(m => m.Path, m => m);
@@ -108,7 +108,7 @@ public partial class ModIndexViewModel : ViewModelBase, IRecipient<InitProfileMe
     {
         try
         {
-            var entities = _phpParser.ParseContent(message.ProfileInfo.Content.Replace("\r\n", ""));
+            var entities = _phpParser.ParseContent(message.ProfileInfo.Content.ReplaceLineEndings(""));
             using var db = _factory.CreateDbContext();
             var existedMods = db.ModInfos.ToDictionary(m => m.Path, m => m);
 

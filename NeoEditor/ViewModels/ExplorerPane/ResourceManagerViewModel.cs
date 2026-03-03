@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using Microsoft.Extensions.DependencyInjection;
@@ -10,6 +11,7 @@ using Microsoft.Extensions.Logging;
 using MsBox.Avalonia;
 using NeoEditor.Data.Messages;
 using NeoEditor.Services;
+using Serilog;
 
 namespace NeoEditor.ViewModels.ExplorerPane;
 
@@ -23,6 +25,7 @@ public partial class ResourceManagerViewModel : ViewModelBase, IRecipient<GameRo
     private readonly ILogger<ResourceManagerViewModel> _logger;
     private readonly LocalizationService _localizationService;
     public ObservableCollection<FolderEntity> Folders { get; } = [];
+    [ObservableProperty] public partial FolderEntity? SelectedItem { get; set; }
 
     public ResourceManagerViewModel() : this(
         App.ServiceProvider!.GetRequiredService<ILogger<ResourceManagerViewModel>>(),
@@ -65,6 +68,28 @@ public partial class ResourceManagerViewModel : ViewModelBase, IRecipient<GameRo
 
         return new ObservableCollection<FolderEntity>(folders.OrderBy(f => f.Info is FileInfo)
             .ThenBy(f => f.Info.Name));
+    }
+
+    [RelayCommand]
+    public void OpenFile(FolderEntity? folder = null)
+    {
+        if (folder is not
+            {
+                Info: FileInfo fileInfo
+            }) return;
+        // 打开文件
+        try
+        {
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+            {
+                FileName = fileInfo.FullName,
+                UseShellExecute = true
+            });
+        }
+        catch (Exception ex)
+        {
+            Log.Logger.Error(ex, $"Failed to open file: {fileInfo.FullName}");
+        }
     }
 
     [RelayCommand]

@@ -21,6 +21,17 @@
         <vm:MainWindowViewModel />
     </Design.DataContext>
     <Window.DataTemplates>
+        <!--  Pane  -->
+        <StaticResource ResourceKey="ResourceManagerPaneTemplate" />
+        <StaticResource ResourceKey="SearchPaneTemplate" />
+        <StaticResource ResourceKey="SettingsPaneTemplate" />
+        <StaticResource ResourceKey="ProfilePaneTemplate" />
+        <StaticResource ResourceKey="ModDatabasePaneTemplate" />
+        <StaticResource ResourceKey="AppConfigTemplate" />
+        <!--  DocumentTemplate  -->
+        <StaticResource ResourceKey="PlainTextDocumentTemplate" />
+        <!--  EditProfileTemplate  -->
+        <StaticResource ResourceKey="EditProfileTemplate" />
         <DataTemplate DataType="model:ProfileInfo">
             <StackPanel Margin="4">
                 <Expander HorizontalAlignment="Stretch">
@@ -43,7 +54,7 @@
                             <MenuItem
                                 Command="{Binding DataContext.EditProfileCommand, ElementName=MainWindowApp}"
                                 CommandParameter="{Binding}"
-                                Header="{Binding DataContext.Loc[EditProfile], ElementName=MainWindowApp}" />
+                                Header="{Binding Loc[EditProfile]}" />
                         </ContextMenu>
                     </Expander.ContextMenu>
                     <StackPanel>
@@ -79,6 +90,7 @@
                 </MenuItem.ItemTemplate>
             </MenuItem>
         </Menu>
+        <!--  底部状态栏  -->
         <StackPanel DockPanel.Dock="Bottom">
             <!-- <TextBlock Text="{Binding Loc[Status]}" /> -->
         </StackPanel>
@@ -94,7 +106,7 @@
                 <avalonia:SymbolIcon IconVariant="Regular" Symbol="Database" />
             </Button>
             <Button Command="{Binding TogglePaneCommand}" CommandParameter="Profiles">
-                <avalonia:SymbolIcon IconVariant="Regular" Symbol="Edit" />
+                <avalonia:SymbolIcon IconVariant="Regular" Symbol="List" />
             </Button>
             <Button Command="{Binding TogglePaneCommand}" CommandParameter="Search">
                 <avalonia:SymbolIcon IconVariant="Regular" Symbol="Search" />
@@ -110,178 +122,7 @@
             OpenPaneLength="500">
             <!--  侧边栏内容区域  -->
             <SplitView.Pane>
-                <ContentControl Content="{Binding CurrentPaneContent}">
-                    <ContentControl.DataTemplates>
-                        <!--  资源管理器面板模板  -->
-                        <DataTemplate DataType="{x:Type explorerPane:ResourceManagerViewModel}">
-                            <ScrollViewer Width="500">
-                                <StackPanel>
-                                    <TextBlock FontWeight="Bold" Text="{Binding DataContext.Loc[ResourceManager], ElementName=MainWindowApp}" />
-                                    <StackPanel Orientation="Horizontal">
-                                        <Button Command="{Binding ReloadFolderCommand}">
-                                            <avalonia:SymbolIcon Symbol="FolderSync" ToolTip.Tip="{Binding DataContext.Loc[ReloadGameFolder], ElementName=MainWindowApp}" />
-                                        </Button>
-                                        <Button Command="{Binding OpenGameFolderCommand}" IsCancel="{Binding Config.GameRootDir, Converter={x:Static ObjectConverters.IsNull}}">
-                                            <StackPanel
-                                                VerticalAlignment="Center"
-                                                Orientation="Horizontal"
-                                                Spacing="4"
-                                                ToolTip.Tip="{Binding DataContext.Loc[OpenGameFolder], ElementName=MainWindowApp}">
-                                                <avalonia:SymbolIcon Symbol="FolderOpen" />
-                                                <TextBlock Text="{Binding DataContext.Loc[Games], ElementName=MainWindowApp}" />
-                                            </StackPanel>
-                                        </Button>
-                                        <Button
-                                            Command="{Binding OpenGameFolderCommand}"
-                                            CommandParameter="Mods"
-                                            IsCancel="{Binding Config.GameRootDir, Converter={x:Static ObjectConverters.IsNull}}">
-                                            <StackPanel
-                                                VerticalAlignment="Center"
-                                                Orientation="Horizontal"
-                                                Spacing="4"
-                                                ToolTip.Tip="{Binding DataContext.Loc[OpenModsFolder], ElementName=MainWindowApp}">
-                                                <avalonia:SymbolIcon Symbol="FolderOpen" />
-                                                <TextBlock Text="{Binding DataContext.Loc[Mods], ElementName=MainWindowApp}" />
-                                            </StackPanel>
-                                        </Button>
-                                    </StackPanel>
-                                    <TreeView DoubleTapped="FolderEntity_OnDoubleTapped" ItemsSource="{Binding Folders}">
-                                        <TreeView.ItemTemplate>
-                                            <TreeDataTemplate ItemsSource="{Binding Children}">
-                                                <ContentControl Content="{Binding Info}" />
-                                            </TreeDataTemplate>
-                                        </TreeView.ItemTemplate>
-                                    </TreeView>
-                                </StackPanel>
-                            </ScrollViewer>
-                        </DataTemplate>
-
-                        <!--  Mod数据库  -->
-                        <DataTemplate DataType="explorerPane:ModDatabaseViewModel">
-                            <ScrollViewer Width="500">
-                                <StackPanel>
-                                    <TextBlock FontWeight="Bold" Text="{Binding DataContext.Loc[ModDatabase], ElementName=MainWindowApp}" />
-                                    <StackPanel Orientation="Horizontal">
-                                        <StackPanel Orientation="Horizontal">
-                                            <Button Command="{Binding ImportModCommand}">
-                                                <avalonia:SymbolIcon Symbol="ArrowCircleDownRight" ToolTip.Tip="{Binding DataContext.Loc[ImportMod], ElementName=MainWindowApp}" />
-                                            </Button>
-                                            <Button Command="{Binding ClearModsCommand}" CommandParameter="{Binding SelectedItem}">
-                                                <avalonia:SymbolIcon Symbol="Delete" ToolTip.Tip="{Binding DataContext.Loc[ClearSelected], ElementName=MainWindowApp}" />
-                                            </Button>
-                                            <Button Command="{Binding ClearModsCommand}">
-                                                <avalonia:SymbolIcon Symbol="DeleteLines" ToolTip.Tip="{Binding DataContext.Loc[ClearAllMods], ElementName=MainWindowApp}" />
-                                            </Button>
-                                        </StackPanel>
-                                    </StackPanel>
-                                    <TextBox
-                                        Margin="8"
-                                        ClearSelectionOnLostFocus="True"
-                                        Text="{Binding Filter}"
-                                        Watermark="{Binding DataContext.Loc[KeywordInput], ElementName=MainWindowApp}" />
-                                    <ListBox
-                                        Margin="8"
-                                        ItemsSource="{Binding Mods}"
-                                        SelectedItem="{Binding SelectedItem}" />
-                                </StackPanel>
-                            </ScrollViewer>
-                        </DataTemplate>
-                        <!--  php配置文件  -->
-                        <DataTemplate DataType="explorerPane:ModIndexViewModel">
-                            <ScrollViewer Width="500">
-                                <StackPanel Margin="8" Spacing="5">
-                                    <TextBlock FontWeight="Bold" Text="{Binding DataContext.Loc[ProfileDatabase], ElementName=MainWindowApp}" />
-                                    <StackPanel Orientation="Horizontal">
-                                        <Button
-                                            Command="{Binding AddProfileCommand}"
-                                            Content="{Binding DataContext.Loc[AddProfile], ElementName=MainWindowApp}"
-                                            IsCancel="{Binding Config.GameRootDir, Converter={x:Static ObjectConverters.IsNull}}" />
-                                        <Button Command="{Binding RefreshProfilesCommand}" Content="{Binding DataContext.Loc[RefreshProfile], ElementName=MainWindowApp}" />
-                                        <Button
-                                            Command="{Binding LoadProfilesCommand}"
-                                            Content="{Binding DataContext.Loc[LoadProfiles], ElementName=MainWindowApp}"
-                                            IsCancel="{Binding Config.GameRootDir, Converter={x:Static ObjectConverters.IsNull}}" />
-                                    </StackPanel>
-
-                                    <StackPanel
-                                        VerticalAlignment="Center"
-                                        Orientation="Horizontal"
-                                        Spacing="5">
-                                        <avalonia:SymbolIcon Symbol="Games" />
-                                        <TextBlock Text="Game" />
-                                    </StackPanel>
-                                    <!-- <Expander HorizontalAlignment="Stretch"> -->
-                                    <!--     <Expander.Header> -->
-                                    <!--         <StackPanel> -->
-                                    <!--  <TextBlock  -->
-                                    <!--  FontSize="11"  -->
-                                    <!--  Text="{Binding Config.GameRootDir}"  -->
-                                    <!--  TextWrapping="Wrap" />  -->
-                                    <!--         </StackPanel> -->
-                                    <!--     </Expander.Header> -->
-                                    <ContentControl Content="{Binding Info}" />
-                                    <!-- </Expander> -->
-                                    <GridSplitter />
-                                    <!--  <AutoCompleteBox  -->
-                                    <!--  Margin="8"  -->
-                                    <!--  ClearSelectionOnLostFocus="True"  -->
-                                    <!--  FilterMode="Contains"  -->
-                                    <!--  ItemsSource="{Binding ProfilesPaths}"  -->
-                                    <!--  Watermark="{Binding DataContext.Loc[KeywordInput], ElementName=MainWindowApp}" />  -->
-
-                                    <StackPanel
-                                        VerticalAlignment="Center"
-                                        Orientation="Horizontal"
-                                        Spacing="5">
-                                        <avalonia:SymbolIcon Symbol="Edit" />
-                                        <TextBlock Text="{Binding DataContext.Loc[OtherProfiles], ElementName=MainWindowApp}" />
-                                    </StackPanel>
-                                    <ListBox ItemsSource="{Binding Profiles}" />
-                                </StackPanel>
-                            </ScrollViewer>
-                        </DataTemplate>
-                        <!--  搜索面板模板  -->
-                        <DataTemplate DataType="{x:Type explorerPane:SearchPaneViewModel}">
-                            <ScrollViewer Width="500">
-                                <StackPanel>
-                                    <TextBlock
-                                        Margin="8"
-                                        FontWeight="Bold"
-                                        Text="{Binding DataContext.Loc[Search], ElementName=MainWindowApp}" />
-                                    <AutoCompleteBox
-                                        Margin="8"
-                                        ClearSelectionOnLostFocus="True"
-                                        FilterMode="Contains"
-                                        ItemsSource="{Binding RecentSearches}"
-                                        Watermark="{Binding DataContext.Loc[KeywordInput], ElementName=MainWindowApp}" />
-                                </StackPanel>
-                            </ScrollViewer>
-                        </DataTemplate>
-
-                        <!--  设置面板模板  -->
-                        <DataTemplate DataType="{x:Type explorerPane:SettingsPaneViewModel}">
-                            <ScrollViewer Width="500">
-                                <StackPanel>
-                                    <TextBlock
-                                        Margin="8"
-                                        FontWeight="Bold"
-                                        Text="{Binding DataContext.Loc[Settings], ElementName=MainWindowApp}" />
-                                    <GridSplitter />
-                                    <ContentControl Content="{Binding Config}">
-                                        <ContentControl.DataTemplates>
-                                            <DataTemplate DataType="vm:AppConfig">
-                                                <StackPanel>
-                                                    <TextBlock Text="{Binding DataContext.Loc[GameRootDir], ElementName=MainWindowApp}" />
-                                                    <TextBox IsReadOnly="True" Text="{Binding GameRootDir}" />
-                                                </StackPanel>
-                                            </DataTemplate>
-                                        </ContentControl.DataTemplates>
-                                    </ContentControl>
-                                </StackPanel>
-                            </ScrollViewer>
-                        </DataTemplate>
-                    </ContentControl.DataTemplates>
-                </ContentControl>
+                <ContentControl Content="{Binding CurrentPaneContent}" />
             </SplitView.Pane>
 
             <!--  主内容区（右侧）  -->
@@ -294,11 +135,11 @@
                         Spacing="6">
 
                         <Button Command="{Binding AddDocumentCommand}">
-                            <avalonia:SymbolIcon Symbol="TabAdd" ToolTip.Tip="{Binding DataContext.Loc[AddTab], ElementName=MainWindowApp}" />
+                            <avalonia:SymbolIcon Symbol="TabAdd" ToolTip.Tip="{Binding Loc[AddTab]}" />
                         </Button>
-                        <Button Command="{Binding AddDocumentCommand}">
-                            <avalonia:SymbolIcon Symbol="Save" ToolTip.Tip="{Binding DataContext.Loc[Save], ElementName=MainWindowApp}" />
-                        </Button>
+                        <!-- <Button Command="{Binding EditProfileCommand}"> -->
+                        <!--     <avalonia:SymbolIcon Symbol="ReadingListAdd" ToolTip.Tip="{Binding Loc[AddTab]}" /> -->
+                        <!-- </Button> -->
                         <GridSplitter />
                         <DropDownButton>
                             <DropDownButton.Content>
@@ -318,55 +159,54 @@
                                 </MenuFlyout>
                             </DropDownButton.Flyout>
                         </DropDownButton>
-
+                        <TextBlock Text="Current Documents: " />
+                        <TextBlock Text="{Binding Documents.Count}" />
                     </StackPanel>
                     <DockControl
                         Grid.Row="1"
+                        EnableManagedWindowLayer="False"
+                        Factory="{Binding DockFactory}"
                         InitializeFactory="True"
-                        InitializeLayout="True">
-                        <DockControl.Factory>
-                            <Factory />
-                        </DockControl.Factory>
-                        <RootDock Id="Root" IsCollapsable="True">
-                            <!--  <ToolDock  -->
-                            <!--  Alignment="Left"  -->
-                            <!--  Id="ToolsPane"  -->
-                            <!--  ItemsSource="{Binding Tools}">  -->
-                            <!--     <ToolDock.ToolTemplate> -->
-                            <!--         <ToolTemplate> -->
-                            <!--             <StackPanel Margin="10" x:DataType="Tool"> -->
-                            <!--                 <TextBlock FontWeight="Bold" Text="{Binding Title}" /> -->
-                            <!--                 <StackPanel x:DataType="mainContent:ReadOnlyToolViewModel" DataContext="{Binding Context}"> -->
-                            <!--                     <TextBlock Text="{Binding Description}" TextWrapping="Wrap" /> -->
-                            <!--                     <TextBlock Opacity="0.75" Text="{Binding Status}" /> -->
-                            <!--                 </StackPanel> -->
-                            <!--             </StackPanel> -->
-                            <!--         </ToolTemplate> -->
-                            <!--     </ToolDock.ToolTemplate> -->
-                            <!-- </ToolDock> -->
-                            <DocumentDock
-                                CanCloseLastDockable="True"
-                                CanUpdateItemsSourceOnUnregister="True"
-                                Id="DocumentsPane"
-                                ItemsSource="{Binding DataContext.Documents, ElementName=MainWindowApp}"
-                                LayoutMode="Tabbed">
-                                <!--  Define how each document should be displayed  -->
-                                <DocumentDock.DocumentTemplate>
-                                    <DocumentTemplate>
-                                        <StackPanel Margin="10" x:DataType="Document">
-                                            <TextBlock FontWeight="Bold" Text="Document Title:" />
-                                            <TextBlock Margin="0,0,0,10" Text="{Binding ((mainContent:DocumentBase)Context).Title}" />
-                                            <TextBlock FontWeight="Bold" Text="Content:" />
-                                            <TextBlock
-                                                Height="200"
-                                                Text="{Binding ((mainContent:DocumentBase)Context).Content}"
-                                                TextWrapping="Wrap" />
-                                        </StackPanel>
-                                    </DocumentTemplate>
-                                </DocumentDock.DocumentTemplate>
-                            </DocumentDock>
+                        InitializeLayout="True"
+                        IsDockingEnabled="{Binding IsDockingEnabled, Mode=OneWay}"
+                        IsVisible="True">
+                        <RootDock Id="Root" PinnedDockDisplayMode="Inline">
+                            <ProportionalDock EnableGlobalDocking="True">
+                                <!--  <ToolDock  -->
+                                <!--  Alignment="Left"  -->
+                                <!--  Column="0"  -->
+                                <!--  Id="ToolsPane"  -->
+                                <!--  ItemsSource="{Binding DataContext.Tools, ElementName=MainWindowApp}">  -->
+                                <!--     <ToolDock.ToolTemplate> -->
+                                <!--         <ToolTemplate> -->
+                                <!--             <StackPanel Margin="10" x:DataType="Tool"> -->
+                                <!--                 <ContentControl Content="{Binding Context}"> -->
+                                <!--                     <ContentControl.DataTemplates> -->
+                                <!--                         <DataTemplate Content="{StaticResource EditorTemplate}" /> -->
+                                <!--                     </ContentControl.DataTemplates> -->
+                                <!--                 </ContentControl> -->
+                                <!--             </StackPanel> -->
+                                <!--         </ToolTemplate> -->
+                                <!--     </ToolDock.ToolTemplate> -->
+                                <!-- </ToolDock> -->
+                                <DocumentDock
+                                    CanUpdateItemsSourceOnUnregister="True"
+                                    EnableWindowDrag="False"
+                                    Id="DocumentsPane"
+                                    ItemsSource="{Binding DataContext.Documents, ElementName=MainWindowApp}">
+                                    <!--  Define how each document should be displayed  -->
+                                    <DocumentDock.DocumentTemplate>
+                                        <DocumentTemplate>
+                                            <StackPanel Margin="10" x:DataType="Document">
+                                                <ContentControl Content="{Binding Context}" />
+                                            </StackPanel>
+                                        </DocumentTemplate>
+                                    </DocumentDock.DocumentTemplate>
+                                </DocumentDock>
+                            </ProportionalDock>
                         </RootDock>
                     </DockControl>
+                    <!--    -->
                     <!-- <Border> -->
                     <!-- <ContentControl Content="{Binding CurrentMainContent}" /> -->
                     <!-- </Border> -->

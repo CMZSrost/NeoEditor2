@@ -7,6 +7,7 @@ using Avalonia.Input;
 using Avalonia.Xaml.Interactions.DragAndDrop;
 using Microsoft.Extensions.DependencyInjection;
 using NeoEditor.Data.DTO;
+using NeoEditor.ViewModels;
 
 namespace NeoEditor.Helper.DragDropHandler;
 
@@ -76,6 +77,16 @@ public abstract class WrapDataGridDropHandler<T> : BaseDataGridDropHandler<T> wh
 
 public class ModEntryDropHandler : WrapDataGridDropHandler<ModEntry>
 {
+    protected override bool Validate(DataGrid dg, DragEventArgs e, object? sourceContext, object? targetContext,
+        bool execute)
+    {
+        var result = base.Validate(dg, e, sourceContext, targetContext, execute);
+        if (dg.DataContext is EditProfileViewModel editProfileViewModel)
+            editProfileViewModel.NeedNotifyWhenClose = true;
+
+        return result;
+    }
+
     protected override ModEntry MakeCopy(ObservableCollection<ModEntry> parentCollection, ModEntry item)
     {
         return _mapper.Map<ModEntry>(item,

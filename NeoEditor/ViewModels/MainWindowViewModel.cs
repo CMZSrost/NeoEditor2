@@ -11,14 +11,22 @@ using System.Windows.Input;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Platform.Storage;
+using Avalonia.Threading;
+using Avalonia.Xaml.Interactions.Custom;
 using AvaloniaEdit.Utils;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Messaging;
+using Dock.Model;
 using Dock.Model.Avalonia;
 using Dock.Model.Avalonia.Controls;
 using Dock.Model.Controls;
+using Dock.Model.Core;
+using Dock.Model.Core.Events;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using MsBox.Avalonia;
+using MsBox.Avalonia.Dto;
+using MsBox.Avalonia.Enums;
 using NeoEditor.Data.DTO;
 using NeoEditor.Data.Messages;
 using NeoEditor.Data.Model;
@@ -27,6 +35,7 @@ using NeoEditor.ViewModels.ExplorerPane;
 using NeoEditor.ViewModels.MainContent;
 using NeoEditor.Views;
 using Newtonsoft.Json;
+using Ursa.Controls;
 using ModIndexViewModel = NeoEditor.ViewModels.ExplorerPane.ModIndexViewModel;
 
 namespace NeoEditor.ViewModels;
@@ -38,12 +47,24 @@ public partial class MainWindowViewModel : ViewModelBase
     private INotificationService _notificationService;
     private readonly ILogger<MainWindowViewModel> _logger;
 
-    public ObservableCollection<DocumentBase> Documents { get; } =
+    public ObservableCollection<IDocumentBase> Documents { get; } =
     [
+        new PlainTextDocument()
+        {
+            Title = "Welcome",
+            Content = "This is the NeoEditor, a modding tool for Neople games.\n\n" +
+                      "Use the sidebar to explore resources, manage mods, and edit profiles.\n\n" +
+                      "Click 'Set Game Folder' in the Project menu to get started."
+        }
     ];
 
-    public ObservableCollection<ViewModelBase> Tools { get; } =
+    public ObservableCollection<Tool> Tools { get; } =
     [
+        new Tool()
+        {
+            Title = "Tool 1",
+            Context = App.ServiceProvider!.GetRequiredService<EditProfileViewModel>(),
+        }
     ];
 
 
@@ -64,6 +85,9 @@ public partial class MainWindowViewModel : ViewModelBase
         _notificationService = serviceProvider.GetRequiredService<INotificationService>();
         _logger = serviceProvider.GetRequiredService<ILogger<MainWindowViewModel>>();
         _config = serviceProvider.GetRequiredService<IConfigService>();
+        DockFactory = serviceProvider.GetRequiredService<Factory>();
+
+        DockFactory.DockableClosing += ClosingDockable;
 
         // _serviceProvider.GetRequiredService<ResourceManagerViewModel>();
         // _serviceProvider.GetRequiredService<SearchPaneViewModel>();
@@ -238,28 +262,103 @@ public partial class MainWindowViewModel : ViewModelBase
         }
 
         _logger.LogInformation($"Loading profile: {profileInfo.Name}");
-        var editWindow = new EditProfileWindow(profileInfo);
-        if (App.Current.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime
-            {
-                MainWindow: { } mainWindow
-            })
-            editWindow.ShowDialog(mainWindow);
+        // var editWindow = new EditProfileWindow(profileInfo);
+        // if (App.Current.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime
+        //     {
+        //         MainWindow: { } mainWindow
+        //     })
+        //     editWindow.ShowDialog(mainWindow);
+        var factory = _serviceProvider.GetRequiredService<Func<ProfileInfo, EditProfileViewModel>>();
+        var vm = factory(profileInfo);
+        Documents.Add(vm);
     }
 
     #endregion
 
     #region Document
 
+    [ObservableProperty]
+    public partial Factory DockFactory { get; set; }
+
+    private bool _isDockingEnabled;
+
+    public bool IsDockingEnabled
+    {
+        get => _isDockingEnabled;
+        set => SetProperty(ref _isDockingEnabled, value);
+    }
+
     [RelayCommand]
     private void AddDocument()
     {
         var index = Documents.Count + 1;
-        Documents.Add(new FileDocument()
+        Documents.Add(new PlainTextDocument()
         {
             Title = $"Document {index}",
             Content = $"Content of document {index}"
         });
         Console.WriteLine($"Document {index} created");
+        if (Documents.Count >= 2)
+            IsDockingEnabled = true;
+    }
+
+    public void ClosingDockable(object? sender, DockableClosingEventArgs e)
+    {
+        if (e.Dockable is not { Context: IDocumentBase docContext })
+        {
+            return;
+        }
+
+        // 接管cancel事件，显示确认对话框
+        e.Cancel = true;
+        _ = ConfirmCloseDockableAsync(docContext);
+        if (Documents.Count < 2)
+            IsDockingEnabled = false;
+    }
+
+    private async Task ConfirmCloseDockableAsync(IDocumentBase docContext)
+    {
+        if (docContext is EditProfileViewModel { ProfileInfo: { } profileInfo, NeedNotifyWhenClose: true } model)
+        {
+            _logger.LogInformation($"Closing document for profile: {profileInfo.Name}");
+
+            var res = await ShowConfirmDialogAsync(new MessageBoxStandardParams()
+            {
+                ButtonDefinitions = ButtonEnum.YesNoCancel,
+                ContentTitle = Loc["CloseProfile"],
+                ContentMessage = Loc["CloseProfileConfirmation"],
+                Icon = Icon.Question
+            });
+
+            switch (res)
+            {
+                case ButtonResult.Yes:
+                    model.Save();
+                    model.NeedNotifyWhenClose = false;
+                    break;
+                case ButtonResult.Cancel:
+                    return;
+            }
+        }
+
+        Documents.Remove(docContext);
+    }
+
+    private async Task<ButtonResult> ShowConfirmDialogAsync(MessageBoxStandardParams parameters)
+    {
+        var msgBox = MessageBoxManager.GetMessageBoxStandard(parameters);
+        if (Application.Current is
+            {
+                ApplicationLifetime: IClassicDesktopStyleApplicationLifetime
+                {
+                    MainWindow: { } mainWindow
+                }
+            })
+        {
+            return await msgBox.ShowWindowDialogAsync(mainWindow);
+        }
+
+        return await msgBox.ShowAsync();
     }
 
     #endregion

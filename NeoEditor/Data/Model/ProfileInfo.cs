@@ -5,13 +5,14 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Microsoft.EntityFrameworkCore;
+using NeoEditor.Services;
 using NeoEditor.ViewModels;
 
 namespace NeoEditor.Data.Model;
 
 [Table("profile_info")]
 [Index(nameof(Path), Name = "u_index_path", IsUnique = true)]
-public partial class ProfileInfo: ObservableObject
+public partial class ProfileInfo : LocalizedObservableObject
 {
     [Key]
     [Column("ProfileId")]

@@ -4,7 +4,7 @@ using NeoEditor.Data.Messages;
 
 namespace NeoEditor.ViewModels;
 
-public partial class AppConfig : ObservableRecipient
+public partial class AppConfig : ViewModelBase
 {
     [ObservableProperty] public partial string GameRootDir { get; set; } = "";
 
