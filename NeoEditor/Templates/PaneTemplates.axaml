@@ -82,18 +82,49 @@
                 <TextBlock FontWeight="Bold" Text="{Binding Loc[ModDatabase]}" />
                 <StackPanel Orientation="Horizontal">
                     <StackPanel Orientation="Horizontal">
-                        <Button Command="{Binding ImportModCommand}">
-                            <avalonia:SymbolIcon Symbol="ArrowCircleDownRight" ToolTip.Tip="{Binding Loc[ImportMod]}" />
-                        </Button>
                         <Button Command="{Binding CreateModCommand}">
                             <avalonia:SymbolIcon Symbol="AddCircle" ToolTip.Tip="{Binding Loc[CreateMod]}" />
                         </Button>
-                        <Button Command="{Binding ClearModsCommand}" CommandParameter="{Binding SelectedItem}">
-                            <avalonia:SymbolIcon Symbol="Delete" ToolTip.Tip="{Binding Loc[ClearSelected]}" />
+                        <Button Command="{Binding ImportModCommand}">
+                            <avalonia:SymbolIcon Symbol="ArrowCircleDownRight" ToolTip.Tip="{Binding Loc[ImportMod]}" />
                         </Button>
-                        <Button Command="{Binding ClearModsCommand}">
-                            <avalonia:SymbolIcon Symbol="DeleteLines" ToolTip.Tip="{Binding Loc[ClearAllMods]}" />
+                        <Button Command="{Binding RefreshModsCommand}">
+                            <avalonia:SymbolIcon Symbol="ArrowClockwise" ToolTip.Tip="{Binding Loc[RefreshMods]}" />
                         </Button>
+                        <!-- <Button Command="{Binding ClearModsCommand}" CommandParameter="{Binding SelectedItem}"> -->
+                        <!--     <avalonia:SymbolIcon Symbol="Delete" ToolTip.Tip="{Binding Loc[ClearSelected]}" /> -->
+                        <!-- </Button> -->
+                        <!-- <Button Command="{Binding ClearModsCommand}"> -->
+                        <!--     <avalonia:SymbolIcon Symbol="DeleteLines" ToolTip.Tip="{Binding Loc[ClearAllMods]}" /> -->
+                        <!-- </Button> -->
+                        <SplitButton Command="{Binding ClearModsCommand}" CommandParameter="{Binding SelectedItem}">
+                            <SplitButton.Content>
+                                <avalonia:SymbolIcon Symbol="Eraser" ToolTip.Tip="{Binding Loc[ClearSelectedMod]}" />
+                            </SplitButton.Content>
+                            <SplitButton.Flyout>
+                                <MenuFlyout>
+                                    <MenuItem Command="{Binding DeleteModsCommand}" CommandParameter="{Binding SelectedItem}">
+                                        <MenuItem.Header>
+                                            <avalonia:SymbolIcon Symbol="Delete" ToolTip.Tip="{Binding Loc[DeleteSelectedMod]}" />
+                                        </MenuItem.Header>
+                                    </MenuItem>
+                                </MenuFlyout>
+                            </SplitButton.Flyout>
+                        </SplitButton>
+                        <SplitButton Command="{Binding ClearModsCommand}">
+                            <SplitButton.Content>
+                                <avalonia:SymbolIcon Symbol="EraserTool" ToolTip.Tip="{Binding Loc[ClearAllMod]}" />
+                            </SplitButton.Content>
+                            <SplitButton.Flyout>
+                                <MenuFlyout>
+                                    <MenuItem Command="{Binding DeleteModsCommand}">
+                                        <MenuItem.Header>
+                                            <avalonia:SymbolIcon Symbol="DeleteLines" ToolTip.Tip="{Binding Loc[DeleteAllMods]}" />
+                                        </MenuItem.Header>
+                                    </MenuItem>
+                                </MenuFlyout>
+                            </SplitButton.Flyout>
+                        </SplitButton>
                     </StackPanel>
                 </StackPanel>
                 <TextBox
@@ -115,15 +146,15 @@
             <StackPanel Margin="8" Spacing="5">
                 <TextBlock FontWeight="Bold" Text="{Binding Loc[ProfileDatabase]}" />
                 <StackPanel Orientation="Horizontal">
-                    <Button
-                        Command="{Binding AddProfileCommand}"
-                        Content="{Binding Loc[AddProfile]}"
-                        IsCancel="{Binding Config.GameRootDir, Converter={x:Static ObjectConverters.IsNull}}" />
-                    <Button Command="{Binding RefreshProfilesCommand}" Content="{Binding Loc[RefreshProfile]}" />
-                    <Button
-                        Command="{Binding LoadProfilesCommand}"
-                        Content="{Binding Loc[LoadProfiles]}"
-                        IsCancel="{Binding Config.GameRootDir, Converter={x:Static ObjectConverters.IsNull}}" />
+                    <Button Command="{Binding AddProfileCommand}">
+                        <avalonia:SymbolIcon Symbol="AddCircle" ToolTip.Tip="{Binding Loc[AddProfile]}" />
+                    </Button>
+                    <Button Command="{Binding ImportProfileCommand}" IsCancel="{Binding Config.GameRootDir, Converter={x:Static ObjectConverters.IsNull}}">
+                        <avalonia:SymbolIcon Symbol="ArrowCircleDownRight" ToolTip.Tip="{Binding Loc[ImportProfile]}" />
+                    </Button>
+                    <Button Command="{Binding RefreshProfilesCommand}">
+                        <avalonia:SymbolIcon Symbol="ArrowClockwise" ToolTip.Tip="{Binding Loc[RefreshProfile]}" />
+                    </Button>
                 </StackPanel>
 
                 <StackPanel

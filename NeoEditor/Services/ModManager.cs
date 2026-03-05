@@ -30,7 +30,7 @@ public class ModManager : IModManager
 {
     private readonly IDbContextFactory<EditorDbContext> _dbContextFactory;
     private readonly PhpParser _parser;
-    private readonly ConfigService _configService;
+    private readonly IConfigService _configService;
 
     private AppConfig Config => _configService.Config;
     private string ModPath => Path.Combine(Config.GameRootDir, "Mods");
@@ -38,12 +38,6 @@ public class ModManager : IModManager
     private const string DefaultModXml =
         """
         <?xml version="1.0" encoding="utf-8"?>
-        <!--
-        -
-        - NSEbattle Main File
-        - Chiko
-        -
-        -->
         <pma_xml_export version="1.0">
             <database name="neogame">
             </database>
@@ -51,7 +45,7 @@ public class ModManager : IModManager
         """;
 
     public ModManager(PhpParser parser, IDbContextFactory<EditorDbContext> dbContextFactory,
-        ConfigService configService)
+        IConfigService configService)
     {
         _parser = parser;
         _dbContextFactory = dbContextFactory;
@@ -91,7 +85,7 @@ public class ModManager : IModManager
                 LastImport = DateTime.Now
             });
             await dbContext.SaveChangesAsync();
-            App.Notification!.ShowInfo($"mod {modFullPath} imported");
+            App.Notification!.ShowSuccess($"mod {modFullPath} imported");
         }
         catch (Exception e)
         {
@@ -106,7 +100,7 @@ public class ModManager : IModManager
 
         try
         {
-            // 创建数据库
+            // 创建数据
             await using (var context = await _dbContextFactory.CreateDbContextAsync())
             {
                 context.ModInfos.Add(new ModInfo
@@ -114,9 +108,10 @@ public class ModManager : IModManager
                     Name = name,
                     IsBase = false,
                     LastImport = DateTime.Now,
-                    Path = projectDir.Replace(Config.GameRootDir, ""),
+                    Path = projectDir.Replace(Config.GameRootDir, "").Replace("\\", "/").TrimStart('/'),
                     LastModified = DateTime.Now,
                 });
+                await context.SaveChangesAsync();
             }
 
             // 创建默认的 getmods.php
@@ -141,13 +136,24 @@ public class ModManager : IModManager
 
     public Task DeleteMod(string name, string author) => DeleteMod(Path.Combine(ModPath, author, name));
 
-    public Task DeleteMod(ModInfo modInfo) => DeleteMod(Path.Combine(Config.GameRootDir, modInfo.Path));
+    public async Task DeleteMod(ModInfo modInfo)
+    {
+        var projectPath = Path.Combine(Config.GameRootDir, modInfo.Path);
+        DeleteDirectory(projectPath);
+        await using var context = await _dbContextFactory.CreateDbContextAsync();
+        if (await context.ModInfos.FindAsync(modInfo.ModId) is
+            not { } mod)
+            return;
+        context.ModInfos.Remove(mod);
+        await context.SaveChangesAsync();
+    }
 
     public async Task DeleteMod(string projectPath)
     {
         DeleteDirectory(projectPath);
+        var relativePath = projectPath.Replace(Config.GameRootDir ?? "", "").Replace("\\", "/").TrimStart('/');
         await using var context = await _dbContextFactory.CreateDbContextAsync();
-        if (await context.ModInfos.FirstOrDefaultAsync(m => m.Path == projectPath.Replace(Config.GameRootDir, "")) is
+        if (await context.ModInfos.FirstOrDefaultAsync(m => m.Path == relativePath) is
             not { } mod)
             return;
         context.ModInfos.Remove(mod);

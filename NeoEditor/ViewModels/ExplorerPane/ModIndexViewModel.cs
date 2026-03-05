@@ -143,6 +143,24 @@ public partial class ModIndexViewModel : ViewModelBase, IRecipient<InitProfileMe
     [RelayCommand]
     public async Task AddProfile()
     {
+        var newProfile = new ProfileInfo()
+        {
+            Name = $"New Profile {DateTime.Now:yyyyMMddHHmmss}",
+            Description = "",
+            Path = "",
+            Content = "",
+            CreateTime = DateTime.Now,
+            UpdateTime = DateTime.Now
+        };
+        await using var db = await _factory.CreateDbContextAsync();
+        db.ProfileInfos.Add(newProfile);
+        await db.SaveChangesAsync();
+        Profiles.Add(newProfile);
+    }
+
+    [RelayCommand]
+    public async Task ImportProfile()
+    {
         if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
             var topLevel = TopLevel.GetTopLevel(desktop.MainWindow); // 获取顶层窗口
@@ -202,7 +220,7 @@ public partial class ModIndexViewModel : ViewModelBase, IRecipient<InitProfileMe
         }
     }
 
-    [RelayCommand]
+    // [RelayCommand]
     public async Task LoadProfiles(ProfileInfo? profileInfo = null)
     {
         if (string.IsNullOrWhiteSpace(Config.GameRootDir))

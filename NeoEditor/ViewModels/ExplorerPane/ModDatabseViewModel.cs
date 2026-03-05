@@ -10,6 +10,7 @@ using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.DesignerSupport.Remote.HtmlTransport;
 using Avalonia.Platform.Storage;
+using Avalonia.Threading;
 using AvaloniaEdit.Utils;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -26,11 +27,13 @@ using NeoEditor.Data.Messages;
 using NeoEditor.Data.Model;
 using NeoEditor.Services;
 using NeoEditor.ViewModels.Dialog;
+using NeoEditor.Views;
 using NeoEditor.Views.Dialog;
 
 namespace NeoEditor.ViewModels.ExplorerPane;
 
-public partial class ModDatabaseViewModel : ViewModelBase, IRecipient<GameRootDirChangedMessage>
+public partial class ModDatabaseViewModel : ViewModelBase, IRecipient<GameRootDirChangedMessage>,
+    IRecipient<RefreshModMessage>
 {
     private readonly IConfigService _config;
     public AppConfig Config => _config.Config;
@@ -58,7 +61,8 @@ public partial class ModDatabaseViewModel : ViewModelBase, IRecipient<GameRootDi
     }
 
     public ModDatabaseViewModel(ProjectDbContextFactory gameContextFactory, ILogger<ModDatabaseViewModel> logger,
-        IDbContextFactory<EditorDbContext> editorContextFactory, EditorDbContext editorDbContext,IModManager modManager,
+        IDbContextFactory<EditorDbContext> editorContextFactory, EditorDbContext editorDbContext,
+        IModManager modManager,
         IConfigService configService)
     {
         _config = configService;
@@ -75,23 +79,15 @@ public partial class ModDatabaseViewModel : ViewModelBase, IRecipient<GameRootDi
     [RelayCommand]
     public async Task CreateMod()
     {
-        if (Application.Current?.ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime{MainWindow: {} mainWindow}) return;
+        if (Application.Current?.ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime
+            {
+                MainWindow: { } mainWindow
+            }) return;
         if (TopLevel.GetTopLevel(mainWindow) is not { StorageProvider: { } storageProvider }) return;
 
         var dialog = App.ServiceProvider.GetRequiredService<CreateModDialog>();
-        
-        var res = await dialog.ShowDialog<ButtonResult>(mainWindow);
-        var vm = dialog.DataContext as CreateModDialogViewModel;
-        var invalid = string.IsNullOrWhiteSpace(vm?.Author) || string.IsNullOrWhiteSpace(vm?.Name);
-        switch (res)
-        {
-            case ButtonResult.Yes when !invalid:
-                await _modManager.CreateModAsync(vm!.Name, vm.Author);
-                break;
-            case ButtonResult.No:
-                App.Notification.ShowWarning(Loc["ModCreationCancelled"], Loc["Cancelled"]);
-                break;
-        }
+
+        await dialog.ShowDialog<ButtonResult>(mainWindow);
     }
 
     [RelayCommand]
@@ -114,13 +110,21 @@ public partial class ModDatabaseViewModel : ViewModelBase, IRecipient<GameRootDi
                 App.Notification!.ShowInfo($"Folder already imported: {folderPath}, skipping.");
                 return;
             }
-            
+
             await _modManager.ImportModAsync(folderPath);
         }
 
         Mods.Clear();
         await using var dbContext = await _editorContextFactory.CreateDbContextAsync();
         Mods.AddRange(dbContext.ModInfos.ToList());
+    }
+
+    [RelayCommand]
+    public async Task RefreshMods(ModInfo? selectedItem = null)
+    {
+        Mods.Clear();
+        Mods.AddRange(await _editorDbContext.ModInfos.ToListAsync());
+        App.Notification.ShowSuccess(Loc["ReloadModsSuccess"], Loc["ReloadModsSuccessMessage"]);
     }
 
     [RelayCommand]
@@ -140,8 +144,42 @@ public partial class ModDatabaseViewModel : ViewModelBase, IRecipient<GameRootDi
         }
     }
 
+    [RelayCommand]
+    public async Task DeleteMods(ModInfo? selectedItem = null)
+    {
+        if (Application.Current is not
+            { ApplicationLifetime: IClassicDesktopStyleApplicationLifetime { MainWindow: { } mainWindow } }) return;
+
+        if (selectedItem is null)
+        {
+            var msgBox = MessageBoxManager.GetMessageBoxStandard(Loc["DeleteAllModsConfirmMessage"],
+                Loc["DeleteAllModsConfirmMessageDetail"], ButtonEnum.YesNo, Icon.Warning);
+            var result = await msgBox.ShowWindowDialogAsync(mainWindow);
+            if (result != ButtonResult.Yes) return;
+            foreach (var modInfo in Mods)
+            {
+                await _modManager.DeleteMod(modInfo);
+            }
+        }
+        else
+        {
+            var msgBox = MessageBoxManager.GetMessageBoxStandard(Loc["DeleteModsConfirmMessage"],
+                Loc["DeleteModsConfirmMessageDetail"], ButtonEnum.YesNo, Icon.Warning);
+            var result = await msgBox.ShowWindowDialogAsync(mainWindow);
+            if (result != ButtonResult.Yes) return;
+            await _modManager.DeleteMod(selectedItem);
+        }
+
+        await RefreshMods();
+    }
+
     public void Receive(GameRootDirChangedMessage message)
     {
         ClearMods().Wait();
+    }
+
+    public void Receive(RefreshModMessage message)
+    {
+        Dispatcher.UIThread.InvokeAsync(() => RefreshMods());
     }
 }

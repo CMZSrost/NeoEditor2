@@ -21,17 +21,6 @@
         <vm:MainWindowViewModel />
     </Design.DataContext>
     <Window.DataTemplates>
-        <!--  Pane  -->
-        <StaticResource ResourceKey="ResourceManagerPaneTemplate" />
-        <StaticResource ResourceKey="SearchPaneTemplate" />
-        <StaticResource ResourceKey="SettingsPaneTemplate" />
-        <StaticResource ResourceKey="ProfilePaneTemplate" />
-        <StaticResource ResourceKey="ModDatabasePaneTemplate" />
-        <StaticResource ResourceKey="AppConfigTemplate" />
-        <!--  DocumentTemplate  -->
-        <StaticResource ResourceKey="PlainTextDocumentTemplate" />
-        <!--  EditProfileTemplate  -->
-        <StaticResource ResourceKey="EditProfileTemplate" />
         <DataTemplate DataType="model:ProfileInfo">
             <StackPanel Margin="4">
                 <Expander HorizontalAlignment="Stretch">

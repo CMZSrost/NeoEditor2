@@ -39,6 +39,7 @@ using NeoEditor.Helper.Extensions;
 using NeoEditor.ViewModels;
 using NeoEditor.Views;
 using NeoEditor.Services;
+using NeoEditor.ViewModels.Dialog;
 using NeoEditor.ViewModels.ExplorerPane;
 using NeoEditor.Views.Dialog;
 using NeoEditor.Views.UserControls;
@@ -97,6 +98,7 @@ public partial class App : Application
                 services.AddSingleton<LocalizationService>();
                 services.AddSingleton<INotificationService, NotificationService>();
                 services.AddSingleton<PhpParser>();
+                services.AddSingleton<IModManager, ModManager>();
                 services.AddAutoMapper((expression => { }));
 
                 // window
@@ -121,7 +123,8 @@ public partial class App : Application
                         return vm;
                     }));
                 // Dialog
-                services.AddTransient<CreateModDialog>();
+                services.AddTransient<CreateModDialog>()
+                    .AddTransient<CreateModDialogViewModel>();
             })
             .Build();
     }

@@ -18,14 +18,25 @@
             <conv:ModLoadTypeIconConverter x:Key="ModLoadTypeIconConverter" />
             <services:LocalizationService x:Key="Loc" />
             <ResourceDictionary.MergedDictionaries>
-                <ResourceInclude Source="/Templates/EditProfileTemplate.axaml" />
-                <ResourceInclude Source="/Templates/DocumentTemplate.axaml" />
-                <ResourceInclude Source="/Templates/PaneTemplates.axaml" />
+                <MergeResourceInclude Source="avares://NeoEditor/Templates/EditProfileTemplate.axaml" />
+                <MergeResourceInclude Source="avares://NeoEditor/Templates/DocumentTemplate.axaml" />
+                <MergeResourceInclude Source="avares://NeoEditor/Templates/PaneTemplates.axaml" />
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </Application.Resources>
 
     <Application.DataTemplates>
+        <!--  Pane  -->
+        <StaticResource ResourceKey="ResourceManagerPaneTemplate" />
+        <StaticResource ResourceKey="SearchPaneTemplate" />
+        <StaticResource ResourceKey="SettingsPaneTemplate" />
+        <StaticResource ResourceKey="ProfilePaneTemplate" />
+        <StaticResource ResourceKey="ModDatabasePaneTemplate" />
+        <StaticResource ResourceKey="AppConfigTemplate" />
+        <!--  DocumentTemplate  -->
+        <StaticResource ResourceKey="PlainTextDocumentTemplate" />
+        <!--  EditProfileTemplate  -->
+        <StaticResource ResourceKey="EditProfileTemplate" />
         <DataTemplate DataType="io:FileInfo">
             <StackPanel Orientation="Horizontal" Spacing="4">
                 <avalonia:SymbolIcon IconVariant="Regular" Symbol="Document" />

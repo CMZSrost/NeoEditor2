@@ -68,6 +68,15 @@
     </ItemGroup>
 
     <ItemGroup>
+        <AvaloniaResource Include="Templates\DocumentTemplate.axaml">
+            <DesignTime>True</DesignTime>
+        </AvaloniaResource>
+        <AvaloniaResource Include="Templates\EditProfileTemplate.axaml">
+            <DesignTime>True</DesignTime>
+        </AvaloniaResource>
+        <AvaloniaResource Include="Templates\PaneTemplates.axaml">
+            <DesignTime>True</DesignTime>
+        </AvaloniaResource>
         <Compile Update="Assets\Resources.Designer.cs">
             <DesignTime>True</DesignTime>
             <AutoGen>True</AutoGen>
