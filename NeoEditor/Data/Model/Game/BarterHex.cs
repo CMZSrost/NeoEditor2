@@ -8,7 +8,7 @@ namespace NeoEditor.Data.Model.Game;
 [Comment("交易区块 - 定义地图上可以进行交易的商店位置")]
 public class BarterHex
 {
-    [Display(Name = "ModId")] [NotMapped] public int ModId { get; set; }
+    [Display(Name = "ModId")] public int ModId { get; set; }
 
     [Key]
     [Column("id")]

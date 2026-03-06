@@ -8,7 +8,7 @@ namespace NeoEditor.Data.Model.Game;
 [Comment("战斗动作 - 定义所有可在战斗中使用的动作")]
 public class BattleMove
 {
-    [Display(Name = "ModId")] [NotMapped] public int ModId { get; set; }
+    [Display(Name = "ModId")] public int ModId { get; set; }
 
     [Key]
     [Column("id")]

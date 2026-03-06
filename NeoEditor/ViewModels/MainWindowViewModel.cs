@@ -40,7 +40,7 @@ using ModIndexViewModel = NeoEditor.ViewModels.ExplorerPane.ModIndexViewModel;
 
 namespace NeoEditor.ViewModels;
 
-public partial class MainWindowViewModel : ViewModelBase
+public partial class MainWindowViewModel : ViewModelBase, IRecipient<EditProfileMessage>
 {
     private readonly IConfigService _config;
     public AppConfig Config => _config.Config;
@@ -184,26 +184,6 @@ public partial class MainWindowViewModel : ViewModelBase
         }
     }
 
-    [RelayCommand]
-    private void CreateProject()
-    {
-        _logger.LogInformation($"Creating project {DateTime.Now}");
-        _notificationService.ShowInfo("创建项目功能尚未实现", "提示");
-        // TODO: implement create project flow.
-    }
-
-    [RelayCommand]
-    private void OpenProject()
-    {
-        // TODO: implement open project flow.
-    }
-
-    [RelayCommand]
-    private void CloseProject()
-    {
-        // TODO: implement close project flow.
-    }
-
     #endregion
 
     #region Language
@@ -233,43 +213,11 @@ public partial class MainWindowViewModel : ViewModelBase
 
     #region Profile
 
-    [RelayCommand]
-    private void ProfileExpanded(ProfileInfo? profileInfo)
+    public void Receive(EditProfileMessage message)
     {
-        if (profileInfo is null)
-        {
-            _logger.LogWarning("ProfileInfo is null in ProfileExpandedCommand");
-            return;
-        }
-
-        if (profileInfo.ModIndexInfo is not null)
-        {
-            _logger.LogInformation($"Profile {profileInfo.Name} already loaded");
-            return;
-        }
-
-        _logger.LogInformation($"Loading profile: {profileInfo.Name}");
-        Messenger.Send(new LoadProfileMessage(profileInfo));
-    }
-
-    [RelayCommand]
-    private void EditProfile(ProfileInfo? profileInfo)
-    {
-        if (profileInfo is null)
-        {
-            _logger.LogWarning("ProfileInfo is null in ProfileExpandedCommand");
-            return;
-        }
-
-        _logger.LogInformation($"Loading profile: {profileInfo.Name}");
-        // var editWindow = new EditProfileWindow(profileInfo);
-        // if (App.Current.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime
-        //     {
-        //         MainWindow: { } mainWindow
-        //     })
-        //     editWindow.ShowDialog(mainWindow);
+        _logger.LogInformation($"Loading profile: {message.ProfileInfo.Name}");
         var factory = _serviceProvider.GetRequiredService<Func<ProfileInfo, EditProfileViewModel>>();
-        var vm = factory(profileInfo);
+        var vm = factory(message.ProfileInfo);
         Documents.Add(vm);
     }
 
@@ -277,8 +225,7 @@ public partial class MainWindowViewModel : ViewModelBase
 
     #region Document
 
-    [ObservableProperty]
-    public partial Factory DockFactory { get; set; }
+    [ObservableProperty] public partial Factory DockFactory { get; set; }
 
     private bool _isDockingEnabled;
 

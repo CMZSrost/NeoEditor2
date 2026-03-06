@@ -8,7 +8,7 @@ namespace NeoEditor.Data.Model.Game;
 [Comment("营地类型 - 定义各种营地的属性和效果")]
 public class CampType
 {
-    [Display(Name = "ModId")] [NotMapped] public int ModId { get; set; }
+    [Display(Name = "ModId")] public int ModId { get; set; }
 
     [Key]
     [Column("id")]

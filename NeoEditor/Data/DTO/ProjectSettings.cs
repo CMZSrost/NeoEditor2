@@ -11,7 +11,7 @@ public class ProjectSettings
     public string ProjectName { get; set; }
 
     /// <summary>SQLite 数据库文件路径（相对于项目目录）</summary>
-    public string DatabasePath { get; set; } = "game.db";
+    public string DatabasePath { get; set; } = "game_runtime.db";
 
     /// <summary>游戏根目录（只读，用于引用基础数据）</summary>
     public string GameRootPath { get; set; }

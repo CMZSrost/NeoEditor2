@@ -114,11 +114,6 @@ public class ModManager : IModManager
                 await context.SaveChangesAsync();
             }
 
-            // 创建默认的 getmods.php
-            var getModsPath = Path.Combine(projectDir, "getmods.php");
-            var getModsContent = _parser.GenerateModsPhp([]);
-            await File.WriteAllTextAsync(getModsPath, getModsContent, Encoding.UTF8);
-
             var getImagesPath = Path.Combine(projectDir, "getimages.php");
             var getImagesContent = _parser.GenerateImagePhp([]);
             await File.WriteAllTextAsync(getImagesPath, getImagesContent, Encoding.UTF8);

@@ -8,7 +8,7 @@ namespace NeoEditor.Data.Model.Game;
 [Comment("状态 - 定义所有角色可以拥有的状态和效果")]
 public class Condition
 {
-    [Display(Name = "ModId")] [NotMapped] public int ModId { get; set; }
+    [Display(Name = "ModId")] public int ModId { get; set; }
 
     [Key]
     [Column("id")]

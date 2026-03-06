@@ -8,7 +8,7 @@ namespace NeoEditor.Data.Model.Game;
 [Comment("合成表 - 定义所有可合成的物品配方")]
 public class Recipe
 {
-    [Display(Name = "ModId")] [NotMapped] public int ModId { get; set; }
+    [Display(Name = "ModId")] public int ModId { get; set; }
 
     [Key]
     [Column("nID")]

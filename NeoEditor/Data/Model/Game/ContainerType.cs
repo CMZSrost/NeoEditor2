@@ -8,7 +8,7 @@ namespace NeoEditor.Data.Model.Game;
 [Comment("内容物属性与分类 - 定义物品的容器属性，结合itemtypes中的nTreasureID与aContentIDs使用")]
 public class ContainerType
 {
-    [Display(Name = "ModId")] [NotMapped] public int ModId { get; set; }
+    [Display(Name = "ModId")] public int ModId { get; set; }
 
     [Key]
     [Column("id")]

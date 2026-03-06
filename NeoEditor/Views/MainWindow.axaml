@@ -8,6 +8,7 @@
     xmlns:mainContent="clr-namespace:NeoEditor.ViewModels.MainContent"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:model="clr-namespace:NeoEditor.Data.Model"
+    xmlns:userControls="clr-namespace:NeoEditor.Views.UserControls"
     xmlns:vm="using:NeoEditor.ViewModels"
     x:Name="MainWindowApp"
     Title="{Binding Loc[AppTitle]}"
@@ -20,52 +21,16 @@
     <Design.DataContext>
         <vm:MainWindowViewModel />
     </Design.DataContext>
-    <Window.DataTemplates>
-        <DataTemplate DataType="model:ProfileInfo">
-            <StackPanel Margin="4">
-                <Expander HorizontalAlignment="Stretch">
-                    <Interaction.Behaviors>
-                        <EventTriggerBehavior EventName="Expanded">
-                            <InvokeCommandAction Command="{Binding DataContext.ProfileExpandedCommand, ElementName=MainWindowApp}" CommandParameter="{Binding}" />
-                        </EventTriggerBehavior>
-                    </Interaction.Behaviors>
-                    <Expander.Header>
-                        <StackPanel>
-                            <TextBlock Text="{Binding Name}" />
-                            <TextBlock
-                                FontSize="11"
-                                Text="{Binding Path}"
-                                TextWrapping="Wrap" />
-                        </StackPanel>
-                    </Expander.Header>
-                    <Expander.ContextMenu>
-                        <ContextMenu>
-                            <MenuItem
-                                Command="{Binding DataContext.EditProfileCommand, ElementName=MainWindowApp}"
-                                CommandParameter="{Binding}"
-                                Header="{Binding Loc[EditProfile]}" />
-                        </ContextMenu>
-                    </Expander.ContextMenu>
-                    <StackPanel>
-                        <TextBlock
-                            FontSize="11"
-                            Text="{Binding Description}"
-                            TextWrapping="Wrap" />
-                        <ContentControl Content="{Binding ModIndexInfo}" />
-                    </StackPanel>
-                </Expander>
-            </StackPanel>
-        </DataTemplate>
-    </Window.DataTemplates>
+    <Window.DataTemplates />
     <DockPanel>
         <!--  菜单栏  -->
         <Menu DockPanel.Dock="Top">
             <!--  项目  -->
             <MenuItem Header="{Binding Loc[MenuProject]}">
                 <MenuItem Command="{Binding SetFolderCommand}" Header="{Binding Loc[SetFolder]}" />
-                <MenuItem Command="{Binding CreateProjectCommand}" Header="{Binding Loc[MenuProjectCreate]}" />
-                <MenuItem Command="{Binding OpenProjectCommand}" Header="{Binding Loc[MenuProjectOpen]}" />
-                <MenuItem Command="{Binding CloseProjectCommand}" Header="{Binding Loc[MenuProjectClose]}" />
+                <!-- <MenuItem Command="{Binding CreateProjectCommand}" Header="{Binding Loc[MenuProjectCreate]}" /> -->
+                <!-- <MenuItem Command="{Binding OpenProjectCommand}" Header="{Binding Loc[MenuProjectOpen]}" /> -->
+                <!-- <MenuItem Command="{Binding CloseProjectCommand}" Header="{Binding Loc[MenuProjectClose]}" /> -->
             </MenuItem>
             <!--  语言  -->
             <MenuItem Header="{Binding Path=CurrentCultureInfo.DisplayName}" ItemsSource="{Binding SupportedCultures}">
@@ -111,7 +76,8 @@
             OpenPaneLength="500">
             <!--  侧边栏内容区域  -->
             <SplitView.Pane>
-                <ContentControl Content="{Binding CurrentPaneContent}" />
+                <!-- <ContentControl Content="{Binding CurrentPaneContent}" /> -->
+                <userControls:Pane Content="{Binding CurrentPaneContent}" />
             </SplitView.Pane>
 
             <!--  主内容区（右侧）  -->

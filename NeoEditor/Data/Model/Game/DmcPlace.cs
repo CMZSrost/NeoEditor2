@@ -8,7 +8,7 @@ namespace NeoEditor.Data.Model.Game;
 [Comment("底特律城区建筑 - 定义底特律城区内的可互动建筑")]
 public class DmcPlace
 {
-    [Display(Name = "ModId")] [NotMapped] public int ModId { get; set; }
+    [Display(Name = "ModId")] public int ModId { get; set; }
 
     [Key]
     [Column("id")]

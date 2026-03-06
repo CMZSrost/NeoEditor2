@@ -19,7 +19,9 @@ using Dock.Model.Avalonia;
 using Dock.Model.Controls;
 using Dock.Model.Core;
 using Dock.Serializer;
+using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -84,6 +86,11 @@ public partial class App : Application
                         .UseSqlite($"Data Source={Constants.EditorDatabasePath}")
                         .LogTo(Console.WriteLine, LogLevel.Warning)
                         .EnableDetailedErrors());
+                services.AddDbContextFactory<GameDbContext>(options =>
+                    options
+                        .UseSqlite($"Data Source={Constants.GameDatabasePath}")
+                        .LogTo(Console.WriteLine, LogLevel.Warning)
+                        .EnableDetailedErrors());
 
                 // DockServices
                 services.AddSingleton<IDockState, DockState>();
@@ -99,6 +106,7 @@ public partial class App : Application
                 services.AddSingleton<INotificationService, NotificationService>();
                 services.AddSingleton<PhpParser>();
                 services.AddSingleton<IModManager, ModManager>();
+                services.AddSingleton<IProfileManager, ProfileManager>();
                 services.AddAutoMapper((expression => { }));
 
                 // window
@@ -153,12 +161,9 @@ public partial class App : Application
         ConfigService = _host.Services.GetRequiredService<IConfigService>();
         Resources["Loc"] = Localizor = _host.Services.GetRequiredService<LocalizationService>();
         Notification = _host.Services.GetRequiredService<INotificationService>();
-        Dispatcher.UIThread.InvokeAsync(ConfigService.LoadAsync);
+        Dispatcher.UIThread.Invoke(ConfigService.LoadAsync);
 
-        if (!File.Exists(Constants.EditorDatabasePath))
-        {
-            InitDatabase(ServiceProvider);
-        }
+        InitDatabase(ServiceProvider);
 
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {

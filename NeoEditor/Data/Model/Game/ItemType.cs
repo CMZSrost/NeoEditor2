@@ -8,7 +8,7 @@ namespace NeoEditor.Data.Model.Game;
 [Comment("物品详情 - 定义所有可交互物品的完整属性")]
 public class ItemType
 {
-    [NotMapped] public int ModId { get; set; }
+    public int ModId { get; set; }
 
     [Key] [Column("id")] [Comment("代码标号")] public int Id { get; set; }
 

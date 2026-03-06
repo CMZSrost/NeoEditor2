@@ -11,8 +11,7 @@ using NeoEditor.ViewModels;
 namespace NeoEditor.Data.Model;
 
 [Table("profile_info")]
-[Index(nameof(Path), Name = "u_index_path", IsUnique = true)]
-public partial class ProfileInfo : LocalizedObservableObject
+public partial class ProfileInfo : ObservableObject
 {
     [Key]
     [Column("ProfileId")]

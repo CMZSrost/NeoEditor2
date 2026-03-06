@@ -8,7 +8,7 @@ namespace NeoEditor.Data.Model.Game;
 [Comment("战利品池 - 定义各种战利品生成的概率和内容")]
 public class TreasureTable
 {
-    [Display(Name = "ModId")] [NotMapped] public int ModId { get; set; }
+    [Display(Name = "ModId")] public int ModId { get; set; }
 
     [Key]
     [Column("id")]

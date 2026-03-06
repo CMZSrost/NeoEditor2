@@ -8,7 +8,7 @@ namespace NeoEditor.Data.Model.Game;
 [Comment("合成项属性/物品属性 - 定义所有物品和合成项可能拥有的属性")]
 public class ItemProp
 {
-    [Display(Name = "ModId")] [NotMapped] public int ModId { get; set; }
+    [Display(Name = "ModId")] public int ModId { get; set; }
 
     [Key]
     [Column("nID")]

@@ -8,7 +8,7 @@ namespace NeoEditor.Data.Model.Game;
 [Comment("内容物/弹药种类 - 定义物品的消耗方式，结合attackmodes中的ChargeProfiles使用")]
 public class ChargeProfile
 {
-    [Display(Name = "ModId")] [NotMapped] public int ModId { get; set; }
+    [Display(Name = "ModId")] public int ModId { get; set; }
 
     [Key]
     [Column("nID")]

@@ -35,6 +35,7 @@ public abstract class WrapDataGridDropHandler<T> : BaseDataGridDropHandler<T> wh
             {
                 // If we are just validating (execute=false), return true to indicate drop is allowed
                 if (!execute) return true;
+                if (items.Count == 1) return false;
 
                 // If executing, perform the move
                 // targetContext is the item we are dropping onto (or null if empty/not on a row)

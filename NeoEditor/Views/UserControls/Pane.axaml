@@ -1,0 +1,268 @@
+﻿<UserControl
+    x:Class="NeoEditor.Views.UserControls.Pane"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:avalonia="clr-namespace:FluentIcons.Avalonia;assembly=FluentIcons.Avalonia"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:explorerPane="clr-namespace:NeoEditor.ViewModels.ExplorerPane"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:model="clr-namespace:NeoEditor.Data.Model"
+    xmlns:viewModels="clr-namespace:NeoEditor.ViewModels"
+    x:Name="Control"
+    d:DesignHeight="800"
+    d:DesignWidth="600"
+    mc:Ignorable="d">
+    <!-- <ScrollViewer> -->
+    <!--     <TabControl> -->
+    <!--         ~1~ <TabItem Header="ResourceManagerViewModel"> @1@ -->
+    <!--         ~1~     <explorerPane:ResourceManagerViewModel /> @1@ -->
+    <!--         ~1~ </TabItem> @1@ -->
+    <!--         ~1~ <TabItem Header="ModDatabaseViewModel"> @1@ -->
+    <!--         ~1~     <explorerPane:ModDatabaseViewModel /> @1@ -->
+    <!--         ~1~ </TabItem> @1@ -->
+    <!--         <TabItem Header="ModIndexViewModel"> -->
+    <!--             <explorerPane:ModIndexViewModel /> -->
+    <!--         </TabItem> -->
+    <!--         <TabItem Header="SearchPaneViewModel"> -->
+    <!--             <explorerPane:SearchPaneViewModel /> -->
+    <!--         </TabItem> -->
+    <!--         <TabItem Header="SettingsPaneViewModel"> -->
+    <!--             <explorerPane:SettingsPaneViewModel /> -->
+    <!--         </TabItem> -->
+    <!--     </TabControl> -->
+    <!-- </ScrollViewer> -->
+    <UserControl.DataTemplates>
+        <!--  资源管理器面板模板  -->
+        <DataTemplate DataType="{x:Type explorerPane:ResourceManagerViewModel}">
+            <ScrollViewer Width="500">
+                <StackPanel Spacing="4">
+                    <TextBlock FontWeight="Bold" Text="{Binding Loc[ResourceManager]}" />
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <Button Command="{Binding ReloadFolderCommand}">
+                            <avalonia:SymbolIcon Symbol="FolderSync" ToolTip.Tip="{Binding Loc[ReloadGameFolder]}" />
+                        </Button>
+                        <Button Command="{Binding OpenGameFolderCommand}" IsCancel="{Binding Config.GameRootDir, Converter={x:Static ObjectConverters.IsNull}}">
+                            <StackPanel
+                                VerticalAlignment="Center"
+                                Orientation="Horizontal"
+                                Spacing="4"
+                                ToolTip.Tip="{Binding Loc[OpenGameFolder]}">
+                                <avalonia:SymbolIcon Symbol="FolderOpen" />
+                                <TextBlock Text="{Binding Loc[Games]}" />
+                            </StackPanel>
+                        </Button>
+                        <Button
+                            Command="{Binding OpenGameFolderCommand}"
+                            CommandParameter="Mods"
+                            IsCancel="{Binding Config.GameRootDir, Converter={x:Static ObjectConverters.IsNull}}">
+                            <StackPanel
+                                VerticalAlignment="Center"
+                                Orientation="Horizontal"
+                                Spacing="4"
+                                ToolTip.Tip="{Binding Loc[OpenModsFolder]}">
+                                <avalonia:SymbolIcon Symbol="FolderOpen" />
+                                <TextBlock Text="{Binding Loc[Mods]}" />
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+                    <TreeView ItemsSource="{Binding Folders}" SelectedItem="{Binding SelectedItem}">
+                        <Interaction.Behaviors>
+                            <EventTriggerBehavior EventName="DoubleTapped">
+                                <InvokeCommandAction Command="{Binding OpenFileCommand}" CommandParameter="{Binding SelectedItem}" />
+                            </EventTriggerBehavior>
+                        </Interaction.Behaviors>
+                        <TreeView.ItemTemplate>
+                            <TreeDataTemplate ItemsSource="{Binding Children}">
+                                <ContentControl Content="{Binding Info}" />
+                            </TreeDataTemplate>
+                        </TreeView.ItemTemplate>
+                    </TreeView>
+                </StackPanel>
+            </ScrollViewer>
+        </DataTemplate>
+
+        <!--  搜索面板模板  -->
+        <DataTemplate DataType="{x:Type explorerPane:SearchPaneViewModel}">
+            <ScrollViewer Width="500">
+                <StackPanel>
+                    <TextBlock
+                        Margin="8"
+                        FontWeight="Bold"
+                        Text="{Binding Loc[Search]}" />
+                    <AutoCompleteBox
+                        Margin="8"
+                        ClearSelectionOnLostFocus="True"
+                        FilterMode="Contains"
+                        ItemsSource="{Binding RecentSearches}"
+                        Watermark="{Binding Loc[KeywordInput]}" />
+                </StackPanel>
+            </ScrollViewer>
+        </DataTemplate>
+
+
+        <!--  Mod数据库  -->
+        <DataTemplate DataType="explorerPane:ModDatabaseViewModel">
+            <ScrollViewer Width="500">
+                <StackPanel>
+                    <TextBlock FontWeight="Bold" Text="{Binding Loc[ModDatabase]}" />
+                    <StackPanel Orientation="Horizontal">
+                        <StackPanel Orientation="Horizontal">
+                            <Button Command="{Binding CreateModCommand}">
+                                <avalonia:SymbolIcon Symbol="AddCircle" ToolTip.Tip="{Binding Loc[CreateMod]}" />
+                            </Button>
+                            <Button Command="{Binding ImportModCommand}">
+                                <avalonia:SymbolIcon Symbol="ArrowCircleDownRight" ToolTip.Tip="{Binding Loc[ImportMod]}" />
+                            </Button>
+                            <Button Command="{Binding RefreshModsCommand}">
+                                <avalonia:SymbolIcon Symbol="ArrowClockwise" ToolTip.Tip="{Binding Loc[RefreshMods]}" />
+                            </Button>
+                            <!-- <Button Command="{Binding ClearModsCommand}" CommandParameter="{Binding SelectedItem}"> -->
+                            <!--     <avalonia:SymbolIcon Symbol="Delete" ToolTip.Tip="{Binding Loc[ClearSelected]}" /> -->
+                            <!-- </Button> -->
+                            <!-- <Button Command="{Binding ClearModsCommand}"> -->
+                            <!--     <avalonia:SymbolIcon Symbol="DeleteLines" ToolTip.Tip="{Binding Loc[ClearAllMods]}" /> -->
+                            <!-- </Button> -->
+                            <SplitButton Command="{Binding ClearModsCommand}" CommandParameter="{Binding SelectedItem}">
+                                <SplitButton.Content>
+                                    <avalonia:SymbolIcon Symbol="Eraser" ToolTip.Tip="{Binding Loc[ClearSelectedMod]}" />
+                                </SplitButton.Content>
+                                <SplitButton.Flyout>
+                                    <MenuFlyout>
+                                        <MenuItem Command="{Binding DeleteModsCommand}" CommandParameter="{Binding SelectedItem}">
+                                            <MenuItem.Header>
+                                                <avalonia:SymbolIcon Symbol="Delete" ToolTip.Tip="{Binding Loc[DeleteSelectedMod]}" />
+                                            </MenuItem.Header>
+                                        </MenuItem>
+                                    </MenuFlyout>
+                                </SplitButton.Flyout>
+                            </SplitButton>
+                            <SplitButton Command="{Binding ClearModsCommand}">
+                                <SplitButton.Content>
+                                    <avalonia:SymbolIcon Symbol="EraserTool" ToolTip.Tip="{Binding Loc[ClearAllMod]}" />
+                                </SplitButton.Content>
+                                <SplitButton.Flyout>
+                                    <MenuFlyout>
+                                        <MenuItem Command="{Binding DeleteModsCommand}">
+                                            <MenuItem.Header>
+                                                <avalonia:SymbolIcon Symbol="DeleteLines" ToolTip.Tip="{Binding Loc[DeleteAllMods]}" />
+                                            </MenuItem.Header>
+                                        </MenuItem>
+                                    </MenuFlyout>
+                                </SplitButton.Flyout>
+                            </SplitButton>
+                        </StackPanel>
+                    </StackPanel>
+                    <TextBox
+                        Margin="8"
+                        ClearSelectionOnLostFocus="True"
+                        Text="{Binding Filter}"
+                        Watermark="{Binding Loc[KeywordInput]}" />
+                    <ListBox
+                        Margin="8"
+                        ItemsSource="{Binding Mods}"
+                        SelectedItem="{Binding SelectedItem}" />
+                </StackPanel>
+            </ScrollViewer>
+        </DataTemplate>
+
+        <!--  php配置文件  -->
+        <DataTemplate DataType="explorerPane:ModIndexViewModel">
+            <ScrollViewer Width="500">
+                <StackPanel Margin="8" Spacing="5">
+                    <TextBlock FontWeight="Bold" Text="{Binding Loc[ProfileDatabase]}" />
+                    <StackPanel Orientation="Horizontal" Spacing="5">
+                        <Button Command="{Binding AddProfileCommand}">
+                            <avalonia:SymbolIcon Symbol="AddCircle" ToolTip.Tip="{Binding Loc[AddProfile]}" />
+                        </Button>
+                        <Button Command="{Binding ImportProfileCommand}" IsCancel="{Binding Config.GameRootDir, Converter={x:Static ObjectConverters.IsNull}}">
+                            <avalonia:SymbolIcon Symbol="ArrowCircleDownRight" ToolTip.Tip="{Binding Loc[ImportProfile]}" />
+                        </Button>
+                        <Button Command="{Binding RefreshProfilesCommand}">
+                            <avalonia:SymbolIcon Symbol="ArrowClockwise" ToolTip.Tip="{Binding Loc[RefreshProfile]}" />
+                        </Button>
+                        <Button Command="{Binding ClearProfileCommand}" CommandParameter="{Binding SelectedProfile}">
+                            <avalonia:SymbolIcon Symbol="Eraser" ToolTip.Tip="{Binding Loc[ClearProfile]}" />
+                        </Button>
+                        <Button Command="{Binding ClearProfileCommand}">
+                            <avalonia:SymbolIcon Symbol="EraserTool" ToolTip.Tip="{Binding Loc[ClearAllProfile]}" />
+
+                        </Button>
+                    </StackPanel>
+
+                    <StackPanel
+                        VerticalAlignment="Center"
+                        Orientation="Horizontal"
+                        Spacing="5">
+                        <avalonia:SymbolIcon Symbol="Games" />
+                        <TextBlock Text="Game" />
+                    </StackPanel>
+                    <ContentControl Content="{Binding Info}" />
+                    <GridSplitter />
+
+                    <StackPanel
+                        VerticalAlignment="Center"
+                        Orientation="Horizontal"
+                        Spacing="5">
+                        <avalonia:SymbolIcon Symbol="Edit" />
+                        <TextBlock Text="{Binding Loc[OtherProfiles]}" />
+                    </StackPanel>
+                    <ListBox
+                        x:Name="Box"
+                        ItemsSource="{Binding Profiles}"
+                        SelectedItem="{Binding SelectedProfile}">
+                        <ListBox.Styles>
+                            <Style Selector="ListBoxItem Expander">
+                                <Setter Property="(Interaction.Behaviors)">
+                                    <BehaviorCollectionTemplate>
+                                        <BehaviorCollection>
+                                            <EventTriggerBehavior EventName="Expanded">
+                                                <InvokeCommandAction Command="{Binding ((explorerPane:ModIndexViewModel)DataContext).ProfileExpandedCommand, ElementName=Box}" CommandParameter="{Binding}" />
+                                            </EventTriggerBehavior>
+                                        </BehaviorCollection>
+                                    </BehaviorCollectionTemplate>
+                                </Setter>
+                            </Style>
+                        </ListBox.Styles>
+                        <!-- <Interaction.Behaviors> -->
+                        <!--     <EventTrigger EventName="Expanded"> -->
+                        <!--         <InvokeCommandAction Command="{Binding ProfileExpandedCommand}" CommandParameter="{Binding SelectedProfile}" /> -->
+                        <!--     </EventTrigger> -->
+                        <!-- </Interaction.Behaviors> -->
+                        <ListBox.ContextMenu>
+                            <ContextMenu>
+                                <MenuItem
+                                    Command="{Binding EditProfileCommand}"
+                                    CommandParameter="{Binding SelectedProfile}"
+                                    Header="{Binding Loc[EditProfile]}" />
+                                <MenuItem
+                                    Command="{Binding ClearProfileCommand}"
+                                    CommandParameter="{Binding SelectedProfile}"
+                                    Header="{Binding Loc[ClearProfile]}" />
+                            </ContextMenu>
+                        </ListBox.ContextMenu>
+                    </ListBox>
+                </StackPanel>
+            </ScrollViewer>
+        </DataTemplate>
+
+        <!--  设置面板模板  -->
+        <DataTemplate DataType="viewModels:AppConfig">
+            <StackPanel>
+                <TextBlock Text="{Binding Loc[GameRootDir]}" />
+                <TextBox IsReadOnly="True" Text="{Binding GameRootDir}" />
+            </StackPanel>
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type explorerPane:SettingsPaneViewModel}">
+            <ScrollViewer Width="500">
+                <StackPanel>
+                    <TextBlock
+                        Margin="8"
+                        FontWeight="Bold"
+                        Text="{Binding Loc[Settings]}" />
+                    <GridSplitter />
+                    <ContentControl Content="{Binding Config}" />
+                </StackPanel>
+            </ScrollViewer>
+        </DataTemplate>
+    </UserControl.DataTemplates>
+</UserControl>

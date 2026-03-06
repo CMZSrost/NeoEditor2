@@ -8,7 +8,7 @@ namespace NeoEditor.Data.Model.Game;
 [Comment("地图 - 定义游戏地图数据，结合hextype使用")]
 public class Map
 {
-    [Display(Name = "ModId")] [NotMapped] public int ModId { get; set; }
+    [Display(Name = "ModId")] public int ModId { get; set; }
 
     [Key]
     [Column("id")]
@@ -26,4 +26,6 @@ public class Map
     [Comment("地图定义数据，大量数字和逗号组成的地形数据")]
     [Display(Name = "Definition")]
     public string Definition { get; set; } = "";
+
+    [ForeignKey("ModId")] public ModInfo ModInfo { get; set; } = null!;
 }

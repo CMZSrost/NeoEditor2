@@ -15,6 +15,7 @@ using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using NeoEditor.Data;
 using NeoEditor.Data.Context;
 using NeoEditor.Data.Messages;
@@ -29,35 +30,181 @@ public partial class ModIndexViewModel : ViewModelBase, IRecipient<InitProfileMe
     IRecipient<GameRootDirChangedMessage>
 {
     private readonly IConfigService _config;
+    private readonly IProfileManager _profileManager;
     public AppConfig Config => _config.Config;
     [ObservableProperty] public partial ProfileInfo? Info { get; set; }
     public ObservableCollection<ProfileInfo> Profiles { get; set; } = [];
+    [ObservableProperty] public partial ProfileInfo? SelectedProfile { get; set; }
 
     private readonly PhpParser _phpParser;
 
     private readonly IDbContextFactory<EditorDbContext> _factory;
 
     private readonly IMapper _mapper;
+    private readonly ILogger<ModIndexViewModel> _logger;
 
     public ModIndexViewModel() : this(
         App.ServiceProvider!.GetRequiredService<PhpParser>(),
         App.ServiceProvider!.GetRequiredService<IDbContextFactory<EditorDbContext>>(),
         App.ServiceProvider!.GetRequiredService<IMapper>(),
-        App.ServiceProvider!.GetRequiredService<IConfigService>()
+        App.ServiceProvider!.GetRequiredService<ILogger<ModIndexViewModel>>(),
+        App.ServiceProvider!.GetRequiredService<IConfigService>(),
+        App.ServiceProvider!.GetRequiredService<IProfileManager>()
     )
     {
     }
 
     public ModIndexViewModel(PhpParser phpParser, IDbContextFactory<EditorDbContext> factory, IMapper mapper,
-        IConfigService configService)
+        ILogger<ModIndexViewModel> logger,
+        IConfigService configService, IProfileManager profileManager)
     {
         _phpParser = phpParser;
         _factory = factory;
         _mapper = mapper;
+        _logger = logger;
         _config = configService;
+        _profileManager = profileManager;
 
         Dispatcher.UIThread.InvokeAsync(() => RefreshProfiles());
     }
+
+    [RelayCommand]
+    public async Task AddProfile()
+    {
+        var newProfile = _profileManager.CreateProfile();
+        Profiles.Add(newProfile);
+    }
+
+    [RelayCommand]
+    public async Task ImportProfile()
+    {
+        if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
+        {
+            var topLevel = TopLevel.GetTopLevel(desktop.MainWindow); // 获取顶层窗口
+            var storageProvider = topLevel?.StorageProvider;
+            if (storageProvider == null) return;
+            var folders = await storageProvider.OpenFilePickerAsync(new FilePickerOpenOptions()
+            {
+                Title = App.Localizor!["SelectPhpProfile"], // 选择Php Mods文件
+                AllowMultiple = true, // 允许多选
+                FileTypeFilter = new[]
+                {
+                    new FilePickerFileType(App.Localizor!["PhpFiles"])
+                    {
+                        Patterns = new[] { "*.php" },
+                    }
+                }
+            });
+
+            await using var db = await _factory.CreateDbContextAsync();
+            foreach (var folder in folders)
+            {
+                if (folder.TryGetLocalPath() is { } folderPath && !folderPath.Contains("getimages.php"))
+                {
+                    try
+                    {
+                        var profile = new ProfileInfo()
+                        {
+                            Name = Path.GetFileNameWithoutExtension(folderPath.Replace("\\", "/")),
+                            Description = "",
+                            Path = folderPath.Replace("\\", "/"),
+                            Content = await File.ReadAllTextAsync(folderPath),
+                            CreateTime = DateTime.Now,
+                            UpdateTime = DateTime.Now
+                        };
+                        db.ProfileInfos.Add(profile);
+                        await db.SaveChangesAsync();
+                        Profiles.Add(profile);
+                    }
+                    catch (Exception e)
+                    {
+                        App.Notification.ShowWarning($"Add {folderPath} failed: {e.Message}");
+                    }
+                }
+            }
+        }
+    }
+
+    [RelayCommand]
+    public async Task RefreshProfiles(string profilePath = "")
+    {
+        await LoadProfiles();
+        await using var db = await _factory.CreateDbContextAsync();
+        Profiles.Clear();
+        foreach (var profile in db.ProfileInfos.ToList())
+        {
+            Profiles.Add(profile);
+        }
+    }
+
+    // [RelayCommand]
+    public async Task LoadProfiles(ProfileInfo? profileInfo = null)
+    {
+        if (string.IsNullOrWhiteSpace(Config.GameRootDir))
+        {
+            App.Notification!.ShowWarning("Game root directory is not set. Please set it before loading mods.",
+                "Load Warning");
+            return;
+        }
+
+        Messenger.Send(profileInfo is null
+            ? new InitProfileMessage(Path.Combine(Config.GameRootDir, "getmods.php"))
+            : new InitProfileMessage(profileInfo.Path));
+    }
+
+    #region Profile
+
+    [RelayCommand]
+    private void ProfileExpanded(ProfileInfo? profileInfo)
+    {
+        Console.WriteLine($"ProfileExpandedCommand executed for profile: {profileInfo?.Name}");
+        if (profileInfo is null)
+        {
+            _logger.LogWarning("ProfileInfo is null in ProfileExpandedCommand");
+            return;
+        }
+
+        if (profileInfo.ModIndexInfo is not null)
+        {
+            _logger.LogInformation($"Profile {profileInfo.Name} already loaded");
+            return;
+        }
+
+        _logger.LogInformation($"Loading profile: {profileInfo.Name}");
+        Messenger.Send(new LoadProfileMessage(profileInfo));
+    }
+
+    [RelayCommand]
+    private void EditProfile(ProfileInfo? profileInfo)
+    {
+        if (profileInfo is null)
+        {
+            _logger.LogWarning("ProfileInfo is null in ProfileExpandedCommand");
+            return;
+        }
+
+        Messenger.Send(new EditProfileMessage(profileInfo));
+    }
+
+    [RelayCommand]
+    private async Task ClearProfile(ProfileInfo? profileInfo)
+    {
+        await using var db = await _factory.CreateDbContextAsync();
+        if (profileInfo is null)
+        {
+            db.ProfileInfos.Local.Clear();
+            await db.SaveChangesAsync();
+            Profiles.Clear();
+        }
+        else
+        {
+            db.ProfileInfos.Remove(profileInfo);
+            await db.SaveChangesAsync();
+            Profiles.Remove(Profiles.First(m => m.ProfileId == profileInfo.ProfileId));
+        }
+    }
+
+    #endregion
 
     public void Receive(InitProfileMessage message)
     {
@@ -139,101 +286,6 @@ public partial class ModIndexViewModel : ViewModelBase, IRecipient<InitProfileMe
         }
     }
 
-
-    [RelayCommand]
-    public async Task AddProfile()
-    {
-        var newProfile = new ProfileInfo()
-        {
-            Name = $"New Profile {DateTime.Now:yyyyMMddHHmmss}",
-            Description = "",
-            Path = "",
-            Content = "",
-            CreateTime = DateTime.Now,
-            UpdateTime = DateTime.Now
-        };
-        await using var db = await _factory.CreateDbContextAsync();
-        db.ProfileInfos.Add(newProfile);
-        await db.SaveChangesAsync();
-        Profiles.Add(newProfile);
-    }
-
-    [RelayCommand]
-    public async Task ImportProfile()
-    {
-        if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
-        {
-            var topLevel = TopLevel.GetTopLevel(desktop.MainWindow); // 获取顶层窗口
-            var storageProvider = topLevel?.StorageProvider;
-            if (storageProvider == null) return;
-            var folders = await storageProvider.OpenFilePickerAsync(new FilePickerOpenOptions()
-            {
-                Title = App.Localizor!["SelectPhpProfile"], // 选择Php Mods文件
-                AllowMultiple = true, // 允许多选
-                FileTypeFilter = new[]
-                {
-                    new FilePickerFileType(App.Localizor!["PhpFiles"])
-                    {
-                        Patterns = new[] { "*.php" },
-                    }
-                }
-            });
-
-            await using var db = await _factory.CreateDbContextAsync();
-            foreach (var folder in folders)
-            {
-                if (folder.TryGetLocalPath() is { } folderPath && !folderPath.Contains("getimages.php"))
-                {
-                    try
-                    {
-                        var profile = new ProfileInfo()
-                        {
-                            Name = Path.GetFileNameWithoutExtension(folderPath.Replace("\\", "/")),
-                            Description = "",
-                            Path = folderPath.Replace("\\", "/"),
-                            Content = await File.ReadAllTextAsync(folderPath),
-                            CreateTime = DateTime.Now,
-                            UpdateTime = DateTime.Now
-                        };
-                        db.ProfileInfos.Add(profile);
-                        await db.SaveChangesAsync();
-                        Profiles.Add(profile);
-                    }
-                    catch (Exception e)
-                    {
-                        App.Notification.ShowWarning($"Add {folderPath} failed: {e.Message}");
-                    }
-                }
-            }
-        }
-    }
-
-    [RelayCommand]
-    public async Task RefreshProfiles(string profilePath = "")
-    {
-        await LoadProfiles();
-        await using var db = await _factory.CreateDbContextAsync();
-        Profiles.Clear();
-        foreach (var profile in db.ProfileInfos.ToList())
-        {
-            Profiles.Add(profile);
-        }
-    }
-
-    // [RelayCommand]
-    public async Task LoadProfiles(ProfileInfo? profileInfo = null)
-    {
-        if (string.IsNullOrWhiteSpace(Config.GameRootDir))
-        {
-            App.Notification!.ShowWarning("Game root directory is not set. Please set it before loading mods.",
-                "Load Warning");
-            return;
-        }
-
-        Messenger.Send(profileInfo is null
-            ? new InitProfileMessage(Path.Combine(Config.GameRootDir, "getmods.php"))
-            : new InitProfileMessage(profileInfo.Path));
-    }
 
     public void Receive(GameRootDirChangedMessage message)
     {

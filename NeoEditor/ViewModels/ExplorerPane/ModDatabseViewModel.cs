@@ -39,7 +39,7 @@ public partial class ModDatabaseViewModel : ViewModelBase, IRecipient<GameRootDi
     public AppConfig Config => _config.Config;
 
     private ProjectDbContextFactory _gameContextFactory;
-    private IDbContextFactory<EditorDbContext> _editorContextFactory;
+    private readonly IDbContextFactory<EditorDbContext> _editorContextFactory;
     private readonly EditorDbContext _editorDbContext;
     private readonly IModManager _modManager;
 
@@ -128,18 +128,19 @@ public partial class ModDatabaseViewModel : ViewModelBase, IRecipient<GameRootDi
     }
 
     [RelayCommand]
-    public async Task ClearMods(ModInfo? selectedItem = null)
+    private async Task ClearMods(ModInfo? selectedItem = null)
     {
+        await using var db = await _editorContextFactory.CreateDbContextAsync();
         if (selectedItem is null)
         {
-            _editorDbContext.ModInfos.Local.Clear();
-            await _editorDbContext.SaveChangesAsync();
+            db.ModInfos.Local.Clear();
+            await db.SaveChangesAsync();
             Mods.Clear();
         }
         else
         {
-            _editorDbContext.ModInfos.Remove(selectedItem);
-            await _editorDbContext.SaveChangesAsync();
+            db.ModInfos.Remove(selectedItem);
+            await db.SaveChangesAsync();
             Mods.Remove(Mods.First(m => m.ModId == selectedItem.ModId));
         }
     }

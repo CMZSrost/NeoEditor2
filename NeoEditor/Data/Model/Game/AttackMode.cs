@@ -8,7 +8,7 @@ namespace NeoEditor.Data.Model.Game;
 [Comment("攻击类别 - 定义所有武器和攻击方式的属性")]
 public class AttackMode
 {
-    [Display(Name = "ModId")] [NotMapped] public int ModId { get; set; } // 编排时使用，表示该数据来源于哪个Mod
+    [Display(Name = "ModId")] public int ModId { get; set; } // 编排时使用，表示该数据来源于哪个Mod
 
     [Key]
     [Column("id")]

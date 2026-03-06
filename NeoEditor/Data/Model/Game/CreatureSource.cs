@@ -8,7 +8,7 @@ namespace NeoEditor.Data.Model.Game;
 [Comment("生物刷新点 - 定义生物在地图上的刷新位置和数量")]
 public class CreatureSource
 {
-    [Display(Name = "ModId")] [NotMapped] public int ModId { get; set; }
+    [Display(Name = "ModId")] public int ModId { get; set; }
 
     [Key]
     [Column("id")]

@@ -20,19 +20,33 @@
             <ResourceDictionary.MergedDictionaries>
                 <MergeResourceInclude Source="avares://NeoEditor/Templates/EditProfileTemplate.axaml" />
                 <MergeResourceInclude Source="avares://NeoEditor/Templates/DocumentTemplate.axaml" />
-                <MergeResourceInclude Source="avares://NeoEditor/Templates/PaneTemplates.axaml" />
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </Application.Resources>
 
     <Application.DataTemplates>
-        <!--  Pane  -->
-        <StaticResource ResourceKey="ResourceManagerPaneTemplate" />
-        <StaticResource ResourceKey="SearchPaneTemplate" />
-        <StaticResource ResourceKey="SettingsPaneTemplate" />
-        <StaticResource ResourceKey="ProfilePaneTemplate" />
-        <StaticResource ResourceKey="ModDatabasePaneTemplate" />
-        <StaticResource ResourceKey="AppConfigTemplate" />
+        <DataTemplate DataType="model:ProfileInfo">
+            <StackPanel Margin="4">
+                <Expander HorizontalAlignment="Stretch">
+                    <Expander.Header>
+                        <StackPanel>
+                            <TextBlock Text="{Binding Name}" />
+                            <TextBlock
+                                FontSize="11"
+                                Text="{Binding Path}"
+                                TextWrapping="Wrap" />
+                        </StackPanel>
+                    </Expander.Header>
+                    <StackPanel>
+                        <TextBlock
+                            FontSize="11"
+                            Text="{Binding Description}"
+                            TextWrapping="Wrap" />
+                        <ContentControl Content="{Binding ModIndexInfo}" />
+                    </StackPanel>
+                </Expander>
+            </StackPanel>
+        </DataTemplate>
         <!--  DocumentTemplate  -->
         <StaticResource ResourceKey="PlainTextDocumentTemplate" />
         <!--  EditProfileTemplate  -->
@@ -68,10 +82,10 @@
         </DataTemplate>
         <DataTemplate DataType="model:ModIndexInfo">
             <StackPanel>
-                <TextBlock
-                    FontWeight="Bold"
-                    Text="{Binding FilePath}"
-                    TextWrapping="Wrap" />
+                <!--  <TextBlock  -->
+                <!--  FontWeight="Bold"  -->
+                <!--  Text="{Binding FilePath}"  -->
+                <!--  TextWrapping="Wrap" />  -->
                 <ListBox ItemsSource="{Binding Mods}" />
             </StackPanel>
         </DataTemplate>

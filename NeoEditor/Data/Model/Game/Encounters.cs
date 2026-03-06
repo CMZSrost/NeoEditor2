@@ -8,7 +8,7 @@ namespace NeoEditor.Data.Model.Game;
 [Comment("剧情代码 - 定义所有可触发的游戏剧情")]
 public class Encounter
 {
-    [Display(Name = "ModId")] [NotMapped] public int ModId { get; set; }
+    [Display(Name = "ModId")] public int ModId { get; set; }
 
     [Key]
     [Column("id")]

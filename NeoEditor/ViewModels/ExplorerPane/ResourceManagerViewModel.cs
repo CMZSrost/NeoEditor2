@@ -97,9 +97,9 @@ public partial class ResourceManagerViewModel : ViewModelBase, IRecipient<GameRo
     {
         // 遍历目录
         Folders.Clear();
-        if (string.IsNullOrWhiteSpace(Config.GameRootDir) || !Directory.Exists(Config.GameRootDir))
+        if (string.IsNullOrWhiteSpace(Config?.GameRootDir) || !Directory.Exists(Config?.GameRootDir))
         {
-            _logger.LogWarning($"Game root directory is not set or does not exist: {Config.GameRootDir}");
+            _logger.LogWarning($"Game root directory is not set or does not exist: {Config?.GameRootDir}");
             return;
         }
 

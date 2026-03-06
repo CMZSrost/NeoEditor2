@@ -8,7 +8,7 @@ namespace NeoEditor.Data.Model.Game;
 [Comment("头版头条（报纸） - 定义游戏中可读取的新闻内容")]
 public class Headline
 {
-    [Display(Name = "ModId")] [NotMapped] public int ModId { get; set; }
+    [Display(Name = "ModId")] public int ModId { get; set; }
 
     [Key]
     [Column("id")]

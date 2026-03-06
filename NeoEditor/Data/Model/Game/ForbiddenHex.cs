@@ -8,7 +8,7 @@ namespace NeoEditor.Data.Model.Game;
 [Comment("保护区场景位置 - 定义不可进入或受保护的区域")]
 public class ForbiddenHex
 {
-    [Display(Name = "ModId")] [NotMapped] public int ModId { get; set; }
+    [Display(Name = "ModId")] public int ModId { get; set; }
 
     [Key]
     [Column("id")]

@@ -7,7 +7,6 @@ using Microsoft.EntityFrameworkCore;
 namespace NeoEditor.Data.Model;
 
 [Table("mod_info")]
-[Index(nameof(Path), Name = "u_index_path", IsUnique = true)]
 public class ModInfo
 {
     [Key]

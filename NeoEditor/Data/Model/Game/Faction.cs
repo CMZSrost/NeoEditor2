@@ -8,7 +8,7 @@ namespace NeoEditor.Data.Model.Game;
 [Comment("阵营/派系 - 定义游戏中的派系及其相互关系，与creatures数据相关")]
 public class Faction
 {
-    [Display(Name = "ModId")] [NotMapped] public int ModId { get; set; }
+    [Display(Name = "ModId")] public int ModId { get; set; }
 
     [Key]
     [Column("id")]

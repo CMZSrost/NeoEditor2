@@ -8,7 +8,7 @@ namespace NeoEditor.Data.Model.Game;
 [Comment("合成项 - 定义合成所需的各种材料类型")]
 public class Ingredient
 {
-    [Display(Name = "ModId")] [NotMapped] public int ModId { get; set; }
+    [Display(Name = "ModId")] public int ModId { get; set; }
 
     [Key]
     [Column("nID")]

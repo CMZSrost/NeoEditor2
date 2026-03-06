@@ -8,7 +8,7 @@ namespace NeoEditor.Data.Model.Game;
 [Comment("游戏变量 - 定义游戏的全局参数和初始值")]
 public class GameVar
 {
-    [Display(Name = "ModId")] [NotMapped] public int ModId { get; set; }
+    [Display(Name = "ModId")] public int ModId { get; set; }
 
     [Key]
     [Column("strName", TypeName = "varchar(255)")]

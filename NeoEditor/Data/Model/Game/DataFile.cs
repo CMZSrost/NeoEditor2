@@ -8,7 +8,7 @@ namespace NeoEditor.Data.Model.Game;
 [Comment("电子产品里的数据文本 - 定义各种电子设备中存储的数据文件")]
 public class DataFile
 {
-    [Display(Name = "ModId")] [NotMapped] public int ModId { get; set; }
+    [Display(Name = "ModId")] public int ModId { get; set; }
 
     [Key]
     [Column("id")]

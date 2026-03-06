@@ -27,6 +27,7 @@
             <PrivateAssets Condition="'$(Configuration)' != 'Debug'">All</PrivateAssets>
         </PackageReference>
         <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0"/>
+        <PackageReference Include="DiffPlex.Avalonia" Version="0.9.0.1"/>
         <PackageReference Include="Dock.Avalonia" Version="11.3.11.16"/>
         <PackageReference Include="Dock.Avalonia.Diagnostics" Version="11.3.11.16"/>
         <PackageReference Include="Dock.Avalonia.Themes.Fluent" Version="11.3.11.16"/>
@@ -54,6 +55,7 @@
         <PackageReference Include="TreeDataGrid.Avalonia" Version="11.3.0"/>
         <PackageReference Include="Xaml.Behaviors.Avalonia" Version="11.3.9.5"/>
         <PackageReference Include="Xaml.Behaviors.Interactions.DragAndDrop.DataGrid" Version="11.3.9.5"/>
+        <PackageReference Include="XMLDiffPatch" Version="1.0.8.28"/>
     </ItemGroup>
 
     <ItemGroup>
@@ -68,15 +70,6 @@
     </ItemGroup>
 
     <ItemGroup>
-        <AvaloniaResource Include="Templates\DocumentTemplate.axaml">
-            <DesignTime>True</DesignTime>
-        </AvaloniaResource>
-        <AvaloniaResource Include="Templates\EditProfileTemplate.axaml">
-            <DesignTime>True</DesignTime>
-        </AvaloniaResource>
-        <AvaloniaResource Include="Templates\PaneTemplates.axaml">
-            <DesignTime>True</DesignTime>
-        </AvaloniaResource>
         <Compile Update="Assets\Resources.Designer.cs">
             <DesignTime>True</DesignTime>
             <AutoGen>True</AutoGen>

@@ -8,7 +8,7 @@ namespace NeoEditor.Data.Model.Game;
 [Comment("生物与生物派系 - 定义游戏中的所有生物")]
 public class Creature
 {
-    [Display(Name = "ModId")] [NotMapped] public int ModId { get; set; }
+    [Display(Name = "ModId")] public int ModId { get; set; }
 
     [Key]
     [Column("id")]

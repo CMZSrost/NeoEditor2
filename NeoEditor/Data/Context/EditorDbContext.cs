@@ -1,10 +1,5 @@
-﻿using System;
-using System.ComponentModel.DataAnnotations.Schema;
-using System.Linq;
-using System.Reflection;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using NeoEditor.Data.Model;
-using NeoEditor.Data.Model.Game;
 
 namespace NeoEditor.Data.Context;
 

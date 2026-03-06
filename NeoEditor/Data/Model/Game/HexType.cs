@@ -8,7 +8,7 @@ namespace NeoEditor.Data.Model.Game;
 [Comment("地块类型 - 定义地图上每种格子的属性和效果")]
 public class HexType
 {
-    [Display(Name = "ModId")] [NotMapped] public int ModId { get; set; }
+    [Display(Name = "ModId")] public int ModId { get; set; }
 
     [Key]
     [Column("id")]
