@@ -6,18 +6,17 @@ namespace NeoEditor.Data.Model.Game;
 
 [Table("treasuretable")]
 [Comment("战利品池 - 定义各种战利品生成的概率和内容")]
-public class TreasureTable
+[Index(nameof(EntityId), nameof(Id), IsUnique =  true, Name = "UID_Key")]
+public class TreasureTable : IEntity
 {
-    [Display(Name = "ModId")] public int ModId { get; set; }
 
-    [Key]
     [Column("id")]
     [Comment("代码标号")]
     [Display(Name = "Id")]
     public int Id { get; set; }
 
-    [Column("strName", TypeName = "varchar(255)")]
-    [StringLength(255)]
+    [Column("strName", TypeName = "varchar(1000)")]
+    [StringLength(1000)]
     [Comment("战利品名称，如'瓮内容'")]
     [Display(Name = "Name")]
     public string Name { get; set; } = "";

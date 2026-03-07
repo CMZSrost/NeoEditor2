@@ -6,24 +6,22 @@ namespace NeoEditor.Data.Model.Game;
 
 [Table("attackmodes")]
 [Comment("攻击类别 - 定义所有武器和攻击方式的属性")]
-public class AttackMode
+[Index(nameof(EntityId), nameof(Id), IsUnique =  true, Name = "UID_Key")]
+public class AttackMode : IEntity
 {
-    [Display(Name = "ModId")] public int ModId { get; set; } // 编排时使用，表示该数据来源于哪个Mod
-
-    [Key]
     [Column("id")]
     [Comment("代码标号，唯一标识每种攻击方式")]
     [Display(Name = "Id")]
     public int Id { get; set; }
 
-    [Column("strName", TypeName = "varchar(255)")]
-    [StringLength(255)]
+    [Column("strName", TypeName = "varchar(1000)")]
+    [StringLength(1000)]
     [Comment("当前物品名称，如'拳头'、'.308步枪'等")]
     [Display(Name = "Name")]
     public string Name { get; set; } = "";
 
-    [Column("strNotes", TypeName = "varchar(255)")]
-    [StringLength(255)]
+    [Column("strNotes", TypeName = "varchar(1000)")]
+    [StringLength(1000)]
     [Comment("物品注释，一般留空，对游戏无影响")]
     [Display(Name = "Notes")]
     public string Notes { get; set; } = "";
@@ -43,8 +41,8 @@ public class AttackMode
     [Display(Name = "DamageBlunt")]
     public double DamageBlunt { get; set; } = 0;
 
-    [Column("strChargeProfiles", TypeName = "varchar(24)")]
-    [StringLength(24)]
+    [Column("strChargeProfiles", TypeName = "varchar(1000)")]
+    [StringLength(1000)]
     [Comment("内容物/弹药的代码标号，结合chargeprofiles数据类别使用，可能为逗号分隔如'6,31'")]
     [Display(Name = "ChargeProfiles")]
     public string ChargeProfiles { get; set; } = "";
@@ -59,8 +57,8 @@ public class AttackMode
     [Display(Name = "Type")]
     public AttackType Type { get; set; } = AttackType.Melee;
 
-    [Column("strSnd", TypeName = "varchar(30)")]
-    [StringLength(30)]
+    [Column("strSnd", TypeName = "varchar(1000)")]
+    [StringLength(1000)]
     [Comment("武器分类声音：近战/Punch、爪子/Claws、棍棒类/Club、利刃/Blade、" +
              "长枪/Rifle、短枪/Pistol、激光/Laser、弓箭类/Bow、投掷/Throw、" +
              "勒死/Choke、抓住/Grasp、撕咬/Bite")]
@@ -72,14 +70,14 @@ public class AttackMode
     [Display(Name = "Transfer")]
     public bool Transfer { get; set; } = false;
 
-    [Column("vAttackerConditions", TypeName = "varchar(255)")]
-    [StringLength(255)]
+    [Column("vAttackerConditions", TypeName = "varchar(1000)")]
+    [StringLength(1000)]
     [Comment("攻击时的状态，结合conditions数据类别使用，如'211x1.0,NSE:42x1'")]
     [Display(Name = "AttackerConditions")]
     public string AttackerConditions { get; set; } = "";
 
-    [Column("strIMG", TypeName = "varchar(50)")]
-    [StringLength(50)]
+    [Column("strIMG", TypeName = "varchar(1000)")]
+    [StringLength(1000)]
     [Comment("右下角武器图标文件名")]
     [Display(Name = "Image")]
     public string Image { get; set; } = "";

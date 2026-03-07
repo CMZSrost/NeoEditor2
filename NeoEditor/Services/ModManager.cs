@@ -1,25 +1,32 @@
-﻿// Services/ModManager.cs
-
-using System;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
-using System.IO.Pipelines;
+using System.Linq;
 using System.Text;
-using System.Text.Json;
 using System.Threading.Tasks;
-using Dock.Model.Core;
+using System.Xml;
+using System.Xml.Linq;
+using System.Xml.XPath;
+using System.Reflection;
+using EFCore.BulkExtensions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using NeoEditor.Data;
 using NeoEditor.Data.Context;
-using NeoEditor.Data.DTO;
 using NeoEditor.Data.Model;
+using NeoEditor.Data.Model.Game;
 using NeoEditor.Helper;
 using NeoEditor.ViewModels;
+using Newtonsoft.Json;
+using Formatting = Newtonsoft.Json.Formatting;
 
 namespace NeoEditor.Services;
 
 public interface IModManager
 {
     Task ImportModAsync(string modFullPath);
+    Task LoadModAsync(ModInfo modInfo);
     Task CreateModAsync(string name, string author);
     Task DeleteMod(string name, string author);
     Task DeleteMod(ModInfo modInfo);
@@ -28,8 +35,10 @@ public interface IModManager
 
 public class ModManager : IModManager
 {
-    private readonly IDbContextFactory<EditorDbContext> _dbContextFactory;
-    private readonly PhpParser _parser;
+    private readonly IDbContextFactory<EditorDbContext> _editorDbFactory;
+    private readonly IDbContextFactory<GameDbContext> _gameDbFactory;
+    private readonly PhpParser _phpParser;
+    private readonly XmlParser _xmlParser;
     private readonly IConfigService _configService;
 
     private AppConfig Config => _configService.Config;
@@ -44,12 +53,23 @@ public class ModManager : IModManager
         </pma_xml_export>
         """;
 
-    public ModManager(PhpParser parser, IDbContextFactory<EditorDbContext> dbContextFactory,
-        IConfigService configService)
+    public ModManager() : this(App.ServiceProvider.GetRequiredService<PhpParser>(),
+        App.ServiceProvider.GetRequiredService<IDbContextFactory<EditorDbContext>>(),
+        App.ServiceProvider.GetRequiredService<IDbContextFactory<GameDbContext>>(),
+        App.ServiceProvider.GetRequiredService<IConfigService>(),
+        App.ServiceProvider.GetRequiredService<XmlParser>())
     {
-        _parser = parser;
-        _dbContextFactory = dbContextFactory;
+    }
+
+    public ModManager(PhpParser phpParser, IDbContextFactory<EditorDbContext> editorDbFactory,
+        IDbContextFactory<GameDbContext> gameDbFactory,
+        IConfigService configService, XmlParser xmlParser)
+    {
+        _phpParser = phpParser;
+        _editorDbFactory = editorDbFactory;
+        _gameDbFactory = gameDbFactory;
         _configService = configService;
+        _xmlParser = xmlParser;
     }
 
     public void CreateDirectory(string dirPath)
@@ -73,23 +93,72 @@ public class ModManager : IModManager
 
     public async Task ImportModAsync(string modFullPath)
     {
-        modFullPath = modFullPath.Replace(Config.GameRootDir ?? "", "").Replace("\\", "/").TrimStart('/');
         try
         {
-            await using var dbContext = await _dbContextFactory.CreateDbContextAsync();
-            await dbContext.ModInfos.AddAsync(new ModInfo
+            var modInfo = new ModInfo
             {
-                Name = Path.GetFileName(modFullPath),
-                Path = modFullPath,
+                Name = Path.GetFileNameWithoutExtension(modFullPath),
+                Path = modFullPath.Replace(Config.GameRootDir ?? "", "").Replace("\\", "/").TrimStart('/'),
                 IsBase = false,
                 LastImport = DateTime.Now
-            });
+            };
+            await LoadModAsync(modInfo);
+
+            await using var dbContext = await _editorDbFactory.CreateDbContextAsync();
+            await dbContext.ModInfos.AddAsync(modInfo);
             await dbContext.SaveChangesAsync();
             App.Notification!.ShowSuccess($"mod {modFullPath} imported");
         }
         catch (Exception e)
         {
             App.Notification!.ShowWarning($"mod {modFullPath} not imported: {e.Message}", "Import Warning");
+        }
+    }
+
+    public async Task LoadModAsync(ModInfo modInfo)
+    {
+        var modFullPath = Path.Combine(Config.GameRootDir, modInfo.Path);
+        if (!Directory.Exists(modFullPath))
+        {
+            App.Notification.ShowWarning($"mod path {modFullPath} not found");
+            return;
+        }
+
+        try
+        {
+            // 遍历mod目录下的所有xml文件并导入到数据库中
+            var xmlFilePaths = Directory.GetFiles(modFullPath, "*.xml", SearchOption.AllDirectories);
+
+            await using var db = await _gameDbFactory.CreateDbContextAsync();
+            foreach (var xmlPath in xmlFilePaths)
+            {
+                var doc = XDocument.Load(xmlPath);
+                // var entities = _xmlParser.ImportEntities<AttackMode>(doc, modId, xmlPath);
+                foreach (var gameType in Constants.GameTypes)
+                {
+                    var method = typeof(XmlParser).GetMethod(nameof(XmlParser.ImportEntities))
+                        ?.MakeGenericMethod(gameType.Value);
+                    if (method == null) continue;
+                    var entities = method.Invoke(_xmlParser, new object[] { doc, modInfo.ModId, xmlPath });
+                    if (entities == null) continue;
+                    try
+                    {
+                        await db.DbBulkInsertOrUpdate(gameType.Value, entities);
+                        Console.WriteLine(
+                            $"load {entities.GetType()} {(entities as IList)?.Count} {gameType.Key} from {xmlPath} with modId {modInfo.ModId}");
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine($"load {gameType.Key} from {xmlPath} with modId {modInfo.ModId} failed: {e.Message} as {JsonConvert.SerializeObject(entities, Formatting.Indented)}");
+                        throw;
+                    }
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+            App.Notification!.ShowWarning($"load {modFullPath} failed: {e.Message}");
         }
     }
 
@@ -101,7 +170,7 @@ public class ModManager : IModManager
         try
         {
             // 创建数据
-            await using (var context = await _dbContextFactory.CreateDbContextAsync())
+            await using (var context = await _editorDbFactory.CreateDbContextAsync())
             {
                 context.ModInfos.Add(new ModInfo
                 {
@@ -115,7 +184,7 @@ public class ModManager : IModManager
             }
 
             var getImagesPath = Path.Combine(projectDir, "getimages.php");
-            var getImagesContent = _parser.GenerateImagePhp([]);
+            var getImagesContent = _phpParser.GenerateImagePhp([]);
             await File.WriteAllTextAsync(getImagesPath, getImagesContent, Encoding.UTF8);
 
             var modDataPath = Path.Combine(projectDir, "neogame.xml");
@@ -135,7 +204,7 @@ public class ModManager : IModManager
     {
         var projectPath = Path.Combine(Config.GameRootDir, modInfo.Path);
         DeleteDirectory(projectPath);
-        await using var context = await _dbContextFactory.CreateDbContextAsync();
+        await using var context = await _editorDbFactory.CreateDbContextAsync();
         if (await context.ModInfos.FindAsync(modInfo.ModId) is
             not { } mod)
             return;
@@ -147,7 +216,7 @@ public class ModManager : IModManager
     {
         DeleteDirectory(projectPath);
         var relativePath = projectPath.Replace(Config.GameRootDir ?? "", "").Replace("\\", "/").TrimStart('/');
-        await using var context = await _dbContextFactory.CreateDbContextAsync();
+        await using var context = await _editorDbFactory.CreateDbContextAsync();
         if (await context.ModInfos.FirstOrDefaultAsync(m => m.Path == relativePath) is
             not { } mod)
             return;

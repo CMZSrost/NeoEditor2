@@ -6,11 +6,10 @@ namespace NeoEditor.Data.Model.Game;
 
 [Table("barterhexes")]
 [Comment("交易区块 - 定义地图上可以进行交易的商店位置")]
-public class BarterHex
+[Index(nameof(EntityId), nameof(Id), IsUnique =  true, Name = "UID_Key")]
+public class BarterHex : IEntity
 {
-    [Display(Name = "ModId")] public int ModId { get; set; }
 
-    [Key]
     [Column("id")]
     [Comment("代码标号")]
     [Display(Name = "Id")]

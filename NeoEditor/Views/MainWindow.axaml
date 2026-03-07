@@ -3,11 +3,10 @@
     xmlns="https://github.com/avaloniaui"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:avalonia="clr-namespace:FluentIcons.Avalonia;assembly=FluentIcons.Avalonia"
+    xmlns:avaloniaEdit="https://github.com/avaloniaui/avaloniaedit"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-    xmlns:explorerPane="clr-namespace:NeoEditor.ViewModels.ExplorerPane"
     xmlns:mainContent="clr-namespace:NeoEditor.ViewModels.MainContent"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    xmlns:model="clr-namespace:NeoEditor.Data.Model"
     xmlns:userControls="clr-namespace:NeoEditor.Views.UserControls"
     xmlns:vm="using:NeoEditor.ViewModels"
     x:Name="MainWindowApp"
@@ -125,6 +124,23 @@
                         InitializeLayout="True"
                         IsDockingEnabled="{Binding IsDockingEnabled, Mode=OneWay}"
                         IsVisible="True">
+                        <DockControl.DataTemplates>
+                            <DataTemplate x:DataType="mainContent:XmlDiffDocument">
+                                <userControls:XmlDiffView
+                                    DocSyntax="XmlDoc"
+                                    NewXml="{Binding NewXml}"
+                                    OldXml="{Binding OldXml}"
+                                    ReadOnly="False" />
+                                <!-- <userControls:DiffView NewText="{Binding NewXml}" OldText="{Binding OldXml}" /> -->
+                            </DataTemplate>
+                            <DataTemplate x:DataType="mainContent:XmlDocument">
+                                <avaloniaEdit:TextEditor
+                                    Document="{Binding Xml, Mode=TwoWay}"
+                                    IsReadOnly="True"
+                                    ShowLineNumbers="True"
+                                    SyntaxHighlighting="XmlDoc" />
+                            </DataTemplate>
+                        </DockControl.DataTemplates>
                         <RootDock Id="Root" PinnedDockDisplayMode="Inline">
                             <ProportionalDock EnableGlobalDocking="True">
                                 <!--  <ToolDock  -->
@@ -152,9 +168,12 @@
                                     <!--  Define how each document should be displayed  -->
                                     <DocumentDock.DocumentTemplate>
                                         <DocumentTemplate>
-                                            <StackPanel Margin="10" x:DataType="Document">
-                                                <ContentControl Content="{Binding Context}" />
-                                            </StackPanel>
+                                            <Grid Margin="10" x:DataType="Document">
+                                                <ContentControl
+                                                    HorizontalAlignment="Stretch"
+                                                    VerticalAlignment="Stretch"
+                                                    Content="{Binding Context}" />
+                                            </Grid>
                                         </DocumentTemplate>
                                     </DocumentDock.DocumentTemplate>
                                 </DocumentDock>

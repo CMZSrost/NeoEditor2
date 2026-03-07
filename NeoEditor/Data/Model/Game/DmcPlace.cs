@@ -6,18 +6,17 @@ namespace NeoEditor.Data.Model.Game;
 
 [Table("dmcplaces")]
 [Comment("底特律城区建筑 - 定义底特律城区内的可互动建筑")]
-public class DmcPlace
+[Index(nameof(EntityId), nameof(Id), IsUnique =  true, Name = "UID_Key")]
+public class DmcPlace : IEntity
 {
-    [Display(Name = "ModId")] public int ModId { get; set; }
 
-    [Key]
     [Column("id")]
     [Comment("代码标号")]
     [Display(Name = "Id")]
     public int Id { get; set; }
 
-    [Column("strImg", TypeName = "varchar(255)")]
-    [StringLength(255)]
+    [Column("strImg", TypeName = "varchar(1000)")]
+    [StringLength(1000)]
     [Comment("建筑图标名称，如'btn_dmc_diner'")]
     [Display(Name = "Image")]
     public string Image { get; set; } = "";

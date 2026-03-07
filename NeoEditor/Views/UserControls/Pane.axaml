@@ -17,9 +17,9 @@
     <!--         ~1~ <TabItem Header="ResourceManagerViewModel"> @1@ -->
     <!--         ~1~     <explorerPane:ResourceManagerViewModel /> @1@ -->
     <!--         ~1~ </TabItem> @1@ -->
-    <!--         ~1~ <TabItem Header="ModDatabaseViewModel"> @1@ -->
-    <!--         ~1~     <explorerPane:ModDatabaseViewModel /> @1@ -->
-    <!--         ~1~ </TabItem> @1@ -->
+    <!--         <TabItem Header="ModDatabaseViewModel"> -->
+    <!--             <explorerPane:ModDatabaseViewModel /> -->
+    <!--         </TabItem> -->
     <!--         <TabItem Header="ModIndexViewModel"> -->
     <!--             <explorerPane:ModIndexViewModel /> -->
     <!--         </TabItem> -->
@@ -41,7 +41,7 @@
                         <Button Command="{Binding ReloadFolderCommand}">
                             <avalonia:SymbolIcon Symbol="FolderSync" ToolTip.Tip="{Binding Loc[ReloadGameFolder]}" />
                         </Button>
-                        <Button Command="{Binding OpenGameFolderCommand}" IsCancel="{Binding Config.GameRootDir, Converter={x:Static ObjectConverters.IsNull}}">
+                        <Button Command="{Binding OpenGameFolderCommand}" IsEnabled="{Binding Config.GameRootDir, Converter={x:Static ObjectConverters.IsNotNull}}">
                             <StackPanel
                                 VerticalAlignment="Center"
                                 Orientation="Horizontal"
@@ -54,7 +54,7 @@
                         <Button
                             Command="{Binding OpenGameFolderCommand}"
                             CommandParameter="Mods"
-                            IsCancel="{Binding Config.GameRootDir, Converter={x:Static ObjectConverters.IsNull}}">
+                            IsEnabled="{Binding Config.GameRootDir, Converter={x:Static ObjectConverters.IsNotNull}}">
                             <StackPanel
                                 VerticalAlignment="Center"
                                 Orientation="Horizontal"
@@ -113,22 +113,25 @@
                             <Button Command="{Binding ImportModCommand}">
                                 <avalonia:SymbolIcon Symbol="ArrowCircleDownRight" ToolTip.Tip="{Binding Loc[ImportMod]}" />
                             </Button>
-                            <Button Command="{Binding RefreshModsCommand}">
+                            <Button Command="{Binding RefreshModCommand}">
                                 <avalonia:SymbolIcon Symbol="ArrowClockwise" ToolTip.Tip="{Binding Loc[RefreshMods]}" />
                             </Button>
-                            <!-- <Button Command="{Binding ClearModsCommand}" CommandParameter="{Binding SelectedItem}"> -->
-                            <!--     <avalonia:SymbolIcon Symbol="Delete" ToolTip.Tip="{Binding Loc[ClearSelected]}" /> -->
-                            <!-- </Button> -->
-                            <!-- <Button Command="{Binding ClearModsCommand}"> -->
-                            <!--     <avalonia:SymbolIcon Symbol="DeleteLines" ToolTip.Tip="{Binding Loc[ClearAllMods]}" /> -->
-                            <!-- </Button> -->
-                            <SplitButton Command="{Binding ClearModsCommand}" CommandParameter="{Binding SelectedItem}">
+                            <Button Command="{Binding LoadModCommand}">
+                                <avalonia:SymbolIcon Symbol="DocumentMultipleSync" ToolTip.Tip="{Binding Loc[LoadAll]}" />
+                            </Button>
+                            <SplitButton
+                                Command="{Binding ClearModsCommand}"
+                                CommandParameter="{Binding SelectedItem}"
+                                IsEnabled="{Binding SelectedItem, Converter={x:Static ObjectConverters.IsNotNull}}">
                                 <SplitButton.Content>
                                     <avalonia:SymbolIcon Symbol="Eraser" ToolTip.Tip="{Binding Loc[ClearSelectedMod]}" />
                                 </SplitButton.Content>
                                 <SplitButton.Flyout>
                                     <MenuFlyout>
-                                        <MenuItem Command="{Binding DeleteModsCommand}" CommandParameter="{Binding SelectedItem}">
+                                        <MenuItem
+                                            Command="{Binding DeleteModsCommand}"
+                                            CommandParameter="{Binding SelectedItem}"
+                                            IsEnabled="{Binding SelectedItem, Converter={x:Static ObjectConverters.IsNotNull}}">
                                             <MenuItem.Header>
                                                 <avalonia:SymbolIcon Symbol="Delete" ToolTip.Tip="{Binding Loc[DeleteSelectedMod]}" />
                                             </MenuItem.Header>
@@ -152,15 +155,73 @@
                             </SplitButton>
                         </StackPanel>
                     </StackPanel>
+                    <StackPanel
+                        VerticalAlignment="Center"
+                        Orientation="Horizontal"
+                        Spacing="5">
+                        <avalonia:SymbolIcon Symbol="Games" />
+                        <TextBlock Text="Game" />
+                    </StackPanel>
+                    <ContentControl Content="{Binding Info}" />
+                    <GridSplitter />
                     <TextBox
                         Margin="8"
                         ClearSelectionOnLostFocus="True"
                         Text="{Binding Filter}"
                         Watermark="{Binding Loc[KeywordInput]}" />
                     <ListBox
+                        x:Name="ModList"
                         Margin="8"
                         ItemsSource="{Binding Mods}"
-                        SelectedItem="{Binding SelectedItem}" />
+                        SelectedItem="{Binding SelectedItem}">
+                        <ListBox.Styles>
+                            <Style Selector="ListBoxItem">
+                                <Setter Property="HorizontalAlignment" Value="Stretch" />
+                            </Style>
+                            <Style Selector="ListBoxItem Expander">
+                                <Setter Property="(Interaction.Behaviors)">
+                                    <BehaviorCollectionTemplate>
+                                        <BehaviorCollection>
+                                            <EventTriggerBehavior EventName="Expanded">
+                                                <InvokeCommandAction Command="{Binding ((explorerPane:ModDatabaseViewModel)DataContext).ModExpandedCommand, ElementName=ModList}" CommandParameter="{Binding}" />
+                                            </EventTriggerBehavior>
+                                        </BehaviorCollection>
+                                    </BehaviorCollectionTemplate>
+                                </Setter>
+                            </Style>
+                            <Style Selector="ListBoxItem Expander ListBoxItem">
+                                <Setter Property="(Interaction.Behaviors)">
+                                    <BehaviorCollectionTemplate>
+                                        <BehaviorCollection>
+                                            <EventTriggerBehavior EventName="DoubleTapped">
+                                                <InvokeCommandAction Command="{Binding ((explorerPane:ModDatabaseViewModel)DataContext).OpenXmlCommand, ElementName=ModList}" CommandParameter="{Binding}" />
+                                            </EventTriggerBehavior>
+                                        </BehaviorCollection>
+                                    </BehaviorCollectionTemplate>
+                                </Setter>
+
+                            </Style>
+                        </ListBox.Styles>
+                        <ListBox.ContextMenu>
+                            <ContextMenu>
+                                <MenuItem
+                                    Command="{Binding OpenModPathCommand}"
+                                    CommandParameter="{Binding SelectedItem}"
+                                    Header="{Binding Loc[OpenModPath]}"
+                                    IsEnabled="{Binding SelectedItem, Converter={x:Static ObjectConverters.IsNotNull}}" />
+                                <MenuItem
+                                    Command="{Binding ClearModsCommand}"
+                                    CommandParameter="{Binding SelectedItem}"
+                                    Header="{Binding Loc[ClearMod]}"
+                                    IsEnabled="{Binding SelectedItem, Converter={x:Static ObjectConverters.IsNotNull}}" />
+                                <MenuItem
+                                    Command="{Binding LoadModCommand}"
+                                    CommandParameter="{Binding SelectedItem}"
+                                    Header="{Binding Loc[LoadMod]}"
+                                    IsEnabled="{Binding SelectedItem, Converter={x:Static ObjectConverters.IsNotNull}}" />
+                            </ContextMenu>
+                        </ListBox.ContextMenu>
+                    </ListBox>
                 </StackPanel>
             </ScrollViewer>
         </DataTemplate>
@@ -174,18 +235,20 @@
                         <Button Command="{Binding AddProfileCommand}">
                             <avalonia:SymbolIcon Symbol="AddCircle" ToolTip.Tip="{Binding Loc[AddProfile]}" />
                         </Button>
-                        <Button Command="{Binding ImportProfileCommand}" IsCancel="{Binding Config.GameRootDir, Converter={x:Static ObjectConverters.IsNull}}">
+                        <Button Command="{Binding ImportProfileCommand}" IsEnabled="{Binding Config.GameRootDir, Converter={x:Static ObjectConverters.IsNotNull}}">
                             <avalonia:SymbolIcon Symbol="ArrowCircleDownRight" ToolTip.Tip="{Binding Loc[ImportProfile]}" />
                         </Button>
                         <Button Command="{Binding RefreshProfilesCommand}">
                             <avalonia:SymbolIcon Symbol="ArrowClockwise" ToolTip.Tip="{Binding Loc[RefreshProfile]}" />
                         </Button>
-                        <Button Command="{Binding ClearProfileCommand}" CommandParameter="{Binding SelectedProfile}">
+                        <Button
+                            Command="{Binding ClearProfileCommand}"
+                            CommandParameter="{Binding SelectedProfile}"
+                            IsEnabled="{Binding SelectedProfile, Converter={x:Static ObjectConverters.IsNotNull}}">
                             <avalonia:SymbolIcon Symbol="Eraser" ToolTip.Tip="{Binding Loc[ClearProfile]}" />
                         </Button>
                         <Button Command="{Binding ClearProfileCommand}">
                             <avalonia:SymbolIcon Symbol="EraserTool" ToolTip.Tip="{Binding Loc[ClearAllProfile]}" />
-
                         </Button>
                     </StackPanel>
 
@@ -207,39 +270,42 @@
                         <TextBlock Text="{Binding Loc[OtherProfiles]}" />
                     </StackPanel>
                     <ListBox
-                        x:Name="Box"
+                        x:Name="ProfileList"
                         ItemsSource="{Binding Profiles}"
                         SelectedItem="{Binding SelectedProfile}">
                         <ListBox.Styles>
+                            <Style Selector="ListBoxItem">
+                                <Setter Property="HorizontalAlignment" Value="Stretch" />
+                            </Style>
                             <Style Selector="ListBoxItem Expander">
                                 <Setter Property="(Interaction.Behaviors)">
                                     <BehaviorCollectionTemplate>
                                         <BehaviorCollection>
                                             <EventTriggerBehavior EventName="Expanded">
-                                                <InvokeCommandAction Command="{Binding ((explorerPane:ModIndexViewModel)DataContext).ProfileExpandedCommand, ElementName=Box}" CommandParameter="{Binding}" />
+                                                <InvokeCommandAction Command="{Binding ((explorerPane:ModIndexViewModel)DataContext).ProfileExpandedCommand, ElementName=ProfileList}" CommandParameter="{Binding}" />
                                             </EventTriggerBehavior>
                                         </BehaviorCollection>
                                     </BehaviorCollectionTemplate>
                                 </Setter>
                             </Style>
+                            <Style Selector="ListBoxItem">
+                                <Setter Property="ContextMenu">
+                                    <Setter.Value>
+                                        <ContextMenu DataContext="{Binding ((explorerPane:ModIndexViewModel)DataContext), ElementName=ProfileList}">
+                                            <MenuItem
+                                                Command="{Binding EditProfileCommand}"
+                                                CommandParameter="{Binding SelectedProfile}"
+                                                Header="{Binding Loc[EditProfile]}" />
+                                            <MenuItem
+                                                Command="{Binding ClearProfileCommand}"
+                                                CommandParameter="{Binding SelectedProfile}"
+                                                Header="{Binding Loc[ClearProfile]}"
+                                                IsEnabled="{Binding SelectedProfile, Converter={x:Static ObjectConverters.IsNotNull}}" />
+                                        </ContextMenu>
+                                    </Setter.Value>
+                                </Setter>
+                            </Style>
                         </ListBox.Styles>
-                        <!-- <Interaction.Behaviors> -->
-                        <!--     <EventTrigger EventName="Expanded"> -->
-                        <!--         <InvokeCommandAction Command="{Binding ProfileExpandedCommand}" CommandParameter="{Binding SelectedProfile}" /> -->
-                        <!--     </EventTrigger> -->
-                        <!-- </Interaction.Behaviors> -->
-                        <ListBox.ContextMenu>
-                            <ContextMenu>
-                                <MenuItem
-                                    Command="{Binding EditProfileCommand}"
-                                    CommandParameter="{Binding SelectedProfile}"
-                                    Header="{Binding Loc[EditProfile]}" />
-                                <MenuItem
-                                    Command="{Binding ClearProfileCommand}"
-                                    CommandParameter="{Binding SelectedProfile}"
-                                    Header="{Binding Loc[ClearProfile]}" />
-                            </ContextMenu>
-                        </ListBox.ContextMenu>
                     </ListBox>
                 </StackPanel>
             </ScrollViewer>

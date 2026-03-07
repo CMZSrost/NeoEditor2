@@ -6,18 +6,17 @@ namespace NeoEditor.Data.Model.Game;
 
 [Table("creaturesources")]
 [Comment("生物刷新点 - 定义生物在地图上的刷新位置和数量")]
-public class CreatureSource
+[Index(nameof(EntityId), nameof(Id), IsUnique =  true, Name = "UID_Key")]
+public class CreatureSource : IEntity
 {
-    [Display(Name = "ModId")] public int ModId { get; set; }
 
-    [Key]
     [Column("id")]
     [Comment("代码标号")]
     [Display(Name = "Id")]
     public int Id { get; set; }
 
-    [Column("strName", TypeName = "varchar(255)")]
-    [StringLength(255)]
+    [Column("strName", TypeName = "varchar(1000)")]
+    [StringLength(1000)]
     [Comment("生物名称，如'来自东南方的掠夺者'")]
     [Display(Name = "Name")]
     public string Name { get; set; } = "";
@@ -35,7 +34,7 @@ public class CreatureSource
     [Column("nCreatureID")]
     [Comment("刷新的生物编号，结合creatures中的标号")]
     [Display(Name = "CreatureId")]
-    public int CreatureId { get; set; } = 0;
+    public string CreatureId { get; set; } = "0";
 
     [Column("nMin")]
     [Comment("最小刷新数量")]

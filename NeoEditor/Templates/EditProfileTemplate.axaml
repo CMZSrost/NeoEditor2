@@ -9,8 +9,25 @@
         <Grid
             Margin="10"
             ColumnDefinitions="*,4,*"
-            RowDefinitions="Auto,*">
-            <StackPanel Grid.RowSpan="2">
+            ColumnSpacing="2"
+            RowDefinitions="Auto,Auto,*"
+            RowSpacing="8">
+            <StackPanel
+                Grid.Row="0"
+                Grid.Column="0"
+                Grid.ColumnSpan="3"
+                Orientation="Horizontal"
+                Spacing="6">
+                <Button
+                    Width="80"
+                    Margin="5,0"
+                    Command="{Binding SaveCommand}"
+                    Content="{Binding Loc[Save]}" />
+            </StackPanel>
+            <StackPanel
+                Grid.Row="1"
+                Grid.RowSpan="2"
+                Grid.Column="0">
                 <Grid
                     ColumnDefinitions="Auto,*"
                     ColumnSpacing="4"
@@ -60,12 +77,14 @@
                 </Grid>
             </StackPanel>
             <GridSplitter
-                Grid.Row="0"
+                Grid.Row="1"
                 Grid.RowSpan="2"
                 Grid.Column="1" />
+
             <StackPanel
-                Grid.Row="0"
+                Grid.Row="1"
                 Grid.Column="2"
+                HorizontalAlignment="Center"
                 Orientation="Horizontal"
                 Spacing="6">
                 <Button
@@ -84,14 +103,9 @@
                     Margin="5,0"
                     Command="{Binding MoveDownCommand}"
                     Content="{Binding Loc[MoveDown]}" />
-                <Button
-                    Width="80"
-                    Margin="5,0"
-                    Command="{Binding SaveCommand}"
-                    Content="{Binding Loc[Save]}" />
             </StackPanel>
             <DataGrid
-                Grid.Row="1"
+                Grid.Row="2"
                 Grid.Column="2"
                 AutoGenerateColumns="False"
                 CanUserReorderColumns="False"

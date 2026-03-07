@@ -12,7 +12,7 @@ public sealed class ModBaseBackgroundConverter : IValueConverter
     {
         if (value is bool isBase && isBase)
         {
-            return Brushes.Gray;
+            return Brushes.Green;
         }
 
         // Fall back to the default background when not a base mod.

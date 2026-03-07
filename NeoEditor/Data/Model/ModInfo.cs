@@ -1,8 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using Microsoft.EntityFrameworkCore;
 
 namespace NeoEditor.Data.Model;
 
@@ -15,8 +14,8 @@ public class ModInfo
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int ModId { get; set; } // 自增主键（数据库内部）
 
-    [Column("Name", TypeName = "varchar(255)")]
-    [StringLength(255)]
+    [Column("Name", TypeName = "varchar(1000)")]
+    [StringLength(1000)]
     [Display(Name = "Name")]
     [Required]
     public string Name { get; set; } // Mod名称，如 "NSEg"
@@ -40,6 +39,9 @@ public class ModInfo
     [Display(Name = "LastImport")]
     [DatabaseGenerated(DatabaseGeneratedOption.Computed)]
     public DateTime? LastImport { get; set; } // 文件最后导入时间，记录从xml导入的时间点
+
+    [NotMapped] public ObservableCollection<string> XmlFilePaths { get; set; } = [];
+    [NotMapped] public bool XmlFilePathsLoaded { get; set; }
 }
 
 public class ModLoadInfo
@@ -48,11 +50,11 @@ public class ModLoadInfo
     public ModInfo Info { get; set; } = null!;
 }
 
-public class ModIndexInfo
-{
-    public string? FilePath { get; set; } // 文件路径
-    public List<ModLoadInfo> Mods { get; set; } = []; // 包含的Mod列表
-}
+// public class ModIndexInfo
+// {
+//     public string? FilePath { get; set; } // 文件路径
+//     public List<ModLoadInfo> Mods { get; set; } = []; // 包含的Mod列表
+// }
 
 public enum ModType
 {

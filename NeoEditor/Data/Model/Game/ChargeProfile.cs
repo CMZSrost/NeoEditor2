@@ -6,24 +6,23 @@ namespace NeoEditor.Data.Model.Game;
 
 [Table("chargeprofiles")]
 [Comment("内容物/弹药种类 - 定义物品的消耗方式，结合attackmodes中的ChargeProfiles使用")]
-public class ChargeProfile
+[Index(nameof(EntityId), nameof(Id), IsUnique =  true, Name = "UID_Key")]
+public class ChargeProfile : IEntity
 {
-    [Display(Name = "ModId")] public int ModId { get; set; }
 
-    [Key]
     [Column("nID")]
     [Comment("代码标号")]
     [Display(Name = "Id")]
     public int Id { get; set; }
 
-    [Column("strName", TypeName = "varchar(255)")]
-    [StringLength(255)]
+    [Column("strName", TypeName = "varchar(1000)")]
+    [StringLength(1000)]
     [Comment("物品名称，如'纳米医疗箱电量'")]
     [Display(Name = "Name")]
     public string Name { get; set; } = "";
 
-    [Column("strItemID", TypeName = "varchar(12)")]
-    [StringLength(12)]
+    [Column("strItemID", TypeName = "varchar(1000)")]
+    [StringLength(1000)]
     [Comment("物品ID，如'10.3'")]
     [Display(Name = "ItemId")]
     public string ItemId { get; set; } = "";

@@ -1,0 +1,125 @@
+<UserControl
+    x:Class="NeoEditor.Views.UserControls.XmlDiffView"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:avalonia="clr-namespace:FluentIcons.Avalonia;assembly=FluentIcons.Avalonia"
+    xmlns:avaloniaEdit="https://github.com/avaloniaui/avaloniaedit"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:helper="clr-namespace:NeoEditor.Helper"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    x:Name="Root"
+    d:DesignHeight="450"
+    d:DesignWidth="800"
+    mc:Ignorable="d">
+    <Grid ColumnDefinitions="*,4,*" RowDefinitions="Auto,*,Auto">
+        <StackPanel
+            Grid.Column="0"
+            Grid.ColumnSpan="3"
+            HorizontalAlignment="Center"
+            Orientation="Horizontal"
+            Spacing="6"
+            ToolTip.Tip="{Binding Loc[ToggleSyncScroll], ElementName=Root}">
+            <avalonia:SymbolIcon Symbol="ArrowAutofitHeight" />
+            <ToggleSwitch IsChecked="{Binding SyncScrolling, ElementName=Root}" />
+        </StackPanel>
+        <Grid
+            Grid.Row="1"
+            Grid.Column="0"
+            ColumnDefinitions="*,14">
+            <avaloniaEdit:TextEditor
+                x:Name="OldEditor"
+                Grid.Column="0"
+                helper:TextEditorScrollSyncAttached.IsEnabled="{Binding SyncScrolling, ElementName=Root}"
+                helper:TextEditorScrollSyncAttached.Mode="Vertical"
+                helper:TextEditorScrollSyncAttached.Partner="{Binding ElementName=NewEditor}"
+                Document="{Binding OldXml, ElementName=Root}"
+                IsReadOnly="{Binding ReadOnly, ElementName=Root}"
+                ShowLineNumbers="True"
+                SyntaxHighlighting="{Binding DocSyntax, ElementName=Root}" />
+            <Grid Grid.Column="1">
+                <Canvas
+                    x:Name="OldPreviewCanvas"
+                    Background="#0D000000"
+                    Cursor="Hand" />
+                <Border
+                    x:Name="OldPreviewViewportBorder"
+                    Height="0"
+                    Margin="0"
+                    HorizontalAlignment="Stretch"
+                    VerticalAlignment="Top"
+                    Background="#24FFFFFF"
+                    BorderBrush="#99FFFFFF"
+                    BorderThickness="1"
+                    CornerRadius="2"
+                    Cursor="SizeNorthSouth" />
+            </Grid>
+        </Grid>
+        <GridSplitter Grid.Row="1" Grid.Column="1" />
+        <Grid
+            Grid.Row="1"
+            Grid.Column="2"
+            ColumnDefinitions="*,14">
+            <avaloniaEdit:TextEditor
+                x:Name="NewEditor"
+                Grid.Column="0"
+                helper:TextEditorScrollSyncAttached.IsEnabled="{Binding SyncScrolling, ElementName=Root}"
+                helper:TextEditorScrollSyncAttached.Mode="Vertical"
+                helper:TextEditorScrollSyncAttached.Partner="{Binding ElementName=OldEditor}"
+                Document="{Binding NewXml, ElementName=Root}"
+                IsReadOnly="{Binding ReadOnly, ElementName=Root}"
+                ShowLineNumbers="True"
+                SyntaxHighlighting="{Binding DocSyntax, ElementName=Root}" />
+            <Grid Grid.Column="1">
+                <Canvas
+                    x:Name="NewPreviewCanvas"
+                    Background="#0D000000"
+                    Cursor="Hand" />
+                <Border
+                    x:Name="NewPreviewViewportBorder"
+                    Height="0"
+                    Margin="0"
+                    HorizontalAlignment="Stretch"
+                    VerticalAlignment="Top"
+                    Background="#24FFFFFF"
+                    BorderBrush="#99FFFFFF"
+                    BorderThickness="1"
+                    CornerRadius="2"
+                    Cursor="SizeNorthSouth" />
+            </Grid>
+        </Grid>
+
+        <Border
+            Grid.Row="2"
+            Grid.Column="0"
+            Grid.ColumnSpan="3"
+            Margin="0,8,0,0"
+            Padding="8,6"
+            Background="#0D000000"
+            CornerRadius="4">
+            <StackPanel
+                HorizontalAlignment="Center"
+                Orientation="Horizontal"
+                Spacing="8">
+                <Button
+                    x:Name="PreviousDiffButton"
+                    MinWidth="36"
+                    Click="OnPreviousDiffClick">
+                    <TextBlock Text="↑" />
+                </Button>
+                <TextBlock
+                    x:Name="DiffNavigationText"
+                    MinWidth="96"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    Text="差异 0/0"
+                    TextAlignment="Center" />
+                <Button
+                    x:Name="NextDiffButton"
+                    MinWidth="36"
+                    Click="OnNextDiffClick">
+                    <TextBlock Text="↓" />
+                </Button>
+            </StackPanel>
+        </Border>
+    </Grid>
+</UserControl>

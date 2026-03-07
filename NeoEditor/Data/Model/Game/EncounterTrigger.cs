@@ -6,18 +6,17 @@ namespace NeoEditor.Data.Model.Game;
 
 [Table("encountertriggers")]
 [Comment("事件触发器 - 定义剧情事件的触发条件和方式")]
-public class EncounterTrigger
+[Index(nameof(EntityId), nameof(Id), IsUnique =  true, Name = "UID_Key")]
+public class EncounterTrigger : IEntity
 {
-    [Display(Name = "ModId")] public int ModId { get; set; }
 
-    [Key]
     [Column("id")]
     [Comment("代码标号")]
     [Display(Name = "Id")]
     public int Id { get; set; }
 
-    [Column("strName", TypeName = "varchar(255)")]
-    [StringLength(255)]
+    [Column("strName", TypeName = "varchar(1000)")]
+    [StringLength(1000)]
     [Comment("触发的剧情名称，如'在冷冻睡眠舱内醒来'")]
     [Display(Name = "Name")]
     public string Name { get; set; } = "";
@@ -57,20 +56,20 @@ public class EncounterTrigger
     [Display(Name = "AIPassable")]
     public bool AIPassable { get; set; } = true;
 
-    [Column("aArea", TypeName = "varchar(25)")]
-    [StringLength(25)]
+    [Column("aArea", TypeName = "varchar(1000)")]
+    [StringLength(1000)]
     [Comment("该事件触发的位置坐标，格式如'20,164,0'")]
     [Display(Name = "Area")]
     public string Area { get; set; } = "";
 
-    [Column("dateMin", TypeName = "varchar(15)")]
-    [StringLength(15)]
+    [Column("dateMin", TypeName = "varchar(1000)")]
+    [StringLength(1000)]
     [Comment("最小触发时间，格式'年-月-日-小时'")]
     [Display(Name = "DateMin")]
     public string DateMin { get; set; } = "";
 
-    [Column("dateMax", TypeName = "varchar(15)")]
-    [StringLength(15)]
+    [Column("dateMax", TypeName = "varchar(1000)")]
+    [StringLength(1000)]
     [Comment("最大触发时间，格式'年-月-日-小时'")]
     [Display(Name = "DateMax")]
     public string DateMax { get; set; } = "";

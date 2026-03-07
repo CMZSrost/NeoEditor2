@@ -6,11 +6,10 @@ namespace NeoEditor.Data.Model.Game;
 
 [Table("headlines")]
 [Comment("头版头条（报纸） - 定义游戏中可读取的新闻内容")]
-public class Headline
+[Index(nameof(EntityId), nameof(Id), IsUnique =  true, Name = "UID_Key")]
+public class Headline : IEntity
 {
-    [Display(Name = "ModId")] public int ModId { get; set; }
 
-    [Key]
     [Column("id")]
     [Comment("代码标号")]
     [Display(Name = "Id")]

@@ -6,18 +6,17 @@ namespace NeoEditor.Data.Model.Game;
 
 [Table("conditions")]
 [Comment("状态 - 定义所有角色可以拥有的状态和效果")]
-public class Condition
+[Index(nameof(EntityId), nameof(Id), IsUnique =  true, Name = "UID_Key")]
+public class Condition : IEntity
 {
-    [Display(Name = "ModId")] public int ModId { get; set; }
 
-    [Key]
     [Column("id")]
     [Comment("代码标号")]
     [Display(Name = "Id")]
     public int Id { get; set; }
 
-    [Column("strName", TypeName = "varchar(255)")]
-    [StringLength(255)]
+    [Column("strName", TypeName = "varchar(1000)")]
+    [StringLength(1000)]
     [Comment("状态名称，如'饥肠辘辘'")]
     [Display(Name = "Name")]
     public string Name { get; set; } = "";
@@ -27,14 +26,14 @@ public class Condition
     [Display(Name = "Description")]
     public string Description { get; set; } = "";
 
-    [Column("aFieldNames", TypeName = "varchar(255)")]
-    [StringLength(255)]
+    [Column("aFieldNames", TypeName = "varchar(1000)")]
+    [StringLength(1000)]
     [Comment("该状态为你带来的效果字段列表，如'm_fHealPerHourMod,m_fImmuneRestoreRate'等")]
     [Display(Name = "FieldNames")]
     public string FieldNames { get; set; } = "";
 
-    [Column("aModifiers", TypeName = "varchar(100)")]
-    [StringLength(100)]
+    [Column("aModifiers", TypeName = "varchar(1000)")]
+    [StringLength(1000)]
     [Comment("该状态为你带来的效果的具体影响数值，与FieldNames对应")]
     [Display(Name = "Modifiers")]
     public string Modifiers { get; set; } = "";
@@ -49,8 +48,8 @@ public class Condition
     [Display(Name = "Fatal")]
     public bool Fatal { get; set; } = false;
 
-    [Column("vIDNext", TypeName = "varchar(255)")]
-    [StringLength(255)]
+    [Column("vIDNext", TypeName = "varchar(1000)")]
+    [StringLength(1000)]
     [Comment("该状态下一阶段为你带来的新状态ID，可能为多个逗号分隔")]
     [Display(Name = "IdNext")]
     public string IdNext { get; set; } = "0";
@@ -65,8 +64,8 @@ public class Condition
     [Display(Name = "Permanent")]
     public bool Permanent { get; set; } = false;
 
-    [Column("vChanceNext", TypeName = "varchar(255)")]
-    [StringLength(255)]
+    [Column("vChanceNext", TypeName = "varchar(1000)")]
+    [StringLength(1000)]
     [Comment("有多大几率该状态在下个阶段为你带来新的状态")]
     [Display(Name = "ChanceNext")]
     public string ChanceNext { get; set; } = "0";
@@ -116,8 +115,8 @@ public class Condition
     [Display(Name = "TransferRange")]
     public int TransferRange { get; set; } = -1;
 
-    [Column("aThresholds", TypeName = "varchar(255)")]
-    [StringLength(255)]
+    [Column("aThresholds", TypeName = "varchar(1000)")]
+    [StringLength(1000)]
     [Comment("触发阈值，目前用于传奇技能的触发")]
     [Display(Name = "Thresholds")]
     public string Thresholds { get; set; } = "";

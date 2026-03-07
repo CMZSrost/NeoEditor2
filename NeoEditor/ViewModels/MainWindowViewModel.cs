@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using Microsoft.Extensions.DependencyInjection;
 using NeoEditor.Services;
 using CommunityToolkit.Mvvm.Input;
@@ -40,7 +41,7 @@ using ModIndexViewModel = NeoEditor.ViewModels.ExplorerPane.ModIndexViewModel;
 
 namespace NeoEditor.ViewModels;
 
-public partial class MainWindowViewModel : ViewModelBase, IRecipient<EditProfileMessage>
+public partial class MainWindowViewModel : ViewModelBase, IRecipient<EditProfileMessage>, IRecipient<OpenXmlDocumentMessage>
 {
     private readonly IConfigService _config;
     public AppConfig Config => _config.Config;
@@ -49,12 +50,18 @@ public partial class MainWindowViewModel : ViewModelBase, IRecipient<EditProfile
 
     public ObservableCollection<IDocumentBase> Documents { get; } =
     [
-        new PlainTextDocument()
+        // new PlainTextDocument()
+        // {
+        //     Title = "Welcome",
+        //     Content = "This is the NeoEditor, a modding tool for Neople games.\n\n" +
+        //               "Use the sidebar to explore resources, manage mods, and edit profiles.\n\n" +
+        //               "Click 'Set Game Folder' in the Project menu to get started."
+        // },
+        new XmlDocument(
+            xmlPath: @"D:\software\Steam\steamapps\common\Neo Scavenger\data\attackmodes.xml"
+        )
         {
-            Title = "Welcome",
-            Content = "This is the NeoEditor, a modding tool for Neople games.\n\n" +
-                      "Use the sidebar to explore resources, manage mods, and edit profiles.\n\n" +
-                      "Click 'Set Game Folder' in the Project menu to get started."
+            Title = "XML Diff Example",
         }
     ];
 
@@ -177,9 +184,9 @@ public partial class MainWindowViewModel : ViewModelBase, IRecipient<EditProfile
                 {
                     _logger.LogInformation($"Selected folder: {folderPath}");
                     Config.GameRootDir = folderPath;
+                    await _config.SaveAsync();
+                    return;
                 }
-
-                return;
             }
         }
     }
@@ -219,6 +226,64 @@ public partial class MainWindowViewModel : ViewModelBase, IRecipient<EditProfile
         var factory = _serviceProvider.GetRequiredService<Func<ProfileInfo, EditProfileViewModel>>();
         var vm = factory(message.ProfileInfo);
         Documents.Add(vm);
+    }
+
+    public void Receive(OpenXmlDocumentMessage message)
+    {
+        var normalizedPath = NormalizeDocumentPath(message.XmlPath);
+        _logger.LogInformation("Opening xml document: {XmlPath}", normalizedPath);
+
+        if (FindOpenXmlDocument(normalizedPath) is { } existingDocument)
+        {
+            ActivateDocument(existingDocument);
+            return;
+        }
+
+        var title = string.IsNullOrWhiteSpace(message.Title)
+            ? Path.GetFileName(normalizedPath)
+            : message.Title;
+        var document = new XmlDocument(normalizedPath)
+        {
+            Title = title,
+        };
+
+        Documents.Add(document);
+        ActivateDocument(document);
+
+        if (Documents.Count >= 2)
+        {
+            IsDockingEnabled = true;
+        }
+    }
+
+    private XmlDocument? FindOpenXmlDocument(string normalizedPath)
+    {
+        return Documents
+            .OfType<XmlDocument>()
+            .FirstOrDefault(doc => string.Equals(NormalizeDocumentPath(doc.XmlPath), normalizedPath,
+                StringComparison.OrdinalIgnoreCase));
+    }
+
+    private void ActivateDocument(IDocumentBase document)
+    {
+        var currentIndex = Documents.IndexOf(document);
+        if (currentIndex < 0)
+        {
+            return;
+        }
+
+        if (currentIndex == Documents.Count - 1)
+        {
+            return;
+        }
+
+        Documents.RemoveAt(currentIndex);
+        Documents.Add(document);
+    }
+
+    private static string NormalizeDocumentPath(string path)
+    {
+        return Path.GetFullPath(path);
     }
 
     #endregion

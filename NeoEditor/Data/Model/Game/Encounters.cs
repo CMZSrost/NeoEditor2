@@ -6,18 +6,17 @@ namespace NeoEditor.Data.Model.Game;
 
 [Table("encounters")]
 [Comment("剧情代码 - 定义所有可触发的游戏剧情")]
-public class Encounter
+[Index(nameof(EntityId), nameof(Id), IsUnique =  true, Name = "UID_Key")]
+public class Encounter : IEntity
 {
-    [Display(Name = "ModId")] public int ModId { get; set; }
 
-    [Key]
     [Column("id")]
     [Comment("代码标号")]
     [Display(Name = "Id")]
     public int Id { get; set; }
 
-    [Column("strName", TypeName = "varchar(255)")]
-    [StringLength(255)]
+    [Column("strName", TypeName = "varchar(1000)")]
+    [StringLength(1000)]
     [Comment("该剧情的名称，如'魔迦怨灵出现'")]
     [Display(Name = "Name")]
     public string Name { get; set; } = "";
@@ -27,8 +26,8 @@ public class Encounter
     [Display(Name = "Description")]
     public string Description { get; set; } = "";
 
-    [Column("strImg", TypeName = "varchar(255)")]
-    [StringLength(255)]
+    [Column("strImg", TypeName = "varchar(1000)")]
+    [StringLength(1000)]
     [Comment("该剧情调用的图片文件名")]
     [Display(Name = "Image")]
     public string Image { get; set; } = "EncBlank.png";
@@ -36,21 +35,21 @@ public class Encounter
     [Column("nTreasureID")]
     [Comment("剧情发生时在玩家脚下生成的战利品池ID")]
     [Display(Name = "TreasureId")]
-    public int TreasureId { get; set; } = 3;
+    public string TreasureId { get; set; } = "3";
 
     [Column("nRemoveTreasureID")]
     [Comment("剧情发生时在玩家脚下移除的战利品池ID")]
     [Display(Name = "RemoveTreasureId")]
-    public int RemoveTreasureId { get; set; } = 3;
+    public string RemoveTreasureId { get; set; } = "3";
 
-    [Column("aConditions", TypeName = "varchar(255)")]
-    [StringLength(255)]
+    [Column("aConditions", TypeName = "varchar(1000)")]
+    [StringLength(1000)]
     [Comment("该剧情的附带状态ID列表，逗号分隔")]
     [Display(Name = "Conditions")]
     public string Conditions { get; set; } = "1";
 
-    [Column("aPreConditions", TypeName = "varchar(255)")]
-    [StringLength(255)]
+    [Column("aPreConditions", TypeName = "varchar(1000)")]
+    [StringLength(1000)]
     [Comment("出现该剧情时必要的前置状态，负数表示不可拥有该状态")]
     [Display(Name = "PreConditions")]
     public string PreConditions { get; set; } = "";
@@ -65,8 +64,8 @@ public class Encounter
     [Display(Name = "Responses")]
     public string Responses { get; set; } = "";
 
-    [Column("aMinimapHexes", TypeName = "varchar(255)")]
-    [StringLength(255)]
+    [Column("aMinimapHexes", TypeName = "varchar(1000)")]
+    [StringLength(1000)]
     [Comment("小地图上显示的点坐标")]
     [Display(Name = "MinimapHexes")]
     public string MinimapHexes { get; set; } = "";
@@ -84,27 +83,27 @@ public class Encounter
     [Column("nItemsID")]
     [Comment("发生该剧情时产生的物品ID")]
     [Display(Name = "ItemsId")]
-    public int ItemsId { get; set; } = 3;
+    public string ItemsId { get; set; } = "3";
 
     [Column("nCreatureID")]
     [Comment("该剧情发生时需要增加的生物ID")]
     [Display(Name = "CreatureId")]
-    public int CreatureId { get; set; } = 0;
+    public string CreatureId { get; set; } = "0";
 
-    [Column("ptCreatureHex", TypeName = "varchar(9)")]
-    [StringLength(9)]
+    [Column("ptCreatureHex", TypeName = "varchar(1000)")]
+    [StringLength(1000)]
     [Comment("生物出现位置坐标，格式如'0,0'")]
     [Display(Name = "CreatureHex")]
     public string CreatureHex { get; set; } = "0,0";
 
-    [Column("ptTeleport", TypeName = "varchar(9)")]
-    [StringLength(9)]
+    [Column("ptTeleport", TypeName = "varchar(1000)")]
+    [StringLength(1000)]
     [Comment("发生该剧情时将玩家传送到的位置，'0,0'为不传送")]
     [Display(Name = "Teleport")]
     public string Teleport { get; set; } = "0,0";
 
-    [Column("ptEditor", TypeName = "varchar(24)")]
-    [StringLength(24)]
+    [Column("ptEditor", TypeName = "varchar(1000)")]
+    [StringLength(1000)]
     [Comment("未知参数，编辑器相关")]
     [Display(Name = "Editor")]
     public string Editor { get; set; } = "0,0";
@@ -129,14 +128,14 @@ public class Encounter
     [Display(Name = "CreatureChance")]
     public double CreatureChance { get; set; } = 0;
 
-    [Column("vAccidents", TypeName = "varchar(255)")]
-    [StringLength(255)]
+    [Column("vAccidents", TypeName = "varchar(1000)")]
+    [StringLength(1000)]
     [Comment("出现意外时发生的事件ID（调用encounters）")]
     [Display(Name = "Accidents")]
     public string Accidents { get; set; } = "1";
 
-    [Column("vLoot", TypeName = "varchar(255)")]
-    [StringLength(255)]
+    [Column("vLoot", TypeName = "varchar(1000)")]
+    [StringLength(1000)]
     [Comment("搜刮成功时的战利品种类ID")]
     [Display(Name = "Loot")]
     public string Loot { get; set; } = "3";

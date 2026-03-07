@@ -19,8 +19,8 @@ public partial class ProfileInfo : ObservableObject
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int ProfileId { get; set; } // 自增主键（数据库内部）
 
-    [Column("Name", TypeName = "varchar(255)")]
-    [StringLength(255)]
+    [Column("Name", TypeName = "varchar(1000)")]
+    [StringLength(1000)]
     [Display(Name = "Name")]
     [Required]
     public string Name { get; set; } // 文件名称，如 "getmods.php"
@@ -52,5 +52,5 @@ public partial class ProfileInfo : ObservableObject
     [DatabaseGenerated(DatabaseGeneratedOption.Computed)]
     public DateTime UpdateTime { get; set; } // 文件最后导入时间，记录从xml导入的时间点
 
-    [NotMapped] [ObservableProperty] public partial ModIndexInfo? ModIndexInfo { get; set; }
+    [NotMapped] public ObservableCollection<ModLoadInfo> ModLoadInfos { get; set; } = [];
 }

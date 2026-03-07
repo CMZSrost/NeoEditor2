@@ -6,42 +6,41 @@ namespace NeoEditor.Data.Model.Game;
 
 [Table("battlemoves")]
 [Comment("战斗动作 - 定义所有可在战斗中使用的动作")]
-public class BattleMove
+[Index(nameof(EntityId), nameof(Id), IsUnique =  true, Name = "UID_Key")]
+public class BattleMove : IEntity
 {
-    [Display(Name = "ModId")] public int ModId { get; set; }
 
-    [Key]
     [Column("id")]
     [Comment("代码标号")]
     [Display(Name = "Id")]
     public int Id { get; set; }
 
-    [Column("strID", TypeName = "varchar(255)")]
-    [StringLength(255)]
+    [Column("strID", TypeName = "varchar(1000)")]
+    [StringLength(1000)]
     [Comment("物品标号，如'90.35'")]
     [Display(Name = "StrId")]
     public string StrId { get; set; } = "";
 
-    [Column("strName", TypeName = "varchar(255)")]
-    [StringLength(255)]
+    [Column("strName", TypeName = "varchar(1000)")]
+    [StringLength(1000)]
     [Comment("动作名称，如'掩体中后退'")]
     [Display(Name = "Name")]
     public string Name { get; set; } = "";
 
-    [Column("strNotes", TypeName = "varchar(255)")]
-    [StringLength(255)]
+    [Column("strNotes", TypeName = "varchar(1000)")]
+    [StringLength(1000)]
     [Comment("动作注释，一般留空，对游戏无影响")]
     [Display(Name = "Notes")]
     public string Notes { get; set; } = "";
 
-    [Column("strSuccess", TypeName = "varchar(255)")]
-    [StringLength(255)]
+    [Column("strSuccess", TypeName = "varchar(1000)")]
+    [StringLength(1000)]
     [Comment("动作执行成功后在游戏中显示的文本，&lt;us&gt;代表自己，&lt;them&gt;代表目标")]
     [Display(Name = "Success")]
     public string Success { get; set; } = "";
 
-    [Column("strFail", TypeName = "varchar(255)")]
-    [StringLength(255)]
+    [Column("strFail", TypeName = "varchar(1000)")]
+    [StringLength(1000)]
     [Comment("动作执行失败后在游戏中显示的文本")]
     [Display(Name = "Fail")]
     public string Fail { get; set; } = "";
@@ -51,56 +50,56 @@ public class BattleMove
     [Display(Name = "PopUp")]
     public string PopUp { get; set; } = "";
 
-    [Column("vChanceType", TypeName = "varchar(255)")]
-    [StringLength(255)]
+    [Column("vChanceType", TypeName = "varchar(1000)")]
+    [StringLength(1000)]
     [Comment("几率类型（目前未明）")]
     [Display(Name = "ChanceType")]
     public string ChanceType { get; set; } = "0,0,0";
 
-    [Column("vUsConditions", TypeName = "varchar(255)")]
-    [StringLength(255)]
+    [Column("vUsConditions", TypeName = "varchar(1000)")]
+    [StringLength(1000)]
     [Comment("需要我方处于的状态，负号表示非，即不处于该状态'")]
     [Display(Name = "UsConditions")]
     public string UsConditions { get; set; } = "";
 
-    [Column("vThemConditions", TypeName = "varchar(255)")]
-    [StringLength(255)]
+    [Column("vThemConditions", TypeName = "varchar(1000)")]
+    [StringLength(1000)]
     [Comment("需要对方处于的状态，负号表示非，即不处于该状态")]
     [Display(Name = "ThemConditions")]
     public string ThemConditions { get; set; } = "";
 
-    [Column("vPairConditions", TypeName = "varchar(255)")]
-    [StringLength(255)]
+    [Column("vPairConditions", TypeName = "varchar(1000)")]
+    [StringLength(1000)]
     [Comment("该行动对自己带来的影响")]
     [Display(Name = "PairConditions")]
     public string PairConditions { get; set; } = "";
 
-    [Column("vUsFailConditions", TypeName = "varchar(255)")]
-    [StringLength(255)]
+    [Column("vUsFailConditions", TypeName = "varchar(1000)")]
+    [StringLength(1000)]
     [Comment("行动失败时会为自己带来的状态")]
     [Display(Name = "UsFailConditions")]
     public string UsFailConditions { get; set; } = "";
 
-    [Column("vThemFailConditions", TypeName = "varchar(255)")]
-    [StringLength(255)]
+    [Column("vThemFailConditions", TypeName = "varchar(1000)")]
+    [StringLength(1000)]
     [Comment("行动失败时会为敌方带来的状态（官方所有数据均未填写）")]
     [Display(Name = "ThemFailConditions")]
     public string ThemFailConditions { get; set; } = "";
 
-    [Column("vPairFailConditions", TypeName = "varchar(255)")]
-    [StringLength(255)]
+    [Column("vPairFailConditions", TypeName = "varchar(1000)")]
+    [StringLength(1000)]
     [Comment("行动失败时会为自己带来的影响")]
     [Display(Name = "PairFailConditions")]
     public string PairFailConditions { get; set; } = "";
 
-    [Column("vUsPreConditions", TypeName = "varchar(255)")]
-    [StringLength(255)]
+    [Column("vUsPreConditions", TypeName = "varchar(1000)")]
+    [StringLength(1000)]
     [Comment("执行该行动的前置要求，格式如'137,151,-143'（负数表示不可拥有该状态）")]
     [Display(Name = "UsPreConditions")]
     public string UsPreConditions { get; set; } = "";
 
-    [Column("vThemPreConditions", TypeName = "varchar(255)")]
-    [StringLength(255)]
+    [Column("vThemPreConditions", TypeName = "varchar(1000)")]
+    [StringLength(1000)]
     [Comment("敌方需要满足的前置条件")]
     [Display(Name = "ThemPreConditions")]
     public string ThemPreConditions { get; set; } = "";
@@ -145,8 +144,8 @@ public class BattleMove
     [Display(Name = "AttackModeType")]
     public BattleMoveType AttackModeType { get; set; } = BattleMoveType.NonAttack;
 
-    [Column("vHexTypes", TypeName = "varchar(255)")]
-    [StringLength(255)]
+    [Column("vHexTypes", TypeName = "varchar(1000)")]
+    [StringLength(1000)]
     [Comment("所在地图格子类型（官方所有数据均留空）")]
     [Display(Name = "HexTypes")]
     public string HexTypes { get; set; } = "";

@@ -105,6 +105,7 @@ public partial class App : Application
                 services.AddSingleton<LocalizationService>();
                 services.AddSingleton<INotificationService, NotificationService>();
                 services.AddSingleton<PhpParser>();
+                services.AddSingleton<XmlParser>();
                 services.AddSingleton<IModManager, ModManager>();
                 services.AddSingleton<IProfileManager, ProfileManager>();
                 services.AddAutoMapper((expression => { }));
@@ -137,11 +138,11 @@ public partial class App : Application
             .Build();
     }
 
-    private static void InitDatabase(IServiceProvider services)
+    private static void InitDatabase<TContext>(IServiceProvider services) where TContext : DbContext
     {
         // Create a scope to initialize the database
         using var scope = services.CreateScope();
-        var dbContextFactory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<EditorDbContext>>();
+        var dbContextFactory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<TContext>>();
         using var dbContext = dbContextFactory.CreateDbContext();
         dbContext.Database.EnsureCreated();
     }
@@ -163,7 +164,8 @@ public partial class App : Application
         Notification = _host.Services.GetRequiredService<INotificationService>();
         Dispatcher.UIThread.Invoke(ConfigService.LoadAsync);
 
-        InitDatabase(ServiceProvider);
+        InitDatabase<EditorDbContext>(ServiceProvider);
+        InitDatabase<GameDbContext>(ServiceProvider);
 
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {

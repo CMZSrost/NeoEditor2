@@ -1,7 +1,10 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Reflection;
+using System.Threading.Tasks;
+using EFCore.BulkExtensions;
 using Microsoft.EntityFrameworkCore;
 using NeoEditor.Data.Model;
 using NeoEditor.Data.Model.Game;
@@ -68,5 +71,30 @@ public class GameDbContext : DbContext
     public IQueryable<TEntity> GetDbSet<TEntity>()
     {
         return (IQueryable<TEntity>)GetDbSet(typeof(TEntity));
+    }
+
+    public async Task DbBulkInsertOrUpdate(Type entityType, object entities)
+    {
+        var method = GetType()
+            .GetMethod(nameof(DbBulkInsertOrUpdateTyped), BindingFlags.Instance | BindingFlags.NonPublic)
+            ?.MakeGenericMethod(entityType);
+        if (method == null)
+            throw new InvalidOperationException($"Cannot bulk import entity type {entityType.Name}.");
+
+        var task = method.Invoke(this, new[] { entities }) as Task;
+        if (task == null)
+            throw new InvalidOperationException(
+                $"Bulk import for entity type {entityType.Name} did not return a task.");
+
+        await task;
+    }
+
+    private Task DbBulkInsertOrUpdateTyped<T>(object entities) where T : IEntity
+    {
+        if (entities is not IEnumerable<T> typedEntities)
+            throw new InvalidOperationException(
+                $"Entity payload type {entities.GetType().Name} does not match {typeof(T).Name}.");
+
+        return this.BulkInsertOrUpdateAsync(typedEntities);
     }
 }

@@ -4,57 +4,59 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using NeoEditor.Data.DTO;
+using Newtonsoft.Json;
 
 namespace NeoEditor.Helper;
 
 public class PhpParser
 {
-    /// <summary>
-    ///     解析 getmods.php 内容（URL 编码键值对格式）
-    /// </summary>
-    public List<ModEntry> Parse(string filePath) => ParseContent(File.ReadAllText(filePath).ReplaceLineEndings(""));
+    public List<ModEntry> ParseMods(string filePath) => ParseModsContent(File.ReadAllText(filePath));
 
-    public List<ModEntry> ParseContent(string content)
+    public List<ModEntry> ParseModsContent(string content)
     {
         var dict = new Dictionary<string, string>();
-        var pairs = content.Split('&', StringSplitOptions.RemoveEmptyEntries);
-        foreach (var pair in pairs)
-        {
-            var eq = pair.IndexOf('=');
-            if (eq > 0)
-            {
-                var key = pair.Substring(0, eq);
-                var value = Uri.UnescapeDataString(pair.Substring(eq + 1));
-                dict[key] = value;
-            }
-        }
-
-        if (!dict.TryGetValue("nRows", out var nRowsStr) || !int.TryParse(nRowsStr, out var nRows))
-            throw new InvalidDataException("Invalid getmods.php: missing or invalid nRows");
-
-        var result = new List<ModEntry>();
-        for (var i = 0; i <= nRows; i++) // nRows 是最大索引
+        var parsed = System.Web.HttpUtility.ParseQueryString(content);
+        var nRow = int.Parse(parsed["nRows"] ?? throw new InvalidDataException("Invalid getmods.php: missing nRows"));
+        for (var i = 0; i < nRow; i++)
         {
             var nameKey = $"strModName{i}";
             var urlKey = $"strModURL{i}";
-            if (dict.TryGetValue(nameKey, out var name) && dict.TryGetValue(urlKey, out var url))
-                result.Add(new ModEntry { Name = name, Path = url });
+            if (parsed[nameKey] != null && parsed[urlKey] != null)
+                dict[parsed[nameKey]!.ReplaceLineEndings("")] = parsed[urlKey]!.ReplaceLineEndings("");
         }
 
+        var result = dict.Select(kv => new ModEntry { Name = kv.Key, Path = kv.Value }).ToList();
+        Console.WriteLine(
+            $"parsed {result.Count} mods from getmods.php\n{JsonConvert.SerializeObject(result, Formatting.Indented)}");
         return result;
     }
 
-    /// <summary>
-    ///     生成 getmods.php 内容
-    /// </summary>
+    public List<string> ParseImages(string filePath) => ParseImagesContent(File.ReadAllText(filePath));
+
+    public List<string> ParseImagesContent(string content)
+    {
+        List<string> result = [];
+        var parsed = System.Web.HttpUtility.ParseQueryString(content);
+        var nRow = int.Parse(parsed["nRows"] ?? throw new InvalidDataException("Invalid getmods.php: missing nRows"));
+        for (var i = 0; i < nRow * 2; i++)
+        {
+            var nameKey = $"strImageURL{i}";
+            if (parsed[nameKey] != null)
+                result.Add(parsed[nameKey]!.ReplaceLineEndings(""));
+        }
+
+        Console.WriteLine($"parsed {result.Count} mods from getmods.php");
+        return result;
+    }
+
     public string GenerateModsPhp(List<ModEntry> mods)
     {
         var sb = new StringBuilder();
         sb.AppendLine($"nRows={mods.Count}");
         for (var i = 0; i < mods.Count; i++)
         {
-            sb.AppendLine($"&strModName{i}={Uri.EscapeDataString(mods[i].Name)}");
-            sb.AppendLine($"&strModURL{i}={Uri.EscapeDataString(mods[i].Path)}");
+            sb.Append($"&strModName{i}={mods[i].Name}");
+            sb.AppendLine($"&strModURL{i}={mods[i].Path}");
         }
 
         return sb.ToString();
@@ -68,15 +70,14 @@ public class PhpParser
     {
         var sb = new StringBuilder();
         sb.AppendLine($"nRows={modImages.Count}&nCols=2");
-
         // 首先进行排序，确保 非x2_ 的图片在前面，然后是同名的 x2_ 图片，并且保持交替
         var imageMap = modImages.Where((s => !s.Contains("x2_"))).Order().ToDictionary((s => s), s => $"x2_{s}");
 
         int i = 0;
         foreach (var imagePair in imageMap)
         {
-            sb.AppendLine($"&strImageURL{i++}={Uri.EscapeDataString(imagePair.Key)}");
-            sb.AppendLine($"&strImageURL{i++}={Uri.EscapeDataString(imagePair.Value)}");
+            sb.AppendLine($"&strImageURL{i++}={imagePair.Key}");
+            sb.AppendLine($"&strImageURL{i++}={imagePair.Value}");
         }
 
         return sb.ToString();

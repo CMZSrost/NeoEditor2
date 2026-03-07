@@ -6,30 +6,29 @@ namespace NeoEditor.Data.Model.Game;
 
 [Table("camptypes")]
 [Comment("营地类型 - 定义各种营地的属性和效果")]
-public class CampType
+[Index(nameof(EntityId), nameof(Id), IsUnique =  true, Name = "UID_Key")]
+public class CampType : IEntity
 {
-    [Display(Name = "ModId")] public int ModId { get; set; }
 
-    [Key]
     [Column("id")]
     [Comment("代码标号")]
     [Display(Name = "Id")]
     public int Id { get; set; }
 
-    [Column("strDesc", TypeName = "varchar(255)")]
-    [StringLength(255)]
+    [Column("strDesc", TypeName = "varchar(1000)")]
+    [StringLength(1000)]
     [Comment("营地的描述，如'区域的暗处'")]
     [Display(Name = "Description")]
     public string Description { get; set; } = "";
 
-    [Column("vImageList", TypeName = "varchar(255)")]
-    [StringLength(255)]
+    [Column("vImageList", TypeName = "varchar(1000)")]
+    [StringLength(1000)]
     [Comment("营地调用的图片文件名")]
     [Display(Name = "ImageList")]
     public string ImageList { get; set; } = "ItmScavengeGrass01.png";
 
-    [Column("aCapacities", TypeName = "varchar(255)")]
-    [StringLength(255)]
+    [Column("aCapacities", TypeName = "varchar(1000)")]
+    [StringLength(1000)]
     [Comment("营地大小，格式如'34x26'")]
     [Display(Name = "Capacities")]
     public string Capacities { get; set; } = "30x30";
@@ -37,7 +36,7 @@ public class CampType
     [Column("nTreasureID")]
     [Comment("该营地的战利品池ID")]
     [Display(Name = "TreasureId")]
-    public int TreasureId { get; set; } = 3;
+    public string TreasureId { get; set; } = "3";
 
     [Column("m_fAlertness", TypeName = "float")]
     [Comment("营地的默认警戒值（百分比）")]

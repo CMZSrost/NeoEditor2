@@ -3,13 +3,15 @@
     xmlns="https://github.com/avaloniaui"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:avalonia="clr-namespace:FluentIcons.Avalonia;assembly=FluentIcons.Avalonia"
+    xmlns:avaloniaEdit="https://github.com/avaloniaui/avaloniaedit"
     xmlns:conv="clr-namespace:NeoEditor.Helper.Converter"
     xmlns:dock="https://irihi.tech/semi"
-    xmlns:dragDropHandler="clr-namespace:NeoEditor.Helper.DragDropHandler"
     xmlns:io="clr-namespace:System.IO;assembly=System.Runtime"
     xmlns:local="using:NeoEditor"
     xmlns:model="clr-namespace:NeoEditor.Data.Model"
     xmlns:services="clr-namespace:NeoEditor.Services"
+    xmlns:viewModels="clr-namespace:NeoEditor.ViewModels"
+    xmlns:views="clr-namespace:NeoEditor.Views"
     RequestedThemeVariant="Default">
 
     <Application.Resources>
@@ -42,7 +44,7 @@
                             FontSize="11"
                             Text="{Binding Description}"
                             TextWrapping="Wrap" />
-                        <ContentControl Content="{Binding ModIndexInfo}" />
+                        <ListBox ItemsSource="{Binding ModLoadInfos}" />
                     </StackPanel>
                 </Expander>
             </StackPanel>
@@ -64,30 +66,49 @@
             </StackPanel>
         </DataTemplate>
         <DataTemplate DataType="model:ModInfo">
-            <StackPanel>
-                <StackPanel Background="{Binding IsBase, Converter={StaticResource ModBaseBackgroundConverter}}" Orientation="Horizontal">
-                    <TextBlock FontWeight="Bold" Text="{Binding Name}" />
-                </StackPanel>
-                <TextBlock
-                    FontSize="11"
-                    Text="{Binding Path}"
-                    TextWrapping="Wrap" />
+            <StackPanel Margin="4">
+                <Expander HorizontalAlignment="Stretch">
+                    <Expander.Header>
+                        <Grid ColumnDefinitions="Auto,*,Auto" RowDefinitions="Auto,*">
+                            <TextBlock
+                                Background="{Binding IsBase, Converter={StaticResource ModBaseBackgroundConverter}}"
+                                FontWeight="Bold"
+                                Text="{Binding Name}" />
+                            <TextBlock
+                                Grid.Row="1"
+                                Grid.Column="0"
+                                FontSize="11"
+                                Text="{Binding Path}"
+                                TextWrapping="Wrap" />
+                            <StackPanel
+                                Grid.Row="0"
+                                Grid.Column="2"
+                                HorizontalAlignment="Center"
+                                Orientation="Horizontal"
+                                Spacing="8"
+                                ToolTip.Tip="{Binding ((viewModels:MainWindowViewModel)DataContext).Loc[LastModified], RelativeSource={RelativeSource AncestorType=views:MainWindow}}">
+                                <TextBlock Text="{Binding LastModified}" />
+                            </StackPanel>
+                            <StackPanel
+                                Grid.Row="1"
+                                Grid.Column="2"
+                                HorizontalAlignment="Center"
+                                Orientation="Horizontal"
+                                Spacing="8"
+                                ToolTip.Tip="{Binding ((viewModels:MainWindowViewModel)DataContext).Loc[LastImport], RelativeSource={RelativeSource AncestorType=views:MainWindow}}">
+                                <TextBlock Text="{Binding LastImport}" />
+                            </StackPanel>
+                        </Grid>
+                    </Expander.Header>
+                    <ListBox ItemsSource="{Binding XmlFilePaths}" />
+                </Expander>
             </StackPanel>
         </DataTemplate>
         <DataTemplate DataType="model:ModLoadInfo">
-            <StackPanel VerticalAlignment="Center" Orientation="Horizontal">
-                <avalonia:SymbolIcon Symbol="{Binding Type, Converter={StaticResource ModLoadTypeIconConverter}}" />
+            <DockPanel VerticalAlignment="Center">
+                <avalonia:SymbolIcon DockPanel.Dock="Left" Symbol="{Binding Type, Converter={StaticResource ModLoadTypeIconConverter}}" />
                 <ContentControl Content="{Binding Info}" />
-            </StackPanel>
-        </DataTemplate>
-        <DataTemplate DataType="model:ModIndexInfo">
-            <StackPanel>
-                <!--  <TextBlock  -->
-                <!--  FontWeight="Bold"  -->
-                <!--  Text="{Binding FilePath}"  -->
-                <!--  TextWrapping="Wrap" />  -->
-                <ListBox ItemsSource="{Binding Mods}" />
-            </StackPanel>
+            </DockPanel>
         </DataTemplate>
 
 
@@ -101,8 +122,14 @@
         <DockFluentTheme />
         <dock:DataGridSemiTheme />
         <dock:DockSemiTheme />
+        <StyleInclude Source="avares://AvaloniaEdit/Themes/Fluent/AvaloniaEdit.xaml" />
         <dock:AvaloniaEditSemiTheme />
         <StyleInclude Source="avares://Avalonia.Controls.DataGrid/Themes/Fluent.xaml" />
         <StyleInclude Source="avares://Xaml.Behaviors.Interactions.DragAndDrop.DataGrid/Styles.axaml" />
+        <!-- <Style Selector="avaloniaEdit|TextEditor"> -->
+        <!--     ~1~ <Setter Property="FontFamily" Value="{DynamicResource SarasaMono}"/> @1@ -->
+        <!--     <Setter Property="FontFamily" Value="avares://Avalonia-Text-Diff-Tool/Assets/Sarasa-Mono-SC-Nerd.ttf#Sarasa Nerd" /> -->
+        <!--     <Setter Property="FontSize" Value="14" /> -->
+        <!-- </Style> -->
     </Application.Styles>
 </Application>

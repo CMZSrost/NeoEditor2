@@ -58,7 +58,7 @@ public partial class EditProfileViewModel : ViewModelBase, IDocumentBase
     public void LoadEntries()
     {
         if (ProfileInfo is null) return;
-        var entries = _phpParser.ParseContent(ProfileInfo.Content);
+        var entries = _phpParser.ParseModsContent(ProfileInfo.Content);
         foreach (var entry in entries)
             Entries.Add(entry);
     }
@@ -118,7 +118,7 @@ public partial class EditProfileViewModel : ViewModelBase, IDocumentBase
     {
         if (ProfileInfo is not null)
         {
-            ProfileInfo.Content = _phpParser.GenerateModsPhp(Entries.ToList()).Replace("\r\n", "");
+            ProfileInfo.Content = _phpParser.GenerateModsPhp(Entries.ToList());
             Messenger.Send(new SaveProfileMessage(ProfileInfo));
             NeedNotifyWhenClose = false;
         }

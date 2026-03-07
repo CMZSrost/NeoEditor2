@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Configuration;
 using System.IO;
@@ -10,6 +11,7 @@ using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Platform.Storage;
 using Avalonia.Threading;
+using AvaloniaEdit.Utils;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
@@ -128,28 +130,13 @@ public partial class ModIndexViewModel : ViewModelBase, IRecipient<InitProfileMe
     [RelayCommand]
     public async Task RefreshProfiles(string profilePath = "")
     {
-        await LoadProfiles();
+        Messenger.Send(new InitProfileMessage());
         await using var db = await _factory.CreateDbContextAsync();
         Profiles.Clear();
         foreach (var profile in db.ProfileInfos.ToList())
         {
             Profiles.Add(profile);
         }
-    }
-
-    // [RelayCommand]
-    public async Task LoadProfiles(ProfileInfo? profileInfo = null)
-    {
-        if (string.IsNullOrWhiteSpace(Config.GameRootDir))
-        {
-            App.Notification!.ShowWarning("Game root directory is not set. Please set it before loading mods.",
-                "Load Warning");
-            return;
-        }
-
-        Messenger.Send(profileInfo is null
-            ? new InitProfileMessage(Path.Combine(Config.GameRootDir, "getmods.php"))
-            : new InitProfileMessage(profileInfo.Path));
     }
 
     #region Profile
@@ -164,7 +151,7 @@ public partial class ModIndexViewModel : ViewModelBase, IRecipient<InitProfileMe
             return;
         }
 
-        if (profileInfo.ModIndexInfo is not null)
+        if (profileInfo.ModLoadInfos.Any())
         {
             _logger.LogInformation($"Profile {profileInfo.Name} already loaded");
             return;
@@ -192,7 +179,7 @@ public partial class ModIndexViewModel : ViewModelBase, IRecipient<InitProfileMe
         await using var db = await _factory.CreateDbContextAsync();
         if (profileInfo is null)
         {
-            db.ProfileInfos.Local.Clear();
+            db.ProfileInfos.RemoveRange(Profiles);
             await db.SaveChangesAsync();
             Profiles.Clear();
         }
@@ -208,46 +195,14 @@ public partial class ModIndexViewModel : ViewModelBase, IRecipient<InitProfileMe
 
     public void Receive(InitProfileMessage message)
     {
+        var profilePath = Path.Combine(Config.GameRootDir, "getmods.php");
         try
         {
-            var content = File.ReadAllText(message.FilePath).ReplaceLineEndings("");
-            var entities = _phpParser.ParseContent(content);
-            using var db = _factory.CreateDbContext();
-            var existedMods = db.ModInfos.ToDictionary(m => m.Path, m => m);
-
-            Info = new ProfileInfo()
-            {
-                ProfileId = -1,
-                Name = "Game",
-                Path = message.FilePath,
-                Content = content,
-                ModIndexInfo = new ModIndexInfo
-                {
-                    FilePath = message.FilePath,
-                    Mods = entities.Select(entry => new ModLoadInfo()
-                    {
-                        Type = existedMods.ContainsKey(entry.Path) ? entry.Type : ModType.Unknown,
-                        Info = existedMods.ContainsKey(entry.Path) switch
-                        {
-                            true => existedMods[entry.Path],
-                            false => new ModInfo()
-                            {
-                                Name = entry.Name,
-                                Path = entry.Path,
-                                IsBase = false,
-                                LastImport = DateTime.Now,
-                                LastModified = DateTime.Now
-                            }
-                        }
-                    }).ToList()
-                },
-                CreateTime = DateTime.Now,
-                UpdateTime = DateTime.Now
-            };
+            Info = _profileManager.LoadProfile("Game", "", profilePath);
         }
         catch (Exception e)
         {
-            App.Notification!.ShowWarning($"load {message.FilePath} failed: {e.Message}");
+            App.Notification!.ShowWarning($"load {profilePath} failed: {e.Message}");
         }
     }
 
@@ -255,30 +210,8 @@ public partial class ModIndexViewModel : ViewModelBase, IRecipient<InitProfileMe
     {
         try
         {
-            var entities = _phpParser.ParseContent(message.ProfileInfo.Content.ReplaceLineEndings(""));
-            using var db = _factory.CreateDbContext();
-            var existedMods = db.ModInfos.ToDictionary(m => m.Path, m => m);
-
-            message.ProfileInfo.ModIndexInfo = new ModIndexInfo
-            {
-                FilePath = message.ProfileInfo.Path,
-                Mods = entities.Select(entry => new ModLoadInfo()
-                {
-                    Type = existedMods.ContainsKey(entry.Path) ? entry.Type : ModType.Unknown,
-                    Info = existedMods.ContainsKey(entry.Path) switch
-                    {
-                        true => existedMods[entry.Path],
-                        false => new ModInfo()
-                        {
-                            Name = entry.Name,
-                            Path = entry.Path,
-                            IsBase = false,
-                            LastImport = DateTime.Now,
-                            LastModified = DateTime.Now
-                        }
-                    }
-                }).ToList()
-            };
+            message.ProfileInfo.ModLoadInfos.Clear();
+            message.ProfileInfo.ModLoadInfos.AddRange(_profileManager.LoadMods(message.ProfileInfo.Content));
         }
         catch (Exception e)
         {
