@@ -12,6 +12,7 @@ using DiffPlex.DiffBuilder;
 using DiffPlex.DiffBuilder.Model;
 using Microsoft.Extensions.DependencyInjection;
 using NeoEditor.Helper;
+using NeoEditor.Helper.AttachedProperties;
 using NeoEditor.Services;
 
 namespace NeoEditor.Views.UserControls;
@@ -420,8 +421,10 @@ public partial class XmlDiffView : UserControl
         }
 
         var currentBlock = GetCurrentDiffBlock();
-        RenderPreviewCanvas(OldPreviewCanvas, OldEditorControl, _diffResult.OldText.Lines, currentBlock, isNewText: false);
-        RenderPreviewCanvas(NewPreviewCanvas, NewEditorControl, _diffResult.NewText.Lines, currentBlock, isNewText: true);
+        RenderPreviewCanvas(OldPreviewCanvas, OldEditorControl, _diffResult.OldText.Lines, currentBlock,
+            isNewText: false);
+        RenderPreviewCanvas(NewPreviewCanvas, NewEditorControl, _diffResult.NewText.Lines, currentBlock,
+            isNewText: true);
     }
 
     private void ClearPreviewSidebars()
@@ -538,7 +541,8 @@ public partial class XmlDiffView : UserControl
     private static void AddCurrentBlockPreviewMarker(Canvas previewCanvas, int totalLines, DiffBlock? currentBlock,
         bool isNewText)
     {
-        if (currentBlock == null || totalLines <= 0 || previewCanvas.Bounds.Height <= 0 || previewCanvas.Bounds.Width <= 0)
+        if (currentBlock == null || totalLines <= 0 || previewCanvas.Bounds.Height <= 0 ||
+            previewCanvas.Bounds.Width <= 0)
         {
             return;
         }

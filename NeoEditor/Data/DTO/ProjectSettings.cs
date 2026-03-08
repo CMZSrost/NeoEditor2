@@ -1,4 +1,5 @@
-﻿using NeoEditor.Data.Model;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
+using NeoEditor.Data.Model;
 
 namespace NeoEditor.Data.DTO;
 
@@ -17,9 +18,28 @@ public class ProjectSettings
     public string GameRootPath { get; set; }
 }
 
-public class ModEntry
+public partial class ModEntry : ObservableObject
 {
-    public string Name { get; set; } // mod 名称，若为 "0" 表示合并模式
-    public string Path { get; set; } // mod 路径（可能是相对路径）
+    private string _name = string.Empty;
+    private string _path = string.Empty;
+
+    public string Name
+    {
+        get => _name;
+        set
+        {
+            if (SetProperty(ref _name, value))
+            {
+                OnPropertyChanged(nameof(Type));
+            }
+        }
+    } // mod 名称，若为 "0" 表示合并模式
+
+    public string Path
+    {
+        get => _path;
+        set => SetProperty(ref _path, value);
+    } // mod 路径（可能是相对路径）
+
     public ModType Type => Name == "0" ? ModType.Merge : ModType.Insert;
 }

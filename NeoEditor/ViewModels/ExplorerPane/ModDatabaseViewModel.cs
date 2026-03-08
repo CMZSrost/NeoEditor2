@@ -9,8 +9,11 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.DesignerSupport.Remote.HtmlTransport;
+using Avalonia.Input;
 using Avalonia.Platform.Storage;
 using Avalonia.Threading;
+using Avalonia.VisualTree;
+using Avalonia.Xaml.Interactions.Events;
 using AvaloniaEdit.Utils;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -29,6 +32,7 @@ using NeoEditor.Services;
 using NeoEditor.ViewModels.Dialog;
 using NeoEditor.Views;
 using NeoEditor.Views.Dialog;
+using Newtonsoft.Json;
 
 namespace NeoEditor.ViewModels.ExplorerPane;
 
@@ -320,15 +324,22 @@ public partial class ModDatabaseViewModel : ViewModelBase, IRecipient<GameRootDi
     }
 
     [RelayCommand]
-    private async Task OpenXml(string? xmlPath)
+    private async Task OpenXml(TappedEventArgs args)
     {
-        if (string.IsNullOrWhiteSpace(xmlPath))
+        if (args.Source is not Control { DataContext: string xmlPath } control)
+            return;
+        if (control.FindAncestorOfType<Expander>() is not { DataContext: ModInfo modInfo })
+            return;
+
+
+        if (string.IsNullOrWhiteSpace(xmlPath) || string.IsNullOrWhiteSpace(modInfo.Path))
         {
-            _logger.LogWarning("Xml path is empty in OpenXmlCommand");
+            _logger.LogWarning("Xml path is null or whitespace for mod {ModName}", modInfo.Name);
+            App.Notification.ShowWarning($"open xml failed: empty path");
             return;
         }
 
-        if (!TryResolveXmlPath(xmlPath, out var absoluteXmlPath, out var title))
+        if (!TryResolveXmlPath(xmlPath, modInfo, out var absoluteXmlPath, out var title))
         {
             _logger.LogWarning("Failed to resolve xml path for display path {XmlPath}", xmlPath);
             App.Notification.ShowWarning($"open xml failed: {xmlPath}");
@@ -339,43 +350,27 @@ public partial class ModDatabaseViewModel : ViewModelBase, IRecipient<GameRootDi
         await Task.CompletedTask;
     }
 
-    private bool TryResolveXmlPath(string xmlPath, out string absoluteXmlPath, out string title)
+    private bool TryResolveXmlPath(string xmlPath, ModInfo mod, out string absoluteXmlPath, out string title)
     {
         absoluteXmlPath = string.Empty;
         title = xmlPath.Replace("\\", "/");
 
-        var candidateMods = Mods
-            .Where(mod => mod.XmlFilePaths.Contains(xmlPath))
-            .OrderByDescending(mod => ReferenceEquals(mod, SelectedItem))
-            .ToList();
-        foreach (var mod in candidateMods)
+        var modDirectory = ResolveModDirectory(mod.Path);
+        if (string.IsNullOrWhiteSpace(modDirectory))
         {
-            var modDirectory = ResolveModDirectory(mod.Path);
-            if (string.IsNullOrWhiteSpace(modDirectory))
-            {
-                continue;
-            }
-
-            var candidatePath = Path.Combine(modDirectory,
-                xmlPath.Replace('/', Path.DirectorySeparatorChar).Replace('\\', Path.DirectorySeparatorChar));
-            if (!File.Exists(candidatePath))
-            {
-                continue;
-            }
-
-            absoluteXmlPath = candidatePath;
-            title = $"{mod.Name}/{xmlPath.Replace("\\", "/")}";
-            return true;
+            return false;
         }
 
-        if (File.Exists(xmlPath))
+        var candidatePath = Path.Combine(modDirectory,
+            xmlPath.Replace('\\', '/'));
+        if (!File.Exists(candidatePath))
         {
-            absoluteXmlPath = xmlPath;
-            title = Path.GetFileName(xmlPath);
-            return true;
+            return false;
         }
 
-        return false;
+        absoluteXmlPath = candidatePath;
+        title = $"{mod.Name}/{xmlPath.Replace("\\", "/")}";
+        return true;
     }
 
     private string ResolveModDirectory(string modPath)

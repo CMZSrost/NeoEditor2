@@ -19,10 +19,6 @@
             <conv:ModBaseBackgroundConverter x:Key="ModBaseBackgroundConverter" />
             <conv:ModLoadTypeIconConverter x:Key="ModLoadTypeIconConverter" />
             <services:LocalizationService x:Key="Loc" />
-            <ResourceDictionary.MergedDictionaries>
-                <MergeResourceInclude Source="avares://NeoEditor/Templates/EditProfileTemplate.axaml" />
-                <MergeResourceInclude Source="avares://NeoEditor/Templates/DocumentTemplate.axaml" />
-            </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </Application.Resources>
 
@@ -49,10 +45,6 @@
                 </Expander>
             </StackPanel>
         </DataTemplate>
-        <!--  DocumentTemplate  -->
-        <StaticResource ResourceKey="PlainTextDocumentTemplate" />
-        <!--  EditProfileTemplate  -->
-        <StaticResource ResourceKey="EditProfileTemplate" />
         <DataTemplate DataType="io:FileInfo">
             <StackPanel Orientation="Horizontal" Spacing="4">
                 <avalonia:SymbolIcon IconVariant="Regular" Symbol="Document" />

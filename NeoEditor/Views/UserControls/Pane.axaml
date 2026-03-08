@@ -3,34 +3,25 @@
     xmlns="https://github.com/avaloniaui"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:avalonia="clr-namespace:FluentIcons.Avalonia;assembly=FluentIcons.Avalonia"
+    xmlns:behaviors="clr-namespace:NeoEditor.Helper.Behaviors"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:explorerPane="clr-namespace:NeoEditor.ViewModels.ExplorerPane"
+    xmlns:helper="clr-namespace:NeoEditor.Helper"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:model="clr-namespace:NeoEditor.Data.Model"
+    xmlns:system="clr-namespace:System;assembly=System.Runtime"
     xmlns:viewModels="clr-namespace:NeoEditor.ViewModels"
-    x:Name="Control"
+    x:Name="Root"
     d:DesignHeight="800"
     d:DesignWidth="600"
     mc:Ignorable="d">
-    <!-- <ScrollViewer> -->
-    <!--     <TabControl> -->
-    <!--         ~1~ <TabItem Header="ResourceManagerViewModel"> @1@ -->
-    <!--         ~1~     <explorerPane:ResourceManagerViewModel /> @1@ -->
-    <!--         ~1~ </TabItem> @1@ -->
-    <!--         <TabItem Header="ModDatabaseViewModel"> -->
-    <!--             <explorerPane:ModDatabaseViewModel /> -->
-    <!--         </TabItem> -->
-    <!--         <TabItem Header="ModIndexViewModel"> -->
-    <!--             <explorerPane:ModIndexViewModel /> -->
-    <!--         </TabItem> -->
-    <!--         <TabItem Header="SearchPaneViewModel"> -->
-    <!--             <explorerPane:SearchPaneViewModel /> -->
-    <!--         </TabItem> -->
-    <!--         <TabItem Header="SettingsPaneViewModel"> -->
-    <!--             <explorerPane:SettingsPaneViewModel /> -->
-    <!--         </TabItem> -->
-    <!--     </TabControl> -->
-    <!-- </ScrollViewer> -->
+    <Design.DataContext>
+        <!-- <explorerPane:ResourceManagerViewModel /> -->
+        <!-- <explorerPane:ModDatabaseViewModel /> -->
+        <explorerPane:ModIndexViewModel />
+        <!-- <explorerPane:SearchPaneViewModel /> -->
+        <!-- <explorerPane:SettingsPaneViewModel /> -->
+    </Design.DataContext>
     <UserControl.DataTemplates>
         <!--  资源管理器面板模板  -->
         <DataTemplate DataType="{x:Type explorerPane:ResourceManagerViewModel}">
@@ -174,6 +165,9 @@
                         Margin="8"
                         ItemsSource="{Binding Mods}"
                         SelectedItem="{Binding SelectedItem}">
+                        <Interaction.Behaviors>
+                            <behaviors:ContextMenuPlacementTargetBehavior />
+                        </Interaction.Behaviors>
                         <ListBox.Styles>
                             <Style Selector="ListBoxItem">
                                 <Setter Property="HorizontalAlignment" Value="Stretch" />
@@ -194,7 +188,7 @@
                                     <BehaviorCollectionTemplate>
                                         <BehaviorCollection>
                                             <EventTriggerBehavior EventName="DoubleTapped">
-                                                <InvokeCommandAction Command="{Binding ((explorerPane:ModDatabaseViewModel)DataContext).OpenXmlCommand, ElementName=ModList}" CommandParameter="{Binding}" />
+                                                <InvokeCommandAction Command="{Binding ((explorerPane:ModDatabaseViewModel)DataContext).OpenXmlCommand, ElementName=ModList}" PassEventArgsToCommand="True" />
                                             </EventTriggerBehavior>
                                         </BehaviorCollection>
                                     </BehaviorCollectionTemplate>
@@ -206,19 +200,19 @@
                             <ContextMenu>
                                 <MenuItem
                                     Command="{Binding OpenModPathCommand}"
-                                    CommandParameter="{Binding SelectedItem}"
+                                    CommandParameter="{Binding $parent[ContextMenu].PlacementTarget.(SelectingItemsControl.SelectedItem)}"
                                     Header="{Binding Loc[OpenModPath]}"
-                                    IsEnabled="{Binding SelectedItem, Converter={x:Static ObjectConverters.IsNotNull}}" />
+                                    IsEnabled="{Binding $parent[ContextMenu].PlacementTarget.(SelectingItemsControl.SelectedItem), Converter={x:Static ObjectConverters.IsNotNull}}" />
                                 <MenuItem
                                     Command="{Binding ClearModsCommand}"
-                                    CommandParameter="{Binding SelectedItem}"
+                                    CommandParameter="{Binding $parent[ContextMenu].PlacementTarget.(SelectingItemsControl.SelectedItem)}"
                                     Header="{Binding Loc[ClearMod]}"
-                                    IsEnabled="{Binding SelectedItem, Converter={x:Static ObjectConverters.IsNotNull}}" />
+                                    IsEnabled="{Binding $parent[ContextMenu].PlacementTarget.(SelectingItemsControl.SelectedItem), Converter={x:Static ObjectConverters.IsNotNull}}" />
                                 <MenuItem
                                     Command="{Binding LoadModCommand}"
-                                    CommandParameter="{Binding SelectedItem}"
+                                    CommandParameter="{Binding $parent[ContextMenu].PlacementTarget.(SelectingItemsControl.SelectedItem)}"
                                     Header="{Binding Loc[LoadMod]}"
-                                    IsEnabled="{Binding SelectedItem, Converter={x:Static ObjectConverters.IsNotNull}}" />
+                                    IsEnabled="{Binding $parent[ContextMenu].PlacementTarget.(SelectingItemsControl.SelectedItem), Converter={x:Static ObjectConverters.IsNotNull}}" />
                             </ContextMenu>
                         </ListBox.ContextMenu>
                     </ListBox>
@@ -229,6 +223,40 @@
         <!--  php配置文件  -->
         <DataTemplate DataType="explorerPane:ModIndexViewModel">
             <ScrollViewer Width="500">
+                <ScrollViewer.DataTemplates>
+                    <DataTemplate DataType="model:ModInfo">
+                        <StackPanel Margin="4">
+                            <Grid ColumnDefinitions="Auto,*,Auto" RowDefinitions="Auto,*">
+                                <TextBlock
+                                    Background="{Binding IsBase, Converter={StaticResource ModBaseBackgroundConverter}}"
+                                    FontWeight="Bold"
+                                    Text="{Binding Name}" />
+                                <TextBlock
+                                    Grid.Row="1"
+                                    Grid.Column="0"
+                                    FontSize="11"
+                                    Text="{Binding Path}"
+                                    TextWrapping="Wrap" />
+                                <StackPanel
+                                    Grid.Row="0"
+                                    Grid.Column="2"
+                                    HorizontalAlignment="Center"
+                                    Orientation="Horizontal"
+                                    Spacing="8">
+                                    <TextBlock Text="{Binding LastModified}" />
+                                </StackPanel>
+                                <StackPanel
+                                    Grid.Row="1"
+                                    Grid.Column="2"
+                                    HorizontalAlignment="Center"
+                                    Orientation="Horizontal"
+                                    Spacing="8">
+                                    <TextBlock Text="{Binding LastImport}" />
+                                </StackPanel>
+                            </Grid>
+                        </StackPanel>
+                    </DataTemplate>
+                </ScrollViewer.DataTemplates>
                 <StackPanel Margin="8" Spacing="5">
                     <TextBlock FontWeight="Bold" Text="{Binding Loc[ProfileDatabase]}" />
                     <StackPanel Orientation="Horizontal" Spacing="5">
@@ -274,10 +302,10 @@
                         ItemsSource="{Binding Profiles}"
                         SelectedItem="{Binding SelectedProfile}">
                         <ListBox.Styles>
-                            <Style Selector="ListBoxItem">
+                            <Style Selector="ListBox#ProfileList &gt; ListBoxItem">
                                 <Setter Property="HorizontalAlignment" Value="Stretch" />
                             </Style>
-                            <Style Selector="ListBoxItem Expander">
+                            <Style Selector="ListBox#ProfileList &gt; ListBoxItem Expander">
                                 <Setter Property="(Interaction.Behaviors)">
                                     <BehaviorCollectionTemplate>
                                         <BehaviorCollection>
@@ -288,19 +316,26 @@
                                     </BehaviorCollectionTemplate>
                                 </Setter>
                             </Style>
-                            <Style Selector="ListBoxItem">
+                            <Style Selector="ListBox#ProfileList &gt; ListBoxItem">
+                                <Setter Property="(Interaction.Behaviors)">
+                                    <BehaviorCollectionTemplate>
+                                        <BehaviorCollection>
+                                            <behaviors:ContextMenuPlacementTargetBehavior />
+                                        </BehaviorCollection>
+                                    </BehaviorCollectionTemplate>
+                                </Setter>
                                 <Setter Property="ContextMenu">
                                     <Setter.Value>
                                         <ContextMenu DataContext="{Binding ((explorerPane:ModIndexViewModel)DataContext), ElementName=ProfileList}">
                                             <MenuItem
                                                 Command="{Binding EditProfileCommand}"
-                                                CommandParameter="{Binding SelectedProfile}"
+                                                CommandParameter="{Binding $parent[ContextMenu].PlacementTarget.DataContext}"
                                                 Header="{Binding Loc[EditProfile]}" />
                                             <MenuItem
                                                 Command="{Binding ClearProfileCommand}"
-                                                CommandParameter="{Binding SelectedProfile}"
+                                                CommandParameter="{Binding $parent[ContextMenu].PlacementTarget.DataContext}"
                                                 Header="{Binding Loc[ClearProfile]}"
-                                                IsEnabled="{Binding SelectedProfile, Converter={x:Static ObjectConverters.IsNotNull}}" />
+                                                IsEnabled="{Binding $parent[ContextMenu].PlacementTarget.DataContext, Converter={x:Static ObjectConverters.IsNotNull}}" />
                                         </ContextMenu>
                                     </Setter.Value>
                                 </Setter>
@@ -331,4 +366,5 @@
             </ScrollViewer>
         </DataTemplate>
     </UserControl.DataTemplates>
+    <ContentControl Content="{Binding DataContext, ElementName=Root}" />
 </UserControl>

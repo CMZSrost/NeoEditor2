@@ -37,10 +37,15 @@ public partial class ProfileInfo : ObservableObject
     [Display(Name = "Path")]
     public string Path { get; set; } = ""; // 相对或绝对路径
 
+
     [Column("Content", TypeName = "longtext")]
     [Required]
     [Display(Name = "ProfileContent")]
-    public string Content { get; set; } = ""; // 相对或绝对路径
+    public string Content
+    {
+        get;
+        set => SetProperty(ref field, value);
+    } // 相对或绝对路径
 
     [Column("CreateTime", TypeName = "datetime")]
     [Display(Name = "CreateTime")]

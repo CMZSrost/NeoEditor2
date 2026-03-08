@@ -11,6 +11,7 @@
     <ItemGroup>
         <Folder Include="Data\Command\"/>
         <AvaloniaResource Include="Assets\**"/>
+        <Folder Include="Templates\"/>
         <Folder Include="Views\MainContent\"/>
     </ItemGroup>
 

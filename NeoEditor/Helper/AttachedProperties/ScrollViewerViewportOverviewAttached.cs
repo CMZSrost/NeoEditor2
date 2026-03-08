@@ -4,7 +4,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 
-namespace NeoEditor.Helper;
+namespace NeoEditor.Helper.AttachedProperties;
 
 public sealed class ScrollViewerViewportOverviewAttached
 {
@@ -33,10 +33,12 @@ public sealed class ScrollViewerViewportOverviewAttached
         AvaloniaProperty.RegisterAttached<ScrollViewerViewportOverviewAttached, ScrollViewer, Control?>("Track");
 
     public static readonly AttachedProperty<Control?> ViewportThumbProperty =
-        AvaloniaProperty.RegisterAttached<ScrollViewerViewportOverviewAttached, ScrollViewer, Control?>("ViewportThumb");
+        AvaloniaProperty
+            .RegisterAttached<ScrollViewerViewportOverviewAttached, ScrollViewer, Control?>("ViewportThumb");
 
     public static readonly AttachedProperty<double> MinThumbHeightProperty =
-        AvaloniaProperty.RegisterAttached<ScrollViewerViewportOverviewAttached, ScrollViewer, double>("MinThumbHeight", 12d);
+        AvaloniaProperty.RegisterAttached<ScrollViewerViewportOverviewAttached, ScrollViewer, double>("MinThumbHeight",
+            12d);
 
     static ScrollViewerViewportOverviewAttached()
     {
@@ -334,4 +336,3 @@ public sealed class ScrollViewerViewportOverviewAttached
         return true;
     }
 }
-

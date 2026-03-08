@@ -76,7 +76,7 @@
             <!--  侧边栏内容区域  -->
             <SplitView.Pane>
                 <!-- <ContentControl Content="{Binding CurrentPaneContent}" /> -->
-                <userControls:Pane Content="{Binding CurrentPaneContent}" />
+                <userControls:Pane DataContext="{Binding CurrentPaneContent}" />
             </SplitView.Pane>
 
             <!--  主内容区（右侧）  -->
@@ -132,6 +132,15 @@
                                     OldXml="{Binding OldXml}"
                                     ReadOnly="False" />
                                 <!-- <userControls:DiffView NewText="{Binding NewXml}" OldText="{Binding OldXml}" /> -->
+                            </DataTemplate>
+                            <DataTemplate DataType="vm:EditProfileViewModel">
+                                <userControls:EditProfileView />
+                            </DataTemplate>
+                            <DataTemplate DataType="mainContent:PlainTextDocument">
+                                <StackPanel>
+                                    <TextBlock Text="{Binding Title}" />
+                                    <TextBlock Text="{Binding Content}" />
+                                </StackPanel>
                             </DataTemplate>
                             <DataTemplate x:DataType="mainContent:XmlDocument">
                                 <avaloniaEdit:TextEditor

@@ -5,7 +5,7 @@ using Avalonia;
 using Avalonia.Controls;
 using AvaloniaEdit;
 
-namespace NeoEditor.Helper;
+namespace NeoEditor.Helper.AttachedProperties;
 
 public enum ScrollSyncMode
 {
