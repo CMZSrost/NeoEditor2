@@ -41,7 +41,7 @@ using ModIndexViewModel = NeoEditor.ViewModels.ExplorerPane.ModIndexViewModel;
 
 namespace NeoEditor.ViewModels;
 
-public partial class MainWindowViewModel : ViewModelBase, IRecipient<EditProfileMessage>, IRecipient<OpenXmlDocumentMessage>
+public partial class MainWindowViewModel : ViewModelBase, IRecipient<EditProfileMessage>, IRecipient<OpenXmlDocumentMessage>, IRecipient<OpenModGameDataDocumentMessage>
 {
     private readonly IConfigService _config;
     public AppConfig Config => _config.Config;
@@ -50,18 +50,12 @@ public partial class MainWindowViewModel : ViewModelBase, IRecipient<EditProfile
 
     public ObservableCollection<IDocumentBase> Documents { get; } =
     [
-        // new PlainTextDocument()
-        // {
-        //     Title = "Welcome",
-        //     Content = "This is the NeoEditor, a modding tool for Neople games.\n\n" +
-        //               "Use the sidebar to explore resources, manage mods, and edit profiles.\n\n" +
-        //               "Click 'Set Game Folder' in the Project menu to get started."
-        // },
-        new XmlDocument(
-            xmlPath: @"D:\software\Steam\steamapps\common\Neo Scavenger\data\attackmodes.xml"
-        )
+        new PlainTextDocument()
         {
-            Title = "XML Diff Example",
+            Title = "Welcome",
+            Content = "This is the NeoEditor, a modding tool for Neople games.\n\n" +
+                      "Use the sidebar to explore resources, manage mods, and edit profiles.\n\n" +
+                      "Click 'Set Game Folder' in the Project menu to get started."
         }
     ];
 
@@ -95,12 +89,6 @@ public partial class MainWindowViewModel : ViewModelBase, IRecipient<EditProfile
         DockFactory = serviceProvider.GetRequiredService<Factory>();
 
         DockFactory.DockableClosing += ClosingDockable;
-
-        // _serviceProvider.GetRequiredService<ResourceManagerViewModel>();
-        // _serviceProvider.GetRequiredService<SearchPaneViewModel>();
-        // _serviceProvider.GetRequiredService<ModIndexViewModel>();
-        // _serviceProvider.GetRequiredService<SettingsPaneViewModel>();
-        // _serviceProvider.GetRequiredService<ModDatabaseViewModel>();
     }
 
     #region SideBar
@@ -223,9 +211,50 @@ public partial class MainWindowViewModel : ViewModelBase, IRecipient<EditProfile
     public void Receive(EditProfileMessage message)
     {
         _logger.LogInformation($"Loading profile: {message.ProfileInfo.Name}");
+
+        if (FindOpenEditProfileDocument(message.ProfileInfo) is { } existingDocument)
+        {
+            ActivateDocument(existingDocument);
+            return;
+        }
+
         var factory = _serviceProvider.GetRequiredService<Func<ProfileInfo, EditProfileViewModel>>();
         var vm = factory(message.ProfileInfo);
         Documents.Add(vm);
+        ActivateDocument(vm);
+
+        if (Documents.Count >= 2)
+        {
+            IsDockingEnabled = true;
+        }
+    }
+
+    public void Receive(OpenModGameDataDocumentMessage message)
+    {
+        _logger.LogInformation("Opening mod game data document: {ModName}", message.ModInfo.Name);
+
+        if (FindOpenModGameDataDocument(message.ModInfo) is { } existingDocument)
+        {
+            existingDocument.ModInfo = message.ModInfo;
+            existingDocument.Title = $"Data: {message.ModInfo.Name}";
+            ActivateDocument(existingDocument);
+            return;
+        }
+
+        var document = new ModGameDataDocument
+        {
+            Title = $"Data: {message.ModInfo.Name}",
+            ModInfo = message.ModInfo,
+            ReadOnly = true,
+        };
+
+        Documents.Add(document);
+        ActivateDocument(document);
+
+        if (Documents.Count >= 2)
+        {
+            IsDockingEnabled = true;
+        }
     }
 
     public void Receive(OpenXmlDocumentMessage message)
@@ -254,6 +283,104 @@ public partial class MainWindowViewModel : ViewModelBase, IRecipient<EditProfile
         {
             IsDockingEnabled = true;
         }
+    }
+
+    private EditProfileViewModel? FindOpenEditProfileDocument(ProfileInfo profileInfo)
+    {
+        var documentKey = GetEditProfileDocumentKey(profileInfo);
+        return Documents
+            .OfType<EditProfileViewModel>()
+            .FirstOrDefault(doc => string.Equals(GetEditProfileDocumentKey(doc.ProfileInfo), documentKey,
+                StringComparison.OrdinalIgnoreCase));
+    }
+
+    private string GetEditProfileDocumentKey(ProfileInfo? profileInfo)
+    {
+        if (profileInfo is null)
+        {
+            return string.Empty;
+        }
+
+        if (profileInfo.ProfileId != 0)
+        {
+            return $"profileid:{profileInfo.ProfileId}";
+        }
+
+        var normalizedPath = NormalizeProfileDocumentPath(profileInfo.Path);
+        if (!string.IsNullOrWhiteSpace(normalizedPath))
+        {
+            return $"path:{normalizedPath}";
+        }
+
+        return $"name:{profileInfo.Name}";
+    }
+
+    private string NormalizeProfileDocumentPath(string? profilePath)
+    {
+        if (string.IsNullOrWhiteSpace(profilePath))
+        {
+            return string.Empty;
+        }
+
+        var path = profilePath.Replace('/', Path.DirectorySeparatorChar)
+            .Replace('\\', Path.DirectorySeparatorChar);
+        if (Path.IsPathRooted(path))
+        {
+            return Path.GetFullPath(path);
+        }
+
+        return string.IsNullOrWhiteSpace(Config.GameRootDir)
+            ? path.TrimStart(Path.DirectorySeparatorChar)
+            : Path.GetFullPath(Path.Combine(Config.GameRootDir, path));
+    }
+
+    private ModGameDataDocument? FindOpenModGameDataDocument(ModInfo modInfo)
+    {
+        var documentKey = GetModGameDataDocumentKey(modInfo);
+        return Documents
+            .OfType<ModGameDataDocument>()
+            .FirstOrDefault(doc => string.Equals(GetModGameDataDocumentKey(doc.ModInfo), documentKey,
+                StringComparison.OrdinalIgnoreCase));
+    }
+
+    private string GetModGameDataDocumentKey(ModInfo? modInfo)
+    {
+        if (modInfo is null)
+        {
+            return string.Empty;
+        }
+
+        if (modInfo.ModId != 0)
+        {
+            return $"modid:{modInfo.ModId}";
+        }
+
+        var normalizedPath = NormalizeModDocumentPath(modInfo.Path);
+        if (!string.IsNullOrWhiteSpace(normalizedPath))
+        {
+            return $"path:{normalizedPath}";
+        }
+
+        return $"name:{modInfo.Name}";
+    }
+
+    private string NormalizeModDocumentPath(string? modPath)
+    {
+        if (string.IsNullOrWhiteSpace(modPath))
+        {
+            return string.Empty;
+        }
+
+        var path = modPath.Replace('/', Path.DirectorySeparatorChar)
+            .Replace('\\', Path.DirectorySeparatorChar);
+        if (Path.IsPathRooted(path))
+        {
+            return Path.GetFullPath(path);
+        }
+
+        return string.IsNullOrWhiteSpace(Config.GameRootDir)
+            ? path.TrimStart(Path.DirectorySeparatorChar)
+            : Path.GetFullPath(Path.Combine(Config.GameRootDir, path));
     }
 
     private XmlDocument? FindOpenXmlDocument(string normalizedPath)

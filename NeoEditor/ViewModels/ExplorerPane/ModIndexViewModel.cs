@@ -24,6 +24,7 @@ using NeoEditor.Data.Messages;
 using NeoEditor.Data.Model;
 using NeoEditor.Helper;
 using NeoEditor.Services;
+using Newtonsoft.Json;
 
 namespace NeoEditor.ViewModels.ExplorerPane;
 
@@ -38,17 +39,13 @@ public partial class ModIndexViewModel : ViewModelBase, IRecipient<InitProfileMe
     public ObservableCollection<ProfileInfo> Profiles { get; set; } = [];
     [ObservableProperty] public partial ProfileInfo? SelectedProfile { get; set; }
 
-    private readonly PhpParser _phpParser;
 
     private readonly IDbContextFactory<EditorDbContext> _factory;
 
-    private readonly IMapper _mapper;
     private readonly ILogger<ModIndexViewModel> _logger;
 
     public ModIndexViewModel() : this(
-        App.ServiceProvider!.GetRequiredService<PhpParser>(),
         App.ServiceProvider!.GetRequiredService<IDbContextFactory<EditorDbContext>>(),
-        App.ServiceProvider!.GetRequiredService<IMapper>(),
         App.ServiceProvider!.GetRequiredService<ILogger<ModIndexViewModel>>(),
         App.ServiceProvider!.GetRequiredService<IConfigService>(),
         App.ServiceProvider!.GetRequiredService<IProfileManager>()
@@ -56,17 +53,16 @@ public partial class ModIndexViewModel : ViewModelBase, IRecipient<InitProfileMe
     {
     }
 
-    public ModIndexViewModel(PhpParser phpParser, IDbContextFactory<EditorDbContext> factory, IMapper mapper,
+    public ModIndexViewModel(IDbContextFactory<EditorDbContext> factory,
         ILogger<ModIndexViewModel> logger,
         IConfigService configService, IProfileManager profileManager)
     {
-        _phpParser = phpParser;
         _factory = factory;
-        _mapper = mapper;
         _logger = logger;
         _config = configService;
         _profileManager = profileManager;
 
+        Messenger.Send(new InitProfileMessage());
         Dispatcher.UIThread.InvokeAsync(() => RefreshProfiles());
     }
 
@@ -130,7 +126,6 @@ public partial class ModIndexViewModel : ViewModelBase, IRecipient<InitProfileMe
     [RelayCommand]
     public async Task RefreshProfiles(string profilePath = "")
     {
-        Messenger.Send(new InitProfileMessage());
         await using var db = await _factory.CreateDbContextAsync();
         Profiles.Clear();
         foreach (var profile in db.ProfileInfos.ToList())
@@ -198,7 +193,12 @@ public partial class ModIndexViewModel : ViewModelBase, IRecipient<InitProfileMe
         var profilePath = Path.Combine(Config.GameRootDir, "getmods.php");
         try
         {
-            Info = _profileManager.LoadProfile("Game", "", profilePath);
+            using var db = _factory.CreateDbContext();
+            if (db.ProfileInfos.Find(-1) is not null) return;
+            var profile = _profileManager.LoadProfile("Game", "", profilePath);
+            profile.ModLoadInfos.AddRange(_profileManager.LoadMods(profile.Content));
+            db.ProfileInfos.Add(profile);
+            db.SaveChanges();
         }
         catch (Exception e)
         {

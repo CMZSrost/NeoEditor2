@@ -1,11 +1,7 @@
-﻿using System.Collections.Generic;
-using System.ComponentModel;
-using System.IO;
-using System.Runtime.CompilerServices;
-using Avalonia.Threading;
+﻿using System.IO;
 using AvaloniaEdit.Document;
 using CommunityToolkit.Mvvm.ComponentModel;
-using Microsoft.XmlDiffPatch;
+using NeoEditor.Data.Model;
 using NeoEditor.Helper;
 
 namespace NeoEditor.ViewModels.MainContent;
@@ -30,6 +26,7 @@ public abstract partial class DocumentViewBase : ViewModelBase, IDocumentBase
     [ObservableProperty] public partial bool CanClose { get; set; } = true;
     [ObservableProperty] public partial bool NeedNotifyWhenClose { get; set; }
 }
+
 public partial class XmlDocument : DocumentBase
 {
     [ObservableProperty] public partial string XmlPath { get; set; }
@@ -61,6 +58,12 @@ public partial class XmlDiffDocument : DocumentBase
             Text = XmlCompareHelper.Compare(oldPath, newPath)
         };
     }
+}
+
+public partial class ModGameDataDocument : DocumentBase
+{
+    [ObservableProperty] public partial ModInfo? ModInfo { get; set; }
+    [ObservableProperty] public partial bool ReadOnly { get; set; } = true;
 }
 
 public partial class PlainTextDocument : DocumentBase

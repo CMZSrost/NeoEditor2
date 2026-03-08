@@ -6,7 +6,7 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:userControls="clr-namespace:NeoEditor.Views.UserControls"
     xmlns:viewModels="clr-namespace:NeoEditor.ViewModels"
-    x:Name="GameDataGrid"
+    x:Name="Root"
     d:DesignHeight="450"
     d:DesignWidth="800"
     mc:Ignorable="d">
@@ -15,7 +15,7 @@
         <TextBox
             Margin="5"
             DockPanel.Dock="Top"
-            Text="{Binding FilterText, Mode=TwoWay, ElementName=GameDataGrid}"
+            Text="{Binding FilterText, Mode=TwoWay, ElementName=Root}"
             Watermark="搜索..." />
 
         <!--  DataGrid  -->
@@ -25,6 +25,7 @@
             CanUserReorderColumns="True"
             CanUserResizeColumns="True"
             CanUserSortColumns="True"
-            ItemsSource="{Binding ItemsSource, ElementName=GameDataGrid}" />
+            IsReadOnly="{Binding ReadOnly, ElementName=Root}"
+            ItemsSource="{Binding ItemsSource, ElementName=Root}" />
     </DockPanel>
 </UserControl>

@@ -49,7 +49,6 @@ public partial class ModDatabaseViewModel : ViewModelBase, IRecipient<GameRootDi
 
     private readonly ILogger<ModDatabaseViewModel> _logger;
     public ObservableCollection<ModInfo> Mods { get; set; } = [];
-    [ObservableProperty] public partial ModInfo? Info { get; set; }
 
     [ObservableProperty] public partial string Filter { get; set; } = "";
     [ObservableProperty] public partial ModInfo? SelectedItem { get; set; }
@@ -159,6 +158,18 @@ public partial class ModDatabaseViewModel : ViewModelBase, IRecipient<GameRootDi
     }
 
     [RelayCommand]
+    private void ShowData(ModInfo? selectedItem = null)
+    {
+        if (selectedItem is null)
+        {
+            _logger.LogWarning("ModInfo is null in ShowDataCommand");
+            return;
+        }
+
+        Messenger.Send(new OpenModGameDataDocumentMessage(selectedItem));
+    }
+
+    [RelayCommand]
     private async Task OpenModPath(ModInfo? selectedItem = null)
     {
         if (App.Current is not
@@ -245,24 +256,19 @@ public partial class ModDatabaseViewModel : ViewModelBase, IRecipient<GameRootDi
         try
         {
             using var db = _editorContextFactory.CreateDbContext();
-            if (db.ModInfos.Find(-1) is { } baseMod)
+            if (db.ModInfos.Find(-1) is not null) return;
+            var mod = new ModInfo
             {
-                Info = baseMod;
-            }
-            else
-            {
-                Info = new ModInfo
-                {
-                    ModId = -1,
-                    Name = "Game",
-                    Path = "data",
-                    IsBase = true,
-                    LastImport = DateTime.Now,
-                    LastModified = DateTime.Now,
-                };
-                db.ModInfos.Add(Info);
-                db.SaveChanges();
-            }
+                ModId = -1,
+                Name = "Game",
+                Path = "data",
+                IsBase = true,
+                LastImport = DateTime.Now,
+                LastModified = DateTime.Now,
+            };
+            db.ModInfos.Add(mod);
+            db.SaveChanges();
+            // Mods.Add(mod);
         }
         catch (Exception e)
         {

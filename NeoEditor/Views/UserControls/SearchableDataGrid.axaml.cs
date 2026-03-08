@@ -23,6 +23,7 @@ public partial class SearchableDataGrid : UserControl
 {
     private LocalizationService Loc;
     private readonly ILogger<SearchableDataGrid> _logger;
+    public static readonly StyledProperty<bool> ReadOnlyProperty = AvaloniaProperty.Register<SearchableDataGrid, bool>("ReadOnly");
 
     public IEnumerable? ItemsSource // ObservableCollection<object>不行，必须IEnumerable，否则无法绑定到DataGrid
     {
@@ -39,6 +40,12 @@ public partial class SearchableDataGrid : UserControl
     {
         get { return (string?)GetValue(FilterTextProperty); }
         set { SetValue(FilterTextProperty, value); }
+    }
+
+    public bool ReadOnly
+    {
+        get { return (bool)GetValue(ReadOnlyProperty); }
+        set { SetValue(ReadOnlyProperty, value); }
     }
 
 

@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
+using Avalonia.Interactivity;
 using Avalonia.Xaml.Interactivity;
 
 namespace NeoEditor.Helper.Behaviors;
@@ -17,8 +18,8 @@ public class ContextMenuPlacementTargetBehavior : Behavior<Control>
         }
 
         AssociatedObject.PropertyChanged += OnAssociatedObjectPropertyChanged;
-        AssociatedObject.PointerPressed += OnAssociatedObjectPointerPressed;
-        UpdatePlacementTarget();
+        AssociatedObject.AddHandler(InputElement.PointerPressedEvent, OnAssociatedObjectPointerPressed,
+            RoutingStrategies.Tunnel, handledEventsToo: true);
     }
 
     protected override void OnDetaching()
@@ -26,7 +27,7 @@ public class ContextMenuPlacementTargetBehavior : Behavior<Control>
         if (AssociatedObject != null)
         {
             AssociatedObject.PropertyChanged -= OnAssociatedObjectPropertyChanged;
-            AssociatedObject.PointerPressed -= OnAssociatedObjectPointerPressed;
+            AssociatedObject.RemoveHandler(InputElement.PointerPressedEvent, OnAssociatedObjectPointerPressed);
         }
 
         base.OnDetaching();
@@ -36,7 +37,7 @@ public class ContextMenuPlacementTargetBehavior : Behavior<Control>
     {
         if (e.Property == Control.ContextMenuProperty)
         {
-            UpdatePlacementTarget();
+            ResetPlacementTarget();
         }
     }
 
@@ -52,6 +53,16 @@ public class ContextMenuPlacementTargetBehavior : Behavior<Control>
         {
             UpdatePlacementTarget();
         }
+    }
+
+    private void ResetPlacementTarget()
+    {
+        if (AssociatedObject?.ContextMenu == null)
+        {
+            return;
+        }
+
+        AssociatedObject.ContextMenu.PlacementTarget = null;
     }
 
     private void UpdatePlacementTarget()

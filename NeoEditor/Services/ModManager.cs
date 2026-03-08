@@ -102,11 +102,12 @@ public class ModManager : IModManager
                 IsBase = false,
                 LastImport = DateTime.Now
             };
-            await LoadModAsync(modInfo);
 
             await using var dbContext = await _editorDbFactory.CreateDbContextAsync();
             await dbContext.ModInfos.AddAsync(modInfo);
             await dbContext.SaveChangesAsync();
+
+            await LoadModAsync(modInfo);
             App.Notification!.ShowSuccess($"mod {modFullPath} imported");
         }
         catch (Exception e)

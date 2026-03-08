@@ -79,13 +79,14 @@ public partial class EditProfileViewModel : ViewModelBase, IDocumentBase
         _isLoadingEntries = true;
         try
         {
+            var originalContent = ProfileInfo.Content;
             foreach (var entry in Entries)
             {
                 entry.PropertyChanged -= OnEntryPropertyChanged;
             }
 
             Entries.Clear();
-            var entries = _phpParser.ParseModsContent(ProfileInfo.Content);
+            var entries = _phpParser.ParseModsContent(originalContent);
             foreach (var entry in entries)
             {
                 Entries.Add(entry);
@@ -94,6 +95,7 @@ public partial class EditProfileViewModel : ViewModelBase, IDocumentBase
         finally
         {
             _isLoadingEntries = false;
+            AddCommand.NotifyCanExecuteChanged();
         }
     }
 
@@ -201,17 +203,28 @@ public partial class EditProfileViewModel : ViewModelBase, IDocumentBase
             }
         }
 
-        SynchronizeProfileContent(markAsDirty: !_isLoadingEntries);
+        if (_isLoadingEntries)
+        {
+            AddCommand.NotifyCanExecuteChanged();
+            return;
+        }
+
+        SynchronizeProfileContent(markAsDirty: true);
     }
 
     private void OnEntryPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
+        if (_isLoadingEntries)
+        {
+            return;
+        }
+
         if (e.PropertyName == nameof(ModEntry.Name) ||
             e.PropertyName == nameof(ModEntry.Path) ||
             e.PropertyName == nameof(ModEntry.Type) ||
             string.IsNullOrWhiteSpace(e.PropertyName))
         {
-            SynchronizeProfileContent(markAsDirty: !_isLoadingEntries);
+            SynchronizeProfileContent(markAsDirty: true);
         }
     }
 

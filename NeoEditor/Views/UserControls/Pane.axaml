@@ -17,8 +17,8 @@
     mc:Ignorable="d">
     <Design.DataContext>
         <!-- <explorerPane:ResourceManagerViewModel /> -->
-        <!-- <explorerPane:ModDatabaseViewModel /> -->
-        <explorerPane:ModIndexViewModel />
+        <explorerPane:ModDatabaseViewModel />
+        <!-- <explorerPane:ModIndexViewModel /> -->
         <!-- <explorerPane:SearchPaneViewModel /> -->
         <!-- <explorerPane:SettingsPaneViewModel /> -->
     </Design.DataContext>
@@ -94,10 +94,10 @@
         <!--  Mod数据库  -->
         <DataTemplate DataType="explorerPane:ModDatabaseViewModel">
             <ScrollViewer Width="500">
-                <StackPanel>
+                <StackPanel Spacing="4">
                     <TextBlock FontWeight="Bold" Text="{Binding Loc[ModDatabase]}" />
                     <StackPanel Orientation="Horizontal">
-                        <StackPanel Orientation="Horizontal">
+                        <StackPanel Orientation="Horizontal" Spacing="4">
                             <Button Command="{Binding CreateModCommand}">
                                 <avalonia:SymbolIcon Symbol="AddCircle" ToolTip.Tip="{Binding Loc[CreateMod]}" />
                             </Button>
@@ -146,23 +146,12 @@
                             </SplitButton>
                         </StackPanel>
                     </StackPanel>
-                    <StackPanel
-                        VerticalAlignment="Center"
-                        Orientation="Horizontal"
-                        Spacing="5">
-                        <avalonia:SymbolIcon Symbol="Games" />
-                        <TextBlock Text="Game" />
-                    </StackPanel>
-                    <ContentControl Content="{Binding Info}" />
-                    <GridSplitter />
                     <TextBox
-                        Margin="8"
                         ClearSelectionOnLostFocus="True"
                         Text="{Binding Filter}"
                         Watermark="{Binding Loc[KeywordInput]}" />
                     <ListBox
                         x:Name="ModList"
-                        Margin="8"
                         ItemsSource="{Binding Mods}"
                         SelectedItem="{Binding SelectedItem}">
                         <Interaction.Behaviors>
@@ -204,6 +193,11 @@
                                     Header="{Binding Loc[OpenModPath]}"
                                     IsEnabled="{Binding $parent[ContextMenu].PlacementTarget.(SelectingItemsControl.SelectedItem), Converter={x:Static ObjectConverters.IsNotNull}}" />
                                 <MenuItem
+                                    Command="{Binding ShowDataCommand}"
+                                    CommandParameter="{Binding $parent[ContextMenu].PlacementTarget.(SelectingItemsControl.SelectedItem)}"
+                                    Header="{Binding Loc[ShowData]}"
+                                    IsEnabled="{Binding $parent[ContextMenu].PlacementTarget.(SelectingItemsControl.SelectedItem), Converter={x:Static ObjectConverters.IsNotNull}}" />
+                                <MenuItem
                                     Command="{Binding ClearModsCommand}"
                                     CommandParameter="{Binding $parent[ContextMenu].PlacementTarget.(SelectingItemsControl.SelectedItem)}"
                                     Header="{Binding Loc[ClearMod]}"
@@ -225,7 +219,7 @@
             <ScrollViewer Width="500">
                 <ScrollViewer.DataTemplates>
                     <DataTemplate DataType="model:ModInfo">
-                        <StackPanel Margin="4">
+                        <StackPanel>
                             <Grid ColumnDefinitions="Auto,*,Auto" RowDefinitions="Auto,*">
                                 <TextBlock
                                     Background="{Binding IsBase, Converter={StaticResource ModBaseBackgroundConverter}}"
@@ -257,7 +251,7 @@
                         </StackPanel>
                     </DataTemplate>
                 </ScrollViewer.DataTemplates>
-                <StackPanel Margin="8" Spacing="5">
+                <StackPanel Spacing="5">
                     <TextBlock FontWeight="Bold" Text="{Binding Loc[ProfileDatabase]}" />
                     <StackPanel Orientation="Horizontal" Spacing="5">
                         <Button Command="{Binding AddProfileCommand}">
@@ -280,23 +274,6 @@
                         </Button>
                     </StackPanel>
 
-                    <StackPanel
-                        VerticalAlignment="Center"
-                        Orientation="Horizontal"
-                        Spacing="5">
-                        <avalonia:SymbolIcon Symbol="Games" />
-                        <TextBlock Text="Game" />
-                    </StackPanel>
-                    <ContentControl Content="{Binding Info}" />
-                    <GridSplitter />
-
-                    <StackPanel
-                        VerticalAlignment="Center"
-                        Orientation="Horizontal"
-                        Spacing="5">
-                        <avalonia:SymbolIcon Symbol="Edit" />
-                        <TextBlock Text="{Binding Loc[OtherProfiles]}" />
-                    </StackPanel>
                     <ListBox
                         x:Name="ProfileList"
                         ItemsSource="{Binding Profiles}"
@@ -356,10 +333,7 @@
         <DataTemplate DataType="{x:Type explorerPane:SettingsPaneViewModel}">
             <ScrollViewer Width="500">
                 <StackPanel>
-                    <TextBlock
-                        Margin="8"
-                        FontWeight="Bold"
-                        Text="{Binding Loc[Settings]}" />
+                    <TextBlock FontWeight="Bold" Text="{Binding Loc[Settings]}" />
                     <GridSplitter />
                     <ContentControl Content="{Binding Config}" />
                 </StackPanel>

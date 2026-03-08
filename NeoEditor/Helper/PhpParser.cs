@@ -27,7 +27,7 @@ public class PhpParser
 
         var result = dict.Select(kv => new ModEntry { Name = kv.Key, Path = kv.Value }).ToList();
         Console.WriteLine(
-            $"parsed {result.Count} mods from getmods.php\n{JsonConvert.SerializeObject(result, Formatting.Indented)}");
+            $"parsed {result.Count} mods from getmods.php\n");
         return result;
     }
 
