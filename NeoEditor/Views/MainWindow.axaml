@@ -50,31 +50,31 @@
             Margin="4"
             Orientation="Vertical"
             Spacing="4">
-            <Button Command="{Binding TogglePaneCommand}" CommandParameter="Explorer">
+            <Button Command="{Binding SideBar.TogglePaneCommand}" CommandParameter="Explorer">
                 <avalonia:SymbolIcon IconVariant="Regular" Symbol="Folder" />
             </Button>
-            <Button Command="{Binding TogglePaneCommand}" CommandParameter="ModDatabase">
+            <Button Command="{Binding SideBar.TogglePaneCommand}" CommandParameter="ModDatabase">
                 <avalonia:SymbolIcon IconVariant="Regular" Symbol="Database" />
             </Button>
-            <Button Command="{Binding TogglePaneCommand}" CommandParameter="Profiles">
+            <Button Command="{Binding SideBar.TogglePaneCommand}" CommandParameter="Profiles">
                 <avalonia:SymbolIcon IconVariant="Regular" Symbol="List" />
             </Button>
-            <Button Command="{Binding TogglePaneCommand}" CommandParameter="Search">
+            <Button Command="{Binding SideBar.TogglePaneCommand}" CommandParameter="Search">
                 <avalonia:SymbolIcon IconVariant="Regular" Symbol="Search" />
             </Button>
-            <Button Command="{Binding TogglePaneCommand}" CommandParameter="Settings">
+            <Button Command="{Binding SideBar.TogglePaneCommand}" CommandParameter="Settings">
                 <avalonia:SymbolIcon IconVariant="Regular" Symbol="Settings" />
             </Button>
         </StackPanel>
         <!--  分割视图  -->
         <SplitView
             DisplayMode="Inline"
-            IsPaneOpen="{Binding SideBarExpanded}"
+            IsPaneOpen="{Binding SideBar.SideBarExpanded}"
             OpenPaneLength="500">
             <!--  侧边栏内容区域  -->
             <SplitView.Pane>
                 <!-- <ContentControl Content="{Binding CurrentPaneContent}" /> -->
-                <userControls:Pane DataContext="{Binding CurrentPaneContent}" />
+                <userControls:Pane DataContext="{Binding SideBar.CurrentPaneContent}" />
             </SplitView.Pane>
 
             <!--  主内容区（右侧）  -->
@@ -86,7 +86,7 @@
                         Orientation="Horizontal"
                         Spacing="6">
 
-                        <Button Command="{Binding AddDocumentCommand}">
+                        <Button Command="{Binding ElementName=MainWindowApp, Path=DataContext.DocumentWorkspace.AddDocumentCommand}">
                             <avalonia:SymbolIcon Symbol="TabAdd" ToolTip.Tip="{Binding Loc[AddTab]}" />
                         </Button>
                         <!-- <Button Command="{Binding EditProfileCommand}"> -->
@@ -101,7 +101,7 @@
                             </DropDownButton.Content>
                             <DropDownButton.Flyout>
                                 <MenuFlyout>
-                                    <MenuItem Command="{Binding AddDocumentCommand}">
+                                    <MenuItem Command="{Binding ElementName=MainWindowApp, Path=DataContext.DocumentWorkspace.AddDocumentCommand}">
                                         <MenuItem.Header>
                                             <StackPanel>
                                                 <avalonia:SymbolIcon Symbol="TabAdd" />
@@ -111,10 +111,10 @@
                                 </MenuFlyout>
                             </DropDownButton.Flyout>
                         </DropDownButton>
-                        <TextBlock Text="Current PlainTextDocument: " />
-                        <TextBlock Text="{Binding Documents.Count}" />
+                        <TextBlock Text="{Binding Loc[CurrentDocumentCountLabel]}" />
+                        <TextBlock Text="{Binding ElementName=MainWindowApp, Path=DataContext.DocumentWorkspace.Documents.Count}" />
                     </StackPanel>
-                    <userControls:DocumentWorkspaceView Grid.Row="1" DataContext="{Binding}" />
+                    <userControls:DocumentWorkspaceView Grid.Row="1" DataContext="{Binding ElementName=MainWindowApp, Path=DataContext.DocumentWorkspace}" />
                     <!--    -->
                     <!-- <Border> -->
                     <!-- <ContentControl Content="{Binding CurrentMainContent}" /> -->

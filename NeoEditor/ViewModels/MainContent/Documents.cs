@@ -13,16 +13,24 @@ public interface IDocumentBase
     public bool NeedNotifyWhenClose { get; set; }
 }
 
+file static class DocumentTitleLocalization
+{
+    public static string GetDefaultTitle()
+    {
+        return App.Localizor["Untitled"];
+    }
+}
+
 public abstract partial class DocumentBase : ObservableObject, IDocumentBase
 {
-    [ObservableProperty] public partial string Title { get; set; } = "Untitled";
+    [ObservableProperty] public partial string Title { get; set; } = DocumentTitleLocalization.GetDefaultTitle();
     [ObservableProperty] public partial bool CanClose { get; set; } = true;
     [ObservableProperty] public partial bool NeedNotifyWhenClose { get; set; }
 }
 
 public abstract partial class DocumentViewBase : ViewModelBase, IDocumentBase
 {
-    [ObservableProperty] public partial string Title { get; set; } = "Untitled";
+    [ObservableProperty] public partial string Title { get; set; } = DocumentTitleLocalization.GetDefaultTitle();
     [ObservableProperty] public partial bool CanClose { get; set; } = true;
     [ObservableProperty] public partial bool NeedNotifyWhenClose { get; set; }
 }
@@ -32,12 +40,12 @@ public partial class XmlDocument : DocumentBase
     [ObservableProperty] public partial string XmlPath { get; set; }
     [ObservableProperty] public partial TextDocument Xml { get; set; }
 
-    public XmlDocument(string xmlPath) : base()
+    public XmlDocument(string xmlPath)
     {
         XmlPath = Path.GetFullPath(xmlPath);
         Xml = new TextDocument
         {
-            Text = System.IO.File.ReadAllText(XmlPath)
+            Text = File.ReadAllText(XmlPath)
         };
     }
 }
@@ -47,11 +55,11 @@ public partial class XmlDiffDocument : DocumentBase
     [ObservableProperty] public partial TextDocument OldXml { get; set; }
     [ObservableProperty] public partial TextDocument NewXml { get; set; }
 
-    public XmlDiffDocument(string oldPath, string newPath) : base()
+    public XmlDiffDocument(string oldPath, string newPath)
     {
         OldXml = new TextDocument
         {
-            Text = System.IO.File.ReadAllText(oldPath)
+            Text = File.ReadAllText(oldPath)
         };
         NewXml = new TextDocument
         {

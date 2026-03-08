@@ -1230,4 +1230,155 @@ No则退出</value>
     <data name="EditProfileWindowTitle" xml:space="preserve">
         <value>编辑配置</value>
     </data>
+    <data name="AddProfile" xml:space="preserve">
+        <value>新增配置</value>
+    </data>
+    <data name="AddTab" xml:space="preserve">
+        <value>新增标签页</value>
+    </data>
+    <data name="ClearAllMod" xml:space="preserve">
+        <value>清空全部 Mod</value>
+    </data>
+    <data name="ClearAllProfile" xml:space="preserve">
+        <value>清空全部配置</value>
+    </data>
+    <data name="ClearMod" xml:space="preserve">
+        <value>清除 Mod</value>
+    </data>
+    <data name="ClearProfile" xml:space="preserve">
+        <value>清除配置</value>
+    </data>
+    <data name="ClearSelectedMod" xml:space="preserve">
+        <value>清空选中 Mod</value>
+    </data>
+    <data name="CloseProfile" xml:space="preserve">
+        <value>关闭配置</value>
+    </data>
+    <data name="CloseProfileConfirmation" xml:space="preserve">
+        <value>关闭前是否保存当前配置的更改？</value>
+    </data>
+    <data name="CreateMod" xml:space="preserve">
+        <value>创建 Mod</value>
+    </data>
+    <data name="CurrentDocumentCountLabel" xml:space="preserve">
+        <value>打开的文档：</value>
+    </data>
+    <data name="DeleteAllMods" xml:space="preserve">
+        <value>删除全部 Mod</value>
+    </data>
+    <data name="DeleteSelectedMod" xml:space="preserve">
+        <value>删除选中 Mod</value>
+    </data>
+    <data name="DiffNavigationEmptyText" xml:space="preserve">
+        <value>差异 0/0</value>
+    </data>
+    <data name="DiffNavigationFormat" xml:space="preserve">
+        <value>差异 {0}/{1}</value>
+    </data>
+    <data name="EditProfile" xml:space="preserve">
+        <value>编辑配置</value>
+    </data>
+    <data name="Games" xml:space="preserve">
+        <value>游戏</value>
+    </data>
+    <data name="ImportProfile" xml:space="preserve">
+        <value>导入配置</value>
+    </data>
+    <data name="LoadAll" xml:space="preserve">
+        <value>加载全部</value>
+    </data>
+    <data name="LoadMod" xml:space="preserve">
+        <value>加载 Mod</value>
+    </data>
+    <data name="ModGameDataTitleFormat" xml:space="preserve">
+        <value>数据：{0}</value>
+    </data>
+    <data name="Mods" xml:space="preserve">
+        <value>Mods</value>
+    </data>
+    <data name="NewDocumentContentFormat" xml:space="preserve">
+        <value>文档 {0} 的内容</value>
+    </data>
+    <data name="NewDocumentTitleFormat" xml:space="preserve">
+        <value>文档 {0}</value>
+    </data>
+    <data name="OpenModPath" xml:space="preserve">
+        <value>打开 Mod 路径</value>
+    </data>
+    <data name="ProfileDatabase" xml:space="preserve">
+        <value>配置数据库</value>
+    </data>
+    <data name="RefreshMods" xml:space="preserve">
+        <value>刷新 Mods</value>
+    </data>
+    <data name="RefreshProfile" xml:space="preserve">
+        <value>刷新配置</value>
+    </data>
+    <data name="ReloadGameFolder" xml:space="preserve">
+        <value>重新加载游戏目录</value>
+    </data>
+    <data name="ShowData" xml:space="preserve">
+        <value>查看数据</value>
+    </data>
+    <data name="ToggleSyncScroll" xml:space="preserve">
+        <value>切换同步滚动</value>
+    </data>
+    <data name="Untitled" xml:space="preserve">
+        <value>未命名</value>
+    </data>
+    <data name="Welcome" xml:space="preserve">
+        <value>欢迎</value>
+    </data>
+    <data name="WelcomeDocumentContent" xml:space="preserve">
+        <value>这里是 NeoEditor，一个面向 Neople 游戏的模组编辑工具。
+
+你可以通过侧边栏浏览资源、管理 Mod 并编辑配置。
+
+点击“设置游戏根目录”即可开始使用。</value>
+    </data>
+    <data name="BaseModCannotBeDeleted" xml:space="preserve">
+        <value>基础 Mod 不可删除</value>
+    </data>
+    <data name="BaseModCannotBeDeletedMessage" xml:space="preserve">
+        <value>基础 Mod 受保护，无法删除。</value>
+    </data>
+    <data name="Cancelled" xml:space="preserve">
+        <value>已取消</value>
+    </data>
+    <data name="CreateModSuccess" xml:space="preserve">
+        <value>Mod 创建成功。</value>
+    </data>
+    <data name="DeleteAllModsConfirmMessage" xml:space="preserve">
+        <value>删除全部 Mod？</value>
+    </data>
+    <data name="DeleteAllModsConfirmMessageDetail" xml:space="preserve">
+        <value>此操作将永久删除所有已导入的 Mod。</value>
+    </data>
+    <data name="DeleteModsConfirmMessage" xml:space="preserve">
+        <value>删除选中的 Mod？</value>
+    </data>
+    <data name="DeleteModsConfirmMessageDetail" xml:space="preserve">
+        <value>此操作将永久删除当前选中的 Mod。</value>
+    </data>
+    <data name="Error" xml:space="preserve">
+        <value>错误</value>
+    </data>
+    <data name="ModCreationCancelled" xml:space="preserve">
+        <value>已取消创建 Mod。</value>
+    </data>
+    <data name="ModDirectoryNotFound" xml:space="preserve">
+        <value>未找到 Mod 目录</value>
+    </data>
+    <data name="ModDirectoryNotFoundMessage" xml:space="preserve">
+        <value>无法找到 Mod 目录。</value>
+    </data>
+    <data name="ModNameRequired" xml:space="preserve">
+        <value>必须填写 Mod 名称。</value>
+    </data>
+    <data name="ReloadModsSuccess" xml:space="preserve">
+        <value>Mods 已刷新</value>
+    </data>
+    <data name="ReloadModsSuccessMessage" xml:space="preserve">
+        <value>Mod 列表刷新成功。</value>
+    </data>
 </root>

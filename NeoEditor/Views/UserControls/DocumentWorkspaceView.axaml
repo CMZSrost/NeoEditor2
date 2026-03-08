@@ -5,16 +5,17 @@
     xmlns:avaloniaEdit="https://github.com/avaloniaui/avaloniaedit"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mainContent="clr-namespace:NeoEditor.ViewModels.MainContent"
+    xmlns:mainContentVm="clr-namespace:NeoEditor.ViewModels.MainContent"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:userControls="clr-namespace:NeoEditor.Views.UserControls"
     xmlns:vm="using:NeoEditor.ViewModels"
     x:Name="Root"
     d:DesignHeight="450"
     d:DesignWidth="800"
-    x:DataType="vm:MainWindowViewModel"
+    x:DataType="mainContentVm:DocumentWorkspaceViewModel"
     mc:Ignorable="d">
     <Design.DataContext>
-        <vm:MainWindowViewModel />
+        <mainContentVm:DocumentWorkspaceViewModel />
     </Design.DataContext>
 
     <DockControl

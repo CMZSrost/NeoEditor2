@@ -6,7 +6,6 @@
     xmlns:avalonia="clr-namespace:FluentIcons.Avalonia;assembly=FluentIcons.Avalonia"
     xmlns:avaloniaEdit="https://github.com/avaloniaui/avaloniaedit"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-    xmlns:helper="clr-namespace:NeoEditor.Helper"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     x:Name="Root"
     d:DesignHeight="450"
@@ -112,7 +111,7 @@
                     MinWidth="96"
                     HorizontalAlignment="Center"
                     VerticalAlignment="Center"
-                    Text="差异 0/0"
+                    Text="{Binding Loc[DiffNavigationEmptyText], ElementName=Root}"
                     TextAlignment="Center" />
                 <Button
                     x:Name="NextDiffButton"

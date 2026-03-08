@@ -1233,4 +1233,155 @@ Exit if No</value>
     <data name="EditProfileWindowTitle" xml:space="preserve">
         <value>Edit Profile</value>
     </data>
+    <data name="AddProfile" xml:space="preserve">
+        <value>Add Profile</value>
+    </data>
+    <data name="AddTab" xml:space="preserve">
+        <value>Add Tab</value>
+    </data>
+    <data name="ClearAllMod" xml:space="preserve">
+        <value>Clear All Mods</value>
+    </data>
+    <data name="ClearAllProfile" xml:space="preserve">
+        <value>Clear All Profiles</value>
+    </data>
+    <data name="ClearMod" xml:space="preserve">
+        <value>Clear Mod</value>
+    </data>
+    <data name="ClearProfile" xml:space="preserve">
+        <value>Clear Profile</value>
+    </data>
+    <data name="ClearSelectedMod" xml:space="preserve">
+        <value>Clear Selected Mod</value>
+    </data>
+    <data name="CloseProfile" xml:space="preserve">
+        <value>Close Profile</value>
+    </data>
+    <data name="CloseProfileConfirmation" xml:space="preserve">
+        <value>Save changes before closing this profile?</value>
+    </data>
+    <data name="CreateMod" xml:space="preserve">
+        <value>Create Mod</value>
+    </data>
+    <data name="CurrentDocumentCountLabel" xml:space="preserve">
+        <value>Open Documents:</value>
+    </data>
+    <data name="DeleteAllMods" xml:space="preserve">
+        <value>Delete All Mods</value>
+    </data>
+    <data name="DeleteSelectedMod" xml:space="preserve">
+        <value>Delete Selected Mod</value>
+    </data>
+    <data name="DiffNavigationEmptyText" xml:space="preserve">
+        <value>Diff 0/0</value>
+    </data>
+    <data name="DiffNavigationFormat" xml:space="preserve">
+        <value>Diff {0}/{1}</value>
+    </data>
+    <data name="EditProfile" xml:space="preserve">
+        <value>Edit Profile</value>
+    </data>
+    <data name="Games" xml:space="preserve">
+        <value>Game</value>
+    </data>
+    <data name="ImportProfile" xml:space="preserve">
+        <value>Import Profile</value>
+    </data>
+    <data name="LoadAll" xml:space="preserve">
+        <value>Load All</value>
+    </data>
+    <data name="LoadMod" xml:space="preserve">
+        <value>Load Mod</value>
+    </data>
+    <data name="ModGameDataTitleFormat" xml:space="preserve">
+        <value>Data: {0}</value>
+    </data>
+    <data name="Mods" xml:space="preserve">
+        <value>Mods</value>
+    </data>
+    <data name="NewDocumentContentFormat" xml:space="preserve">
+        <value>Content of document {0}</value>
+    </data>
+    <data name="NewDocumentTitleFormat" xml:space="preserve">
+        <value>Document {0}</value>
+    </data>
+    <data name="OpenModPath" xml:space="preserve">
+        <value>Open Mod Path</value>
+    </data>
+    <data name="ProfileDatabase" xml:space="preserve">
+        <value>Profile Database</value>
+    </data>
+    <data name="RefreshMods" xml:space="preserve">
+        <value>Refresh Mods</value>
+    </data>
+    <data name="RefreshProfile" xml:space="preserve">
+        <value>Refresh Profiles</value>
+    </data>
+    <data name="ReloadGameFolder" xml:space="preserve">
+        <value>Reload Game Folder</value>
+    </data>
+    <data name="ShowData" xml:space="preserve">
+        <value>Show Data</value>
+    </data>
+    <data name="ToggleSyncScroll" xml:space="preserve">
+        <value>Toggle synchronized scrolling</value>
+    </data>
+    <data name="Untitled" xml:space="preserve">
+        <value>Untitled</value>
+    </data>
+    <data name="Welcome" xml:space="preserve">
+        <value>Welcome</value>
+    </data>
+    <data name="WelcomeDocumentContent" xml:space="preserve">
+        <value>This is the NeoEditor, a modding tool for Neople games.
+
+Use the sidebar to explore resources, manage mods, and edit profiles.
+
+Click 'Set Game Folder' in the Project menu to get started.</value>
+    </data>
+    <data name="BaseModCannotBeDeleted" xml:space="preserve">
+        <value>Base Mod Cannot Be Deleted</value>
+    </data>
+    <data name="BaseModCannotBeDeletedMessage" xml:space="preserve">
+        <value>Base mods are protected and can't be deleted.</value>
+    </data>
+    <data name="Cancelled" xml:space="preserve">
+        <value>Cancelled</value>
+    </data>
+    <data name="CreateModSuccess" xml:space="preserve">
+        <value>Mod created successfully.</value>
+    </data>
+    <data name="DeleteAllModsConfirmMessage" xml:space="preserve">
+        <value>Delete all mods?</value>
+    </data>
+    <data name="DeleteAllModsConfirmMessageDetail" xml:space="preserve">
+        <value>This action will permanently remove all imported mods.</value>
+    </data>
+    <data name="DeleteModsConfirmMessage" xml:space="preserve">
+        <value>Delete selected mod?</value>
+    </data>
+    <data name="DeleteModsConfirmMessageDetail" xml:space="preserve">
+        <value>This action will permanently remove the selected mod.</value>
+    </data>
+    <data name="Error" xml:space="preserve">
+        <value>Error</value>
+    </data>
+    <data name="ModCreationCancelled" xml:space="preserve">
+        <value>Mod creation was cancelled.</value>
+    </data>
+    <data name="ModDirectoryNotFound" xml:space="preserve">
+        <value>Mod Directory Not Found</value>
+    </data>
+    <data name="ModDirectoryNotFoundMessage" xml:space="preserve">
+        <value>The mod directory could not be found.</value>
+    </data>
+    <data name="ModNameRequired" xml:space="preserve">
+        <value>Mod name is required.</value>
+    </data>
+    <data name="ReloadModsSuccess" xml:space="preserve">
+        <value>Mods Reloaded</value>
+    </data>
+    <data name="ReloadModsSuccessMessage" xml:space="preserve">
+        <value>Mod list has been refreshed successfully.</value>
+    </data>
 </root>

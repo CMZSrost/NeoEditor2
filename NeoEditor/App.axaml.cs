@@ -43,6 +43,7 @@ using NeoEditor.Views;
 using NeoEditor.Services;
 using NeoEditor.ViewModels.Dialog;
 using NeoEditor.ViewModels.ExplorerPane;
+using NeoEditor.ViewModels.MainContent;
 using NeoEditor.Views.Dialog;
 using NeoEditor.Views.UserControls;
 using ConfigurationManager = Microsoft.Extensions.Configuration.ConfigurationManager;
@@ -113,6 +114,8 @@ public partial class App : Application
                 // window
                 services.AddTransient<MainWindow>()
                     .AddScoped<MainWindowViewModel>()
+                    .AddScoped<MainWindowSideBarViewModel>()
+                    .AddScoped<DocumentWorkspaceViewModel>()
                     // Panes
                     .AddScoped<ResourceManagerViewModel>()
                     .AddScoped<SearchPaneViewModel>()

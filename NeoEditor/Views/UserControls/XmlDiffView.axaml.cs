@@ -363,7 +363,7 @@ public partial class XmlDiffView : UserControl
         var totalCount = _diffBlocks.Count;
         var currentDisplayIndex = _currentDiffIndex >= 0 && _currentDiffIndex < totalCount ? _currentDiffIndex + 1 : 0;
 
-        DiffNavigationText.Text = $"差异 {currentDisplayIndex}/{totalCount}";
+        DiffNavigationText.Text = string.Format(Loc["DiffNavigationFormat"], currentDisplayIndex, totalCount);
         PreviousDiffButton.IsEnabled = totalCount > 0 && _currentDiffIndex > 0;
         NextDiffButton.IsEnabled = totalCount > 0 && _currentDiffIndex < totalCount - 1;
     }
