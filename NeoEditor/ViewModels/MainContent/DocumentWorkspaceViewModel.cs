@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -18,23 +19,22 @@ using MsBox.Avalonia.Enums;
 using NeoEditor.Data.Messages;
 using NeoEditor.Data.Model;
 using NeoEditor.Services;
-using NeoEditor.ViewModels;
 
 namespace NeoEditor.ViewModels.MainContent;
 
 public partial class DocumentWorkspaceViewModel : ViewModelBase,
     IRecipient<EditProfileMessage>,
     IRecipient<OpenXmlDocumentMessage>,
-    IRecipient<OpenModGameDataDocumentMessage>
+    IRecipient<OpenModGameDataDocumentMessage>,
+    IRecipient<OpenHelpDocumentMessage>
 {
     private readonly IConfigService _config;
     public AppConfig Config => _config.Config;
     private readonly ILogger<DocumentWorkspaceViewModel> _logger;
-    private readonly Func<ProfileInfo, EditProfileViewModel> _editProfileFactory;
 
     public ObservableCollection<IDocumentBase> Documents { get; }
 
-    public DocumentWorkspaceViewModel() : this(App.ServiceProvider!)
+    public DocumentWorkspaceViewModel() : this(App.ServiceProvider)
     {
     }
 
@@ -42,10 +42,10 @@ public partial class DocumentWorkspaceViewModel : ViewModelBase,
     {
         _config = serviceProvider.GetRequiredService<IConfigService>();
         _logger = serviceProvider.GetRequiredService<ILogger<DocumentWorkspaceViewModel>>();
-        _editProfileFactory = serviceProvider.GetRequiredService<Func<ProfileInfo, EditProfileViewModel>>();
         Documents = [CreateWelcomeDocument()];
         DockFactory = serviceProvider.GetRequiredService<Factory>();
         DockFactory.DockableClosing += ClosingDockable;
+        Loc.PropertyChanged += OnLocalizationPropertyChanged;
         UpdateDockingEnabled();
     }
 
@@ -60,14 +60,18 @@ public partial class DocumentWorkspaceViewModel : ViewModelBase,
     }
 
     [RelayCommand]
+    private void AddImage()
+    {
+    }
+
+    [RelayCommand]
     private void AddDocument()
     {
         var index = Documents.Count + 1;
-        Documents.Add(new PlainTextDocument
-        {
-            Title = FormatLocalized("NewDocumentTitleFormat", index),
-            Content = FormatLocalized("NewDocumentContentFormat", index)
-        });
+        var document = new PlainTextDocument();
+        document.SetLocalizedTitle("NewDocumentTitleFormat", index);
+        document.SetLocalizedContent("NewDocumentContentFormat", index);
+        Documents.Add(document);
         UpdateDockingEnabled();
     }
 
@@ -81,7 +85,12 @@ public partial class DocumentWorkspaceViewModel : ViewModelBase,
             return;
         }
 
-        var viewModel = _editProfileFactory(message.ProfileInfo);
+        var viewModel = new EditProfileViewModel
+        {
+            ProfileInfo = message.ProfileInfo,
+        };
+        viewModel.SetStaticTitle(message.ProfileInfo.Name);
+        viewModel.LoadEntries();
         Documents.Add(viewModel);
         ActivateDocument(viewModel);
         UpdateDockingEnabled();
@@ -94,17 +103,17 @@ public partial class DocumentWorkspaceViewModel : ViewModelBase,
         if (FindOpenModGameDataDocument(message.ModInfo) is { } existingDocument)
         {
             existingDocument.ModInfo = message.ModInfo;
-            existingDocument.Title = FormatLocalized("ModGameDataTitleFormat", message.ModInfo.Name);
+            existingDocument.SetLocalizedTitle("ModGameDataTitleFormat", message.ModInfo.Name);
             ActivateDocument(existingDocument);
             return;
         }
 
         var document = new ModGameDataDocument
         {
-            Title = FormatLocalized("ModGameDataTitleFormat", message.ModInfo.Name),
             ModInfo = message.ModInfo,
             ReadOnly = true,
         };
+        document.SetLocalizedTitle("ModGameDataTitleFormat", message.ModInfo.Name);
 
         Documents.Add(document);
         ActivateDocument(document);
@@ -125,10 +134,43 @@ public partial class DocumentWorkspaceViewModel : ViewModelBase,
         var title = string.IsNullOrWhiteSpace(message.Title)
             ? Path.GetFileName(normalizedPath)
             : message.Title;
-        var document = new XmlDocument(normalizedPath)
+        var document = new XmlDocument(normalizedPath);
+        document.SetStaticTitle(title);
+
+        Documents.Add(document);
+        ActivateDocument(document);
+        UpdateDockingEnabled();
+    }
+
+    public void Receive(OpenHelpDocumentMessage message)
+    {
+        var normalizedPath = NormalizeDocumentPath(message.DocumentPath);
+        _logger.LogInformation("Opening help document: {HelpPath}", normalizedPath);
+
+        if (!File.Exists(normalizedPath))
         {
-            Title = title,
+            return;
+        }
+
+        if (FindOpenHelpDocument(normalizedPath) is { } existingDocument)
+        {
+            ActivateDocument(existingDocument);
+            return;
+        }
+
+        var title = string.IsNullOrWhiteSpace(message.Title)
+            ? Path.GetFileNameWithoutExtension(normalizedPath)
+            : message.Title;
+        MarkdownDocument? document = Path.GetExtension(normalizedPath).ToLowerInvariant() switch
+        {
+            ".md" or ".markdown" => new MarkdownDocument(normalizedPath, title),
+            _ => null
         };
+
+        if (document is null)
+        {
+            return;
+        }
 
         Documents.Add(document);
         ActivateDocument(document);
@@ -218,6 +260,14 @@ public partial class DocumentWorkspaceViewModel : ViewModelBase,
                 StringComparison.OrdinalIgnoreCase));
     }
 
+    private MarkdownDocument? FindOpenHelpDocument(string normalizedPath)
+    {
+        return Documents
+            .OfType<MarkdownDocument>()
+            .FirstOrDefault(doc => string.Equals(NormalizeDocumentPath(doc.FilePath), normalizedPath,
+                StringComparison.OrdinalIgnoreCase));
+    }
+
     private void ActivateDocument(IDocumentBase document)
     {
         var currentIndex = Documents.IndexOf(document);
@@ -237,16 +287,23 @@ public partial class DocumentWorkspaceViewModel : ViewModelBase,
 
     private PlainTextDocument CreateWelcomeDocument()
     {
-        return new PlainTextDocument
-        {
-            Title = Loc["Welcome"],
-            Content = Loc["WelcomeDocumentContent"]
-        };
+        var document = new PlainTextDocument();
+        document.SetLocalizedTitle("Welcome");
+        document.SetLocalizedContent("WelcomeDocumentContent");
+        return document;
     }
 
-    private string FormatLocalized(string key, params object[] args)
+    private void OnLocalizationPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        return string.Format(Loc[key], args);
+        if (e.PropertyName is not nameof(LocalizationService.CurrentCulture))
+        {
+            return;
+        }
+
+        foreach (var document in Documents)
+        {
+            document.RefreshLocalizedText();
+        }
     }
 
     private string GetEditProfileDocumentKey(ProfileInfo? profileInfo)

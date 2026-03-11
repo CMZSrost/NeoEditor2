@@ -125,15 +125,6 @@ public partial class App : Application
                     .AddScoped<ModIndexViewModel>();
                 services.AddTransient<SearchableDataGrid>();
                 services.AddTransient<ModEntryDropHandler>();
-                // DocumentView
-                services.AddTransient<EditProfileViewModel>()
-                    .AddSingleton<Func<ProfileInfo, EditProfileViewModel>>((info =>
-                    {
-                        var vm = ServiceProvider.GetRequiredService<EditProfileViewModel>();
-                        vm.ProfileInfo = info;
-                        vm.LoadEntries();
-                        return vm;
-                    }));
                 // Dialog
                 services.AddTransient<CreateModDialog>()
                     .AddTransient<CreateModDialogViewModel>();

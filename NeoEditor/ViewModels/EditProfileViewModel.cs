@@ -8,28 +8,21 @@ using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 using NeoEditor.Data.Context;
 using NeoEditor.Data.DTO;
 using NeoEditor.Data.Messages;
 using NeoEditor.Data.Model;
 using NeoEditor.Helper;
 using NeoEditor.Helper.DragDropHandler;
-using NeoEditor.Services;
 using NeoEditor.ViewModels.MainContent;
 
 namespace NeoEditor.ViewModels;
 
-public partial class EditProfileViewModel : ViewModelBase, IDocumentBase
+public partial class EditProfileViewModel : DocumentViewBase
 {
-    private INotificationService _notificationService;
-    private readonly ILogger<MainWindowViewModel> _logger;
     private readonly IDbContextFactory<EditorDbContext> _editorDbContextFactory;
     private bool _isLoadingEntries;
 
-    [ObservableProperty] public partial string Title { get; set; } = "Edit Profile";
-    [ObservableProperty] public partial bool CanClose { get; set; } = true;
-    [ObservableProperty] public partial bool NeedNotifyWhenClose { get; set; } = false;
 
     [ObservableProperty] public partial ProfileInfo? ProfileInfo { get; set; }
     private readonly PhpParser _phpParser;
@@ -54,7 +47,7 @@ public partial class EditProfileViewModel : ViewModelBase, IDocumentBase
         return SelectedModInfo is { Path: { } path } && !HasEntryWithPath(path);
     }
 
-    public EditProfileViewModel() : this(App.ServiceProvider!)
+    public EditProfileViewModel() : this(App.ServiceProvider)
     {
     }
 
@@ -62,9 +55,6 @@ public partial class EditProfileViewModel : ViewModelBase, IDocumentBase
     {
         _phpParser = serviceProvider.GetRequiredService<PhpParser>();
         DataGridDropHandler = serviceProvider.GetRequiredService<ModEntryDropHandler>();
-
-        _notificationService = serviceProvider.GetRequiredService<INotificationService>();
-        _logger = serviceProvider.GetRequiredService<ILogger<MainWindowViewModel>>();
         _editorDbContextFactory = serviceProvider.GetRequiredService<IDbContextFactory<EditorDbContext>>();
 
         Entries.CollectionChanged += OnEntriesCollectionChanged;

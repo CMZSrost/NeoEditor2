@@ -7,6 +7,7 @@
     xmlns:mainContent="clr-namespace:NeoEditor.ViewModels.MainContent"
     xmlns:mainContentVm="clr-namespace:NeoEditor.ViewModels.MainContent"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:mdxaml="https://github.com/whistyun/Markdown.Avalonia"
     xmlns:userControls="clr-namespace:NeoEditor.Views.UserControls"
     xmlns:vm="using:NeoEditor.ViewModels"
     x:Name="Root"
@@ -52,6 +53,9 @@
                     ShowLineNumbers="True"
                     SyntaxHighlighting="XmlDoc" />
             </DataTemplate>
+            <DataTemplate x:DataType="mainContent:MarkdownDocument">
+                <mdxaml:MarkdownScrollViewer Markdown="{Binding Content}" />
+            </DataTemplate>
         </DockControl.DataTemplates>
         <RootDock Id="Root" PinnedDockDisplayMode="Inline">
             <ProportionalDock EnableGlobalDocking="True">
@@ -75,4 +79,3 @@
         </RootDock>
     </DockControl>
 </UserControl>
-

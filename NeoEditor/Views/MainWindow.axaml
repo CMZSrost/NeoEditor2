@@ -18,34 +18,9 @@
     <Design.DataContext>
         <vm:MainWindowViewModel />
     </Design.DataContext>
-    <Window.DataTemplates />
     <DockPanel>
-        <!--  菜单栏  -->
-        <Menu DockPanel.Dock="Top">
-            <!--  项目  -->
-            <MenuItem Header="{Binding Loc[MenuProject]}">
-                <MenuItem Command="{Binding SetFolderCommand}" Header="{Binding Loc[SetFolder]}" />
-                <!-- <MenuItem Command="{Binding CreateProjectCommand}" Header="{Binding Loc[MenuProjectCreate]}" /> -->
-                <!-- <MenuItem Command="{Binding OpenProjectCommand}" Header="{Binding Loc[MenuProjectOpen]}" /> -->
-                <!-- <MenuItem Command="{Binding CloseProjectCommand}" Header="{Binding Loc[MenuProjectClose]}" /> -->
-            </MenuItem>
-            <!--  语言  -->
-            <MenuItem Header="{Binding Path=CurrentCultureInfo.DisplayName}" ItemsSource="{Binding SupportedCultures}">
-                <MenuItem.ItemTemplate>
-                    <DataTemplate>
-                        <MenuItem
-                            Command="{Binding ElementName=MainWindowApp, Path=DataContext.ChangeCultureCommand}"
-                            CommandParameter="{Binding}"
-                            Header="{Binding DisplayName}" />
-                    </DataTemplate>
-                </MenuItem.ItemTemplate>
-            </MenuItem>
-        </Menu>
-        <!--  底部状态栏  -->
-        <StackPanel DockPanel.Dock="Bottom">
-            <!-- <TextBlock Text="{Binding Loc[Status]}" /> -->
-        </StackPanel>
-        <!--  左侧垂直按钮条  -->
+        <userControls:MainMenuBar DockPanel.Dock="Top" />
+        <userControls:MainStatusBar DockPanel.Dock="Bottom" />
         <StackPanel
             Margin="4"
             Orientation="Vertical"
@@ -66,18 +41,14 @@
                 <avalonia:SymbolIcon IconVariant="Regular" Symbol="Settings" />
             </Button>
         </StackPanel>
-        <!--  分割视图  -->
         <SplitView
             DisplayMode="Inline"
             IsPaneOpen="{Binding SideBar.SideBarExpanded}"
             OpenPaneLength="500">
-            <!--  侧边栏内容区域  -->
             <SplitView.Pane>
-                <!-- <ContentControl Content="{Binding CurrentPaneContent}" /> -->
                 <userControls:Pane DataContext="{Binding SideBar.CurrentPaneContent}" />
             </SplitView.Pane>
 
-            <!--  主内容区（右侧）  -->
             <SplitView.Content>
                 <Grid ColumnDefinitions="*" RowDefinitions="Auto,*">
                     <StackPanel
@@ -85,13 +56,9 @@
                         Margin="6,4"
                         Orientation="Horizontal"
                         Spacing="6">
-
-                        <Button Command="{Binding ElementName=MainWindowApp, Path=DataContext.DocumentWorkspace.AddDocumentCommand}">
-                            <avalonia:SymbolIcon Symbol="TabAdd" ToolTip.Tip="{Binding Loc[AddTab]}" />
+                        <Button Command="{Binding ElementName=MainWindowApp, Path=DataContext.DocumentWorkspace.AddImageCommand}">
+                            <avalonia:SymbolIcon Symbol="ImageAdd" ToolTip.Tip="{Binding Loc[AddImage]}" />
                         </Button>
-                        <!-- <Button Command="{Binding EditProfileCommand}"> -->
-                        <!--     <avalonia:SymbolIcon Symbol="ReadingListAdd" ToolTip.Tip="{Binding Loc[AddTab]}" /> -->
-                        <!-- </Button> -->
                         <GridSplitter />
                         <DropDownButton>
                             <DropDownButton.Content>
@@ -111,21 +78,8 @@
                                 </MenuFlyout>
                             </DropDownButton.Flyout>
                         </DropDownButton>
-                        <TextBlock Text="{Binding Loc[CurrentDocumentCountLabel]}" />
-                        <TextBlock Text="{Binding ElementName=MainWindowApp, Path=DataContext.DocumentWorkspace.Documents.Count}" />
                     </StackPanel>
                     <userControls:DocumentWorkspaceView Grid.Row="1" DataContext="{Binding ElementName=MainWindowApp, Path=DataContext.DocumentWorkspace}" />
-                    <!--    -->
-                    <!-- <Border> -->
-                    <!-- <ContentControl Content="{Binding CurrentMainContent}" /> -->
-                    <!-- </Border> -->
-                    <!-- <TabControl> -->
-                    <!--     <TabItem Header="{Binding Loc[Welcome]}"> -->
-                    <!--         <TextBlock></TextBlock> -->
-                    <!--     </TabItem> -->
-                    <!-- </TabControl> -->
-                    <!-- <userControls:SearchableDataGrid Grid.Row="0" ItemsSource="{Binding SampleData}" /> -->
-
 
                     <WindowNotificationManager
                         Name="NotificationManager"

@@ -27,6 +27,7 @@
             <IncludeAssets Condition="'$(Configuration)' != 'Debug'">None</IncludeAssets>
             <PrivateAssets Condition="'$(Configuration)' != 'Debug'">All</PrivateAssets>
         </PackageReference>
+        <PackageReference Include="AvaloniaEdit.TextMate" Version="11.4.1"/>
         <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0"/>
         <PackageReference Include="DiffPlex" Version="1.9.0"/>
         <PackageReference Include="Dock.Avalonia" Version="11.3.11.16"/>
@@ -38,6 +39,7 @@
         <PackageReference Include="FluentIcons.Avalonia" Version="2.0.319"/>
         <PackageReference Include="Irihi.Ursa" Version="1.15.0"/>
         <PackageReference Include="Irihi.Ursa.Themes.Semi" Version="1.15.0"/>
+        <PackageReference Include="Markdown.Avalonia" Version="11.0.2"/>
         <PackageReference Include="MessageBox.Avalonia" Version="3.3.1.1"/>
         <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.3"/>
         <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.3"/>
@@ -53,6 +55,7 @@
         <PackageReference Include="Serilog.Settings.Configuration" Version="10.0.0"/>
         <PackageReference Include="Serilog.Sinks.Console" Version="6.1.1"/>
         <PackageReference Include="Serilog.Sinks.File" Version="7.0.0"/>
+        <PackageReference Include="SixLabors.ImageSharp" Version="3.1.12"/>
         <PackageReference Include="System.Configuration.ConfigurationManager" Version="10.0.3"/>
         <PackageReference Include="TreeDataGrid.Avalonia" Version="11.3.0"/>
         <PackageReference Include="Xaml.Behaviors.Avalonia" Version="11.3.9.5"/>
@@ -69,6 +72,10 @@
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
             <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
         </None>
+        <Content Include="Help\**\*">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+            <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+        </Content>
     </ItemGroup>
 
     <ItemGroup>
@@ -83,9 +90,6 @@
         </EmbeddedResource>
         <Compile Update="Views\MainWindow.axaml.cs">
             <DependentUpon>MainWindow.axaml</DependentUpon>
-        </Compile>
-        <Compile Update="ViewModels\MainWindowViewModel.Messager.cs">
-            <DependentUpon>MainWindowViewModel.cs</DependentUpon>
         </Compile>
         <Compile Update="Views\Dialog\CreateModDialog.axaml.cs">
             <DependentUpon>CreateModDialog.axaml</DependentUpon>

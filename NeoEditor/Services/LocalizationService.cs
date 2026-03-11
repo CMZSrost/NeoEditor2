@@ -1,6 +1,5 @@
-﻿using System;
+﻿using System.ComponentModel;
 using System.Globalization;
-using System.Net.Mime;
 using System.Threading;
 using Avalonia;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -13,38 +12,41 @@ namespace NeoEditor.Services;
 
 public sealed class LocalizationService : ObservableObject
 {
-    public LocalizationService() : this(App.ServiceProvider!.GetRequiredService<IStringLocalizer<Resources>>())
+    public LocalizationService() : this(App.ServiceProvider.GetRequiredService<IStringLocalizer<Resources>>())
     {
     }
 
     public LocalizationService(IStringLocalizer<Resources> localizer)
     {
-        ResourceManager = localizer;
+        _localizer = localizer;
     }
 
-
-    private readonly IStringLocalizer<Resources> ResourceManager;
+    private readonly IStringLocalizer<Resources> _localizer;
 
     public CultureInfo CurrentCulture => CultureInfo.CurrentUICulture;
 
-    public string this[string key] => ResourceManager.GetString(key, CurrentCulture) ?? key;
+    public string this[string key] => _localizer[key].Value;
+
+    public string this[string key, params object[] arguments] => _localizer[key, arguments].Value;
 
     public void SetCulture(CultureInfo culture)
     {
         if (Equals(CurrentCulture, culture))
         {
-            Console.WriteLine($"Set Culture Equals {CurrentCulture.Name} {culture.Name}");
             return;
         }
 
         CultureInfo.CurrentUICulture = culture;
         CultureInfo.CurrentCulture = culture;
         Thread.CurrentThread.CurrentCulture = culture;
-        SemiTheme.OverrideLocaleResources(Application.Current, culture);
-        Console.WriteLine($"Set Culture to {culture.Name}");
 
-        OnPropertyChanged(nameof(CurrentCulture));
-        OnPropertyChanged("Item[]");
-        OnPropertyChanged("Item");
+        if (Application.Current is { } application)
+        {
+            SemiTheme.OverrideLocaleResources(application, culture);
+        }
+
+        OnPropertyChanged(new PropertyChangedEventArgs(nameof(CurrentCulture)));
+        OnPropertyChanged(new PropertyChangedEventArgs("Item[]"));
+        OnPropertyChanged(new PropertyChangedEventArgs("Item"));
     }
 }

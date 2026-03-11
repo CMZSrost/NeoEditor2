@@ -1,0 +1,44 @@
+﻿<UserControl
+    x:Class="NeoEditor.Views.UserControls.MainMenuBar"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:vm="using:NeoEditor.ViewModels"
+    x:Name="Root"
+    d:DesignHeight="32"
+    d:DesignWidth="800"
+    x:DataType="vm:MainWindowViewModel"
+    mc:Ignorable="d">
+    <Design.DataContext>
+        <vm:MainWindowViewModel />
+    </Design.DataContext>
+    <UserControl.DataTemplates>
+        <DataTemplate x:DataType="vm:HelpMenuNode">
+            <MenuItem
+                Command="{Binding ElementName=Root, Path=DataContext.OpenHelpDocumentCommand}"
+                CommandParameter="{Binding}"
+                Header="{Binding Header}"
+                ItemsSource="{Binding ChildItemsSource}" />
+        </DataTemplate>
+    </UserControl.DataTemplates>
+
+    <Menu>
+        <MenuItem Header="{Binding Loc[MenuProject]}">
+            <MenuItem Command="{Binding SetFolderCommand}" Header="{Binding Loc[SetFolder]}" />
+        </MenuItem>
+
+        <MenuItem Header="{Binding CurrentCultureInfo.DisplayName}" ItemsSource="{Binding SupportedCultures}">
+            <MenuItem.ItemTemplate>
+                <DataTemplate>
+                    <MenuItem
+                        Command="{Binding ElementName=Root, Path=DataContext.ChangeCultureCommand}"
+                        CommandParameter="{Binding}"
+                        Header="{Binding DisplayName}" />
+                </DataTemplate>
+            </MenuItem.ItemTemplate>
+        </MenuItem>
+
+        <MenuItem Header="{Binding Loc[Help]}" ItemsSource="{Binding HelpMenuItems}" />
+    </Menu>
+</UserControl>
