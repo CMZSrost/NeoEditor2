@@ -1218,6 +1218,9 @@ No则退出</value>
     <data name="Delete" xml:space="preserve">
         <value>删除</value>
     </data>
+    <data name="DeleteImagePairTooltip" xml:space="preserve">
+        <value>仅从当前图片列表中移除选中项，不会删除磁盘上的图片文件。</value>
+    </data>
     <data name="Save" xml:space="preserve">
         <value>保存</value>
     </data>
@@ -1256,6 +1259,12 @@ No则退出</value>
     </data>
     <data name="CloseProfileConfirmation" xml:space="preserve">
         <value>关闭前是否保存当前配置的更改？</value>
+    </data>
+    <data name="CloseModImages" xml:space="preserve">
+        <value>关闭图片</value>
+    </data>
+    <data name="CloseModImagesConfirmation" xml:space="preserve">
+        <value>关闭前是否保存当前图片顺序的更改？</value>
     </data>
     <data name="CreateMod" xml:space="preserve">
         <value>创建 Mod</value>
@@ -1401,6 +1410,105 @@ No则退出</value>
     </data>
     <data name="ReloadModsSuccessMessage" xml:space="preserve">
         <value>Mod 列表刷新成功。</value>
+    </data>
+    <data name="SaveModImagesSuccess" xml:space="preserve">
+        <value>图片已保存</value>
+    </data>
+    <data name="SaveModImagesSuccessMessage" xml:space="preserve">
+        <value>图片顺序已保存到 {0}</value>
+    </data>
+    <data name="SaveModImagesFailed" xml:space="preserve">
+        <value>保存图片失败</value>
+    </data>
+    <data name="SaveModImagesFailedMessage" xml:space="preserve">
+        <value>保存图片顺序失败：{0}</value>
+    </data>
+    <data name="ImportImagesSuccess" xml:space="preserve">
+        <value>图片已导入</value>
+    </data>
+    <data name="ImportImagesSuccessMessage" xml:space="preserve">
+        <value>已导入 {0} 组图片到 {1}</value>
+    </data>
+    <data name="ImportImagesSkipped" xml:space="preserve">
+        <value>已跳过图片</value>
+    </data>
+    <data name="ImportImagesSkippedMessage" xml:space="preserve">
+        <value>跳过导入：{0}</value>
+    </data>
+    <data name="ImportImagesOverwrite" xml:space="preserve">
+        <value>图片已覆盖</value>
+    </data>
+    <data name="ImportImagesOverwriteMessage" xml:space="preserve">
+        <value>已覆盖同名文件：{0}</value>
+    </data>
+    <data name="ImportImagesTooltip" xml:space="preserve">
+        <value>将图片对导入到当前 Mod 的 img 文件夹。</value>
+    </data>
+    <data name="SaveModImagesTooltip" xml:space="preserve">
+        <value>将当前图片列表顺序保存到 getimages.php。</value>
+    </data>
+    <data name="RenameImagePair" xml:space="preserve">
+        <value>重命名图片对</value>
+    </data>
+    <data name="RenameImagePairTooltip" xml:space="preserve">
+        <value>同时重命名当前选中的图片及其 x2 文件。</value>
+    </data>
+    <data name="RenameImagePairDialogTitle" xml:space="preserve">
+        <value>重命名图片对</value>
+    </data>
+    <data name="RenameImagePairCurrentNormal" xml:space="preserve">
+        <value>当前图片</value>
+    </data>
+    <data name="RenameImagePairCurrentX2" xml:space="preserve">
+        <value>当前 X2 图片</value>
+    </data>
+    <data name="RenameImagePairPreviewNormal" xml:space="preserve">
+        <value>重命名后图片</value>
+    </data>
+    <data name="RenameImagePairPreviewX2" xml:space="preserve">
+        <value>重命名后 X2 图片</value>
+    </data>
+    <data name="RenameImagePairNameRequired" xml:space="preserve">
+        <value>必须填写名称。</value>
+    </data>
+    <data name="RenameImagePairInvalidName" xml:space="preserve">
+        <value>名称包含非法文件名字符。</value>
+    </data>
+    <data name="RenameImagePairFileExists" xml:space="preserve">
+        <value>目标文件名已存在，无法确认修改。</value>
+    </data>
+    <data name="RenameImagePairNormalFileExists" xml:space="preserve">
+        <value>普通图片文件已存在：{0}</value>
+    </data>
+    <data name="RenameImagePairX2FileExists" xml:space="preserve">
+        <value>X2 图片文件已存在：{0}</value>
+    </data>
+    <data name="RenameImagePairBothFilesExist" xml:space="preserve">
+        <value>目标文件已存在：{0}，{1}</value>
+    </data>
+    <data name="RenameImagePairMissingFiles" xml:space="preserve">
+        <value>重命名图片对失败</value>
+    </data>
+    <data name="RenameImagePairMissingFilesMessage" xml:space="preserve">
+        <value>磁盘上未找到当前选中的图片对。</value>
+    </data>
+    <data name="RenameImagePairSuccess" xml:space="preserve">
+        <value>图片对已重命名</value>
+    </data>
+    <data name="RenameImagePairSuccessMessage" xml:space="preserve">
+        <value>已将图片对重命名为 {0}</value>
+    </data>
+    <data name="RenameImagePairFailed" xml:space="preserve">
+        <value>重命名失败</value>
+    </data>
+    <data name="RenameImagePairFailedMessage" xml:space="preserve">
+        <value>重命名图片对失败：{0}</value>
+    </data>
+    <data name="MoveUpImagePairTooltip" xml:space="preserve">
+        <value>将当前选中的图片对向上移动一项。</value>
+    </data>
+    <data name="MoveDownImagePairTooltip" xml:space="preserve">
+        <value>将当前选中的图片对向下移动一项。</value>
     </data>
     <data name="AddImage" xml:space="preserve">
         <value>添加图片</value>

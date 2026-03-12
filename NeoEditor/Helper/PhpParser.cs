@@ -135,18 +135,28 @@ public class PhpParser
     ///     生成 getimages.php 内容
     ///     注意 图片Url里，不带x2_要排前面，然后带x2的同名Url紧跟其后，接着就是下一个Url，这样形成一个 n*2 的表格
     /// </summary>
-    public string GenerateImagePhp(IList<string> modImages)
+    public string GenerateImagePhp(IReadOnlyList<(string NormalImage, string X2Image)> imagePairs)
     {
-        var sb = new StringBuilder();
-        sb.AppendLine($"nRows={modImages.Count}&nCols=2");
-        // 首先进行排序，确保 非x2_ 的图片在前面，然后是同名的 x2_ 图片，并且保持交替
-        var imageMap = modImages.Where((s => !s.Contains("x2_"))).Order().ToDictionary((s => s), s => $"x2_{s}");
+        var flattenedImages = imagePairs
+            .SelectMany(pair => new[] { pair.NormalImage, pair.X2Image })
+            .Where(static image => !string.IsNullOrWhiteSpace(image))
+            .Select(static image => image.Trim())
+            .ToList();
 
-        int i = 0;
-        foreach (var imagePair in imageMap)
+        var sb = new StringBuilder();
+        sb.AppendLine($"nRows={flattenedImages.Count}&nCols=2");
+        // if (flattenedImages.Count > 0)
+        // {
+        //     sb.AppendLine($"&strImageURL0={flattenedImages[0]}");
+        // }
+        // else
+        // {
+        //     sb.AppendLine();
+        // }
+
+        for (var i = 0; i < flattenedImages.Count; i++)
         {
-            sb.AppendLine($"&strImageURL{i++}={imagePair.Key}");
-            sb.AppendLine($"&strImageURL{i++}={imagePair.Value}");
+            sb.AppendLine($"&strImageURL{i}={flattenedImages[i]}");
         }
 
         return sb.ToString();

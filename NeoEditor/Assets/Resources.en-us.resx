@@ -1219,6 +1219,9 @@ Exit if No</value>
     <data name="Delete" xml:space="preserve">
         <value>Delete</value>
     </data>
+    <data name="DeleteImagePairTooltip" xml:space="preserve">
+        <value>Remove the selected item from this image list only. The image files on disk will not be deleted.</value>
+    </data>
     <data name="Save" xml:space="preserve">
         <value>Save</value>
     </data>
@@ -1257,6 +1260,12 @@ Exit if No</value>
     </data>
     <data name="CloseProfileConfirmation" xml:space="preserve">
         <value>Save changes before closing this profile?</value>
+    </data>
+    <data name="CloseModImages" xml:space="preserve">
+        <value>Close Images</value>
+    </data>
+    <data name="CloseModImagesConfirmation" xml:space="preserve">
+        <value>Save the current image order before closing?</value>
     </data>
     <data name="CreateMod" xml:space="preserve">
         <value>Create Mod</value>
@@ -1402,6 +1411,105 @@ Click 'Set Game Folder' in the Project menu to get started.</value>
     </data>
     <data name="ReloadModsSuccessMessage" xml:space="preserve">
         <value>Mod list has been refreshed successfully.</value>
+    </data>
+    <data name="SaveModImagesSuccess" xml:space="preserve">
+        <value>Images Saved</value>
+    </data>
+    <data name="SaveModImagesSuccessMessage" xml:space="preserve">
+        <value>Saved image order to {0}</value>
+    </data>
+    <data name="SaveModImagesFailed" xml:space="preserve">
+        <value>Save Images Failed</value>
+    </data>
+    <data name="SaveModImagesFailedMessage" xml:space="preserve">
+        <value>Failed to save image order: {0}</value>
+    </data>
+    <data name="ImportImagesSuccess" xml:space="preserve">
+        <value>Images Imported</value>
+    </data>
+    <data name="ImportImagesSuccessMessage" xml:space="preserve">
+        <value>Imported {0} image pair(s) into {1}</value>
+    </data>
+    <data name="ImportImagesSkipped" xml:space="preserve">
+        <value>Images Skipped</value>
+    </data>
+    <data name="ImportImagesSkippedMessage" xml:space="preserve">
+        <value>Skipped import: {0}</value>
+    </data>
+    <data name="ImportImagesOverwrite" xml:space="preserve">
+        <value>Images Overwritten</value>
+    </data>
+    <data name="ImportImagesOverwriteMessage" xml:space="preserve">
+        <value>Overwrote existing files: {0}</value>
+    </data>
+    <data name="ImportImagesTooltip" xml:space="preserve">
+        <value>Import image pairs into the current mod's img folder.</value>
+    </data>
+    <data name="SaveModImagesTooltip" xml:space="preserve">
+        <value>Save the current image list order to getimages.php.</value>
+    </data>
+    <data name="RenameImagePair" xml:space="preserve">
+        <value>Rename Image Pair</value>
+    </data>
+    <data name="RenameImagePairTooltip" xml:space="preserve">
+        <value>Rename the selected image pair and its x2 file together.</value>
+    </data>
+    <data name="RenameImagePairDialogTitle" xml:space="preserve">
+        <value>Rename Image Pair</value>
+    </data>
+    <data name="RenameImagePairCurrentNormal" xml:space="preserve">
+        <value>Current Image</value>
+    </data>
+    <data name="RenameImagePairCurrentX2" xml:space="preserve">
+        <value>Current X2 Image</value>
+    </data>
+    <data name="RenameImagePairPreviewNormal" xml:space="preserve">
+        <value>Renamed Image</value>
+    </data>
+    <data name="RenameImagePairPreviewX2" xml:space="preserve">
+        <value>Renamed X2 Image</value>
+    </data>
+    <data name="RenameImagePairNameRequired" xml:space="preserve">
+        <value>Name is required.</value>
+    </data>
+    <data name="RenameImagePairInvalidName" xml:space="preserve">
+        <value>Name contains invalid file name characters.</value>
+    </data>
+    <data name="RenameImagePairFileExists" xml:space="preserve">
+        <value>A file with the target name already exists.</value>
+    </data>
+    <data name="RenameImagePairNormalFileExists" xml:space="preserve">
+        <value>Image file already exists: {0}</value>
+    </data>
+    <data name="RenameImagePairX2FileExists" xml:space="preserve">
+        <value>X2 image file already exists: {0}</value>
+    </data>
+    <data name="RenameImagePairBothFilesExist" xml:space="preserve">
+        <value>Image files already exist: {0}, {1}</value>
+    </data>
+    <data name="RenameImagePairMissingFiles" xml:space="preserve">
+        <value>Rename Image Pair Failed</value>
+    </data>
+    <data name="RenameImagePairMissingFilesMessage" xml:space="preserve">
+        <value>The selected image pair could not be found on disk.</value>
+    </data>
+    <data name="RenameImagePairSuccess" xml:space="preserve">
+        <value>Image Pair Renamed</value>
+    </data>
+    <data name="RenameImagePairSuccessMessage" xml:space="preserve">
+        <value>Renamed image pair to {0}</value>
+    </data>
+    <data name="RenameImagePairFailed" xml:space="preserve">
+        <value>Rename Failed</value>
+    </data>
+    <data name="RenameImagePairFailedMessage" xml:space="preserve">
+        <value>Failed to rename image pair: {0}</value>
+    </data>
+    <data name="MoveUpImagePairTooltip" xml:space="preserve">
+        <value>Move the selected image pair up in the list.</value>
+    </data>
+    <data name="MoveDownImagePairTooltip" xml:space="preserve">
+        <value>Move the selected image pair down in the list.</value>
     </data>
     <data name="AddImage" xml:space="preserve">
         <value>Add Image</value>

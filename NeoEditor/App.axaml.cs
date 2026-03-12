@@ -126,9 +126,12 @@ public partial class App : Application
                     .AddScoped<ModIndexViewModel>();
                 services.AddTransient<SearchableDataGrid>();
                 services.AddTransient<ModEntryDropHandler>();
+                services.AddTransient<ModImagePairDropHandler>();
                 // Dialog
                 services.AddTransient<CreateModDialog>()
-                    .AddTransient<CreateModDialogViewModel>();
+                    .AddTransient<CreateModDialogViewModel>()
+                    .AddTransient<RenameImagePairDialog>()
+                    .AddTransient<RenameImagePairDialogViewModel>();
             })
             .Build();
     }

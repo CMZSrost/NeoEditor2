@@ -1,0 +1,84 @@
+﻿<Window
+    x:Class="NeoEditor.Views.Dialog.RenameImagePairDialog"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:dialog="clr-namespace:NeoEditor.ViewModels.Dialog"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    Title="{Binding Loc[RenameImagePairDialogTitle]}"
+    d:DesignHeight="260"
+    d:DesignWidth="460"
+    x:DataType="dialog:RenameImagePairDialogViewModel"
+    mc:Ignorable="d">
+    <Grid
+        Margin="12"
+        ColumnDefinitions="Auto,*"
+        ColumnSpacing="8"
+        RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto"
+        RowSpacing="8">
+        <TextBlock
+            Grid.ColumnSpan="2"
+            FontWeight="SemiBold"
+            Text="{Binding Loc[RenameImagePair]}" />
+
+        <TextBlock
+            Grid.Row="1"
+            Grid.Column="0"
+            VerticalAlignment="Center"
+            Text="{Binding Loc[Name]}" />
+        <TextBox
+            Grid.Row="1"
+            Grid.Column="1"
+            Text="{Binding NewBaseName}" />
+
+        <TextBlock
+            Grid.Row="2"
+            Grid.Column="0"
+            VerticalAlignment="Center"
+            Text="{Binding Loc[RenameImagePairCurrentNormal]}" />
+        <TextBlock
+            Grid.Row="2"
+            Grid.Column="1"
+            Text="{Binding CurrentNormalFileName}"
+            TextWrapping="Wrap" />
+
+        <TextBlock
+            Grid.Row="3"
+            Grid.Column="0"
+            VerticalAlignment="Center"
+            Text="{Binding Loc[RenameImagePairCurrentX2]}" />
+        <TextBlock
+            Grid.Row="3"
+            Grid.Column="1"
+            Text="{Binding CurrentX2FileName}"
+            TextWrapping="Wrap" />
+
+        <StackPanel
+            Grid.Row="4"
+            Grid.Column="0"
+            Grid.ColumnSpan="2"
+            Spacing="4">
+            <TextBlock Text="{Binding Loc[RenameImagePairPreviewNormal]}" />
+            <TextBlock FontWeight="SemiBold" Text="{Binding ProposedNormalFileName}" />
+            <TextBlock Text="{Binding Loc[RenameImagePairPreviewX2]}" />
+            <TextBlock FontWeight="SemiBold" Text="{Binding ProposedX2FileName}" />
+            <TextBlock
+                Foreground="Tomato"
+                IsVisible="{Binding HasValidationError}"
+                Text="{Binding ValidationMessage}"
+                TextWrapping="Wrap" />
+        </StackPanel>
+
+        <StackPanel
+            Grid.Row="5"
+            Grid.Column="0"
+            Grid.ColumnSpan="2"
+            HorizontalAlignment="Center"
+            Orientation="Horizontal"
+            Spacing="16">
+            <Button Command="{Binding ConfirmCommand}" Content="{Binding Loc[Confirm]}" />
+            <Button Command="{Binding CancelCommand}" Content="{Binding Loc[Cancel]}" />
+        </StackPanel>
+    </Grid>
+</Window>
+

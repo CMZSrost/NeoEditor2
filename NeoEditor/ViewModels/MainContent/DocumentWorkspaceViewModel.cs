@@ -131,7 +131,6 @@ public partial class DocumentWorkspaceViewModel : ViewModelBase,
 
         if (FindOpenModImagesDocument(message.ModInfo) is { } existingDocument)
         {
-            existingDocument.Update(message.ModInfo);
             existingDocument.SetLocalizedTitle("ModImagesTitleFormat", message.ModInfo.Name);
             ActivateDocument(existingDocument);
             return;
@@ -232,6 +231,32 @@ public partial class DocumentWorkspaceViewModel : ViewModelBase,
                 case ButtonResult.Yes:
                     model.Save();
                     model.NeedNotifyWhenClose = false;
+                    break;
+                case ButtonResult.Cancel:
+                    return;
+            }
+        }
+
+        if (docContext is ModImagesDocument { ModInfo: { } modInfo, NeedNotifyWhenClose: true } imageDocument)
+        {
+            _logger.LogInformation("Closing image document for mod: {ModName}", modInfo.Name);
+
+            var result = await ShowConfirmDialogAsync(new MessageBoxStandardParams
+            {
+                ButtonDefinitions = ButtonEnum.YesNoCancel,
+                ContentTitle = Loc["CloseModImages"],
+                ContentMessage = Loc["CloseModImagesConfirmation"],
+                Icon = Icon.Question
+            });
+
+            switch (result)
+            {
+                case ButtonResult.Yes:
+                    await imageDocument.SaveCommand.ExecuteAsync(null);
+                    if (imageDocument.NeedNotifyWhenClose)
+                    {
+                        return;
+                    }
                     break;
                 case ButtonResult.Cancel:
                     return;

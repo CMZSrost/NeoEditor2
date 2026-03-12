@@ -403,9 +403,7 @@ public partial class ImageEditorDocument : DocumentViewBase
         }
 
         var fileNameWithoutExtension = Path.GetFileNameWithoutExtension(ImageName);
-        return HasSelection
-            ? $"{fileNameWithoutExtension}_selection_{TargetWidth}x{TargetHeight}{OutputExtension}"
-            : $"{fileNameWithoutExtension}_{TargetWidth}x{TargetHeight}{OutputExtension}";
+        return $"{fileNameWithoutExtension}{OutputExtension}";
     }
 
     private static string GetSuggestedX2FileName(string normalFileName)
