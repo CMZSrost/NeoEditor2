@@ -32,9 +32,11 @@ internal sealed class CropSelectionInteraction
 
     public bool IsActive => _activeHandle != CropHandle.None;
 
-    public bool TryBegin(CropHandle handle, Point startPoint, ImageCropSelection startSelection, ImageSelectionViewportGeometry geometry)
+    public bool TryBegin(CropHandle handle, Point startPoint, ImageCropSelection startSelection,
+        ImageSelectionViewportGeometry geometry)
     {
-        if (handle == CropHandle.None || !geometry.IsValid || startSelection.Width < _minimumSize || startSelection.Height < _minimumSize)
+        if (handle == CropHandle.None || !geometry.IsValid || startSelection.Width < _minimumSize ||
+            startSelection.Height < _minimumSize)
         {
             return false;
         }
@@ -68,7 +70,8 @@ internal sealed class CropSelectionInteraction
                 return new ImageCropSelection(
                     _startSelection.Left,
                     _startSelection.Top,
-                    Math.Clamp((int)Math.Ceiling(currentPixel.X), _startSelection.Left + _minimumSize, geometry.SourceWidth),
+                    Math.Clamp((int)Math.Ceiling(currentPixel.X), _startSelection.Left + _minimumSize,
+                        geometry.SourceWidth),
                     _startSelection.Bottom);
             case CropHandle.Top:
                 return new ImageCropSelection(
@@ -81,7 +84,8 @@ internal sealed class CropSelectionInteraction
                     _startSelection.Left,
                     _startSelection.Top,
                     _startSelection.Right,
-                    Math.Clamp((int)Math.Ceiling(currentPixel.Y), _startSelection.Top + _minimumSize, geometry.SourceHeight));
+                    Math.Clamp((int)Math.Ceiling(currentPixel.Y), _startSelection.Top + _minimumSize,
+                        geometry.SourceHeight));
             case CropHandle.TopLeft:
                 return new ImageCropSelection(
                     Math.Clamp((int)Math.Floor(currentPixel.X), 0, _startSelection.Right - _minimumSize),
@@ -92,20 +96,24 @@ internal sealed class CropSelectionInteraction
                 return new ImageCropSelection(
                     _startSelection.Left,
                     Math.Clamp((int)Math.Floor(currentPixel.Y), 0, _startSelection.Bottom - _minimumSize),
-                    Math.Clamp((int)Math.Ceiling(currentPixel.X), _startSelection.Left + _minimumSize, geometry.SourceWidth),
+                    Math.Clamp((int)Math.Ceiling(currentPixel.X), _startSelection.Left + _minimumSize,
+                        geometry.SourceWidth),
                     _startSelection.Bottom);
             case CropHandle.BottomLeft:
                 return new ImageCropSelection(
                     Math.Clamp((int)Math.Floor(currentPixel.X), 0, _startSelection.Right - _minimumSize),
                     _startSelection.Top,
                     _startSelection.Right,
-                    Math.Clamp((int)Math.Ceiling(currentPixel.Y), _startSelection.Top + _minimumSize, geometry.SourceHeight));
+                    Math.Clamp((int)Math.Ceiling(currentPixel.Y), _startSelection.Top + _minimumSize,
+                        geometry.SourceHeight));
             case CropHandle.BottomRight:
                 return new ImageCropSelection(
                     _startSelection.Left,
                     _startSelection.Top,
-                    Math.Clamp((int)Math.Ceiling(currentPixel.X), _startSelection.Left + _minimumSize, geometry.SourceWidth),
-                    Math.Clamp((int)Math.Ceiling(currentPixel.Y), _startSelection.Top + _minimumSize, geometry.SourceHeight));
+                    Math.Clamp((int)Math.Ceiling(currentPixel.X), _startSelection.Left + _minimumSize,
+                        geometry.SourceWidth),
+                    Math.Clamp((int)Math.Ceiling(currentPixel.Y), _startSelection.Top + _minimumSize,
+                        geometry.SourceHeight));
             default:
                 return _startSelection;
         }

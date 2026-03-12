@@ -7,6 +7,7 @@
     xmlns:avaloniaEdit="https://github.com/avaloniaui/avaloniaedit"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:userControls="clr-namespace:NeoEditor.Views.UserControls"
     x:Name="Root"
     d:DesignHeight="450"
     d:DesignWidth="800"
@@ -37,8 +38,8 @@
                 ShowLineNumbers="True"
                 SyntaxHighlighting="{Binding DocSyntax, ElementName=Root}" />
             <Grid Grid.Column="1">
-                <Canvas
-                    x:Name="OldPreviewCanvas"
+                <userControls:DiffPreviewTrack
+                    x:Name="OldPreviewTrack"
                     Background="#0D000000"
                     Cursor="Hand" />
                 <Border
@@ -70,8 +71,8 @@
                 ShowLineNumbers="True"
                 SyntaxHighlighting="{Binding DocSyntax, ElementName=Root}" />
             <Grid Grid.Column="1">
-                <Canvas
-                    x:Name="NewPreviewCanvas"
+                <userControls:DiffPreviewTrack
+                    x:Name="NewPreviewTrack"
                     Background="#0D000000"
                     Cursor="Hand" />
                 <Border
@@ -104,7 +105,7 @@
                     x:Name="PreviousDiffButton"
                     MinWidth="36"
                     Click="OnPreviousDiffClick">
-                    <TextBlock Text="↑" />
+                    <avalonia:SymbolIcon Symbol="ArrowUp" />
                 </Button>
                 <TextBlock
                     x:Name="DiffNavigationText"
@@ -117,7 +118,7 @@
                     x:Name="NextDiffButton"
                     MinWidth="36"
                     Click="OnNextDiffClick">
-                    <TextBlock Text="↓" />
+                    <avalonia:SymbolIcon Symbol="ArrowDown" />
                 </Button>
             </StackPanel>
         </Border>

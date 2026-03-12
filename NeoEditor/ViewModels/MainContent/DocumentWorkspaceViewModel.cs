@@ -116,7 +116,7 @@ public partial class DocumentWorkspaceViewModel : ViewModelBase,
         var document = new ModGameDataDocument
         {
             ModInfo = message.ModInfo,
-            ReadOnly = true,
+            ReadOnly = false,
         };
         document.SetLocalizedTitle("ModGameDataTitleFormat", message.ModInfo.Name);
 

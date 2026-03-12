@@ -9,6 +9,7 @@ using Avalonia.Platform.Storage;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.DependencyInjection;
+using NeoEditor.Helper;
 using NeoEditor.Services;
 
 namespace NeoEditor.ViewModels.MainContent;
@@ -74,15 +75,22 @@ public partial class ImageEditorDocument : DocumentViewBase
     public int CropRight => _cropSelection.Right;
     public int CropBottom => _cropSelection.Bottom;
     public PixelRect? CropRect => TryGetNormalizedCropRect();
+
     public bool HasSelection => HasImage && CropRect is { } crop && SelectedImage is { } image &&
-        (crop.X != 0 || crop.Y != 0 || crop.Width != image.PixelSize.Width || crop.Height != image.PixelSize.Height);
+                                (crop.X != 0 || crop.Y != 0 || crop.Width != image.PixelSize.Width ||
+                                 crop.Height != image.PixelSize.Height);
+
     public string SelectionDimensions => HasImage && CropRect is { } selection
         ? FormatDimensions(selection.Width, selection.Height)
         : string.Empty;
+
     public string NormalOutputDimensions => HasImage ? FormatDimensions(TargetWidth, TargetHeight) : string.Empty;
+
     public string X2OutputDimensions => HasImage
-        ? FormatDimensions(TargetWidth * PixelArtOutputSizeCalculator.X2Scale, TargetHeight * PixelArtOutputSizeCalculator.X2Scale)
+        ? FormatDimensions(TargetWidth * PixelArtOutputSizeCalculator.X2Scale,
+            TargetHeight * PixelArtOutputSizeCalculator.X2Scale)
         : string.Empty;
+
     public bool CanPixelate => HasImage && TargetWidth > 0 && TargetHeight > 0;
     public bool CanSaveProcessedImage => HasProcessedImage;
 
@@ -189,7 +197,9 @@ public partial class ImageEditorDocument : DocumentViewBase
         var file = await storageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
         {
             Title = Loc["SaveImagePair"],
-            SuggestedFileName = string.IsNullOrWhiteSpace(NormalOutputName) ? GetSuggestedNormalFileName() : NormalOutputName,
+            SuggestedFileName = string.IsNullOrWhiteSpace(NormalOutputName)
+                ? GetSuggestedNormalFileName()
+                : NormalOutputName,
             FileTypeChoices =
             [
                 new FilePickerFileType("PNG") { Patterns = ["*.png"] }
@@ -216,7 +226,8 @@ public partial class ImageEditorDocument : DocumentViewBase
                 return;
             }
 
-            var result = await _processingService.SaveAsync(pairPaths.Value.NormalPath, pairPaths.Value.X2Path, request);
+            var result =
+                await _processingService.SaveAsync(pairPaths.Value.NormalPath, pairPaths.Value.X2Path, request);
             if (result is null)
             {
                 return;
@@ -307,7 +318,8 @@ public partial class ImageEditorDocument : DocumentViewBase
             return;
         }
 
-        var normalizedCrop = ImageCropSelection.Normalize(left, top, right, bottom, SelectedImage.PixelSize.Width, SelectedImage.PixelSize.Height, minimumSize: 2);
+        var normalizedCrop = ImageCropSelection.Normalize(left, top, right, bottom, SelectedImage.PixelSize.Width,
+            SelectedImage.PixelSize.Height, minimumSize: 2);
         if (normalizedCrop is null)
         {
             return;
@@ -360,7 +372,8 @@ public partial class ImageEditorDocument : DocumentViewBase
         return new ImageEditorProcessingRequest(ImagePath, TargetWidth, TargetHeight, CropRect);
     }
 
-    private (string NormalPath, string X2Path, string NormalFileName, string X2FileName)? TryCreateOutputPairPaths(string selectedPath)
+    private (string NormalPath, string X2Path, string NormalFileName, string X2FileName)? TryCreateOutputPairPaths(
+        string selectedPath)
     {
         if (string.IsNullOrWhiteSpace(selectedPath))
         {
@@ -488,7 +501,8 @@ public partial class ImageEditorDocument : DocumentViewBase
 
         if (value)
         {
-            SetTargetSize(PixelArtOutputSizeCalculator.ResolveNearest(TargetWidth, TargetHeight, GetCurrentAspectRatio()));
+            SetTargetSize(
+                PixelArtOutputSizeCalculator.ResolveNearest(TargetWidth, TargetHeight, GetCurrentAspectRatio()));
         }
 
         NotifyOutputStateChanged();
@@ -590,7 +604,8 @@ public partial class ImageEditorDocument : DocumentViewBase
         OnPropertyChanged(nameof(SelectionDimensions));
         if (LockAspectRatio)
         {
-            SetTargetSize(PixelArtOutputSizeCalculator.ResolveNearest(TargetWidth, TargetHeight, GetCurrentAspectRatio()));
+            SetTargetSize(
+                PixelArtOutputSizeCalculator.ResolveNearest(TargetWidth, TargetHeight, GetCurrentAspectRatio()));
         }
 
         InvalidateProcessedPreview();
@@ -618,4 +633,3 @@ public partial class ImageEditorDocument : DocumentViewBase
         NotifyCropStateChanged();
     }
 }
-

@@ -29,7 +29,7 @@
         <DockControl.DataTemplates>
             <DataTemplate x:DataType="mainContent:XmlDiffDocument">
                 <userControls:XmlDiffView
-                    DocSyntax="XmlDoc"
+                    DocSyntax="XML"
                     NewXml="{Binding NewXml}"
                     OldXml="{Binding OldXml}"
                     ReadOnly="False" />
@@ -57,7 +57,7 @@
                     Document="{Binding Xml, Mode=TwoWay}"
                     IsReadOnly="True"
                     ShowLineNumbers="True"
-                    SyntaxHighlighting="XmlDoc" />
+                    SyntaxHighlighting="XML" />
             </DataTemplate>
             <DataTemplate x:DataType="mainContent:MarkdownDocument">
                 <mdxaml:MarkdownScrollViewer Markdown="{Binding Content}" />

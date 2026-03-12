@@ -1,0 +1,38 @@
+﻿<Window
+    x:Class="NeoEditor.Views.Dialog.ModGameDataSavePreviewDialog"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:userControls="clr-namespace:NeoEditor.Views.UserControls"
+    x:Name="Root"
+    Width="1200"
+    Height="760"
+    MinWidth="900"
+    MinHeight="560"
+    x:DataType="userControls:ModGameDataTabsView"
+    WindowStartupLocation="CenterOwner"
+    mc:Ignorable="d">
+    <Grid
+        Margin="12"
+        RowDefinitions="Auto,*,Auto"
+        RowSpacing="10">
+        <TextBlock Text="{Binding Loc[ModGameDataSavePreviewNote], ElementName=Root}" TextWrapping="Wrap" />
+
+        <userControls:XmlDiffView
+            Grid.Row="1"
+            DocSyntax="XML"
+            NewXml="{Binding NewXml, ElementName=Root}"
+            OldXml="{Binding OldXml, ElementName=Root}"
+            ReadOnly="True" />
+
+        <StackPanel
+            Grid.Row="2"
+            HorizontalAlignment="Center"
+            Orientation="Horizontal"
+            Spacing="16">
+            <Button Click="OnConfirmClick" Content="{Binding Loc[Confirm], ElementName=Root}" />
+            <Button Click="OnCancelClick" Content="{Binding Loc[Cancel], ElementName=Root}" />
+        </StackPanel>
+    </Grid>
+</Window>

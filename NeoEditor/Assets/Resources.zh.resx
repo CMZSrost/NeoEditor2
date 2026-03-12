@@ -1224,6 +1224,24 @@ No则退出</value>
     <data name="Save" xml:space="preserve">
         <value>保存</value>
     </data>
+    <data name="ModGameDataSavePreviewTitle" xml:space="preserve">
+        <value>保存预览</value>
+    </data>
+    <data name="ModGameDataSavePreviewTitleFormat" xml:space="preserve">
+        <value>保存预览 - {0}</value>
+    </data>
+    <data name="ModGameDataSavePreviewNote" xml:space="preserve">
+        <value>请先检查下方 XML 差异。当前“确认”只会关闭预览并弹出保存成功提示，暂时不会真正写入文件。</value>
+    </data>
+    <data name="ModGameDataSaveSuccessMessage" xml:space="preserve">
+        <value>保存成功。</value>
+    </data>
+    <data name="ModGameDataSavePreviewFailedMessage" xml:space="preserve">
+        <value>生成保存预览失败：{0}</value>
+    </data>
+    <data name="ModGameDataSaveMissingModMessage" xml:space="preserve">
+        <value>当前没有加载可保存的 Mod 数据。</value>
+    </data>
     <data name="MoveUp" xml:space="preserve">
         <value>上移</value>
     </data>
@@ -1563,5 +1581,17 @@ No则退出</value>
     </data>
     <data name="SaveImagePair" xml:space="preserve">
         <value>保存 PNG 图片对</value>
+    </data>
+    <data name="ModGameDataPreparingSavePreviewButton" xml:space="preserve">
+        <value>正在准备预览...</value>
+    </data>
+    <data name="ModGameDataPreparingSavePreviewScanning" xml:space="preserve">
+        <value>正在读取本地模组 XML...</value>
+    </data>
+    <data name="ModGameDataPreparingSavePreviewExporting" xml:space="preserve">
+        <value>正在导出当前编辑数据...</value>
+    </data>
+    <data name="ModGameDataPreparingSavePreviewDiffing" xml:space="preserve">
+        <value>正在比对 XML 并生成预览...</value>
     </data>
 </root>

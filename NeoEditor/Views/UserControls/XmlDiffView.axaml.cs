@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Threading;
+using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Media;
@@ -11,6 +13,7 @@ using AvaloniaEdit.Document;
 using DiffPlex.DiffBuilder;
 using DiffPlex.DiffBuilder.Model;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using NeoEditor.Helper;
 using NeoEditor.Helper.AttachedProperties;
 using NeoEditor.Services;
@@ -21,6 +24,7 @@ public partial class XmlDiffView : UserControl
 {
     private const double PreviewMinBlockHeight = 2d;
     private const double ViewportMinHeight = 12d;
+    private const int DiffRefreshDebounceMilliseconds = 90;
 
     private readonly record struct DiffBlock(
         int OldStartLineNumber,
@@ -80,22 +84,32 @@ public partial class XmlDiffView : UserControl
     private readonly List<DiffBlock> _diffBlocks = [];
     private int _currentDiffIndex = -1;
     private SideBySideDiffModel? _diffResult;
+    private HighlightBackgroundRenderHelper.HighlightData? _oldHighlightData;
+    private HighlightBackgroundRenderHelper.HighlightData? _newHighlightData;
+    private IReadOnlyList<DiffPreviewMarkerRun> _oldPreviewMarkerRuns = Array.Empty<DiffPreviewMarkerRun>();
+    private IReadOnlyList<DiffPreviewMarkerRun> _newPreviewMarkerRuns = Array.Empty<DiffPreviewMarkerRun>();
+    private CancellationTokenSource? _refreshHighlightingCancellation;
+    private int _refreshHighlightingVersion;
 
     private TextEditor OldEditorControl => this.FindControl<TextEditor>("OldEditor")!;
     private TextEditor NewEditorControl => this.FindControl<TextEditor>("NewEditor")!;
-    public LocalizationService Loc { get; set; }
+    public LocalizationService Loc { get; }
+    private ILogger<XmlDiffView> Logger { get; }
 
     public XmlDiffView()
     {
+        Loc = App.ServiceProvider.GetRequiredService<LocalizationService>();
+        Logger = App.ServiceProvider.GetRequiredService<ILogger<XmlDiffView>>();
         InitializeComponent();
         AttachedToVisualTree += OnAttachedToVisualTree;
         OldEditorControl.TextChanged += OnEditorTextChanged;
         NewEditorControl.TextChanged += OnEditorTextChanged;
-        OldPreviewCanvas.SizeChanged += OnPreviewCanvasSizeChanged;
-        NewPreviewCanvas.SizeChanged += OnPreviewCanvasSizeChanged;
+        OldEditorControl.SizeChanged += OnEditorSizeChanged;
+        NewEditorControl.SizeChanged += OnEditorSizeChanged;
+        OldPreviewTrack.SizeChanged += OnPreviewCanvasSizeChanged;
+        NewPreviewTrack.SizeChanged += OnPreviewCanvasSizeChanged;
         UpdateDiffNavigationUi();
         QueueRefreshHighlighting();
-        Loc = App.ServiceProvider.GetRequiredService<LocalizationService>();
     }
 
     protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
@@ -110,7 +124,10 @@ public partial class XmlDiffView : UserControl
 
     private void OnAttachedToVisualTree(object? sender, VisualTreeAttachmentEventArgs e)
     {
-        Dispatcher.UIThread.Post(EnsureOverviewBehaviors, DispatcherPriority.Loaded);
+        Dispatcher.UIThread.Post(() =>
+        {
+            EnsureOverviewBehaviors();
+        }, DispatcherPriority.Loaded);
     }
 
     private void OnEditorTextChanged(object? sender, EventArgs e)
@@ -122,6 +139,11 @@ public partial class XmlDiffView : UserControl
     {
         EnsureOverviewBehaviors();
         RenderPreviewSidebars();
+    }
+
+    private void OnEditorSizeChanged(object? sender, SizeChangedEventArgs e)
+    {
+        EnsureOverviewBehaviors();
     }
 
     private void OnPreviousDiffClick(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
@@ -160,93 +182,151 @@ public partial class XmlDiffView : UserControl
 
     private void QueueRefreshHighlighting()
     {
-        Dispatcher.UIThread.Post(RefreshHighlighting, DispatcherPriority.Background);
+        _refreshHighlightingCancellation?.Cancel();
+        _refreshHighlightingCancellation?.Dispose();
+
+        var cancellation = new CancellationTokenSource();
+        _refreshHighlightingCancellation = cancellation;
+        var refreshVersion = ++_refreshHighlightingVersion;
+        _ = RefreshHighlightingAsync(refreshVersion, cancellation.Token);
     }
 
-    private void RefreshHighlighting()
+    private async Task RefreshHighlightingAsync(int refreshVersion, CancellationToken cancellationToken)
     {
-        EnsureOverviewBehaviors();
+        try
+        {
+            await Task.Delay(DiffRefreshDebounceMilliseconds, cancellationToken);
+        }
+        catch (OperationCanceledException)
+        {
+            return;
+        }
 
         var oldText = OldXml?.Text ?? string.Empty;
         var newText = NewXml?.Text ?? string.Empty;
 
         if (string.Equals(oldText, newText, StringComparison.Ordinal))
         {
-            _diffResult = null;
-            _diffBlocks.Clear();
-            _currentDiffIndex = -1;
-            HighlightBackgroundRenderHelper.Clear(OldEditorControl);
-            HighlightBackgroundRenderHelper.Clear(NewEditorControl);
-            ClearPreviewSidebars();
-            UpdateDiffNavigationUi();
+            await Dispatcher.UIThread.InvokeAsync(() =>
+            {
+                if (!IsCurrentRefresh(refreshVersion, cancellationToken))
+                {
+                    return;
+                }
+
+                EnsureOverviewBehaviors();
+                ClearDiffState();
+            }, DispatcherPriority.Background);
             return;
         }
 
-        _diffResult = SideBySideDiffBuilder.Diff(oldText, newText);
-        if (!_diffResult.OldText.HasDifferences && !_diffResult.NewText.HasDifferences)
+        SideBySideDiffModel diffResult;
+        HighlightBackgroundRenderHelper.HighlightData? oldHighlightData = null;
+        HighlightBackgroundRenderHelper.HighlightData? newHighlightData = null;
+        IReadOnlyList<DiffPreviewMarkerRun> oldPreviewMarkerRuns = Array.Empty<DiffPreviewMarkerRun>();
+        IReadOnlyList<DiffPreviewMarkerRun> newPreviewMarkerRuns = Array.Empty<DiffPreviewMarkerRun>();
+
+        try
         {
-            _diffResult = null;
-            _diffBlocks.Clear();
-            _currentDiffIndex = -1;
-            HighlightBackgroundRenderHelper.Clear(OldEditorControl);
-            HighlightBackgroundRenderHelper.Clear(NewEditorControl);
-            ClearPreviewSidebars();
-            UpdateDiffNavigationUi();
+            diffResult = await Task.Run(() => SideBySideDiffBuilder.Diff(oldText, newText), cancellationToken);
+            cancellationToken.ThrowIfCancellationRequested();
+        }
+        catch (OperationCanceledException)
+        {
             return;
         }
 
-        RebuildDiffBlocks();
-        ApplyDiffHighlights();
-        RenderPreviewSidebars();
-        UpdateDiffNavigationUi();
+        var hasDifferences = HasDiffLines(diffResult.OldText.Lines) || HasDiffLines(diffResult.NewText.Lines);
+
+        if (hasDifferences)
+        {
+            try
+            {
+                oldHighlightData = await Task.Run(
+                    () => HighlightBackgroundRenderHelper.BuildHighlightData(diffResult.OldText.Lines), cancellationToken);
+                cancellationToken.ThrowIfCancellationRequested();
+                newHighlightData = await Task.Run(
+                    () => HighlightBackgroundRenderHelper.BuildHighlightData(diffResult.NewText.Lines), cancellationToken);
+                cancellationToken.ThrowIfCancellationRequested();
+                oldPreviewMarkerRuns = await Task.Run(
+                    () => BuildPreviewMarkerRuns(diffResult.OldText.Lines), cancellationToken);
+                cancellationToken.ThrowIfCancellationRequested();
+                newPreviewMarkerRuns = await Task.Run(
+                    () => BuildPreviewMarkerRuns(diffResult.NewText.Lines), cancellationToken);
+            }
+            catch (OperationCanceledException)
+            {
+                return;
+            }
+            catch (Exception ex)
+            {
+                Logger.LogWarning(ex,
+                    "Failed to build XmlDiffView highlight data. Diff navigation will remain available without line highlights.");
+                oldHighlightData = null;
+                newHighlightData = null;
+            }
+        }
+
+        await Dispatcher.UIThread.InvokeAsync(() =>
+        {
+            if (!IsCurrentRefresh(refreshVersion, cancellationToken))
+            {
+                return;
+            }
+
+            EnsureOverviewBehaviors();
+
+            _diffResult = diffResult;
+            _oldHighlightData = oldHighlightData;
+            _newHighlightData = newHighlightData;
+            _oldPreviewMarkerRuns = oldPreviewMarkerRuns;
+            _newPreviewMarkerRuns = newPreviewMarkerRuns;
+            RebuildDiffBlocks();
+
+            if (_diffBlocks.Count == 0 && !hasDifferences)
+            {
+                ClearDiffState();
+                return;
+            }
+
+            TryRefreshDiffPresentation();
+            UpdateDiffNavigationUi();
+
+            if (_diffBlocks.Count > 0)
+            {
+                Dispatcher.UIThread.Post(NavigateToCurrentDiff, DispatcherPriority.Loaded);
+            }
+        }, DispatcherPriority.Background);
     }
 
     private void ApplyDiffHighlights()
     {
-        if (_diffResult == null)
+        if (_diffResult == null || _oldHighlightData is null || _newHighlightData is null)
         {
             HighlightBackgroundRenderHelper.Clear(OldEditorControl);
             HighlightBackgroundRenderHelper.Clear(NewEditorControl);
             return;
         }
 
-        var oldHighlight = HighlightBackgroundRenderHelper.BuildHighlightData(_diffResult.OldText.Lines);
-        var newHighlight = HighlightBackgroundRenderHelper.BuildHighlightData(_diffResult.NewText.Lines);
+        var oldNavigation = GetNavigationBlockRange(isNewText: false);
+        var newNavigation = GetNavigationBlockRange(isNewText: true);
 
         HighlightBackgroundRenderHelper.Apply(OldEditorControl,
-            MergeNavigationBlockHighlight(oldHighlight, isNewText: false),
-            HighlightBackgroundRenderHelper.GetRangeBrush(isNewText: false));
+            _oldHighlightData.Value,
+            HighlightBackgroundRenderHelper.GetRangeBrush(isNewText: false),
+            oldNavigation.StartLineNumber,
+            oldNavigation.EndLineNumber,
+            oldNavigation.StartLineNumber > 0
+                ? HighlightBackgroundRenderHelper.GetNavigationLineBrush(isNewText: false)
+                : null);
         HighlightBackgroundRenderHelper.Apply(NewEditorControl,
-            MergeNavigationBlockHighlight(newHighlight, isNewText: true),
-            HighlightBackgroundRenderHelper.GetRangeBrush(isNewText: true));
-    }
-
-    private HighlightBackgroundRenderHelper.HighlightData MergeNavigationBlockHighlight(
-        HighlightBackgroundRenderHelper.HighlightData highlightData, bool isNewText)
-    {
-        if (GetCurrentDiffBlock() is not { } currentBlock)
-        {
-            return highlightData;
-        }
-
-        var startLineNumber = isNewText ? currentBlock.NewStartLineNumber : currentBlock.OldStartLineNumber;
-        var endLineNumber = isNewText ? currentBlock.NewEndLineNumber : currentBlock.OldEndLineNumber;
-        if (startLineNumber <= 0 || endLineNumber < startLineNumber)
-        {
-            return highlightData;
-        }
-
-        var mergedLineBrushes = highlightData.LineBrushes
-            .Where(x => x.LineNumber < startLineNumber || x.LineNumber > endLineNumber)
-            .ToList();
-        var navigationBrush = HighlightBackgroundRenderHelper.GetNavigationLineBrush(isNewText);
-
-        for (var lineNumber = startLineNumber; lineNumber <= endLineNumber; lineNumber++)
-        {
-            mergedLineBrushes.Add((lineNumber, navigationBrush));
-        }
-
-        return highlightData with { LineBrushes = mergedLineBrushes.OrderBy(x => x.LineNumber).ToList() };
+            _newHighlightData.Value,
+            HighlightBackgroundRenderHelper.GetRangeBrush(isNewText: true),
+            newNavigation.StartLineNumber,
+            newNavigation.EndLineNumber,
+            newNavigation.StartLineNumber > 0
+                ? HighlightBackgroundRenderHelper.GetNavigationLineBrush(isNewText: true)
+                : null);
     }
 
     private void NavigateToCurrentDiff()
@@ -257,12 +337,40 @@ public partial class XmlDiffView : UserControl
             return;
         }
 
-        NavigateEditorToLine(OldEditorControl,
-            ResolveNavigationLineNumber(currentBlock.OldStartLineNumber, currentBlock.OldEndLineNumber));
-        NavigateEditorToLine(NewEditorControl,
-            ResolveNavigationLineNumber(currentBlock.NewStartLineNumber, currentBlock.NewEndLineNumber));
-        ApplyDiffHighlights();
+        SyncScrolling = false;
+        CenterEditorOnDiffBlock(OldEditorControl, currentBlock.OldStartLineNumber, currentBlock.OldEndLineNumber);
+        CenterEditorOnDiffBlock(NewEditorControl, currentBlock.NewStartLineNumber, currentBlock.NewEndLineNumber);
+        TryRefreshDiffPresentation();
         UpdateDiffNavigationUi();
+    }
+
+    private void ClearDiffState()
+    {
+        _diffResult = null;
+        _oldHighlightData = null;
+        _newHighlightData = null;
+        _oldPreviewMarkerRuns = Array.Empty<DiffPreviewMarkerRun>();
+        _newPreviewMarkerRuns = Array.Empty<DiffPreviewMarkerRun>();
+        _diffBlocks.Clear();
+        _currentDiffIndex = -1;
+        HighlightBackgroundRenderHelper.Clear(OldEditorControl);
+        HighlightBackgroundRenderHelper.Clear(NewEditorControl);
+        ClearPreviewSidebars();
+        UpdateDiffNavigationUi();
+    }
+
+    private void TryRefreshDiffPresentation()
+    {
+        try
+        {
+            ApplyDiffHighlights();
+            RenderPreviewSidebars();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogWarning(ex,
+                "Failed to render XmlDiffView diff highlights or overview markers. Diff navigation remains available.");
+        }
     }
 
     private void RebuildDiffBlocks()
@@ -277,9 +385,9 @@ public partial class XmlDiffView : UserControl
 
         var oldLines = _diffResult.OldText.Lines;
         var newLines = _diffResult.NewText.Lines;
-        var pairCount = Math.Min(oldLines.Count, newLines.Count);
-        var oldTotalLines = OldEditorControl.Document?.LineCount ?? 0;
-        var newTotalLines = NewEditorControl.Document?.LineCount ?? 0;
+        var pairCount = Math.Max(oldLines.Count, newLines.Count);
+        var oldTotalLines = OldXml?.LineCount ?? CountNonImaginaryLines(oldLines);
+        var newTotalLines = NewXml?.LineCount ?? CountNonImaginaryLines(newLines);
         var oldProcessedLineCount = 0;
         var newProcessedLineCount = 0;
         var inBlock = false;
@@ -290,9 +398,11 @@ public partial class XmlDiffView : UserControl
 
         for (var i = 0; i < pairCount; i++)
         {
-            var oldLine = oldLines[i];
-            var newLine = newLines[i];
-            var hasDifference = oldLine.Type != ChangeType.Unchanged || newLine.Type != ChangeType.Unchanged;
+            var oldLine = i < oldLines.Count ? oldLines[i] : null;
+            var newLine = i < newLines.Count ? newLines[i] : null;
+            var oldLineType = oldLine?.Type ?? ChangeType.Imaginary;
+            var newLineType = newLine?.Type ?? ChangeType.Imaginary;
+            var hasDifference = oldLineType != ChangeType.Unchanged || newLineType != ChangeType.Unchanged;
 
             if (hasDifference)
             {
@@ -305,12 +415,12 @@ public partial class XmlDiffView : UserControl
                     inBlock = true;
                 }
 
-                if (oldLine.Type != ChangeType.Imaginary && oldTotalLines > 0)
+                if (oldLineType != ChangeType.Imaginary && oldTotalLines > 0)
                 {
                     currentOldEnd = Math.Clamp(oldProcessedLineCount + 1, 1, oldTotalLines);
                 }
 
-                if (newLine.Type != ChangeType.Imaginary && newTotalLines > 0)
+                if (newLineType != ChangeType.Imaginary && newTotalLines > 0)
                 {
                     currentNewEnd = Math.Clamp(newProcessedLineCount + 1, 1, newTotalLines);
                 }
@@ -321,12 +431,12 @@ public partial class XmlDiffView : UserControl
                 inBlock = false;
             }
 
-            if (oldLine.Type != ChangeType.Imaginary)
+            if (oldLineType != ChangeType.Imaginary)
             {
                 oldProcessedLineCount++;
             }
 
-            if (newLine.Type != ChangeType.Imaginary)
+            if (newLineType != ChangeType.Imaginary)
             {
                 newProcessedLineCount++;
             }
@@ -336,6 +446,16 @@ public partial class XmlDiffView : UserControl
         {
             _diffBlocks.Add(new DiffBlock(currentOldStart, currentOldEnd, currentNewStart, currentNewEnd));
         }
+
+        if (_diffBlocks.Count > 0)
+        {
+            _currentDiffIndex = 0;
+        }
+    }
+
+    private static int CountNonImaginaryLines(IEnumerable<DiffPiece> lines)
+    {
+        return lines.Count(line => line.Type != ChangeType.Imaginary);
     }
 
     private static int GetAnchorLineNumber(int processedLineCount, int totalLines)
@@ -348,9 +468,50 @@ public partial class XmlDiffView : UserControl
         return Math.Clamp(processedLineCount + 1, 1, totalLines);
     }
 
+    private static bool HasDiffLines(IEnumerable<DiffPiece> lines)
+    {
+        foreach (var line in lines)
+        {
+            if (line.Type != ChangeType.Unchanged)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private (int StartLineNumber, int EndLineNumber) GetNavigationBlockRange(bool isNewText)
+    {
+        if (GetCurrentDiffBlock() is not { } currentBlock)
+        {
+            return (0, 0);
+        }
+
+        int startLineNumber;
+        int endLineNumber;
+        if (isNewText)
+        {
+            startLineNumber = currentBlock.NewStartLineNumber;
+            endLineNumber = currentBlock.NewEndLineNumber;
+        }
+        else
+        {
+            startLineNumber = currentBlock.OldStartLineNumber;
+            endLineNumber = currentBlock.OldEndLineNumber;
+        }
+
+        return startLineNumber <= 0 || endLineNumber < startLineNumber ? (0, 0) : (startLineNumber, endLineNumber);
+    }
+
     private DiffBlock? GetCurrentDiffBlock()
     {
-        return _currentDiffIndex >= 0 && _currentDiffIndex < _diffBlocks.Count ? _diffBlocks[_currentDiffIndex] : null;
+        if (_currentDiffIndex < 0 || _currentDiffIndex >= _diffBlocks.Count)
+        {
+            return null;
+        }
+
+        return _diffBlocks[_currentDiffIndex];
     }
 
     private static int ResolveNavigationLineNumber(int startLineNumber, int endLineNumber)
@@ -361,31 +522,70 @@ public partial class XmlDiffView : UserControl
     private void UpdateDiffNavigationUi()
     {
         var totalCount = _diffBlocks.Count;
-        var currentDisplayIndex = _currentDiffIndex >= 0 && _currentDiffIndex < totalCount ? _currentDiffIndex + 1 : 0;
+        if (totalCount <= 0)
+        {
+            var emptyText = Loc["DiffNavigationEmptyText"];
+            DiffNavigationText.Text = string.IsNullOrWhiteSpace(emptyText) ? "Diff 0/0" : emptyText;
+            PreviousDiffButton.IsEnabled = false;
+            NextDiffButton.IsEnabled = false;
+            return;
+        }
 
-        DiffNavigationText.Text = string.Format(Loc["DiffNavigationFormat"], currentDisplayIndex, totalCount);
+        var currentDisplayIndex = _currentDiffIndex >= 0 && _currentDiffIndex < totalCount ? _currentDiffIndex + 1 : 1;
+
+        var format = Loc["DiffNavigationFormat"];
+        DiffNavigationText.Text = string.IsNullOrWhiteSpace(format)
+            ? $"Diff {currentDisplayIndex}/{totalCount}"
+            : string.Format(format, currentDisplayIndex, totalCount);
         PreviousDiffButton.IsEnabled = totalCount > 0 && _currentDiffIndex > 0;
         NextDiffButton.IsEnabled = totalCount > 0 && _currentDiffIndex < totalCount - 1;
     }
 
-    private static void NavigateEditorToLine(TextEditor editor, int targetLineNumber)
+    private static void CenterEditorOnDiffBlock(TextEditor editor, int startLineNumber, int endLineNumber)
     {
         var document = editor.Document;
-        if (document == null || document.LineCount <= 0 || targetLineNumber <= 0)
+        if (document == null || document.LineCount <= 0)
         {
             return;
         }
 
-        var lineNumber = Math.Clamp(targetLineNumber, 1, document.LineCount);
+        var lineNumber = ResolveNavigationLineNumber(startLineNumber, endLineNumber);
+        if (lineNumber <= 0)
+        {
+            return;
+        }
+
+        lineNumber = Math.Clamp(lineNumber, 1, document.LineCount);
         var line = document.GetLineByNumber(lineNumber);
         editor.CaretOffset = line.Offset;
-        editor.ScrollToLine(lineNumber);
+
+        if (GetScrollViewer(editor) is not { } scrollViewer)
+        {
+            editor.ScrollToLine(lineNumber);
+            return;
+        }
+
+        var lineHeight = editor.TextArea?.TextView?.DefaultLineHeight ?? 0d;
+        if (lineHeight <= 0)
+        {
+            editor.ScrollToLine(lineNumber);
+            return;
+        }
+
+        var boundedEndLine = Math.Clamp(Math.Max(lineNumber, endLineNumber), lineNumber, document.LineCount);
+        var blockMidLine = (lineNumber + boundedEndLine) / 2d;
+        var blockHeight = Math.Max(lineHeight, (boundedEndLine - lineNumber + 1) * lineHeight);
+        var targetVerticalOffset = (blockMidLine - 1d) * lineHeight - (scrollViewer.Viewport.Height - blockHeight) / 2d;
+        var maxOffsetY = Math.Max(0d, scrollViewer.Extent.Height - scrollViewer.Viewport.Height);
+        var clampedOffsetY = Math.Clamp(targetVerticalOffset, 0d, maxOffsetY);
+
+        scrollViewer.Offset = new Vector(scrollViewer.Offset.X, clampedOffsetY);
     }
 
     private void EnsureOverviewBehaviors()
     {
-        ConfigureOverviewBehavior(OldEditorControl, OldPreviewCanvas, OldPreviewViewportBorder);
-        ConfigureOverviewBehavior(NewEditorControl, NewPreviewCanvas, NewPreviewViewportBorder);
+        ConfigureOverviewBehavior(OldEditorControl, OldPreviewTrack, OldPreviewViewportBorder);
+        ConfigureOverviewBehavior(NewEditorControl, NewPreviewTrack, NewPreviewViewportBorder);
     }
 
     private static void ConfigureOverviewBehavior(TextEditor editor, Control track, Control viewportThumb)
@@ -421,50 +621,58 @@ public partial class XmlDiffView : UserControl
         }
 
         var currentBlock = GetCurrentDiffBlock();
-        RenderPreviewCanvas(OldPreviewCanvas, OldEditorControl, _diffResult.OldText.Lines, currentBlock,
+        UpdatePreviewTrack(OldPreviewTrack, OldEditorControl, _oldPreviewMarkerRuns, currentBlock,
             isNewText: false);
-        RenderPreviewCanvas(NewPreviewCanvas, NewEditorControl, _diffResult.NewText.Lines, currentBlock,
+        UpdatePreviewTrack(NewPreviewTrack, NewEditorControl, _newPreviewMarkerRuns, currentBlock,
             isNewText: true);
     }
 
     private void ClearPreviewSidebars()
     {
-        OldPreviewCanvas.Children.Clear();
-        NewPreviewCanvas.Children.Clear();
+        ClearPreviewTrack(OldPreviewTrack);
+        ClearPreviewTrack(NewPreviewTrack);
     }
 
-    private static void RenderPreviewCanvas(Canvas previewCanvas, TextEditor editor, IReadOnlyList<DiffPiece> lines,
+    private static void UpdatePreviewTrack(DiffPreviewTrack previewTrack, TextEditor editor,
+        IReadOnlyList<DiffPreviewMarkerRun> markerRuns,
         DiffBlock? currentBlock, bool isNewText)
     {
-        previewCanvas.Children.Clear();
-
-        var markers = BuildPreviewMarkers(lines);
-        if (markers.Count == 0 || editor.Document == null)
+        if (editor.Document == null)
         {
+            ClearPreviewTrack(previewTrack);
             return;
         }
 
-        var rectangles = GeneratePreviewRectangles(markers, previewCanvas.Bounds.Height, editor.Document.LineCount,
-            previewCanvas.Bounds.Width);
-        foreach (var (x, y, width, height, brush) in rectangles)
+        previewTrack.MarkerRuns = markerRuns;
+        previewTrack.TotalLines = editor.Document.LineCount;
+        if (currentBlock == null)
         {
-            previewCanvas.Children.Add(new Border
-            {
-                Background = brush,
-                Width = width,
-                Height = height,
-                Margin = new Thickness(x, y, 0, 0),
-                IsHitTestVisible = false
-            });
+            previewTrack.CurrentBlockStartLineNumber = 0;
+            previewTrack.CurrentBlockEndLineNumber = 0;
+            return;
         }
 
-        AddCurrentBlockPreviewMarker(previewCanvas, editor.Document.LineCount, currentBlock, isNewText);
+        previewTrack.CurrentBlockStartLineNumber = isNewText
+            ? currentBlock.Value.NewStartLineNumber
+            : currentBlock.Value.OldStartLineNumber;
+        previewTrack.CurrentBlockEndLineNumber = isNewText
+            ? currentBlock.Value.NewEndLineNumber
+            : currentBlock.Value.OldEndLineNumber;
     }
 
-    private static List<(int Index, IBrush Brush, int Count)> BuildPreviewMarkers(IReadOnlyList<DiffPiece> lines)
+    private static void ClearPreviewTrack(DiffPreviewTrack previewTrack)
     {
-        var markers = new List<(int Index, IBrush Brush, int Count)>();
+        previewTrack.MarkerRuns = Array.Empty<DiffPreviewMarkerRun>();
+        previewTrack.TotalLines = 0;
+        previewTrack.CurrentBlockStartLineNumber = 0;
+        previewTrack.CurrentBlockEndLineNumber = 0;
+    }
+
+    private static IReadOnlyList<DiffPreviewMarkerRun> BuildPreviewMarkerRuns(IReadOnlyList<DiffPiece> lines)
+    {
+        var markerRuns = new List<DiffPreviewMarkerRun>();
         var documentLineNumber = 0;
+        DiffPreviewMarkerRun? currentRun = null;
 
         foreach (var line in lines)
         {
@@ -475,105 +683,41 @@ public partial class XmlDiffView : UserControl
 
             documentLineNumber++;
             var brush = HighlightBackgroundRenderHelper.GetIndicatorBrush(line.Type);
-            if (brush != null)
+
+            if (brush == null)
             {
-                markers.Add((documentLineNumber, brush, 1));
-            }
-        }
+                if (currentRun is { } runWithoutBrush)
+                {
+                    markerRuns.Add(runWithoutBrush);
+                    currentRun = null;
+                }
 
-        return markers;
-    }
-
-    private static List<(double X, double Y, double Width, double Height, IBrush Brush)> GeneratePreviewRectangles(
-        IEnumerable<(int Index, IBrush Brush, int Count)> indexes, double totalHeight, int totalLines, double width)
-    {
-        var rects = new List<(double X, double Y, double Width, double Height, IBrush Brush)>();
-        if (totalHeight <= 0 || totalLines <= 0 || width <= 0)
-        {
-            return rects;
-        }
-
-        var lineHeight = totalHeight / totalLines;
-        foreach (var group in GroupConsecutiveIndexes(indexes))
-        {
-            var first = group.First();
-            var startY = Math.Max(0, (first.Index - 1) * lineHeight);
-            var groupLineCount = group.Sum(x => x.Count);
-            var height = Math.Max(PreviewMinBlockHeight, groupLineCount * lineHeight);
-            height = Math.Min(height, totalHeight - startY);
-            if (height <= 0)
-            {
                 continue;
             }
 
-            rects.Add((0, startY, width, height, first.Brush));
-        }
-
-        return rects;
-    }
-
-    private static List<List<(int Index, IBrush Brush, int Count)>> GroupConsecutiveIndexes(
-        IEnumerable<(int Index, IBrush Brush, int Count)> indexes)
-    {
-        var groupedIndexes = new List<List<(int Index, IBrush Brush, int Count)>>();
-        List<(int Index, IBrush Brush, int Count)>? currentGroup = null;
-
-        foreach (var index in indexes.OrderBy(x => x.Index))
-        {
-            var canAppend = currentGroup != null &&
-                            index.Index == currentGroup.Last().Index + currentGroup.Last().Count &&
-                            ReferenceEquals(index.Brush, currentGroup.Last().Brush);
-
-            if (!canAppend)
+            if (currentRun is { } run && ReferenceEquals(run.Brush, brush) &&
+                run.StartLineNumber + run.LineCount == documentLineNumber)
             {
-                currentGroup = new List<(int Index, IBrush Brush, int Count)> { index };
-                groupedIndexes.Add(currentGroup);
+                currentRun = run with { LineCount = run.LineCount + 1 };
+                continue;
             }
-            else if (currentGroup != null)
+
+            if (currentRun is { } completedRun)
             {
-                currentGroup.Add(index);
+                markerRuns.Add(completedRun);
             }
+
+            currentRun = new DiffPreviewMarkerRun(documentLineNumber, 1, brush);
         }
 
-        return groupedIndexes;
+        if (currentRun is { } finalRun)
+        {
+            markerRuns.Add(finalRun);
+        }
+
+        return markerRuns;
     }
 
-    private static void AddCurrentBlockPreviewMarker(Canvas previewCanvas, int totalLines, DiffBlock? currentBlock,
-        bool isNewText)
-    {
-        if (currentBlock == null || totalLines <= 0 || previewCanvas.Bounds.Height <= 0 ||
-            previewCanvas.Bounds.Width <= 0)
-        {
-            return;
-        }
-
-        var startLineNumber = isNewText ? currentBlock.Value.NewStartLineNumber : currentBlock.Value.OldStartLineNumber;
-        var endLineNumber = isNewText ? currentBlock.Value.NewEndLineNumber : currentBlock.Value.OldEndLineNumber;
-        if (startLineNumber <= 0 || endLineNumber < startLineNumber)
-        {
-            return;
-        }
-
-        var lineHeight = previewCanvas.Bounds.Height / totalLines;
-        var startY = Math.Max(0, (startLineNumber - 1) * lineHeight);
-        var height = Math.Max(PreviewMinBlockHeight * 1.5, (endLineNumber - startLineNumber + 1) * lineHeight);
-        height = Math.Min(height, previewCanvas.Bounds.Height - startY);
-        if (height <= 0)
-        {
-            return;
-        }
-
-        previewCanvas.Children.Add(new Border
-        {
-            Background = HighlightBackgroundRenderHelper.GetNavigationPreviewBrush(),
-            BorderBrush = HighlightBackgroundRenderHelper.GetNavigationPreviewBorderBrush(),
-            BorderThickness = new Thickness(1),
-            Width = previewCanvas.Bounds.Width,
-            Height = height,
-            Margin = new Thickness(0, startY, 0, 0),
-            IsHitTestVisible = false
-        });
-    }
 
 
     private static ScrollViewer? GetScrollViewer(TextEditor editor)
@@ -581,4 +725,10 @@ public partial class XmlDiffView : UserControl
         return typeof(TextEditor).GetProperty("ScrollViewer",
             BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)?.GetValue(editor) as ScrollViewer;
     }
+
+    private bool IsCurrentRefresh(int refreshVersion, CancellationToken cancellationToken)
+    {
+        return !cancellationToken.IsCancellationRequested && refreshVersion == _refreshHighlightingVersion;
+    }
+
 }

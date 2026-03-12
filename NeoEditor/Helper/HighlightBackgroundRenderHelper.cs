@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Avalonia.Media;
+using Avalonia.Media.Immutable;
 using AvaloniaEdit;
 using AvaloniaEdit.Rendering;
 using DiffPlex.DiffBuilder.Model;
@@ -30,22 +31,25 @@ public class HighlightBackgroundRenderHelper : IBackgroundRenderer
     public static IBrush InsertedIndicatorBrush { get; } = CreateBrush("#CC65A96F");
     public static IBrush ModifiedIndicatorBrush { get; } = CreateBrush("#CC6E9FD8");
 
-    private readonly Dictionary<int, List<(int Start, int Length)>> _lineRangesToHighlight;
-    private readonly Dictionary<int, IBrush> _linesToHighlight;
-    private readonly IBrush _rangeBrush;
+    private Dictionary<int, List<(int Start, int Length)>> _lineRangesToHighlight;
+    private Dictionary<int, IBrush> _linesToHighlight;
+    private IBrush _rangeBrush;
+    private int _navigationStartLineNumber;
+    private int _navigationEndLineNumber;
+    private IBrush? _navigationLineBrush;
 
-    public HighlightBackgroundRenderHelper(
-        IEnumerable<(int LineNumber, IBrush LineBrush)> linesToHighlight,
-        Dictionary<int, List<(int Start, int Length)>> lineRangesToHighlight, IBrush rangeBrush)
+    private HighlightBackgroundRenderHelper(HighlightData highlightData, IBrush rangeBrush,
+        int navigationStartLineNumber = 0, int navigationEndLineNumber = 0, IBrush? navigationLineBrush = null)
     {
-        _linesToHighlight = linesToHighlight.ToDictionary(tuple => tuple.LineNumber, tuple => tuple.LineBrush);
-        _lineRangesToHighlight = lineRangesToHighlight;
+        _linesToHighlight = [];
+        _lineRangesToHighlight = [];
         _rangeBrush = rangeBrush;
+        Update(highlightData, rangeBrush, navigationStartLineNumber, navigationEndLineNumber, navigationLineBrush);
     }
 
     public static IBrush CreateBrush(string color)
     {
-        return new SolidColorBrush(Color.Parse(color));
+        return new ImmutableSolidColorBrush(Color.Parse(color));
     }
 
     public static IBrush GetRangeBrush(bool isNewText)
@@ -134,28 +138,54 @@ public class HighlightBackgroundRenderHelper : IBackgroundRenderer
             return;
         }
 
-        editor.TextArea.TextView.BackgroundRenderers.Clear();
+        var renderers = editor.TextArea.TextView.BackgroundRenderers
+            .OfType<HighlightBackgroundRenderHelper>()
+            .ToList();
+        foreach (var renderer in renderers)
+        {
+            editor.TextArea.TextView.BackgroundRenderers.Remove(renderer);
+        }
+
         editor.TextArea.TextView.InvalidateVisual();
     }
 
-    public static void Apply(TextEditor editor, HighlightData highlightData, IBrush rangeBrush)
-    {
-        Apply(editor, highlightData.LineBrushes, highlightData.Ranges, rangeBrush);
-    }
-
-    public static void Apply(TextEditor editor,
-        IEnumerable<(int LineNumber, IBrush LineBrush)> lineBrushes,
-        Dictionary<int, List<(int Start, int Length)>> ranges, IBrush rangeBrush)
+    public static void Apply(TextEditor editor, HighlightData highlightData, IBrush rangeBrush,
+        int navigationStartLineNumber = 0, int navigationEndLineNumber = 0, IBrush? navigationLineBrush = null)
     {
         if (editor.TextArea?.TextView == null)
         {
             return;
         }
 
-        editor.TextArea.TextView.BackgroundRenderers.Clear();
-        editor.TextArea.TextView.BackgroundRenderers.Add(new HighlightBackgroundRenderHelper(lineBrushes,
-            ranges, rangeBrush));
+        var renderer = editor.TextArea.TextView.BackgroundRenderers
+            .OfType<HighlightBackgroundRenderHelper>()
+            .FirstOrDefault();
+        if (renderer == null)
+        {
+            renderer = new HighlightBackgroundRenderHelper(highlightData, rangeBrush,
+                navigationStartLineNumber, navigationEndLineNumber, navigationLineBrush);
+            editor.TextArea.TextView.BackgroundRenderers.Add(renderer);
+        }
+        else
+        {
+            renderer.Update(highlightData, rangeBrush, navigationStartLineNumber, navigationEndLineNumber,
+                navigationLineBrush);
+        }
+
         editor.TextArea.TextView.InvalidateVisual();
+    }
+
+    private void Update(HighlightData highlightData, IBrush rangeBrush, int navigationStartLineNumber,
+        int navigationEndLineNumber, IBrush? navigationLineBrush)
+    {
+        _linesToHighlight = highlightData.LineBrushes.ToDictionary(tuple => tuple.LineNumber, tuple => tuple.LineBrush);
+        _lineRangesToHighlight = highlightData.Ranges.ToDictionary(entry => entry.Key, entry => entry.Value.ToList());
+        _rangeBrush = rangeBrush;
+        _navigationStartLineNumber = navigationStartLineNumber;
+        _navigationEndLineNumber = navigationEndLineNumber;
+        _navigationLineBrush = navigationStartLineNumber > 0 && navigationEndLineNumber >= navigationStartLineNumber
+            ? navigationLineBrush
+            : null;
     }
 
     private static List<(int Start, int Length)> BuildSubPieceRanges(DiffPiece line)
@@ -185,8 +215,23 @@ public class HighlightBackgroundRenderHelper : IBackgroundRenderer
 
         foreach (var line in textView.VisualLines)
         {
+            var lineNumber = line.FirstDocumentLine.LineNumber;
+
             // 高亮整行背景
-            if (_linesToHighlight.TryGetValue(line.FirstDocumentLine.LineNumber, out var lineBrush))
+            var hasNavigationOverlay = _navigationLineBrush != null &&
+                                       lineNumber >= _navigationStartLineNumber &&
+                                       lineNumber <= _navigationEndLineNumber;
+            IBrush? lineBrush = null;
+            if (hasNavigationOverlay)
+            {
+                lineBrush = _navigationLineBrush;
+            }
+            else
+            {
+                _linesToHighlight.TryGetValue(lineNumber, out lineBrush);
+            }
+
+            if (lineBrush != null)
             {
                 var rect = BackgroundGeometryBuilder.GetRectsFromVisualSegment(textView, line, 0, line.VisualLength)
                     .FirstOrDefault();
@@ -197,7 +242,7 @@ public class HighlightBackgroundRenderHelper : IBackgroundRenderer
             }
 
             // 高亮行中的特定范围
-            if (_lineRangesToHighlight.TryGetValue(line.FirstDocumentLine.LineNumber, out var ranges))
+            if (_lineRangesToHighlight.TryGetValue(lineNumber, out var ranges))
                 foreach (var (start, length) in ranges)
                 {
                     var rects = BackgroundGeometryBuilder.GetRectsFromVisualSegment(textView, line, start,

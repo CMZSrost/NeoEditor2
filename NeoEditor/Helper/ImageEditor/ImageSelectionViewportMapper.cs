@@ -3,7 +3,11 @@ using Avalonia;
 
 namespace NeoEditor.Views.UserControls.ImageEditor;
 
-internal readonly record struct ImageSelectionViewportGeometry(Rect ViewportBounds, Rect ImageBounds, int SourceWidth, int SourceHeight)
+internal readonly record struct ImageSelectionViewportGeometry(
+    Rect ViewportBounds,
+    Rect ImageBounds,
+    int SourceWidth,
+    int SourceHeight)
 {
     private const double Epsilon = 1e-6;
 
@@ -45,16 +49,19 @@ internal static class ImageSelectionViewportMapper
 {
     private const double Epsilon = 1e-6;
 
-    public static ImageSelectionViewportGeometry? TryCreateGeometry(Size viewportSize, int sourceWidth, int sourceHeight, double scale, double translateX, double translateY)
+    public static ImageSelectionViewportGeometry? TryCreateGeometry(Size viewportSize, int sourceWidth,
+        int sourceHeight, double scale, double translateX, double translateY)
     {
-        if (sourceWidth <= 0 || sourceHeight <= 0 || viewportSize.Width <= Epsilon || viewportSize.Height <= Epsilon || scale <= Epsilon)
+        if (sourceWidth <= 0 || sourceHeight <= 0 || viewportSize.Width <= Epsilon || viewportSize.Height <= Epsilon ||
+            scale <= Epsilon)
         {
             return null;
         }
 
         var displayedWidth = sourceWidth * scale;
         var displayedHeight = sourceHeight * scale;
-        if (displayedWidth <= Epsilon || displayedHeight <= Epsilon || double.IsNaN(displayedWidth) || double.IsNaN(displayedHeight)
+        if (displayedWidth <= Epsilon || displayedHeight <= Epsilon || double.IsNaN(displayedWidth) ||
+            double.IsNaN(displayedHeight)
             || double.IsInfinity(displayedWidth) || double.IsInfinity(displayedHeight))
         {
             return null;
@@ -62,7 +69,8 @@ internal static class ImageSelectionViewportMapper
 
         var left = (viewportSize.Width - displayedWidth) / 2D + translateX;
         var top = (viewportSize.Height - displayedHeight) / 2D + translateY;
-        var geometry = new ImageSelectionViewportGeometry(new Rect(viewportSize), new Rect(left, top, displayedWidth, displayedHeight), sourceWidth, sourceHeight);
+        var geometry = new ImageSelectionViewportGeometry(new Rect(viewportSize),
+            new Rect(left, top, displayedWidth, displayedHeight), sourceWidth, sourceHeight);
         return geometry.IsValid ? geometry : null;
     }
 

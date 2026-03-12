@@ -1227,6 +1227,24 @@ Exit if No</value>
     <data name="Save" xml:space="preserve">
         <value>Save</value>
     </data>
+    <data name="ModGameDataSavePreviewTitle" xml:space="preserve">
+        <value>Save Preview</value>
+    </data>
+    <data name="ModGameDataSavePreviewTitleFormat" xml:space="preserve">
+        <value>Save Preview - {0}</value>
+    </data>
+    <data name="ModGameDataSavePreviewNote" xml:space="preserve">
+        <value>Review the XML diff below. Confirm will only close this preview and show a success notification for now; it will not write any files yet.</value>
+    </data>
+    <data name="ModGameDataSaveSuccessMessage" xml:space="preserve">
+        <value>Save successful.</value>
+    </data>
+    <data name="ModGameDataSavePreviewFailedMessage" xml:space="preserve">
+        <value>Unable to generate the save preview: {0}</value>
+    </data>
+    <data name="ModGameDataSaveMissingModMessage" xml:space="preserve">
+        <value>No mod data is currently loaded.</value>
+    </data>
     <data name="MoveUp" xml:space="preserve">
         <value>Move Up</value>
     </data>
@@ -1513,58 +1531,70 @@ Click 'Set Game Folder' in the Project menu to get started.</value>
     <data name="MoveDownImagePairTooltip" xml:space="preserve">
         <value>Move the selected image pair down in the list.</value>
     </data>
-  <data name="AddImage" xml:space="preserve">
+    <data name="AddImage" xml:space="preserve">
     <value>Add Image</value>
   </data>
-  <data name="SelectImage" xml:space="preserve">
+    <data name="SelectImage" xml:space="preserve">
     <value>Select Image</value>
   </data>
-  <data name="ImageFiles" xml:space="preserve">
+    <data name="ImageFiles" xml:space="preserve">
     <value>Image Files</value>
   </data>
-  <data name="ImageDimensions" xml:space="preserve">
+    <data name="ImageDimensions" xml:space="preserve">
     <value>Dimensions</value>
   </data>
-  <data name="FileSize" xml:space="preserve">
+    <data name="FileSize" xml:space="preserve">
     <value>File Size</value>
   </data>
-  <data name="NoImageSelected" xml:space="preserve">
+    <data name="NoImageSelected" xml:space="preserve">
     <value>No image selected.</value>
   </data>
-  <data name="Width" xml:space="preserve">
+    <data name="Width" xml:space="preserve">
     <value>Width</value>
   </data>
-  <data name="Height" xml:space="preserve">
+    <data name="Height" xml:space="preserve">
     <value>Height</value>
   </data>
-  <data name="Pixelate" xml:space="preserve">
+    <data name="Pixelate" xml:space="preserve">
     <value>Pixelate</value>
   </data>
-  <data name="ProcessedPreview" xml:space="preserve">
+    <data name="ProcessedPreview" xml:space="preserve">
     <value>Processed Preview</value>
   </data>
-  <data name="NoProcessedImage" xml:space="preserve">
+    <data name="NoProcessedImage" xml:space="preserve">
     <value>No processed image yet.</value>
   </data>
-  <data name="SaveProcessedImage" xml:space="preserve">
+    <data name="SaveProcessedImage" xml:space="preserve">
     <value>Save Processed Image</value>
   </data>
-  <data name="LockAspectRatio" xml:space="preserve">
+    <data name="LockAspectRatio" xml:space="preserve">
     <value>Lock Aspect Ratio</value>
   </data>
-  <data name="X2Preview" xml:space="preserve">
+    <data name="X2Preview" xml:space="preserve">
     <value>X2 Preview</value>
   </data>
-  <data name="NormalOutput" xml:space="preserve">
+    <data name="NormalOutput" xml:space="preserve">
     <value>Normal Output</value>
   </data>
-  <data name="X2Output" xml:space="preserve">
+    <data name="X2Output" xml:space="preserve">
     <value>X2 Output</value>
   </data>
-  <data name="ImageEditorGridConstraintHint" xml:space="preserve">
+    <data name="ImageEditorGridConstraintHint" xml:space="preserve">
     <value>Normal output is snapped to 10px steps, the x2 preview is generated automatically at 20px steps, and both files are always saved as PNG to preserve full transparency.</value>
   </data>
-  <data name="SaveImagePair" xml:space="preserve">
+    <data name="SaveImagePair" xml:space="preserve">
     <value>Save PNG Image Pair</value>
+  </data>
+    <data name="ModGameDataPreparingSavePreviewButton" xml:space="preserve">
+    <value>Preparing Preview...</value>
+  </data>
+    <data name="ModGameDataPreparingSavePreviewScanning" xml:space="preserve">
+    <value>Loading local mod XML...</value>
+  </data>
+    <data name="ModGameDataPreparingSavePreviewExporting" xml:space="preserve">
+    <value>Exporting current editor data...</value>
+  </data>
+    <data name="ModGameDataPreparingSavePreviewDiffing" xml:space="preserve">
+    <value>Comparing XML and preparing preview...</value>
   </data>
 </root>

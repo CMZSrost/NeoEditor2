@@ -8,18 +8,42 @@
     x:Name="Root"
     d:DesignHeight="600"
     d:DesignWidth="1000"
-    x:CompileBindings="False"
     mc:Ignorable="d">
-    <TabControl ItemsSource="{Binding Tabs, ElementName=Root}">
-        <TabControl.ItemTemplate>
-            <DataTemplate>
-                <TextBlock Text="{Binding Header}" />
-            </DataTemplate>
-        </TabControl.ItemTemplate>
-        <TabControl.ContentTemplate>
-            <DataTemplate DataType="userControls:GameDataTypeTabItem">
-                <userControls:SearchableDataGrid ItemsSource="{Binding ItemsSource}" ReadOnly="{Binding ReadOnly, ElementName=Root}" />
-            </DataTemplate>
-        </TabControl.ContentTemplate>
-    </TabControl>
+    <DockPanel>
+        <StackPanel
+            Margin="0,0,0,8"
+            HorizontalAlignment="Right"
+            DockPanel.Dock="Top"
+            Spacing="4">
+            <Button
+                Click="OnSavePreviewButtonClick"
+                Content="{Binding SavePreviewButtonText, ElementName=Root}"
+                IsEnabled="{Binding CanStartSavePreview, ElementName=Root}" />
+            <StackPanel
+                HorizontalAlignment="Right"
+                IsVisible="{Binding IsPreparingSavePreview, ElementName=Root}"
+                Orientation="Horizontal"
+                Spacing="8">
+                <TextBlock VerticalAlignment="Center" Text="{Binding SavePreviewStatusText, ElementName=Root}" />
+                <ProgressBar
+                    Width="140"
+                    Height="4"
+                    VerticalAlignment="Center"
+                    IsIndeterminate="True" />
+            </StackPanel>
+        </StackPanel>
+
+        <TabControl ItemsSource="{Binding Tabs, ElementName=Root}">
+            <TabControl.ItemTemplate>
+                <DataTemplate DataType="userControls:GameDataTypeTabItem">
+                    <TextBlock Text="{Binding Header}" />
+                </DataTemplate>
+            </TabControl.ItemTemplate>
+            <TabControl.ContentTemplate>
+                <DataTemplate DataType="userControls:GameDataTypeTabItem">
+                    <userControls:SearchableDataGrid ItemsSource="{Binding ItemsSource}" ReadOnly="{Binding ReadOnly, ElementName=Root}" />
+                </DataTemplate>
+            </TabControl.ContentTemplate>
+        </TabControl>
+    </DockPanel>
 </UserControl>

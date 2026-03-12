@@ -1225,6 +1225,24 @@ Exit if No</value>
     <data name="Save" xml:space="preserve">
         <value>Save</value>
     </data>
+    <data name="ModGameDataSavePreviewTitle" xml:space="preserve">
+        <value>Save Preview</value>
+    </data>
+    <data name="ModGameDataSavePreviewTitleFormat" xml:space="preserve">
+        <value>Save Preview - {0}</value>
+    </data>
+    <data name="ModGameDataSavePreviewNote" xml:space="preserve">
+        <value>Review the XML diff below. Confirm will only close this preview and show a success notification for now; it will not write any files yet.</value>
+    </data>
+    <data name="ModGameDataSaveSuccessMessage" xml:space="preserve">
+        <value>Save successful.</value>
+    </data>
+    <data name="ModGameDataSavePreviewFailedMessage" xml:space="preserve">
+        <value>Unable to generate the save preview: {0}</value>
+    </data>
+    <data name="ModGameDataSaveMissingModMessage" xml:space="preserve">
+        <value>No mod data is currently loaded.</value>
+    </data>
     <data name="MoveUp" xml:space="preserve">
         <value>Move Up</value>
     </data>
@@ -1564,5 +1582,17 @@ Click 'Set Game Folder' in the Project menu to get started.</value>
     </data>
     <data name="SaveImagePair" xml:space="preserve">
         <value>Save PNG Image Pair</value>
+    </data>
+    <data name="ModGameDataPreparingSavePreviewButton" xml:space="preserve">
+        <value>Preparing Preview...</value>
+    </data>
+    <data name="ModGameDataPreparingSavePreviewScanning" xml:space="preserve">
+        <value>Loading local mod XML...</value>
+    </data>
+    <data name="ModGameDataPreparingSavePreviewExporting" xml:space="preserve">
+        <value>Exporting current editor data...</value>
+    </data>
+    <data name="ModGameDataPreparingSavePreviewDiffing" xml:space="preserve">
+        <value>Comparing XML and preparing preview...</value>
     </data>
 </root>

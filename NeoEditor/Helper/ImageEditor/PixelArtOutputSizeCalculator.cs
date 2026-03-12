@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace NeoEditor.ViewModels.MainContent;
+namespace NeoEditor.Helper;
 
 public readonly record struct PixelArtOutputSize(int Width, int Height)
 {
@@ -27,7 +27,8 @@ public static class PixelArtOutputSizeCalculator
         }
 
         var idealHeight = snappedWidth / aspectRatio;
-        return new PixelArtOutputSize(snappedWidth, SnapToBaseStep((int)Math.Round(idealHeight, MidpointRounding.AwayFromZero)));
+        return new PixelArtOutputSize(snappedWidth,
+            SnapToBaseStep((int)Math.Round(idealHeight, MidpointRounding.AwayFromZero)));
     }
 
     public static PixelArtOutputSize ResolveFromHeight(int height, double aspectRatio)
@@ -39,7 +40,8 @@ public static class PixelArtOutputSizeCalculator
         }
 
         var idealWidth = snappedHeight * aspectRatio;
-        return new PixelArtOutputSize(SnapToBaseStep((int)Math.Round(idealWidth, MidpointRounding.AwayFromZero)), snappedHeight);
+        return new PixelArtOutputSize(SnapToBaseStep((int)Math.Round(idealWidth, MidpointRounding.AwayFromZero)),
+            snappedHeight);
     }
 
     public static PixelArtOutputSize ResolveNearest(int preferredWidth, int preferredHeight, double aspectRatio)
@@ -69,7 +71,8 @@ public static class PixelArtOutputSizeCalculator
             var ratioError = Math.Abs(candidateAspectRatio - aspectRatio);
             var distance = Math.Abs(candidate.Width - preferredWidth) + Math.Abs(candidate.Height - preferredHeight);
 
-            if (ratioError < bestRatioError - 1e-9 || (Math.Abs(ratioError - bestRatioError) <= 1e-9 && distance < bestDistance))
+            if (ratioError < bestRatioError - 1e-9 ||
+                (Math.Abs(ratioError - bestRatioError) <= 1e-9 && distance < bestDistance))
             {
                 best = candidate;
                 bestRatioError = ratioError;
@@ -81,7 +84,8 @@ public static class PixelArtOutputSizeCalculator
     public static int SnapToBaseStep(int value)
     {
         var safeValue = Math.Max(BaseStep, value);
-        return Math.Max(BaseStep, (int)Math.Round(safeValue / (double)BaseStep, MidpointRounding.AwayFromZero) * BaseStep);
+        return Math.Max(BaseStep,
+            (int)Math.Round(safeValue / (double)BaseStep, MidpointRounding.AwayFromZero) * BaseStep);
     }
 
     private static bool IsValidAspectRatio(double aspectRatio)

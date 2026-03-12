@@ -158,7 +158,7 @@ public partial class XmlDiffDocument : DocumentBase
 public partial class ModGameDataDocument : DocumentBase
 {
     [ObservableProperty] public partial ModInfo? ModInfo { get; set; }
-    [ObservableProperty] public partial bool ReadOnly { get; set; } = true;
+    [ObservableProperty] public partial bool ReadOnly { get; set; } = false;
 }
 
 public class PlainTextDocument : DocumentBase

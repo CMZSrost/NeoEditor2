@@ -1,6 +1,9 @@
 ﻿using System;
 using System.IO;
+using System.Linq;
+using System.Text;
 using System.Xml;
+using System.Xml.Linq;
 using Microsoft.XmlDiffPatch;
 
 namespace NeoEditor.Helper;
@@ -14,8 +17,11 @@ public static class XmlCompareHelper
             throw new FileNotFoundException("The XML files are different.", oldXmlPath);
         }
 
-        var xmlDiff = new XmlDiff(XmlDiffOptions.IgnoreComments | XmlDiffOptions.IgnoreWhitespace |
-                                  XmlDiffOptions.IgnoreNamespaces);
+        var xmlDiff = new XmlDiff(
+            XmlDiffOptions.IgnoreComments |
+            XmlDiffOptions.IgnoreWhitespace |
+            XmlDiffOptions.IgnoreNamespaces
+            );
         var xmlPatch = new XmlPatch();
 
         using var diffStream = new MemoryStream();
@@ -32,6 +38,52 @@ public static class XmlCompareHelper
         patchStream.Position = 0;
 
         using var reader = new StreamReader(patchStream);
-        return reader.ReadToEnd();
+        return NormalizePatchedXml(reader.ReadToEnd());
+    }
+
+    private static string NormalizePatchedXml(string xml)
+    {
+        if (string.IsNullOrWhiteSpace(xml))
+        {
+            return xml;
+        }
+
+        var document = XDocument.Parse(xml, LoadOptions.PreserveWhitespace);
+        foreach (var columnElement in document.Descendants("column").Where(element => !element.HasElements))
+        {
+            var value = columnElement.Value;
+            if (!IsIndentationOnlyEmptyValue(value))
+            {
+                continue;
+            }
+
+            columnElement.Value = string.Empty;
+        }
+
+        var settings = new XmlWriterSettings
+        {
+            Encoding = new UTF8Encoding(false),
+            Indent = true,
+            NewLineChars = Environment.NewLine,
+            OmitXmlDeclaration = false
+        };
+
+        using var writer = new Utf8StringWriter();
+        using var xmlWriter = XmlWriter.Create(writer, settings);
+        document.Save(xmlWriter);
+        xmlWriter.Flush();
+        return writer.ToString();
+    }
+
+    private static bool IsIndentationOnlyEmptyValue(string value)
+    {
+        return !string.IsNullOrEmpty(value) &&
+               string.IsNullOrWhiteSpace(value) &&
+               value.IndexOfAny(['\r', '\n']) >= 0;
+    }
+
+    private sealed class Utf8StringWriter : StringWriter
+    {
+        public override Encoding Encoding => new UTF8Encoding(false);
     }
 }
