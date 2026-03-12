@@ -105,6 +105,7 @@ public partial class App : Application
                 services.AddScoped<IMessenger, WeakReferenceMessenger>();
                 services.AddSingleton<LocalizationService>();
                 services.AddSingleton<INotificationService, NotificationService>();
+                services.AddSingleton<IImageEditorProcessingService, ImageEditorProcessingService>();
                 services.AddSingleton<PhpParser>();
                 services.AddSingleton<XmlParser>();
                 services.AddSingleton<IModManager, ModManager>();

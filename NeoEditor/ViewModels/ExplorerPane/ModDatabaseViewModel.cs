@@ -28,6 +28,7 @@ using NeoEditor.Data;
 using NeoEditor.Data.Context;
 using NeoEditor.Data.Messages;
 using NeoEditor.Data.Model;
+using NeoEditor.Helper;
 using NeoEditor.Services;
 using NeoEditor.ViewModels.Dialog;
 using NeoEditor.Views;
@@ -40,6 +41,7 @@ public partial class ModDatabaseViewModel : ViewModelBase, IRecipient<GameRootDi
     IRecipient<InitModMessage>, IRecipient<RefreshModMessage>
 {
     private readonly IConfigService _config;
+    private readonly PhpParser _phpParser = new();
     public AppConfig Config => _config.Config;
 
     private ProjectDbContextFactory _gameContextFactory;
@@ -49,6 +51,7 @@ public partial class ModDatabaseViewModel : ViewModelBase, IRecipient<GameRootDi
 
     private readonly ILogger<ModDatabaseViewModel> _logger;
     public ObservableCollection<ModInfo> Mods { get; set; } = [];
+    public IRelayCommand<ModInfo?> ShowImageMenuCommand { get; }
 
     [ObservableProperty] public partial string Filter { get; set; } = "";
     [ObservableProperty] public partial ModInfo? SelectedItem { get; set; }
@@ -75,6 +78,7 @@ public partial class ModDatabaseViewModel : ViewModelBase, IRecipient<GameRootDi
         _editorContextFactory = editorContextFactory;
         _editorDbContext = editorDbContext;
         _modManager = modManager;
+        ShowImageMenuCommand = new RelayCommand<ModInfo?>(ShowImage);
 
         Messenger.Send(new InitModMessage());
         Dispatcher.UIThread.InvokeAsync(() => RefreshMod());
@@ -167,6 +171,23 @@ public partial class ModDatabaseViewModel : ViewModelBase, IRecipient<GameRootDi
         }
 
         Messenger.Send(new OpenModGameDataDocumentMessage(selectedItem));
+    }
+
+    private void ShowImage(ModInfo? selectedItem = null)
+    {
+        if (selectedItem is null)
+        {
+            _logger.LogWarning("ModInfo is null in ShowImageCommand");
+            return;
+        }
+
+        if (!TryResolveGetImagesLocation(selectedItem, out _, out _))
+        {
+            App.Notification.ShowWarning(Loc["GetImagesFileNotFoundMessage"], Loc["GetImagesFileNotFound"]);
+            return;
+        }
+
+        Messenger.Send(new OpenModImagesDocumentMessage(selectedItem));
     }
 
     [RelayCommand]
@@ -377,6 +398,30 @@ public partial class ModDatabaseViewModel : ViewModelBase, IRecipient<GameRootDi
         absoluteXmlPath = candidatePath;
         title = $"{mod.Name}/{xmlPath.Replace("\\", "/")}";
         return true;
+    }
+
+    private bool TryResolveGetImagesLocation(ModInfo modInfo, out string imageRootDirectory, out string getImagesPath)
+    {
+        imageRootDirectory = string.Empty;
+        getImagesPath = string.Empty;
+
+        if (string.IsNullOrWhiteSpace(Config.GameRootDir))
+        {
+            return false;
+        }
+
+        imageRootDirectory = string.Equals(modInfo.Name, "Game", StringComparison.OrdinalIgnoreCase)
+            ? Path.GetFullPath(Config.GameRootDir)
+            : string.IsNullOrWhiteSpace(modInfo.Path)
+                ? string.Empty
+                : Path.GetFullPath(Path.Combine(Config.GameRootDir, modInfo.Path));
+        if (string.IsNullOrWhiteSpace(imageRootDirectory))
+        {
+            return false;
+        }
+
+        getImagesPath = Path.Combine(imageRootDirectory, "getimages.php");
+        return File.Exists(getImagesPath);
     }
 
     private string ResolveModDirectory(string modPath)

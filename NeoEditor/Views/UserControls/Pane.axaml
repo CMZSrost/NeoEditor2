@@ -198,6 +198,11 @@
                                     Header="{Binding Loc[ShowData]}"
                                     IsEnabled="{Binding $parent[ContextMenu].PlacementTarget.(SelectingItemsControl.SelectedItem), Converter={x:Static ObjectConverters.IsNotNull}}" />
                                 <MenuItem
+                                    Command="{Binding ShowImageMenuCommand}"
+                                    CommandParameter="{Binding $parent[ContextMenu].PlacementTarget.(SelectingItemsControl.SelectedItem)}"
+                                    Header="{Binding Loc[ShowImage]}"
+                                    IsEnabled="{Binding $parent[ContextMenu].PlacementTarget.(SelectingItemsControl.SelectedItem), Converter={x:Static ObjectConverters.IsNotNull}}" />
+                                <MenuItem
                                     Command="{Binding ClearModsCommand}"
                                     CommandParameter="{Binding $parent[ContextMenu].PlacementTarget.(SelectingItemsControl.SelectedItem)}"
                                     Header="{Binding Loc[ClearMod]}"

@@ -40,6 +40,12 @@
             <DataTemplate DataType="mainContent:ModGameDataDocument">
                 <userControls:ModGameDataTabsView ModInfo="{Binding ModInfo}" ReadOnly="{Binding ReadOnly}" />
             </DataTemplate>
+            <DataTemplate x:DataType="mainContent:ModImagesDocument">
+                <userControls:ModImagesDocumentView DataContext="{Binding}" />
+            </DataTemplate>
+            <DataTemplate x:DataType="mainContent:ImageEditorDocument">
+                <userControls:ImageEditorDocumentView DataContext="{Binding}" />
+            </DataTemplate>
             <DataTemplate DataType="mainContent:PlainTextDocument">
                 <StackPanel>
                     <TextBlock Text="{Binding Title}" />

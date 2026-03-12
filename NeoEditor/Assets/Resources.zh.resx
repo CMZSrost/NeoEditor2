@@ -1320,6 +1320,27 @@ No则退出</value>
     <data name="ShowData" xml:space="preserve">
         <value>查看数据</value>
     </data>
+    <data name="ShowImage" xml:space="preserve">
+        <value>查看图片</value>
+    </data>
+    <data name="NoImagesFound" xml:space="preserve">
+        <value>getimages.php 中没有找到图片。</value>
+    </data>
+    <data name="ModImagesTitleFormat" xml:space="preserve">
+        <value>图片：{0}</value>
+    </data>
+    <data name="GetImagesFileNotFound" xml:space="preserve">
+        <value>未找到 getimages.php</value>
+    </data>
+    <data name="GetImagesFileNotFoundMessage" xml:space="preserve">
+        <value>在所选 Mod 目录中没有找到 getimages.php。</value>
+    </data>
+    <data name="OpenModImagesFailed" xml:space="preserve">
+        <value>打开 Mod 图片失败</value>
+    </data>
+    <data name="OpenModImagesFailedMessage" xml:space="preserve">
+        <value>打开 Mod 图片失败</value>
+    </data>
     <data name="ToggleSyncScroll" xml:space="preserve">
         <value>切换同步滚动</value>
     </data>
@@ -1380,5 +1401,59 @@ No则退出</value>
     </data>
     <data name="ReloadModsSuccessMessage" xml:space="preserve">
         <value>Mod 列表刷新成功。</value>
+    </data>
+    <data name="AddImage" xml:space="preserve">
+        <value>添加图片</value>
+    </data>
+    <data name="SelectImage" xml:space="preserve">
+        <value>选择图片</value>
+    </data>
+    <data name="ImageFiles" xml:space="preserve">
+        <value>图片文件</value>
+    </data>
+    <data name="ImageDimensions" xml:space="preserve">
+        <value>尺寸</value>
+    </data>
+    <data name="FileSize" xml:space="preserve">
+        <value>文件大小</value>
+    </data>
+    <data name="NoImageSelected" xml:space="preserve">
+        <value>尚未选择图片。</value>
+    </data>
+    <data name="Width" xml:space="preserve">
+        <value>宽</value>
+    </data>
+    <data name="Height" xml:space="preserve">
+        <value>高</value>
+    </data>
+    <data name="Pixelate" xml:space="preserve">
+        <value>像素化</value>
+    </data>
+    <data name="ProcessedPreview" xml:space="preserve">
+        <value>处理后预览</value>
+    </data>
+    <data name="NoProcessedImage" xml:space="preserve">
+        <value>尚未生成处理后的图片。</value>
+    </data>
+    <data name="SaveProcessedImage" xml:space="preserve">
+        <value>保存处理后的图片</value>
+    </data>
+    <data name="LockAspectRatio" xml:space="preserve">
+        <value>锁定宽高比</value>
+    </data>
+    <data name="X2Preview" xml:space="preserve">
+        <value>X2 预览</value>
+    </data>
+    <data name="NormalOutput" xml:space="preserve">
+        <value>正常尺寸</value>
+    </data>
+    <data name="X2Output" xml:space="preserve">
+        <value>X2 尺寸</value>
+    </data>
+    <data name="ImageEditorGridConstraintHint" xml:space="preserve">
+        <value>正常尺寸会自动对齐到 10px 网格，X2 预览会自动按 20px 网格生成，并且两张图片都会固定保存为 PNG 以保留完整透明通道。</value>
+    </data>
+    <data name="SaveImagePair" xml:space="preserve">
+        <value>保存 PNG 图片对</value>
     </data>
 </root>

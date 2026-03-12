@@ -1,0 +1,177 @@
+﻿<UserControl
+    x:Class="NeoEditor.Views.UserControls.ModImagesDocumentView"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mainContent="clr-namespace:NeoEditor.ViewModels.MainContent"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    x:Name="Root"
+    d:DesignHeight="450"
+    d:DesignWidth="800"
+    x:DataType="mainContent:ModImagesDocument"
+    mc:Ignorable="d">
+    <Grid
+        MinHeight="0"
+        ColumnDefinitions="300,4,*,220"
+        ColumnSpacing="12"
+        RowDefinitions="Auto,Auto,*"
+        RowSpacing="12">
+        <Border
+            Grid.RowSpan="3"
+            Padding="8"
+            BorderBrush="DarkGray"
+            BorderThickness="1">
+            <DockPanel LastChildFill="True">
+                <TextBlock
+                    Margin="0,0,0,8"
+                    DockPanel.Dock="Top"
+                    FontWeight="Bold"
+                    Text="{Binding Loc[ShowImage]}" />
+                <ListBox
+                    MinHeight="0"
+                    ItemsSource="{Binding ImagePairs}"
+                    ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                    ScrollViewer.VerticalScrollBarVisibility="Auto"
+                    SelectedItem="{Binding SelectedPair}">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate x:DataType="mainContent:ModImagePairItem">
+                            <TextBlock Text="{Binding DisplayName}" TextTrimming="CharacterEllipsis" />
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </DockPanel>
+        </Border>
+
+        <GridSplitter
+            Grid.Row="0"
+            Grid.RowSpan="3"
+            Grid.Column="1" />
+
+        <TextBlock
+            Grid.Row="0"
+            Grid.RowSpan="3"
+            Grid.Column="2"
+            Grid.ColumnSpan="2"
+            HorizontalAlignment="Center"
+            VerticalAlignment="Center"
+            IsVisible="{Binding HasNoImages}"
+            Text="{Binding Loc[NoImagesFound]}" />
+
+        <Border
+            Grid.Row="0"
+            Grid.Column="2"
+            Padding="8"
+            BorderBrush="DarkGray"
+            BorderThickness="1"
+            IsVisible="{Binding HasSelectedPair}">
+            <StackPanel Spacing="4">
+                <TextBlock
+                    FontWeight="Bold"
+                    Text="{Binding SelectedNormalName}"
+                    TextTrimming="CharacterEllipsis" />
+                <TextBlock
+                    FontSize="11"
+                    Opacity="0.7"
+                    Text="{Binding SelectedNormalPath}"
+                    TextWrapping="Wrap" />
+                <TextBlock
+                    FontSize="11"
+                    Opacity="0.7"
+                    Text="{Binding SelectedNormalDimensions}" />
+            </StackPanel>
+        </Border>
+
+        <Button
+            Grid.Row="0"
+            Grid.Column="3"
+            Padding="8"
+            HorizontalContentAlignment="Left"
+            VerticalContentAlignment="Top"
+            Background="Transparent"
+            BorderBrush="DarkGray"
+            BorderThickness="1"
+            Command="{Binding ShowPreviewCommand}"
+            CommandParameter="Normal"
+            IsVisible="{Binding HasSelectedPair}">
+            <Image Source="{Binding SelectedNormalImage}" Stretch="None" />
+        </Button>
+
+        <Border
+            Grid.Row="1"
+            Grid.Column="2"
+            Padding="8"
+            BorderBrush="DarkGray"
+            BorderThickness="1"
+            IsVisible="{Binding HasSelectedPair}">
+            <StackPanel Spacing="4">
+                <TextBlock
+                    FontWeight="Bold"
+                    Text="{Binding SelectedX2Name}"
+                    TextTrimming="CharacterEllipsis" />
+                <TextBlock
+                    FontSize="11"
+                    Opacity="0.7"
+                    Text="{Binding SelectedX2Path}"
+                    TextWrapping="Wrap" />
+                <TextBlock
+                    FontSize="11"
+                    Opacity="0.7"
+                    Text="{Binding SelectedX2Dimensions}" />
+            </StackPanel>
+        </Border>
+
+        <Button
+            Grid.Row="1"
+            Grid.Column="3"
+            Padding="8"
+            HorizontalContentAlignment="Left"
+            VerticalContentAlignment="Top"
+            Background="Transparent"
+            BorderBrush="DarkGray"
+            BorderThickness="1"
+            Command="{Binding ShowPreviewCommand}"
+            CommandParameter="X2"
+            IsVisible="{Binding HasSelectedPair}">
+            <Image Source="{Binding SelectedX2Image}" Stretch="None" />
+        </Button>
+
+        <Border
+            Grid.Row="2"
+            Grid.Column="2"
+            Grid.ColumnSpan="2"
+            MinHeight="0"
+            Padding="8"
+            BorderBrush="DarkGray"
+            BorderThickness="1"
+            IsVisible="{Binding HasSelectedPair}">
+            <Grid
+                MinHeight="0"
+                RowDefinitions="Auto,Auto,Auto,*"
+                RowSpacing="6">
+                <TextBlock
+                    FontWeight="Bold"
+                    Text="{Binding PreviewName}"
+                    TextTrimming="CharacterEllipsis" />
+                <TextBlock
+                    Grid.Row="1"
+                    FontSize="11"
+                    Opacity="0.7"
+                    Text="{Binding PreviewPath}"
+                    TextWrapping="Wrap" />
+                <TextBlock
+                    Grid.Row="2"
+                    FontSize="11"
+                    Opacity="0.7"
+                    Text="{Binding PreviewDimensions}" />
+                <ScrollViewer
+                    Grid.Row="3"
+                    MinHeight="0"
+                    HorizontalScrollBarVisibility="Auto"
+                    VerticalScrollBarVisibility="Auto">
+                    <Image Source="{Binding PreviewImage}" Stretch="Uniform" />
+                </ScrollViewer>
+            </Grid>
+        </Border>
+    </Grid>
+</UserControl>
+

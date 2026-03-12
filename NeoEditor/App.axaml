@@ -10,6 +10,7 @@
     xmlns:local="using:NeoEditor"
     xmlns:model="clr-namespace:NeoEditor.Data.Model"
     xmlns:services="clr-namespace:NeoEditor.Services"
+    xmlns:u-semi="https://irihi.tech/ursa/themes/semi"
     xmlns:viewModels="clr-namespace:NeoEditor.ViewModels"
     xmlns:views="clr-namespace:NeoEditor.Views"
     RequestedThemeVariant="Default">
@@ -111,6 +112,7 @@
     <Application.Styles>
         <FluentTheme />
         <dock:SemiTheme />
+        <u-semi:SemiTheme />
         <DockFluentTheme />
         <dock:DataGridSemiTheme />
         <dock:DockSemiTheme />

@@ -26,6 +26,7 @@ public partial class DocumentWorkspaceViewModel : ViewModelBase,
     IRecipient<EditProfileMessage>,
     IRecipient<OpenXmlDocumentMessage>,
     IRecipient<OpenModGameDataDocumentMessage>,
+    IRecipient<OpenModImagesDocumentMessage>,
     IRecipient<OpenHelpDocumentMessage>
 {
     private readonly IConfigService _config;
@@ -62,6 +63,10 @@ public partial class DocumentWorkspaceViewModel : ViewModelBase,
     [RelayCommand]
     private void AddImage()
     {
+        var document = new ImageEditorDocument();
+        Documents.Add(document);
+        ActivateDocument(document);
+        UpdateDockingEnabled();
     }
 
     [RelayCommand]
@@ -114,6 +119,26 @@ public partial class DocumentWorkspaceViewModel : ViewModelBase,
             ReadOnly = true,
         };
         document.SetLocalizedTitle("ModGameDataTitleFormat", message.ModInfo.Name);
+
+        Documents.Add(document);
+        ActivateDocument(document);
+        UpdateDockingEnabled();
+    }
+
+    public void Receive(OpenModImagesDocumentMessage message)
+    {
+        _logger.LogInformation("Opening mod images document: {ModName}", message.ModInfo.Name);
+
+        if (FindOpenModImagesDocument(message.ModInfo) is { } existingDocument)
+        {
+            existingDocument.Update(message.ModInfo);
+            existingDocument.SetLocalizedTitle("ModImagesTitleFormat", message.ModInfo.Name);
+            ActivateDocument(existingDocument);
+            return;
+        }
+
+        var document = new ModImagesDocument(message.ModInfo);
+        document.SetLocalizedTitle("ModImagesTitleFormat", message.ModInfo.Name);
 
         Documents.Add(document);
         ActivateDocument(document);
@@ -252,6 +277,15 @@ public partial class DocumentWorkspaceViewModel : ViewModelBase,
                 StringComparison.OrdinalIgnoreCase));
     }
 
+    private ModImagesDocument? FindOpenModImagesDocument(ModInfo modInfo)
+    {
+        var documentKey = GetModImagesDocumentKey(modInfo);
+        return Documents
+            .OfType<ModImagesDocument>()
+            .FirstOrDefault(doc => string.Equals(GetModImagesDocumentKey(doc.ModInfo), documentKey,
+                StringComparison.OrdinalIgnoreCase));
+    }
+
     private XmlDocument? FindOpenXmlDocument(string normalizedPath)
     {
         return Documents
@@ -346,6 +380,11 @@ public partial class DocumentWorkspaceViewModel : ViewModelBase,
         }
 
         return $"name:{modInfo.Name}";
+    }
+
+    private string GetModImagesDocumentKey(ModInfo? modInfo)
+    {
+        return GetModGameDataDocumentKey(modInfo);
     }
 
     private string NormalizeWorkspacePath(string? path)

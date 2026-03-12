@@ -1323,6 +1323,27 @@ Exit if No</value>
     <data name="ShowData" xml:space="preserve">
         <value>Show Data</value>
     </data>
+    <data name="ShowImage" xml:space="preserve">
+        <value>Show Images</value>
+    </data>
+    <data name="NoImagesFound" xml:space="preserve">
+        <value>No images were found in getimages.php.</value>
+    </data>
+    <data name="ModImagesTitleFormat" xml:space="preserve">
+        <value>Images: {0}</value>
+    </data>
+    <data name="GetImagesFileNotFound" xml:space="preserve">
+        <value>getimages.php Not Found</value>
+    </data>
+    <data name="GetImagesFileNotFoundMessage" xml:space="preserve">
+        <value>Could not find getimages.php in the selected mod directory.</value>
+    </data>
+    <data name="OpenModImagesFailed" xml:space="preserve">
+        <value>Open Mod Images Failed</value>
+    </data>
+    <data name="OpenModImagesFailedMessage" xml:space="preserve">
+        <value>Failed to open mod images</value>
+    </data>
     <data name="ToggleSyncScroll" xml:space="preserve">
         <value>Toggle synchronized scrolling</value>
     </data>
@@ -1384,4 +1405,58 @@ Click 'Set Game Folder' in the Project menu to get started.</value>
     <data name="ReloadModsSuccessMessage" xml:space="preserve">
         <value>Mod list has been refreshed successfully.</value>
     </data>
+  <data name="AddImage" xml:space="preserve">
+    <value>Add Image</value>
+  </data>
+  <data name="SelectImage" xml:space="preserve">
+    <value>Select Image</value>
+  </data>
+  <data name="ImageFiles" xml:space="preserve">
+    <value>Image Files</value>
+  </data>
+  <data name="ImageDimensions" xml:space="preserve">
+    <value>Dimensions</value>
+  </data>
+  <data name="FileSize" xml:space="preserve">
+    <value>File Size</value>
+  </data>
+  <data name="NoImageSelected" xml:space="preserve">
+    <value>No image selected.</value>
+  </data>
+  <data name="Width" xml:space="preserve">
+    <value>Width</value>
+  </data>
+  <data name="Height" xml:space="preserve">
+    <value>Height</value>
+  </data>
+  <data name="Pixelate" xml:space="preserve">
+    <value>Pixelate</value>
+  </data>
+  <data name="ProcessedPreview" xml:space="preserve">
+    <value>Processed Preview</value>
+  </data>
+  <data name="NoProcessedImage" xml:space="preserve">
+    <value>No processed image yet.</value>
+  </data>
+  <data name="SaveProcessedImage" xml:space="preserve">
+    <value>Save Processed Image</value>
+  </data>
+  <data name="LockAspectRatio" xml:space="preserve">
+    <value>Lock Aspect Ratio</value>
+  </data>
+  <data name="X2Preview" xml:space="preserve">
+    <value>X2 Preview</value>
+  </data>
+  <data name="NormalOutput" xml:space="preserve">
+    <value>Normal Output</value>
+  </data>
+  <data name="X2Output" xml:space="preserve">
+    <value>X2 Output</value>
+  </data>
+  <data name="ImageEditorGridConstraintHint" xml:space="preserve">
+    <value>Normal output is snapped to 10px steps, the x2 preview is generated automatically at 20px steps, and both files are always saved as PNG to preserve full transparency.</value>
+  </data>
+  <data name="SaveImagePair" xml:space="preserve">
+    <value>Save PNG Image Pair</value>
+  </data>
 </root>
