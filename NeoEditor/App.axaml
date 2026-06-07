@@ -10,6 +10,7 @@
     xmlns:local="using:NeoEditor"
     xmlns:model="clr-namespace:NeoEditor.Data.Model"
     xmlns:services="clr-namespace:NeoEditor.Services"
+    xmlns:sys="clr-namespace:System;assembly=System.Runtime"
     xmlns:u-semi="https://irihi.tech/ursa/themes/semi"
     xmlns:viewModels="clr-namespace:NeoEditor.ViewModels"
     xmlns:views="clr-namespace:NeoEditor.Views"
@@ -17,9 +18,15 @@
 
     <Application.Resources>
         <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceInclude Source="avares://LiveMarkdown.Avalonia/Defaults.axaml"/>
+            </ResourceDictionary.MergedDictionaries>
             <conv:ModBaseBackgroundConverter x:Key="ModBaseBackgroundConverter" />
             <conv:ModLoadTypeIconConverter x:Key="ModLoadTypeIconConverter" />
+            <conv:OverlayPanelConverter x:Key="OverlayPanelConverter" />
+            <conv:FileTypeIconConverter x:Key="FileTypeIconConverter" />
             <services:LocalizationService x:Key="Loc" />
+            <sys:Double x:Key="AppFontSize">12</sys:Double>
         </ResourceDictionary>
     </Application.Resources>
 
@@ -48,7 +55,7 @@
         </DataTemplate>
         <DataTemplate DataType="io:FileInfo">
             <StackPanel Orientation="Horizontal" Spacing="4">
-                <avalonia:SymbolIcon IconVariant="Regular" Symbol="Document" />
+                <avalonia:SymbolIcon IconVariant="Regular" Symbol="{Binding Name, Converter={StaticResource FileTypeIconConverter}}" />
                 <TextBlock Text="{Binding Name}" />
             </StackPanel>
         </DataTemplate>
@@ -116,14 +123,13 @@
         <DockFluentTheme />
         <dock:DataGridSemiTheme />
         <dock:DockSemiTheme />
+        <StyleInclude Source="avares://LiveMarkdown.Avalonia/Styles.axaml"/>
         <StyleInclude Source="avares://AvaloniaEdit/Themes/Fluent/AvaloniaEdit.xaml" />
         <dock:AvaloniaEditSemiTheme />
         <StyleInclude Source="avares://Avalonia.Controls.DataGrid/Themes/Fluent.xaml" />
         <StyleInclude Source="avares://Xaml.Behaviors.Interactions.DragAndDrop.DataGrid/Styles.axaml" />
-        <!-- <Style Selector="avaloniaEdit|TextEditor"> -->
-        <!--     ~1~ <Setter Property="FontFamily" Value="{DynamicResource SarasaMono}"/> @1@ -->
-        <!--     <Setter Property="FontFamily" Value="avares://Avalonia-Text-Diff-Tool/Assets/Sarasa-Mono-SC-Nerd.ttf#Sarasa Nerd" /> -->
-        <!--     <Setter Property="FontSize" Value="14" /> -->
-        <!-- </Style> -->
+        <Style Selector="Window">
+            <Setter Property="FontSize" Value="{DynamicResource AppFontSize}" />
+        </Style>
     </Application.Styles>
 </Application>

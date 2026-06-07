@@ -1,6 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
+using NeoEditor.Helper;
 
 namespace NeoEditor.Data.Model.Game;
 
@@ -43,6 +44,7 @@ public class HexType : IEntity
     [Column("nTreasureID")]
     [Comment("在该地块上生成的战利品池ID")]
     [Display(Name = "TreasureId")]
+    [ReferenceField(typeof(TreasureTable))]
     public string TreasureId { get; set; } = "3";
 
     [Column("bPassable", TypeName = "tinyint(1)")]
@@ -53,11 +55,13 @@ public class HexType : IEntity
     [Column("nScavengeInitialID")]
     [Comment("初次搜刮该地形时调用的战利品池ID")]
     [Display(Name = "ScavengeInitialId")]
+    [ReferenceField(typeof(TreasureTable))]
     public string ScavengeInitialId { get; set; } = "3";
 
     [Column("nScavengeItemsIDPerHour")]
     [Comment("多次搜刮该地形时调用的战利品池ID")]
     [Display(Name = "ScavengeItemsIdPerHour")]
+    [ReferenceField(typeof(TreasureTable))]
     public string ScavengeItemsIdPerHour { get; set; } = "25";
 
     [Column("nCampItems")]
@@ -74,6 +78,7 @@ public class HexType : IEntity
     [Column("nDefaultCampID")]
     [Comment("默认营地的代码标号，结合treasuretable使用")]
     [Display(Name = "DefaultCampId")]
+    [ReferenceField(typeof(CampType))]
     public int DefaultCampId { get; set; } = 517;
 
     [Column("nMinRange")]
@@ -90,5 +95,6 @@ public class HexType : IEntity
     [StringLength(1000)]
     [Comment("进入该地块会为玩家带来的状态ID")]
     [Display(Name = "ConditionIds")]
+    [ReferenceField(typeof(Condition), Separator = ",")]
     public string ConditionIds { get; set; } = "";
 }

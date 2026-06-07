@@ -1,6 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
+using NeoEditor.Helper;
 
 namespace NeoEditor.Data.Model.Game;
 
@@ -35,23 +36,27 @@ public class Encounter : IEntity
     [Column("nTreasureID")]
     [Comment("剧情发生时在玩家脚下生成的战利品池ID")]
     [Display(Name = "TreasureId")]
+    [ReferenceField(typeof(TreasureTable))]
     public string TreasureId { get; set; } = "3";
 
     [Column("nRemoveTreasureID")]
     [Comment("剧情发生时在玩家脚下移除的战利品池ID")]
     [Display(Name = "RemoveTreasureId")]
+    [ReferenceField(typeof(TreasureTable))]
     public string RemoveTreasureId { get; set; } = "3";
 
     [Column("aConditions", TypeName = "varchar(1000)")]
     [StringLength(1000)]
     [Comment("该剧情的附带状态ID列表，逗号分隔")]
     [Display(Name = "Conditions")]
+    [ReferenceField(typeof(Condition), Separator = ",")]
     public string Conditions { get; set; } = "1";
 
     [Column("aPreConditions", TypeName = "varchar(1000)")]
     [StringLength(1000)]
     [Comment("出现该剧情时必要的前置状态，负数表示不可拥有该状态")]
     [Display(Name = "PreConditions")]
+    [ReferenceField(typeof(Condition), Separator = ",")]
     public string PreConditions { get; set; } = "";
 
     [Column("fPrice", TypeName = "float")]
@@ -83,11 +88,13 @@ public class Encounter : IEntity
     [Column("nItemsID")]
     [Comment("发生该剧情时产生的物品ID")]
     [Display(Name = "ItemsId")]
+    [ReferenceField(typeof(ItemType), TargetKey = "{GroupId}.{SubgroupId}")]
     public string ItemsId { get; set; } = "3";
 
     [Column("nCreatureID")]
     [Comment("该剧情发生时需要增加的生物ID")]
     [Display(Name = "CreatureId")]
+    [ReferenceField(typeof(Creature))]
     public string CreatureId { get; set; } = "0";
 
     [Column("ptCreatureHex", TypeName = "varchar(1000)")]
@@ -132,11 +139,13 @@ public class Encounter : IEntity
     [StringLength(1000)]
     [Comment("出现意外时发生的事件ID（调用encounters）")]
     [Display(Name = "Accidents")]
+    [ReferenceField(typeof(Encounter), Separator = ",")]
     public string Accidents { get; set; } = "1";
 
     [Column("vLoot", TypeName = "varchar(1000)")]
     [StringLength(1000)]
     [Comment("搜刮成功时的战利品种类ID")]
     [Display(Name = "Loot")]
+    [ReferenceField(typeof(TreasureTable))]
     public string Loot { get; set; } = "3";
 }

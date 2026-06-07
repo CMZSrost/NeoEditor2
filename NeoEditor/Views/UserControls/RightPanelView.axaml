@@ -1,0 +1,19 @@
+<UserControl
+    x:Class="NeoEditor.Views.UserControls.RightPanelView"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:userControls="clr-namespace:NeoEditor.Views.UserControls"
+    xmlns:mainContent="clr-namespace:NeoEditor.ViewModels.MainContent"
+    x:Name="Root">
+    <TabControl>
+        <TabItem Header="{Binding Loc[RightPanelEditor], ElementName=Root}">
+            <userControls:ValueEditorPanel x:Name="EditorPanel" />
+        </TabItem>
+        <TabItem Header="{Binding Loc[RightPanelImages], ElementName=Root}">
+            <userControls:ImagePreviewView x:Name="ImagePanel" />
+        </TabItem>
+        <TabItem Header="{Binding Loc[RefInspect], ElementName=Root}">
+            <userControls:ReferenceInspectorView x:Name="RefPanel" />
+        </TabItem>
+    </TabControl>
+</UserControl>

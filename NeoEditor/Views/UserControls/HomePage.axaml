@@ -1,0 +1,156 @@
+<UserControl
+    x:Class="NeoEditor.Views.UserControls.HomePage"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:avalonia="clr-namespace:FluentIcons.Avalonia;assembly=FluentIcons.Avalonia"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mainContent="clr-namespace:NeoEditor.ViewModels.MainContent"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    x:Name="Root"
+    x:DataType="mainContent:HomePageViewModel"
+    mc:Ignorable="d">
+    <Design.DataContext>
+        <mainContent:HomePageViewModel />
+    </Design.DataContext>
+    <UserControl.Styles>
+        <Style Selector="Button.CardButton">
+            <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundChromeMediumBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="8" />
+        </Style>
+        <Style Selector="Button.CardButton:pointerover">
+            <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource SystemControlHighlightAccentBrush}" />
+            <Setter Property="BorderThickness" Value="1.5" />
+        </Style>
+        <Style Selector="Button.CardButton:pressed">
+            <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundListLowBrush}" />
+            <Setter Property="ScaleTransform.ScaleX" Value="0.97" />
+            <Setter Property="ScaleTransform.ScaleY" Value="0.97" />
+        </Style>
+    </UserControl.Styles>
+    <ScrollViewer>
+        <StackPanel
+            MaxWidth="680"
+            Margin="0,40,0,0"
+            HorizontalAlignment="Center"
+            Spacing="32">
+            <!-- Setup required banner -->
+            <Border Padding="12,10" CornerRadius="6" HorizontalAlignment="Center"
+                    x:Name="SetupBanner" IsVisible="False"
+                    Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}"
+                    BorderBrush="DarkOrange" BorderThickness="1">
+                <StackPanel Spacing="4" HorizontalAlignment="Center">
+                    <TextBlock FontSize="14" FontWeight="SemiBold" HorizontalAlignment="Center"
+                               Foreground="DarkOrange"
+                               Text="{Binding Loc[HomePageBannerWarning]}" />
+                    <TextBlock FontSize="12" HorizontalAlignment="Center"
+                               Foreground="{DynamicResource SystemControlForegroundChromeDisabledLowBrush}"
+                               TextWrapping="Wrap"
+                               Text="{Binding Loc[HomePageBannerHelp]}" />
+                    <Button HorizontalAlignment="Center" Margin="0,4,0,0" Padding="16,4"
+                            Click="OnGoToSettingsClick" Content="{Binding Loc[HomePageOpenSettings]}" />
+                </StackPanel>
+            </Border>
+
+            <!-- Title -->
+            <StackPanel HorizontalAlignment="Center" Spacing="4">
+                <TextBlock FontSize="28" FontWeight="Bold" HorizontalAlignment="Center" Text="{Binding Loc[HomePageTitle]}" />
+                <TextBlock FontSize="14" Foreground="{DynamicResource SystemControlForegroundChromeDisabledLowBrush}"
+                           HorizontalAlignment="Center" Text="{Binding Loc[HomePageSubtitle]}" />
+            </StackPanel>
+
+            <!-- Three entry cards -->
+            <StackPanel HorizontalAlignment="Center" Orientation="Horizontal" Spacing="16">
+                <!-- Browse -->
+                <Button Width="200" Height="130" Padding="12" Click="OnBrowseClick" Classes="CardButton">
+                    <StackPanel HorizontalAlignment="Center" Spacing="6">
+                        <avalonia:SymbolIcon FontSize="28" HorizontalAlignment="Center" Symbol="BookOpen" />
+                        <TextBlock FontSize="13" FontWeight="SemiBold" HorizontalAlignment="Center" Text="{Binding Loc[HomePageBrowseTitle]}" />
+                        <TextBlock FontSize="11" Foreground="{DynamicResource SystemControlForegroundChromeDisabledLowBrush}"
+                                   HorizontalAlignment="Center" TextWrapping="Wrap" Text="{Binding Loc[HomePageBrowseDesc]}" />
+                    </StackPanel>
+                </Button>
+                <!-- New Mod -->
+                <Button Width="200" Height="130" Padding="12" Click="OnNewModClick" Classes="CardButton">
+                    <StackPanel HorizontalAlignment="Center" Spacing="6">
+                        <avalonia:SymbolIcon FontSize="28" HorizontalAlignment="Center" Symbol="DocumentAdd" />
+                        <TextBlock FontSize="13" FontWeight="SemiBold" HorizontalAlignment="Center" Text="{Binding Loc[HomePageNewModTitle]}" />
+                        <TextBlock FontSize="11" Foreground="{DynamicResource SystemControlForegroundChromeDisabledLowBrush}"
+                                   HorizontalAlignment="Center" TextWrapping="Wrap" Text="{Binding Loc[HomePageNewModDesc]}" />
+                    </StackPanel>
+                </Button>
+                <!-- Import -->
+                <Button Width="200" Height="130" Padding="12" Click="OnImportClick" Classes="CardButton">
+                    <StackPanel HorizontalAlignment="Center" Spacing="6">
+                        <avalonia:SymbolIcon FontSize="28" HorizontalAlignment="Center" Symbol="ArrowDownload" />
+                        <TextBlock FontSize="13" FontWeight="SemiBold" HorizontalAlignment="Center" Text="{Binding Loc[HomePageImportTitle]}" />
+                        <TextBlock FontSize="11" Foreground="{DynamicResource SystemControlForegroundChromeDisabledLowBrush}"
+                                   HorizontalAlignment="Center" TextWrapping="Wrap" Text="{Binding Loc[HomePageImportDesc]}" />
+                    </StackPanel>
+                </Button>
+            </StackPanel>
+
+            <!-- Recent Mods -->
+            <StackPanel Spacing="8" IsVisible="{Binding HasRecentMods}">
+                <TextBlock FontSize="15" FontWeight="SemiBold" Text="{Binding Loc[HomePageRecentMods]}" />
+                <ItemsControl ItemsSource="{Binding RecentMods}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate><StackPanel Spacing="2" /></ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate DataType="mainContent:RecentModEntry">
+                            <Button Padding="10,6" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"
+                                    Click="OnRecentModClick" Tag="{Binding ModId}">
+                                <StackPanel Orientation="Horizontal" Spacing="12">
+                                    <TextBlock FontSize="13" FontWeight="SemiBold" Text="{Binding Name}"
+                                               Width="160" TextWrapping="NoWrap" />
+                                    <TextBlock FontSize="11" VerticalAlignment="Center"
+                                               Foreground="{DynamicResource SystemControlForegroundChromeDisabledLowBrush}"
+                                               Text="{Binding EntityCountText}" />
+                                    <TextBlock FontSize="11" VerticalAlignment="Center"
+                                               Foreground="{DynamicResource SystemControlForegroundChromeDisabledLowBrush}"
+                                               Text="{Binding TimeAgo}" />
+                                </StackPanel>
+                            </Button>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
+
+            <!-- Profiles / Merge View -->
+            <StackPanel Spacing="8">
+                <TextBlock FontSize="15" FontWeight="SemiBold" Text="{Binding Loc[HomePageMergeView]}" />
+                <TextBlock FontSize="11" Foreground="{DynamicResource SystemControlForegroundChromeDisabledLowBrush}"
+                           Text="{Binding Loc[HomePageMergeViewDesc]}" />
+                <ItemsControl ItemsSource="{Binding Profiles}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate><StackPanel Spacing="2" /></ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate DataType="mainContent:ProfileEntry">
+                            <Button Padding="10,6" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"
+                                    Click="OnProfileClick" Tag="{Binding ProfileId}">
+                                <StackPanel Orientation="Horizontal" Spacing="12">
+                                    <TextBlock FontSize="13" FontWeight="SemiBold" Text="{Binding Name}" Width="200" />
+                                    <TextBlock FontSize="11" VerticalAlignment="Center"
+                                               Foreground="{DynamicResource SystemControlForegroundChromeDisabledLowBrush}"
+                                               Text="{Binding ModCountText}" />
+                                </StackPanel>
+                            </Button>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+                <TextBlock FontSize="11" Foreground="{DynamicResource SystemControlForegroundChromeDisabledLowBrush}"
+                           HorizontalAlignment="Center"
+                           Text="{Binding Loc[HomePageProfilesHint]}" />
+            </StackPanel>
+
+            <!-- Drop hint -->
+            <TextBlock FontSize="11" Foreground="{DynamicResource SystemControlForegroundChromeDisabledLowBrush}"
+                       HorizontalAlignment="Center" Margin="0,0,0,24"
+                       Text="{Binding Loc[HomePageDropHint]}" />
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

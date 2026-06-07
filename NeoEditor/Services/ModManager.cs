@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -25,12 +26,14 @@ namespace NeoEditor.Services;
 
 public interface IModManager
 {
-    Task ImportModAsync(string modFullPath);
+    Task<ModInfo?> ImportModAsync(string modFullPath);
     Task LoadModAsync(ModInfo modInfo);
     Task CreateModAsync(string name, string author);
     Task DeleteMod(string name, string author);
     Task DeleteMod(ModInfo modInfo);
     Task DeleteMod(string modPath);
+    Task ExportModToZipAsync(ModInfo modInfo, string outputPath);
+    Task<ModInfo> ImportModFromZipAsync(string zipPath);
 }
 
 public class ModManager : IModManager
@@ -38,7 +41,7 @@ public class ModManager : IModManager
     private readonly IDbContextFactory<EditorDbContext> _editorDbFactory;
     private readonly IDbContextFactory<GameDbContext> _gameDbFactory;
     private readonly PhpParser _phpParser;
-    private readonly XmlParser _xmlParser;
+    private readonly IXmlParser _xmlParser;
     private readonly IConfigService _configService;
 
     private AppConfig Config => _configService.Config;
@@ -57,13 +60,13 @@ public class ModManager : IModManager
         App.ServiceProvider.GetRequiredService<IDbContextFactory<EditorDbContext>>(),
         App.ServiceProvider.GetRequiredService<IDbContextFactory<GameDbContext>>(),
         App.ServiceProvider.GetRequiredService<IConfigService>(),
-        App.ServiceProvider.GetRequiredService<XmlParser>())
+        App.ServiceProvider.GetRequiredService<IXmlParser>())
     {
     }
 
     public ModManager(PhpParser phpParser, IDbContextFactory<EditorDbContext> editorDbFactory,
         IDbContextFactory<GameDbContext> gameDbFactory,
-        IConfigService configService, XmlParser xmlParser)
+        IConfigService configService, IXmlParser xmlParser)
     {
         _phpParser = phpParser;
         _editorDbFactory = editorDbFactory;
@@ -84,14 +87,14 @@ public class ModManager : IModManager
     {
         if (!Directory.Exists(dirPath))
         {
-            Console.WriteLine($"目录不存在: {dirPath}");
+            Serilog.Log.Logger.Warning("目录不存在: {DirPath}", dirPath);
             return;
         }
 
         Directory.Delete(dirPath, recursive: recursive);
     }
 
-    public async Task ImportModAsync(string modFullPath)
+    public async Task<ModInfo?> ImportModAsync(string modFullPath)
     {
         try
         {
@@ -109,10 +112,12 @@ public class ModManager : IModManager
 
             await LoadModAsync(modInfo);
             App.Notification!.ShowSuccess($"mod {modFullPath} imported");
+            return modInfo;
         }
         catch (Exception e)
         {
             App.Notification!.ShowWarning($"mod {modFullPath} not imported: {e.Message}", "Import Warning");
+            return null;
         }
     }
 
@@ -125,6 +130,11 @@ public class ModManager : IModManager
             return;
         }
 
+        // Quick check: skip if data already loaded (check one table)
+        await using var checkDb = await _gameDbFactory.CreateDbContextAsync();
+        var existingCount = await checkDb.AttackModes.CountAsync(e => e.ModId == modInfo.ModId);
+        if (existingCount > 0) return;
+
         try
         {
             // 遍历mod目录下的所有xml文件并导入到数据库中
@@ -133,11 +143,11 @@ public class ModManager : IModManager
             await using var db = await _gameDbFactory.CreateDbContextAsync();
             foreach (var xmlPath in xmlFilePaths)
             {
-                var doc = XDocument.Load(xmlPath);
+                var doc = LoadXmlFile(xmlPath);
                 // var entities = _xmlParser.ImportEntities<AttackMode>(doc, modId, xmlPath);
                 foreach (var gameType in Constants.GameTypes)
                 {
-                    var method = typeof(XmlParser).GetMethod(nameof(XmlParser.ImportEntities))
+                    var method = typeof(IXmlParser).GetMethod(nameof(IXmlParser.ImportEntities))
                         ?.MakeGenericMethod(gameType.Value);
                     if (method == null) continue;
                     var entities = method.Invoke(_xmlParser, new object[] { doc, modInfo.ModId, xmlPath });
@@ -145,22 +155,40 @@ public class ModManager : IModManager
                     try
                     {
                         await db.DbBulkInsertOrUpdate(gameType.Value, entities);
-                        Console.WriteLine(
-                            $"load {entities.GetType()} {(entities as IList)?.Count} {gameType.Key} from {xmlPath} with modId {modInfo.ModId}");
+                        Serilog.Log.Logger.Information("[ModManager] load {Type} {Count} {EntityType} from {Path} modId={ModId}",
+                            entities.GetType(), (entities as IList)?.Count, gameType.Key, xmlPath, modInfo.ModId);
                     }
                     catch (Exception e)
                     {
-                        Console.WriteLine($"load {gameType.Key} from {xmlPath} with modId {modInfo.ModId} failed: {e.Message} as {JsonConvert.SerializeObject(entities, Formatting.Indented)}");
+                        Serilog.Log.Logger.Error(e, "[ModManager] load {EntityType} from {Path} modId={ModId} failed",
+                            gameType.Key, xmlPath, modInfo.ModId);
                         throw;
                     }
                 }
             }
+
+            // Update import timestamp
+            await using var editorDb = await _editorDbFactory.CreateDbContextAsync();
+            if (await editorDb.ModInfos.FindAsync(modInfo.ModId) is { } mod)
+            {
+                mod.LastImport = DateTime.Now;
+                await editorDb.SaveChangesAsync();
+            }
         }
         catch (Exception e)
         {
-            Console.WriteLine(e);
+            Serilog.Log.Logger.Error(e, "ModManager operation failed");
             App.Notification!.ShowWarning($"load {modFullPath} failed: {e.Message}");
         }
+    }
+
+    /// <summary>Loads an XML file, fixing common encoding issues (e.g. "utf8" → "utf-8").</summary>
+    private static XDocument LoadXmlFile(string path)
+    {
+        var text = File.ReadAllText(path);
+        if (text.Contains("encoding=\"utf8\"", StringComparison.OrdinalIgnoreCase))
+            text = text.Replace("encoding=\"utf8\"", "encoding=\"utf-8\"", StringComparison.OrdinalIgnoreCase);
+        return XDocument.Parse(text);
     }
 
     public async Task CreateModAsync(string name, string author)
@@ -193,7 +221,7 @@ public class ModManager : IModManager
         }
         catch (Exception e)
         {
-            Console.WriteLine(e);
+            Serilog.Log.Logger.Error(e, "ModManager operation failed");
             Directory.Delete(projectDir, true);
             throw;
         }
@@ -203,7 +231,12 @@ public class ModManager : IModManager
 
     public async Task DeleteMod(ModInfo modInfo)
     {
+        if (modInfo.IsBase)
+            throw new InvalidOperationException("Cannot delete base game data.");
         var projectPath = Path.Combine(Config.GameRootDir, modInfo.Path);
+        var normalizedDataPath = Path.GetFullPath(Path.Combine(Config.GameRootDir, "data"));
+        if (string.Equals(Path.GetFullPath(projectPath), normalizedDataPath, StringComparison.OrdinalIgnoreCase))
+            throw new InvalidOperationException("Cannot delete the game data directory.");
         DeleteDirectory(projectPath);
         await using var context = await _editorDbFactory.CreateDbContextAsync();
         if (await context.ModInfos.FindAsync(modInfo.ModId) is
@@ -223,5 +256,50 @@ public class ModManager : IModManager
             return;
         context.ModInfos.Remove(mod);
         await context.SaveChangesAsync();
+    }
+
+    public Task ExportModToZipAsync(ModInfo modInfo, string outputPath)
+    {
+        var modDir = Path.GetFullPath(Path.Combine(Config.GameRootDir, modInfo.Path));
+        if (!Directory.Exists(modDir))
+            throw new DirectoryNotFoundException($"Mod directory not found: {modDir}");
+
+        if (File.Exists(outputPath))
+            File.Delete(outputPath);
+
+        ZipFile.CreateFromDirectory(modDir, outputPath, CompressionLevel.Optimal, false);
+        return Task.CompletedTask;
+    }
+
+    public async Task<ModInfo> ImportModFromZipAsync(string zipPath)
+    {
+        if (!File.Exists(zipPath))
+            throw new FileNotFoundException($"Zip file not found: {zipPath}");
+
+        var extractDir = Path.Combine(Path.GetTempPath(), $"mod_import_{Guid.NewGuid():N}");
+        try
+        {
+            ZipFile.ExtractToDirectory(zipPath, extractDir);
+
+            var hasData = Directory.GetFiles(extractDir, "neogame.xml", SearchOption.AllDirectories).Length > 0
+                       || Directory.GetFiles(extractDir, "*.xml", SearchOption.AllDirectories).Length > 0;
+            var hasGetmods = File.Exists(Path.Combine(extractDir, "getmods.php"));
+            var hasGetimages = File.Exists(Path.Combine(extractDir, "getimages.php"));
+
+            if (!hasData && !hasGetmods)
+                throw new InvalidOperationException("Zip does not contain valid mod data (no XML or PHP files found).");
+
+            await ImportModAsync(extractDir);
+
+            await using var db = await _editorDbFactory.CreateDbContextAsync();
+            var importedMod = await db.ModInfos
+                .OrderByDescending(m => m.ModId)
+                .FirstOrDefaultAsync();
+            return importedMod!;
+        }
+        finally
+        {
+            try { Directory.Delete(extractDir, true); } catch { /* best effort */ }
+        }
     }
 }

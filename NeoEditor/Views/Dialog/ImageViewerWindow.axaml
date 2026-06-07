@@ -1,0 +1,22 @@
+<Window
+    x:Class="NeoEditor.Views.Dialog.ImageViewerWindow"
+    xmlns:dialog="clr-namespace:NeoEditor.Views.Dialog"
+    x:DataType="dialog:ImageViewerWindow"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Width="800" Height="600"
+    MinWidth="300" MinHeight="200"
+    Title="{Binding Loc[ImageViewerTitle]}"
+    WindowStartupLocation="CenterOwner">
+    <Grid>
+        <ScrollViewer x:Name="ScrollHost" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+            <Image x:Name="MainImage" Stretch="None" />
+        </ScrollViewer>
+        <StackPanel
+            VerticalAlignment="Bottom" HorizontalAlignment="Right"
+            Orientation="Horizontal" Spacing="4" Margin="8"
+            Background="#CC000000" Opacity="0.8">
+            <TextBlock x:Name="ZoomLabel" Foreground="White" FontSize="12" VerticalAlignment="Center" />
+        </StackPanel>
+    </Grid>
+</Window>

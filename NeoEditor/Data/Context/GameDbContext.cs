@@ -64,7 +64,9 @@ public class GameDbContext : DbContext
     /// </summary>
     public IQueryable GetDbSet(Type entityType)
     {
-        var method = typeof(GameDbContext).GetMethod(nameof(Set))?.MakeGenericMethod(entityType);
+        // Specify Type.EmptyTypes to disambiguate between Set<TEntity>() and Set<TEntity>(string)
+        var method = typeof(GameDbContext).GetMethod(nameof(Set), Type.EmptyTypes)
+            ?.MakeGenericMethod(entityType);
         return (IQueryable)method?.Invoke(this, null)!;
     }
 

@@ -46,13 +46,13 @@ public abstract class WrapDataGridDropHandler<T> : BaseDataGridDropHandler<T> wh
                 return RunDropAction(dg, e, execute, sourceItem, targetItem, items);
             }
 
-            Console.WriteLine(
-                $"Validata failed: sourceContext={sourceContext?.GetType()}, targetContext={targetContext?.GetType()}");
+            Serilog.Log.Logger.Debug("[ModEntryDrop] Validate failed: source={SrcType} target={TgtType}",
+                sourceContext?.GetType(), targetContext?.GetType());
             return false;
         }
         catch (Exception exception)
         {
-            Console.WriteLine(exception);
+            Serilog.Log.Logger.Error(exception, "[ModEntryDrop] Execute failed");
             return false;
         }
     }

@@ -1,6 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
+using NeoEditor.Helper;
 
 namespace NeoEditor.Data.Model.Game;
 
@@ -45,6 +46,7 @@ public class AttackMode : IEntity
     [StringLength(1000)]
     [Comment("内容物/弹药的代码标号，结合chargeprofiles数据类别使用，可能为逗号分隔如'6,31'")]
     [Display(Name = "ChargeProfiles")]
+    [ReferenceField(typeof(ChargeProfile), Separator = ",")]
     public string ChargeProfiles { get; set; } = "";
 
     [Column("nPenetration")]
@@ -74,6 +76,7 @@ public class AttackMode : IEntity
     [StringLength(1000)]
     [Comment("攻击时的状态，结合conditions数据类别使用，如'211x1.0,NSE:42x1'")]
     [Display(Name = "AttackerConditions")]
+    [ReferenceField(typeof(Condition), Separator = ",", Pattern = "{id}x{mult}")]
     public string AttackerConditions { get; set; } = "";
 
     [Column("strIMG", TypeName = "varchar(1000)")]

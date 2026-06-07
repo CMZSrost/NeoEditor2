@@ -1,51 +1,40 @@
-﻿<Window
+<Window
     x:Class="NeoEditor.Views.Dialog.CreateModDialog"
     xmlns="https://github.com/avaloniaui"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:dialog="clr-namespace:NeoEditor.ViewModels.Dialog"
-    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    Title="{Binding Loc[CreateModDialogTitle]}"
-    d:DesignHeight="150"
-    d:DesignWidth="400"
-    x:DataType="dialog:CreateModDialogViewModel"
-    mc:Ignorable="d">
-    <Design.DataContext>
-        <dialog:CreateModDialogViewModel />
-    </Design.DataContext>
-    <Grid
-        Margin="10"
-        ColumnDefinitions="Auto,*"
-        ColumnSpacing="6"
-        RowDefinitions="Auto,Auto,Auto"
-        RowSpacing="6">
-        <Label
-            HorizontalAlignment="Center"
-            VerticalAlignment="Center"
-            Content="{Binding Loc[Author]}" />
-        <TextBox
-            Grid.Row="0"
-            Grid.Column="1"
-            Text="{Binding Author}" />
-        <Label
-            Grid.Row="1"
-            Grid.Column="0"
-            HorizontalAlignment="Center"
-            VerticalAlignment="Center"
-            Content="{Binding Loc[Name]}" />
-        <TextBox
-            Grid.Row="1"
-            Grid.Column="1"
-            Text="{Binding Name}" />
-        <StackPanel
-            Grid.Row="2"
-            Grid.Column="0"
-            Grid.ColumnSpan="2"
-            HorizontalAlignment="Center"
-            Orientation="Horizontal"
-            Spacing="20">
-            <Button Command="{Binding ConfirmCommand}" Content="{Binding Loc[Confirm]}" />
-            <Button Command="{Binding CancelCommand}" Content="{Binding Loc[Cancel]}" />
+    Title="{Binding Loc[CreateMod]}"
+    Width="420" Height="260"
+    WindowStartupLocation="CenterOwner"
+    CanResize="False" ShowInTaskbar="False"
+    x:DataType="dialog:CreateModDialogViewModel">
+    <Grid Margin="12" RowDefinitions="Auto,Auto,Auto,Auto,Auto" ColumnDefinitions="Auto,*" RowSpacing="6" ColumnSpacing="6">
+        <!-- Author -->
+        <Label Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" Content="{Binding Loc[DialogAuthor]}" />
+        <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding Author}" Watermark="{Binding Loc[DialogAuthorWatermark]}" />
+
+        <!-- Mod Name -->
+        <Label Grid.Row="1" Grid.Column="0" VerticalAlignment="Center" Content="{Binding Loc[DialogModName]}" />
+        <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding Name}" Watermark="{Binding Loc[DialogModNameWatermark]}" />
+
+        <!-- Namespace -->
+        <Label Grid.Row="2" Grid.Column="0" VerticalAlignment="Center" Content="{Binding Loc[DialogNamespace]}" />
+        <StackPanel Grid.Row="2" Grid.Column="1" Spacing="4">
+            <TextBox Text="{Binding Namespace}" Watermark="{Binding Loc[DialogNamespaceWatermark]}" Width="80" />
+            <TextBlock FontSize="10" Foreground="{DynamicResource SystemControlForegroundChromeDisabledLowBrush}"
+                       TextWrapping="Wrap"
+                       Text="{Binding Loc[DialogNamespaceHint]}" />
+        </StackPanel>
+
+        <!-- Create Profile checkbox -->
+        <CheckBox Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,4,0,0"
+                  IsChecked="{Binding CreateProfile}" Content="{Binding Loc[DialogCreateProfile]}" />
+
+        <!-- Buttons -->
+        <StackPanel Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="2"
+                    HorizontalAlignment="Right" Orientation="Horizontal" Spacing="8" Margin="0,8,0,0">
+            <Button Content="{Binding Loc[DialogCancel]}" Command="{Binding CancelCommand}" Width="70" />
+            <Button Content="{Binding Loc[DialogCreate]}" Command="{Binding ConfirmCommand}" Width="70" IsDefault="True" />
         </StackPanel>
     </Grid>
 </Window>

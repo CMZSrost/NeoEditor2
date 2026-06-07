@@ -273,6 +273,12 @@
     <data name="Faction" xml:space="preserve">
         <value>Faction</value>
     </data>
+    <data name="FactionId" xml:space="preserve">
+        <value>Faction</value>
+    </data>
+    <data name="FactionIdDesc" xml:space="preserve">
+        <value>Faction ID</value>
+    </data>
 
     <data name="BaseConditions" xml:space="preserve">
         <value>BaseConditions</value>
@@ -513,6 +519,63 @@
     <data name="AttackModes" xml:space="preserve">
         <value>AttackModes</value>
     </data>
+    <data name="BarterHexes" xml:space="preserve">
+        <value>BarterHexes</value>
+    </data>
+    <data name="CampTypes" xml:space="preserve">
+        <value>CampTypes</value>
+    </data>
+    <data name="ContainerTypes" xml:space="preserve">
+        <value>ContainerTypes</value>
+    </data>
+    <data name="Creatures" xml:space="preserve">
+        <value>Creatures</value>
+    </data>
+    <data name="CreatureSources" xml:space="preserve">
+        <value>CreatureSources</value>
+    </data>
+    <data name="DataFiles" xml:space="preserve">
+        <value>DataFiles</value>
+    </data>
+    <data name="DmcPlaces" xml:space="preserve">
+        <value>DmcPlaces</value>
+    </data>
+    <data name="EncounterTriggers" xml:space="preserve">
+        <value>EncounterTriggers</value>
+    </data>
+    <data name="Encounters" xml:space="preserve">
+        <value>Encounters</value>
+    </data>
+    <data name="Factions" xml:space="preserve">
+        <value>Factions</value>
+    </data>
+    <data name="ForbiddenHexes" xml:space="preserve">
+        <value>ForbiddenHexes</value>
+    </data>
+    <data name="GameVars" xml:space="preserve">
+        <value>GameVars</value>
+    </data>
+    <data name="Headlines" xml:space="preserve">
+        <value>Headlines</value>
+    </data>
+    <data name="Ingredients" xml:space="preserve">
+        <value>Ingredients</value>
+    </data>
+    <data name="ItemProps" xml:space="preserve">
+        <value>ItemProps</value>
+    </data>
+    <data name="ItemTypes" xml:space="preserve">
+        <value>ItemTypes</value>
+    </data>
+    <data name="Maps" xml:space="preserve">
+        <value>Maps</value>
+    </data>
+    <data name="Recipes" xml:space="preserve">
+        <value>Recipes</value>
+    </data>
+    <data name="TreasureTables" xml:space="preserve">
+        <value>TreasureTables</value>
+    </data>
     <data name="StackLimit" xml:space="preserve">
         <value>StackLimit</value>
     </data>
@@ -575,6 +638,9 @@
     <data name="ModId" xml:space="preserve">
         <value>ModId</value>
     </data>
+    <data name="Content" xml:space="preserve">
+        <value>Content</value>
+    </data>
     <data name="Id" xml:space="preserve">
         <value>Id</value>
     </data>
@@ -626,6 +692,9 @@
         <value>UpLevel</value>
         <comment>UpLevel</comment>
     </data>
+    <data name="Help" xml:space="preserve">
+        <value>Help</value>
+    </data>
     <data name="MenuProject" xml:space="preserve">
         <value>Project</value>
     </data>
@@ -641,11 +710,38 @@
     <data name="AppTitle" xml:space="preserve">
         <value>Neo Editor</value>
     </data>
+    <data name="Home" xml:space="preserve">
+        <value>Home</value>
+    </data>
+    <data name="NewMod" xml:space="preserve">
+        <value>+ New Mod</value>
+    </data>
+    <data name="ImportMod" xml:space="preserve">
+        <value>Import Mod</value>
+    </data>
     <data name="MainContent" xml:space="preserve">
         <value>Main Content</value>
     </data>
     <data name="Settings" xml:space="preserve">
         <value>Settings</value>
+    </data>
+    <data name="Language" xml:space="preserve">
+        <value>Language</value>
+    </data>
+    <data name="Theme" xml:space="preserve">
+        <value>Theme</value>
+    </data>
+    <data name="FontSize" xml:space="preserve">
+        <value>Font Size</value>
+    </data>
+    <data name="AutoSaveInterval" xml:space="preserve">
+        <value>Auto-save Interval (seconds, 0=off)</value>
+    </data>
+    <data name="DefaultExportFormat" xml:space="preserve">
+        <value>Default Export Format</value>
+    </data>
+    <data name="GridRowHeight" xml:space="preserve">
+        <value>Grid Row Height (0=default)</value>
     </data>
     <data name="Search" xml:space="preserve">
         <value>Search</value>
@@ -655,6 +751,39 @@
     </data>
     <data name="KeywordInput" xml:space="preserve">
         <value>Enter the keyword...</value>
+    </data>
+    <data name="ModFilterAll" xml:space="preserve">
+        <value>All Mods</value>
+    </data>
+    <data name="ShowAll" xml:space="preserve">
+        <value>Show All</value>
+    </data>
+    <data name="ExportXml" xml:space="preserve">
+        <value>Export XML</value>
+    </data>
+    <data name="ExportXmlTooltip" xml:space="preserve">
+        <value>Export DB changes to XML files</value>
+    </data>
+    <data name="Loading" xml:space="preserve">
+        <value>Loading...</value>
+    </data>
+    <data name="LocateRowTooltip" xml:space="preserve">
+        <value>Locate selected row</value>
+    </data>
+    <data name="SearchHelpTooltip" xml:space="preserve">
+        <value>Search: keyword (any column) or col:value (e.g. strName:Sword)</value>
+    </data>
+    <data name="SearchHelpButtonTooltip" xml:space="preserve">
+        <value>Show available column names</value>
+    </data>
+    <data name="SearchHelpAvailableColumns" xml:space="preserve">
+        <value>Available columns (click to insert):</value>
+    </data>
+    <data name="ColumnManagerTooltip" xml:space="preserve">
+        <value>Show/hide columns</value>
+    </data>
+    <data name="ColumnManagerHeader" xml:space="preserve">
+        <value>Columns:</value>
     </data>
 
     <!-- Auto-generated description entries from Game models -->
@@ -1188,8 +1317,11 @@
     </data>
     <data name="GameRootDirNotSet" xml:space="preserve">
         <value>Game Root Dir Not Set
- 
+
 Exit if No</value>
+    </data>
+    <data name="GameRootDir" xml:space="preserve">
+        <value>Game Root Dir</value>
     </data>
     <data name="ModDatabase" xml:space="preserve">
         <value>Mod Database</value>
@@ -1245,6 +1377,48 @@ Exit if No</value>
     <data name="ModGameDataSaveMissingModMessage" xml:space="preserve">
         <value>No mod data is currently loaded.</value>
     </data>
+    <data name="DiffOldLabel" xml:space="preserve">
+        <value>Original (Disk)</value>
+    </data>
+    <data name="DiffNewLabel" xml:space="preserve">
+        <value>Pending (Edits)</value>
+    </data>
+    <data name="AddRow" xml:space="preserve">
+        <value>Add Row</value>
+    </data>
+    <data name="DeleteRow" xml:space="preserve">
+        <value>Delete Row</value>
+    </data>
+    <data name="ImportTutorial" xml:space="preserve">
+        <value>Import Tutorial...</value>
+    </data>
+    <data name="NavigateBack" xml:space="preserve">
+        <value>Navigate back</value>
+    </data>
+    <data name="GoToReference" xml:space="preserve">
+        <value>Go to {0}</value>
+    </data>
+    <data name="NavigateSameEntity" xml:space="preserve">
+        <value>Already at this entity.</value>
+    </data>
+    <data name="NavigateToOverriddenRequiresShowAll" xml:space="preserve">
+        <value>Entity is hidden (overridden). Enable Show All to navigate to it.</value>
+    </data>
+    <data name="NoRowSelectedMessage" xml:space="preserve">
+        <value>No row selected.</value>
+    </data>
+    <data name="RefTargetNotLoaded" xml:space="preserve">
+        <value>Cannot navigate: {0} table is not loaded in the current mod.</value>
+    </data>
+    <data name="RefTargetNotFound" xml:space="preserve">
+        <value>Referenced {0} id={1} not found in the current mod. It may be defined in another mod.</value>
+    </data>
+    <data name="OpenMergeEditor" xml:space="preserve">
+        <value>Open Merged View</value>
+    </data>
+    <data name="MergeEditorTitleFormat" xml:space="preserve">
+        <value>Merge View: {0}</value>
+    </data>
     <data name="MoveUp" xml:space="preserve">
         <value>Move Up</value>
     </data>
@@ -1253,6 +1427,9 @@ Exit if No</value>
     </data>
     <data name="EditProfileWindowTitle" xml:space="preserve">
         <value>Edit Profile</value>
+    </data>
+    <data name="ProfileDescription" xml:space="preserve">
+        <value>Description</value>
     </data>
     <data name="AddProfile" xml:space="preserve">
         <value>Add Profile</value>
@@ -1307,6 +1484,15 @@ Exit if No</value>
     </data>
     <data name="EditProfile" xml:space="preserve">
         <value>Edit Profile</value>
+    </data>
+    <data name="CompareProfiles" xml:space="preserve">
+        <value>Compare with...</value>
+    </data>
+    <data name="SetActiveProfile" xml:space="preserve">
+        <value>Set as Active</value>
+    </data>
+    <data name="AddModToProfile" xml:space="preserve">
+        <value>Add Mod...</value>
     </data>
     <data name="Games" xml:space="preserve">
         <value>Game</value>
@@ -1597,4 +1783,250 @@ Click 'Set Game Folder' in the Project menu to get started.</value>
     <data name="ModGameDataPreparingSavePreviewDiffing" xml:space="preserve">
     <value>Comparing XML and preparing preview...</value>
   </data>
+    <data name="ModGameDataPreparingSavePreviewValidating" xml:space="preserve">
+    <value>Validating data...</value>
+  </data>
+    <data name="UndoTooltip" xml:space="preserve">
+        <value>Undo (Ctrl+Z)</value>
+    </data>
+    <data name="RedoTooltip" xml:space="preserve">
+        <value>Redo (Ctrl+Y)</value>
+    </data>
+    <data name="CloneRow" xml:space="preserve">
+        <value>Clone Row</value>
+    </data>
+    <data name="FindReferences" xml:space="preserve">
+        <value>Find references to this...</value>
+    </data>
+    <data name="ExportCsv" xml:space="preserve">
+        <value>CSV</value>
+    </data>
+    <data name="ImportCsv" xml:space="preserve">
+        <value>Import</value>
+    </data>
+    <data name="ExportCsvTooltip" xml:space="preserve">
+        <value>Export current table as CSV</value>
+    </data>
+    <data name="ImportCsvTooltip" xml:space="preserve">
+        <value>Import CSV into current table</value>
+    </data>
+    <data name="ExportModZip" xml:space="preserve">
+        <value>Export as .zip</value>
+    </data>
+    <data name="ImportModZip" xml:space="preserve">
+        <value>Import .zip Mod</value>
+    </data>
+    <data name="ExportCraftingCsv" xml:space="preserve">
+        <value>Export Crafting Table (CSV)</value>
+    </data>
+    <data name="ExportItemEncyclopediaMd" xml:space="preserve">
+        <value>Export Item Encyclopedia (Markdown)</value>
+    </data>
+    <data name="ExportLootTableJson" xml:space="preserve">
+        <value>Export Loot Tables (JSON)</value>
+    </data>
+    <data name="DataExportTooltip" xml:space="preserve">
+        <value>Data Export</value>
+    </data>
+    <data name="CsvImportDiffHeader" xml:space="preserve">
+        <value>Review the changes before importing</value>
+    </data>
+    <data name="CsvImportConfirm" xml:space="preserve">
+        <value>Confirm Import</value>
+    </data>
+    <data name="CsvImportCancel" xml:space="preserve">
+        <value>Cancel</value>
+    </data>
+    <data name="ValueEditorToggle" xml:space="preserve">
+        <value>Toggle Value Editor (Recipe / Encounter / TreasureTable)</value>
+    </data>
+    <data name="FieldNamesModifiers" xml:space="preserve">
+        <value>FieldNames → Modifiers</value>
+    </data>
+    <data name="ExportAllXlsx" xml:space="preserve">
+        <value>Export All to Excel (XLSX)</value>
+    </data>
+    <data name="FindPrevious" xml:space="preserve">
+        <value>Previous</value>
+    </data>
+    <data name="FindNext" xml:space="preserve">
+        <value>Next</value>
+    </data>
+    <data name="FindMatchCase" xml:space="preserve">
+        <value>Match case</value>
+    </data>
+    <data name="FindWholeWord" xml:space="preserve">
+        <value>Whole word</value>
+    </data>
+    <data name="FindRegex" xml:space="preserve">
+        <value>Regex</value>
+    </data>
+    <data name="FindClose" xml:space="preserve">
+        <value>Close</value>
+    </data>
+    <data name="FindWatermark" xml:space="preserve">
+        <value>Find</value>
+    </data>
+    <data name="ReplaceWatermark" xml:space="preserve">
+        <value>Replace</value>
+    </data>
+    <data name="ReplaceButton" xml:space="preserve">
+        <value>Replace</value>
+    </data>
+    <data name="ReplaceAllButton" xml:space="preserve">
+        <value>All</value>
+    </data>
+    <data name="FindInvalid" xml:space="preserve">
+        <value>invalid</value>
+    </data>
+    <data name="FindNoMatches" xml:space="preserve">
+        <value>No matches</value>
+    </data>
+    <data name="FindMatchCount" xml:space="preserve">
+        <value>{0} matches</value>
+    </data>
+    <data name="FindReplaceSuccess" xml:space="preserve">
+        <value>Replaced {0} occurrence(s).</value>
+    </data>
+    <data name="FindReplaceTitle" xml:space="preserve">
+        <value>Replace</value>
+    </data>
+
+  <data name="RefInspect" xml:space="preserve"><value>Ref Inspect</value></data>
+  <data name="RefInspectPinned" xml:space="preserve"><value>🔒 PINNED</value></data>
+  <data name="RefInspectHelp" xml:space="preserve"><value>Ctrl+Left Click a teal reference to peek here (jump + preview).
+Ctrl+Right Click to peek without jumping.
+Double-click to navigate directly.</value></data>
+  <data name="RefInspectBack" xml:space="preserve"><value>Back in peek history (navigate previous peeked entity)</value></data>
+  <data name="RefInspectForward" xml:space="preserve"><value>Forward in peek history</value></data>
+  <data name="RefInspectPin" xml:space="preserve"><value>Pin</value></data>
+  <data name="RefInspectUnpin" xml:space="preserve"><value>Unpin</value></data>
+  <data name="RefInspectPinHelp" xml:space="preserve"><value>Pin: freeze current entity view. New peeks will not replace it until unpinned.</value></data>
+  <data name="RefInspectOpenFull" xml:space="preserve"><value>Open Full</value></data>
+  <data name="RefInspectOpenFullHelp" xml:space="preserve"><value>Open the full entity document and navigate to this entity</value></data>
+  <data name="RefInspectEmptyHint" xml:space="preserve"><value>Ctrl+Click a teal reference to inspect it here.</value></data>
+  <data name="SearchTab" xml:space="preserve"><value>Search</value></data>
+  <data name="ConflictsTab" xml:space="preserve"><value>Conflicts</value></data>
+  <data name="ValidationTab" xml:space="preserve"><value>Validation</value></data>
+  <data name="BottomSearchWatermark" xml:space="preserve"><value>Search all game data... (use col:value syntax)</value></data>
+  <data name="BottomSearchClear" xml:space="preserve"><value>Clear search</value></data>
+  <data name="RunValidation" xml:space="preserve"><value>Run</value></data>
+  <data name="ModGuide" xml:space="preserve"><value>Mod Guide</value></data>
+
+  <data name="HomePageBannerWarning" xml:space="preserve"><value>⚠  Game directory not set</value></data>
+  <data name="HomePageBannerHelp" xml:space="preserve"><value>Click ⚙ Settings in the left sidebar, then set your Neo Scavenger installation path.</value></data>
+  <data name="HomePageOpenSettings" xml:space="preserve"><value>Open Settings</value></data>
+  <data name="HomePageTitle" xml:space="preserve"><value>NeoEditor</value></data>
+  <data name="HomePageSubtitle" xml:space="preserve"><value>Neo Scavenger Mod Editor</value></data>
+  <data name="HomePageBrowseTitle" xml:space="preserve"><value>Browse Game Data</value></data>
+  <data name="HomePageBrowseDesc" xml:space="preserve"><value>Explore all items, recipes, creatures (read-only)</value></data>
+  <data name="HomePageNewModTitle" xml:space="preserve"><value>New Mod</value></data>
+  <data name="HomePageNewModDesc" xml:space="preserve"><value>Create your own mod from scratch</value></data>
+  <data name="HomePageImportTitle" xml:space="preserve"><value>Import Mod</value></data>
+  <data name="HomePageImportDesc" xml:space="preserve"><value>Open an existing mod folder or XML file</value></data>
+  <data name="HomePageRecentMods" xml:space="preserve"><value>Recent Mods</value></data>
+  <data name="HomePageEntitiesFormat" xml:space="preserve"><value>{0} entities</value></data>
+  <data name="HomePageMergeView" xml:space="preserve"><value>Merge View</value></data>
+  <data name="HomePageMergeViewDesc" xml:space="preserve"><value>Open a mod loadout to see how mods combine and override each other.</value></data>
+  <data name="HomePageModsFormat" xml:space="preserve"><value>{0} mods</value></data>
+  <data name="HomePageProfilesHint" xml:space="preserve"><value>Manage profiles in the sidebar 👥 panel</value></data>
+  <data name="HomePageDropHint" xml:space="preserve"><value>Or drop a mod folder / XML file anywhere on the window</value></data>
+  <data name="RmOpen" xml:space="preserve"><value>Open</value></data>
+  <data name="RmOpenInExplorer" xml:space="preserve"><value>Open in Explorer</value></data>
+  <data name="RmCopyFullPath" xml:space="preserve"><value>Copy Full Path</value></data>
+  <data name="RmRename" xml:space="preserve"><value>Rename...</value></data>
+  <data name="RmDelete" xml:space="preserve"><value>Delete</value></data>
+  <data name="RightPanelEditor" xml:space="preserve"><value>Overview</value></data>
+  <data name="RightPanelImages" xml:space="preserve"><value>Images</value></data>
+  <data name="OverlayChainTitle" xml:space="preserve"><value>Overlay Chain</value></data>
+  <data name="OverlayChainWinner" xml:space="preserve"><value>WINNER</value></data>
+  <data name="OverlayChainOverridden" xml:space="preserve"><value>OVERRIDDEN</value></data>
+  <data name="OverlayChainEmpty" xml:space="preserve"><value>Select a row to see its overlay chain.</value></data>
+  <data name="ValueEditorTitle" xml:space="preserve"><value>Visual Overview</value></data>
+  <data name="ValueEditorEmpty" xml:space="preserve"><value>Select an entity row to see a visualization.</value></data>
+  <data name="ImagePreviewFooter" xml:space="preserve"><value>✓ found  ✗ missing. Double‑click found items to open image.</value></data>
+  <data name="DepsTooltip" xml:space="preserve"><value>Check cross-mod reference integrity</value></data>
+  <data name="ConflictsFormat" xml:space="preserve"><value>{0} conflicts</value></data>
+  <data name="CreateModToEdit" xml:space="preserve"><value>Create Mod to Edit</value></data>
+  <data name="EmptyModHeader" xml:space="preserve"><value>This mod has no entities yet.</value></data>
+  <data name="EmptyModDesc" xml:space="preserve"><value>Click the + button below to add items, recipes, or creatures.</value></data>
+  <data name="EmptyModButton" xml:space="preserve"><value>Add Your First Entity</value></data>
+  <data name="ToggleLeftPanel" xml:space="preserve"><value>Toggle left panel</value></data>
+  <data name="ToggleRightPanel" xml:space="preserve"><value>Toggle right panel</value></data>
+  <data name="ToggleBottomPanel" xml:space="preserve"><value>Toggle bottom panel</value></data>
+  <data name="DocsFormat" xml:space="preserve"><value>Docs: {0}</value></data>
+  <data name="DialogRename" xml:space="preserve"><value>Rename</value></data>
+  <data name="DialogOK" xml:space="preserve"><value>OK</value></data>
+  <data name="DialogAdd" xml:space="preserve"><value>Add</value></data>
+  <data name="DialogClose" xml:space="preserve"><value>Close</value></data>
+  <data name="DialogExportCsv" xml:space="preserve"><value>Export CSV</value></data>
+  <data name="DialogCancel" xml:space="preserve"><value>Cancel</value></data>
+  <data name="DialogCreate" xml:space="preserve"><value>Create</value></data>
+  <data name="DialogAuthor" xml:space="preserve"><value>Author</value></data>
+  <data name="DialogAuthorWatermark" xml:space="preserve"><value>Your name or team</value></data>
+  <data name="DialogModName" xml:space="preserve"><value>Mod Name</value></data>
+  <data name="DialogModNameWatermark" xml:space="preserve"><value>e.g. MyAwesomeMod</value></data>
+  <data name="DialogNamespace" xml:space="preserve"><value>Namespace</value></data>
+  <data name="DialogNamespaceWatermark" xml:space="preserve"><value>e.g. MAM</value></data>
+  <data name="DialogNamespaceHint" xml:space="preserve"><value>Short prefix to identify your mod items. Used to avoid ID conflicts with other mods.</value></data>
+  <data name="DialogCreateProfile" xml:space="preserve"><value>Create a mod loadout profile automatically</value></data>
+  <data name="AddRowTitle" xml:space="preserve"><value>Add New Row</value></data>
+  <data name="AddRowTargetMod" xml:space="preserve"><value>Target Mod</value></data>
+  <data name="AddRowTargetXml" xml:space="preserve"><value>Target XML *</value></data>
+  <data name="AddRowCopyFrom" xml:space="preserve"><value>Copy From</value></data>
+  <data name="CsvImportTitle" xml:space="preserve"><value>CSV Import Preview</value></data>
+  <data name="DependencyCheckTitle" xml:space="preserve"><value>Dependency Check</value></data>
+  <data name="DependencySource" xml:space="preserve"><value>Source</value></data>
+  <data name="DependencyMod" xml:space="preserve"><value>Mod</value></data>
+  <data name="DependencyField" xml:space="preserve"><value>Field</value></data>
+  <data name="DependencyTarget" xml:space="preserve"><value>Target</value></data>
+  <data name="DependencyIssue" xml:space="preserve"><value>Issue</value></data>
+  <data name="ConflictTitle" xml:space="preserve"><value>Field Conflicts</value></data>
+  <data name="ConflictEntityType" xml:space="preserve"><value>Entity Type</value></data>
+  <data name="ConflictEntity" xml:space="preserve"><value>Entity</value></data>
+  <data name="ConflictField" xml:space="preserve"><value>Field</value></data>
+  <data name="ConflictMods" xml:space="preserve"><value>Conflicting Mods</value></data>
+  <data name="MergeExportTitle" xml:space="preserve"><value>XML Export Preview</value></data>
+  <data name="MergeExportFiles" xml:space="preserve"><value>Files</value></data>
+  <data name="MergeExportInfo" xml:space="preserve"><value>Review changes for each file. Click a file on the left to see its diff.</value></data>
+  <data name="MergeExportAll" xml:space="preserve"><value>Export All</value></data>
+  <data name="ProfileDiffTitle" xml:space="preserve"><value>Profile Comparison</value></data>
+  <data name="ProfileDiffA" xml:space="preserve"><value>Profile A:</value></data>
+  <data name="ProfileDiffB" xml:space="preserve"><value>Profile B:</value></data>
+  <data name="ProfileDiffModName" xml:space="preserve"><value>Mod Name</value></data>
+  <data name="ProfileDiffPath" xml:space="preserve"><value>Path</value></data>
+  <data name="ImageViewerTitle" xml:space="preserve"><value>Image Viewer</value></data>
+  <data name="ValidationReportTitle" xml:space="preserve"><value>Validation Report</value></data>
+  <data name="ValidationCancelSave" xml:space="preserve"><value>Cancel Save</value></data>
+  <data name="ValidationSaveAnyway" xml:space="preserve"><value>Save Anyway</value></data>
+  <data name="ModGameDataTitleFormat" xml:space="preserve"><value>{0} - Mod Game Data</value></data>
+  <data name="ModImagesTitleFormat" xml:space="preserve"><value>{0} - Images</value></data>
+  <data name="MergeEditorTitleFormat" xml:space="preserve"><value>{0} - Merge Editor</value></data>
+  <data name="NewDocumentTitleFormat" xml:space="preserve"><value>Document {0}</value></data>
+
+  <data name="EmptyModMessage" xml:space="preserve"><value>This mod has no entities yet.</value></data>
+  <data name="EmptyModHint" xml:space="preserve"><value>Click the + button below to add items, recipes, or creatures.</value></data>
+  <data name="AddFirstEntity" xml:space="preserve"><value>Add Your First Entity</value></data>
+  <data name="ConflictsLabel" xml:space="preserve"><value>conflicts</value></data>
+  <data name="QuickSave" xml:space="preserve"><value>Quick Save</value></data>
+  <data name="QuickSaveTooltip" xml:space="preserve"><value>Save to database only (Ctrl+S)</value></data>
+  <data name="SaveAndExport" xml:space="preserve"><value>Export</value></data>
+  <data name="SaveAndExportTooltip" xml:space="preserve"><value>Save and export to XML files with diff preview</value></data>
+  <data name="Saving" xml:space="preserve"><value>Saving...</value></data>
+  <data name="SaveTooltip" xml:space="preserve"><value>Save (Ctrl+S)</value></data>
+  <data name="SaveAndLaunchTooltip" xml:space="preserve"><value>Save &amp; Launch Game (Ctrl+Shift+S)</value></data>
+  <data name="GameDataReadOnly" xml:space="preserve"><value>Game Data</value></data>
+  <data name="GameDataReadOnlyMessage" xml:space="preserve"><value>Game base data cannot be edited directly. To modify game data, add a Merge-mode mod (strModName=0) to the profile, or create one via "New Mod" with namespace 0. Changes to game data will then be written to that override mod.</value></data>
+  <data name="Launch" xml:space="preserve"><value>Launch</value></data>
+  <data name="DiffJumpToCursor" xml:space="preserve"><value>Jump to next diff from cursor</value></data>
+  <data name="DiffJumpToIndex" xml:space="preserve"><value>Go to diff #</value></data>
+  <data name="DataBrowserTitle" xml:space="preserve"><value>Data Browser</value></data>
+  <data name="DataBrowserProperties" xml:space="preserve"><value>Properties</value></data>
+  <data name="DomainCoreItems" xml:space="preserve"><value>Core Items</value></data>
+  <data name="DomainCombat" xml:space="preserve"><value>Combat</value></data>
+  <data name="DomainCrafting" xml:space="preserve"><value>Crafting</value></data>
+  <data name="DomainLoot" xml:space="preserve"><value>Loot</value></data>
+  <data name="DomainStory" xml:space="preserve"><value>Story</value></data>
+  <data name="DomainMap" xml:space="preserve"><value>Map</value></data>
+  <data name="DomainOther" xml:space="preserve"><value>Other</value></data>
 </root>

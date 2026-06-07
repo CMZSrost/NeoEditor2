@@ -1,8 +1,16 @@
-﻿using System;
+using System;
 using System.IO;
+using System.Linq;
+using System.Reflection;
 using System.Text.RegularExpressions;
 using AvaloniaEdit.Document;
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Messaging;
+using Dock.Model.Avalonia;
+using Dock.Model.Avalonia.Controls;
+using LiveMarkdown.Avalonia;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using NeoEditor.Data.Model;
 using NeoEditor.Helper;
 
@@ -159,6 +167,13 @@ public partial class ModGameDataDocument : DocumentBase
 {
     [ObservableProperty] public partial ModInfo? ModInfo { get; set; }
     [ObservableProperty] public partial bool ReadOnly { get; set; } = false;
+    [ObservableProperty] public partial bool IsDirty { get; set; }
+}
+
+public partial class MergeEditorDocument : DocumentBase
+{
+    [ObservableProperty] public partial ProfileInfo? ProfileInfo { get; set; }
+    [ObservableProperty] public partial bool IsDirty { get; set; }
 }
 
 public class PlainTextDocument : DocumentBase
@@ -211,12 +226,49 @@ public partial class MarkdownDocument : DocumentViewBase
 
     [ObservableProperty] public partial string FilePath { get; set; }
     [ObservableProperty] public partial string Content { get; set; }
+    public string BaseDirectory => Path.GetDirectoryName(FilePath) ?? "";
+    public LiveMarkdown.Avalonia.ObservableStringBuilder MarkdownBuilder { get; }
+    public System.Windows.Input.ICommand LinkCommand { get; }
 
     public MarkdownDocument(string filePath, string title)
     {
         FilePath = Path.GetFullPath(filePath);
         SetStaticTitle(title);
-        Content = PrepareMarkdownContent(File.ReadAllText(FilePath), Path.GetDirectoryName(FilePath));
+        var raw = File.ReadAllText(FilePath);
+        Serilog.Log.Logger.Debug("[MarkdownDocument] Read {Length} chars from {Path}", raw.Length, FilePath);
+        var prepared = PrepareMarkdownContent(raw, BaseDirectory);
+        Content = prepared;
+        MarkdownBuilder = new LiveMarkdown.Avalonia.ObservableStringBuilder();
+        MarkdownBuilder.Append(prepared);
+
+        LinkCommand = new CommunityToolkit.Mvvm.Input.RelayCommand<LinkClickedEventArgs>(HandleLinkClick);
+    }
+
+    private void HandleLinkClick(LinkClickedEventArgs? e)
+    {
+        if (e.HRef is null) return;
+        var url = e.HRef.ToString();
+
+        if (url.StartsWith("http://", StringComparison.OrdinalIgnoreCase) ||
+            url.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+        {
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(url) { UseShellExecute = true });
+            return;
+        }
+
+        string localPath;
+        if (url.StartsWith("file:///", StringComparison.OrdinalIgnoreCase))
+            localPath = new Uri(url).LocalPath;
+        else if (Path.IsPathRooted(url))
+            localPath = Path.GetFullPath(url);
+        else
+            localPath = Path.GetFullPath(Path.Combine(BaseDirectory, url));
+
+        if (localPath.EndsWith(".md", StringComparison.OrdinalIgnoreCase) && File.Exists(localPath))
+        {
+            var docTitle = Path.GetFileNameWithoutExtension(localPath);
+            Messenger.Send(new Data.Messages.OpenHelpDocumentMessage(localPath, docTitle));
+        }
     }
 
     private static string PrepareMarkdownContent(string content, string? baseDirectory)
@@ -226,8 +278,8 @@ public partial class MarkdownDocument : DocumentViewBase
             return content;
         }
 
-        var rewrittenMarkdown = MarkdownImageRegex.Replace(content, match => RewriteMarkdownImage(match, baseDirectory));
-        return HtmlImageSrcRegex.Replace(rewrittenMarkdown, match => RewriteHtmlImage(match, baseDirectory));
+        var withImages = MarkdownImageRegex.Replace(content, match => RewriteMarkdownImage(match, baseDirectory));
+        return HtmlImageSrcRegex.Replace(withImages, match => RewriteHtmlImage(match, baseDirectory));
     }
 
     private static string RewriteMarkdownImage(Match match, string baseDirectory)
@@ -324,4 +376,213 @@ public partial class MarkdownDocument : DocumentViewBase
 public partial class ImageDocument : DocumentBase
 {
     [ObservableProperty] public partial string ImagePath { get; set; } = "";
+    [ObservableProperty] public partial Avalonia.Media.IImage? ImageSource { get; set; }
+
+    partial void OnImagePathChanged(string value)
+    {
+        if (!string.IsNullOrWhiteSpace(value) && System.IO.File.Exists(value))
+            ImageSource = new Avalonia.Media.Imaging.Bitmap(value);
+    }
+}
+
+/// <summary>
+/// Read-only entity browser tab. Left: entity list. Right: tabbed visual overviews.
+/// </summary>
+public partial class EntityBrowserDocument : DocumentViewBase
+{
+    /// <summary>Independent Factory for the nested DockControl (must NOT share the DI singleton).</summary>
+    [ObservableProperty] public partial Factory DockFactory { get; set; }
+
+    public Helper.EntityTypeGroup EntityType { get; }
+
+    /// <summary>All entities of this type (loaded on open).</summary>
+    public System.Collections.ObjectModel.ObservableCollection<BrowserEntityRow> Entities { get; } = [];
+
+    /// <summary>Entity viewer tabs in the right panel.</summary>
+    public System.Collections.ObjectModel.ObservableCollection<EntityViewerDocument> ViewerTabs { get; } = [];
+    [ObservableProperty] public partial EntityViewerDocument? SelectedViewerTab { get; set; }
+
+    public EntityBrowserDocument(Helper.EntityTypeGroup entityType)
+    {
+        EntityType = entityType;
+        DockFactory = new Factory();
+        Helper.AsyncHelper.FireAndForget(LoadEntitiesAsync());
+    }
+
+    private async System.Threading.Tasks.Task LoadEntitiesAsync()
+    {
+        try
+        {
+            await using var db = await App.ServiceProvider!
+                .GetRequiredService<Microsoft.EntityFrameworkCore.IDbContextFactory<Data.Context.GameDbContext>>()
+                .CreateDbContextAsync();
+
+            var m = typeof(Data.Context.GameDbContext).GetMethod(nameof(Data.Context.GameDbContext.Set),
+                System.Type.EmptyTypes)!.MakeGenericMethod(EntityType.EntityType);
+            var dbSet = (System.Collections.IEnumerable)m.Invoke(db, null)!;
+
+            var rows = new System.Collections.Generic.List<BrowserEntityRow>();
+            int rawCount = 0;
+            foreach (var obj in dbSet)
+            {
+                rawCount++;
+                if (obj is Data.Model.Game.IEntity e)
+                    rows.Add(new BrowserEntityRow(e));
+            }
+
+            Console.WriteLine($"[DB] LoadEntities: type={EntityType.EntityType.Name}, rawCount={rawCount}, matched={rows.Count}");
+
+            await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
+            {
+                foreach (var r in rows) Entities.Add(r);
+                Console.WriteLine($"[DB] LoadEntities done: Entities.Count={Entities.Count}");
+            });
+        }
+        catch (System.Exception ex)
+        {
+            Console.WriteLine($"[DB] LoadEntities FAILED: {ex.Message}");
+        }
+    }
+}
+
+/// <summary>Lightweight row for entity list display.</summary>
+public partial class BrowserEntityRow : ObservableObject
+{
+    public Data.Model.Game.IEntity Entity { get; }
+    public string DisplayName { get; }
+    public string EntityId { get; }
+    public string TypeName { get; }
+
+    public BrowserEntityRow(Data.Model.Game.IEntity entity)
+    {
+        Entity = entity;
+        EntityId = entity.EntityId;
+        TypeName = entity.GetType().Name;
+        DisplayName = ResolveDisplayName(entity);
+    }
+
+    private static string ResolveDisplayName(Data.Model.Game.IEntity entity)
+    {
+        var type = entity.GetType();
+        foreach (var name in new[] { "strName", "Name", "strLabel", "strTitle", "PropertyName", "strPropertyName" })
+        {
+            var prop = type.GetProperty(name,
+                System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.IgnoreCase);
+            if (prop?.GetValue(entity) is string s && s.Length > 0)
+                return s;
+        }
+        var indexAttr = type.GetCustomAttribute<Microsoft.EntityFrameworkCore.IndexAttribute>();
+        var keyName = indexAttr?.PropertyNames?.FirstOrDefault(n => n != nameof(EntityId));
+        if (keyName is not null)
+        {
+            var keyProp = type.GetProperty(keyName,
+                System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public);
+            if (keyProp?.GetValue(entity) is { } kv)
+                return $"[{type.Name}] #{kv}";
+        }
+        return $"[{type.Name}]";
+    }
+}
+
+/// <summary>A single-entity Dock document opened from the Data Browser.</summary>
+public partial class EntityViewerDocument : DocumentViewBase
+{
+    public Data.Model.Game.IEntity Entity { get; }
+    public EntityViewerDocument(Data.Model.Game.IEntity entity)
+    {
+        Entity = entity;
+        Title = entity.Subject ?? entity.GetType().Name;
+    }
+}
+
+/// <summary>A single tab in the DomainBrowser's right-side entity viewer.</summary>
+public partial class EntityViewerTab : ObservableObject
+{
+    public string Header { get; init; } = "";
+    public Data.Model.Game.IEntity Entity { get; init; } = null!;
+}
+
+// ── Tool classes for ToolDock panels ────────────────────────────────
+
+/// <summary>Left ToolDock: overlay chain display.</summary>
+public class OverlayChainTool : Tool
+{
+    public OverlayChainTool(OverlayChainToolContent content)
+    {
+        Id = "OverlayChain";
+        Title = "Overlay Chain";
+        Context = content;
+        Proportion = 1.0;
+    }
+}
+
+/// <summary>Right: value editor panel.</summary>
+public class ValueEditorTool : Tool
+{
+    public ValueEditorTool()
+    {
+        Id = "ValueEditor";
+        Title = "Value Editor";
+        Proportion = 1.0;
+    }
+}
+
+/// <summary>Right: image preview.</summary>
+public class ImagePreviewTool : Tool
+{
+    public ImagePreviewTool(ImagePreviewContent content)
+    {
+        Id = "ImagePreview";
+        Title = "Image Preview";
+        Context = content;
+        Proportion = 1.0;
+    }
+}
+
+/// <summary>Right: reference inspector.</summary>
+public class ReferenceInspectorTool : Tool
+{
+    public ReferenceInspectorTool(ReferenceInspectorContent content)
+    {
+        Id = "RefInspector";
+        Title = "Reference Inspector";
+        Context = content;
+        Proportion = 1.0;
+    }
+}
+
+/// <summary>Bottom: search results.</summary>
+public class SearchResultsTool : Tool
+{
+    public SearchResultsTool(BottomToolsViewModel content)
+    {
+        Id = "SearchResults";
+        Title = "Search Results";
+        Context = content;
+        Proportion = 1.0;
+    }
+}
+
+/// <summary>Bottom: conflicts.</summary>
+public class ConflictsTool : Tool
+{
+    public ConflictsTool(BottomToolsViewModel content)
+    {
+        Id = "Conflicts";
+        Title = "Conflicts";
+        Context = content;
+        Proportion = 1.0;
+    }
+}
+
+/// <summary>Bottom: validation.</summary>
+public class ValidationTool : Tool
+{
+    public ValidationTool(BottomToolsViewModel content)
+    {
+        Id = "Validation";
+        Title = "Validation";
+        Context = content;
+        Proportion = 1.0;
+    }
 }

@@ -1,0 +1,17 @@
+<Window
+    x:Class="NeoEditor.Views.Dialog.RenameDialog"
+    xmlns:dialog="clr-namespace:NeoEditor.Views.Dialog"
+    x:DataType="dialog:RenameDialog"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Title="{Binding Loc[DialogRename]}" Width="360" Height="130"
+    WindowStartupLocation="CenterOwner"
+    CanResize="False" ShowInTaskbar="False">
+    <Grid RowDefinitions="Auto,Auto" Margin="12">
+        <TextBox Grid.Row="0" x:Name="NameBox" Margin="0,0,0,8" />
+        <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="6">
+            <Button Content="{Binding Loc[DialogCancel]}" Click="OnCancelClick" Width="60" />
+            <Button Content="{Binding Loc[DialogOK]}" Click="OnOkClick" Width="60" IsDefault="True" />
+        </StackPanel>
+    </Grid>
+</Window>

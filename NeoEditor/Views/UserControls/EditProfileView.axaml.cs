@@ -1,6 +1,7 @@
 ﻿using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Markup.Xaml;
+using Avalonia.Xaml.Interactions.DragAndDrop;
 using Microsoft.Extensions.DependencyInjection;
 using NeoEditor.Services;
 

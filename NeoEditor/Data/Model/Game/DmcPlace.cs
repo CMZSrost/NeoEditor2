@@ -1,6 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
+using NeoEditor.Helper;
 
 namespace NeoEditor.Data.Model.Game;
 
@@ -24,6 +25,7 @@ public class DmcPlace : IEntity
     [Column("nEncounterID")]
     [Comment("调用的剧情代码ID，结合encounters使用")]
     [Display(Name = "EncounterId")]
+    [ReferenceField(typeof(Encounter))]
     public int EncounterId { get; set; } = 1;
 
     [Column("nX")]

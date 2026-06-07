@@ -1,4 +1,4 @@
-﻿<UserControl
+<UserControl
     x:Class="NeoEditor.Views.UserControls.Pane"
     xmlns="https://github.com/avaloniaui"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -10,150 +10,173 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:model="clr-namespace:NeoEditor.Data.Model"
     xmlns:system="clr-namespace:System;assembly=System.Runtime"
+    xmlns:userControls="clr-namespace:NeoEditor.Views.UserControls"
     xmlns:viewModels="clr-namespace:NeoEditor.ViewModels"
     x:Name="Root"
     d:DesignHeight="800"
     d:DesignWidth="600"
     mc:Ignorable="d">
     <Design.DataContext>
-        <!-- <explorerPane:ResourceManagerViewModel /> -->
         <explorerPane:ModDatabaseViewModel />
-        <!-- <explorerPane:ModIndexViewModel /> -->
-        <!-- <explorerPane:SearchPaneViewModel /> -->
-        <!-- <explorerPane:SettingsPaneViewModel /> -->
     </Design.DataContext>
     <UserControl.DataTemplates>
-        <!--  资源管理器面板模板  -->
+
+        <!--  资源管理器  -->
         <DataTemplate DataType="{x:Type explorerPane:ResourceManagerViewModel}">
-            <ScrollViewer Width="500">
-                <StackPanel Spacing="4">
-                    <TextBlock FontWeight="Bold" Text="{Binding Loc[ResourceManager]}" />
-                    <StackPanel Orientation="Horizontal" Spacing="6">
+            <DockPanel>
+                <StackPanel DockPanel.Dock="Top" Spacing="4" Margin="8,8,8,4">
+                    <TextBlock FontWeight="Bold" FontSize="14" Text="{Binding Loc[ResourceManager]}" />
+                    <StackPanel Orientation="Horizontal" Spacing="4">
                         <Button Command="{Binding ReloadFolderCommand}">
                             <avalonia:SymbolIcon Symbol="FolderSync" ToolTip.Tip="{Binding Loc[ReloadGameFolder]}" />
                         </Button>
                         <Button Command="{Binding OpenGameFolderCommand}" IsEnabled="{Binding Config.GameRootDir, Converter={x:Static ObjectConverters.IsNotNull}}">
-                            <StackPanel
-                                VerticalAlignment="Center"
-                                Orientation="Horizontal"
-                                Spacing="4"
-                                ToolTip.Tip="{Binding Loc[OpenGameFolder]}">
+                            <StackPanel Orientation="Horizontal" Spacing="4" ToolTip.Tip="{Binding Loc[OpenGameFolder]}">
                                 <avalonia:SymbolIcon Symbol="FolderOpen" />
-                                <TextBlock Text="{Binding Loc[Games]}" />
+                                <TextBlock VerticalAlignment="Center" Text="{Binding Loc[Games]}" />
                             </StackPanel>
                         </Button>
-                        <Button
-                            Command="{Binding OpenGameFolderCommand}"
-                            CommandParameter="Mods"
-                            IsEnabled="{Binding Config.GameRootDir, Converter={x:Static ObjectConverters.IsNotNull}}">
-                            <StackPanel
-                                VerticalAlignment="Center"
-                                Orientation="Horizontal"
-                                Spacing="4"
-                                ToolTip.Tip="{Binding Loc[OpenModsFolder]}">
+                        <Button Command="{Binding OpenGameFolderCommand}" CommandParameter="Mods"
+                                IsEnabled="{Binding Config.GameRootDir, Converter={x:Static ObjectConverters.IsNotNull}}">
+                            <StackPanel Orientation="Horizontal" Spacing="4" ToolTip.Tip="{Binding Loc[OpenModsFolder]}">
                                 <avalonia:SymbolIcon Symbol="FolderOpen" />
-                                <TextBlock Text="{Binding Loc[Mods]}" />
+                                <TextBlock VerticalAlignment="Center" Text="{Binding Loc[Mods]}" />
                             </StackPanel>
                         </Button>
                     </StackPanel>
-                    <TreeView ItemsSource="{Binding Folders}" SelectedItem="{Binding SelectedItem}">
+                </StackPanel>
+                <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+                    <TreeView x:Name="ResourceTreeView" ItemsSource="{Binding Folders}" SelectedItem="{Binding SelectedItem}" Margin="8,0">
                         <Interaction.Behaviors>
                             <EventTriggerBehavior EventName="DoubleTapped">
                                 <InvokeCommandAction Command="{Binding OpenFileCommand}" CommandParameter="{Binding SelectedItem}" />
                             </EventTriggerBehavior>
+                            <behaviors:ContextMenuPlacementTargetBehavior />
                         </Interaction.Behaviors>
+                        <TreeView.ContextMenu>
+                            <ContextMenu>
+                                <MenuItem Header="{Binding Loc[RmOpen]}" Command="{Binding OpenFileCommand}"
+                                          CommandParameter="{Binding $parent[ContextMenu].PlacementTarget.(SelectingItemsControl.SelectedItem)}"
+                                          IsEnabled="{Binding $parent[ContextMenu].PlacementTarget.(SelectingItemsControl.SelectedItem), Converter={x:Static ObjectConverters.IsNotNull}}" />
+                                <MenuItem Header="{Binding Loc[RmOpenInExplorer]}" Command="{Binding OpenInExplorerCommand}"
+                                          CommandParameter="{Binding $parent[ContextMenu].PlacementTarget.(SelectingItemsControl.SelectedItem)}"
+                                          IsEnabled="{Binding $parent[ContextMenu].PlacementTarget.(SelectingItemsControl.SelectedItem), Converter={x:Static ObjectConverters.IsNotNull}}" />
+                                <Separator />
+                                <MenuItem Header="{Binding Loc[RmCopyFullPath]}" Command="{Binding CopyPathCommand}"
+                                          CommandParameter="{Binding $parent[ContextMenu].PlacementTarget.(SelectingItemsControl.SelectedItem)}"
+                                          IsEnabled="{Binding $parent[ContextMenu].PlacementTarget.(SelectingItemsControl.SelectedItem), Converter={x:Static ObjectConverters.IsNotNull}}" />
+                                <MenuItem Header="{Binding Loc[RmRename]}" Command="{Binding RenameItemCommand}"
+                                          CommandParameter="{Binding $parent[ContextMenu].PlacementTarget.(SelectingItemsControl.SelectedItem)}"
+                                          IsEnabled="{Binding $parent[ContextMenu].PlacementTarget.(SelectingItemsControl.SelectedItem), Converter={x:Static ObjectConverters.IsNotNull}}" />
+                                <Separator />
+                                <MenuItem Header="{Binding Loc[RmDelete]}" Command="{Binding DeleteItemCommand}"
+                                          CommandParameter="{Binding $parent[ContextMenu].PlacementTarget.(SelectingItemsControl.SelectedItem)}"
+                                          Foreground="Red"
+                                          IsEnabled="{Binding $parent[ContextMenu].PlacementTarget.(SelectingItemsControl.SelectedItem), Converter={x:Static ObjectConverters.IsNotNull}}" />
+                            </ContextMenu>
+                        </TreeView.ContextMenu>
                         <TreeView.ItemTemplate>
                             <TreeDataTemplate ItemsSource="{Binding Children}">
                                 <ContentControl Content="{Binding Info}" />
                             </TreeDataTemplate>
                         </TreeView.ItemTemplate>
                     </TreeView>
-                </StackPanel>
-            </ScrollViewer>
+                </ScrollViewer>
+            </DockPanel>
         </DataTemplate>
 
-        <!--  搜索面板模板  -->
+        <!--  全局搜索  -->
         <DataTemplate DataType="{x:Type explorerPane:SearchPaneViewModel}">
-            <ScrollViewer Width="500">
-                <StackPanel>
-                    <TextBlock
-                        Margin="8"
-                        FontWeight="Bold"
-                        Text="{Binding Loc[Search]}" />
-                    <AutoCompleteBox
-                        Margin="8"
-                        ClearSelectionOnLostFocus="True"
-                        FilterMode="Contains"
-                        ItemsSource="{Binding RecentSearches}"
-                        Watermark="{Binding Loc[KeywordInput]}" />
+            <DockPanel>
+                <StackPanel DockPanel.Dock="Top" Spacing="4" Margin="8,8,8,4">
+                    <TextBlock FontWeight="Bold" FontSize="14" Text="{Binding Loc[Search]}" />
+                    <DockPanel>
+                        <Button DockPanel.Dock="Right" Command="{Binding SearchCommand}" Content="Go" Width="40" />
+                        <TextBox Text="{Binding SearchText}" Watermark="{Binding Loc[KeywordInput]}">
+                            <TextBox.KeyBindings>
+                                <KeyBinding Gesture="Enter" Command="{Binding SearchCommand}" />
+                            </TextBox.KeyBindings>
+                        </TextBox>
+                    </DockPanel>
+                    <ProgressBar IsIndeterminate="True" IsVisible="{Binding IsSearching}" Height="4" />
+                    <TextBlock Text="{Binding StatusText}" FontSize="10"
+                               Foreground="{DynamicResource SystemControlForegroundChromeDisabledBrush}" />
                 </StackPanel>
-            </ScrollViewer>
+                <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+                    <ItemsControl ItemsSource="{Binding Results}" Margin="8,0">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate DataType="helper:SearchResultGroup">
+                                <StackPanel Margin="0,4">
+                                    <TextBlock FontWeight="Bold" Text="{Binding TypeName}" />
+                                    <ItemsControl ItemsSource="{Binding Items}" Margin="12,2,0,4">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate DataType="helper:SearchResultItem">
+                                                <TextBlock Text="{Binding DisplayText}" Cursor="Hand" Foreground="Teal"
+                                                           TextWrapping="Wrap" PointerPressed="OnSearchResultPointerPressed" />
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+            </DockPanel>
         </DataTemplate>
 
-
-        <!--  Mod数据库  -->
+        <!--  Mod 数据库  -->
         <DataTemplate DataType="explorerPane:ModDatabaseViewModel">
-            <ScrollViewer Width="500">
-                <StackPanel Spacing="4">
-                    <TextBlock FontWeight="Bold" Text="{Binding Loc[ModDatabase]}" />
-                    <StackPanel Orientation="Horizontal">
-                        <StackPanel Orientation="Horizontal" Spacing="4">
-                            <Button Command="{Binding CreateModCommand}">
-                                <avalonia:SymbolIcon Symbol="AddCircle" ToolTip.Tip="{Binding Loc[CreateMod]}" />
-                            </Button>
-                            <Button Command="{Binding ImportModCommand}">
-                                <avalonia:SymbolIcon Symbol="ArrowCircleDownRight" ToolTip.Tip="{Binding Loc[ImportMod]}" />
-                            </Button>
-                            <Button Command="{Binding RefreshModCommand}">
-                                <avalonia:SymbolIcon Symbol="ArrowClockwise" ToolTip.Tip="{Binding Loc[RefreshMods]}" />
-                            </Button>
-                            <Button Command="{Binding LoadModCommand}">
-                                <avalonia:SymbolIcon Symbol="DocumentMultipleSync" ToolTip.Tip="{Binding Loc[LoadAll]}" />
-                            </Button>
-                            <SplitButton
-                                Command="{Binding ClearModsCommand}"
-                                CommandParameter="{Binding SelectedItem}"
-                                IsEnabled="{Binding SelectedItem, Converter={x:Static ObjectConverters.IsNotNull}}">
-                                <SplitButton.Content>
-                                    <avalonia:SymbolIcon Symbol="Eraser" ToolTip.Tip="{Binding Loc[ClearSelectedMod]}" />
-                                </SplitButton.Content>
-                                <SplitButton.Flyout>
-                                    <MenuFlyout>
-                                        <MenuItem
-                                            Command="{Binding DeleteModsCommand}"
-                                            CommandParameter="{Binding SelectedItem}"
-                                            IsEnabled="{Binding SelectedItem, Converter={x:Static ObjectConverters.IsNotNull}}">
-                                            <MenuItem.Header>
-                                                <avalonia:SymbolIcon Symbol="Delete" ToolTip.Tip="{Binding Loc[DeleteSelectedMod]}" />
-                                            </MenuItem.Header>
-                                        </MenuItem>
-                                    </MenuFlyout>
-                                </SplitButton.Flyout>
-                            </SplitButton>
-                            <SplitButton Command="{Binding ClearModsCommand}">
-                                <SplitButton.Content>
-                                    <avalonia:SymbolIcon Symbol="EraserTool" ToolTip.Tip="{Binding Loc[ClearAllMod]}" />
-                                </SplitButton.Content>
-                                <SplitButton.Flyout>
-                                    <MenuFlyout>
-                                        <MenuItem Command="{Binding DeleteModsCommand}">
-                                            <MenuItem.Header>
-                                                <avalonia:SymbolIcon Symbol="DeleteLines" ToolTip.Tip="{Binding Loc[DeleteAllMods]}" />
-                                            </MenuItem.Header>
-                                        </MenuItem>
-                                    </MenuFlyout>
-                                </SplitButton.Flyout>
-                            </SplitButton>
-                        </StackPanel>
+            <DockPanel>
+                <StackPanel DockPanel.Dock="Top" Spacing="4" Margin="8,8,8,4">
+                    <TextBlock FontWeight="Bold" FontSize="14" Text="{Binding Loc[ModDatabase]}" />
+                    <StackPanel Orientation="Horizontal" Spacing="4">
+                        <Button Command="{Binding CreateModCommand}">
+                            <avalonia:SymbolIcon Symbol="AddCircle" ToolTip.Tip="{Binding Loc[CreateMod]}" />
+                        </Button>
+                        <Button Command="{Binding ImportModCommand}">
+                            <avalonia:SymbolIcon Symbol="ArrowCircleDownRight" ToolTip.Tip="{Binding Loc[ImportMod]}" />
+                        </Button>
+                        <Button Command="{Binding RefreshModCommand}">
+                            <avalonia:SymbolIcon Symbol="ArrowClockwise" ToolTip.Tip="{Binding Loc[RefreshMods]}" />
+                        </Button>
+                        <Button Command="{Binding LoadModCommand}">
+                            <avalonia:SymbolIcon Symbol="DocumentMultipleSync" ToolTip.Tip="{Binding Loc[LoadAll]}" />
+                        </Button>
+                        <SplitButton Command="{Binding ClearModsCommand}" CommandParameter="{Binding SelectedItem}"
+                                     IsEnabled="{Binding SelectedItem, Converter={x:Static ObjectConverters.IsNotNull}}">
+                            <SplitButton.Content>
+                                <avalonia:SymbolIcon Symbol="Eraser" ToolTip.Tip="{Binding Loc[ClearSelectedMod]}" />
+                            </SplitButton.Content>
+                            <SplitButton.Flyout>
+                                <MenuFlyout>
+                                    <MenuItem Command="{Binding DeleteModsCommand}" CommandParameter="{Binding SelectedItem}"
+                                              IsEnabled="{Binding SelectedItem, Converter={x:Static ObjectConverters.IsNotNull}}">
+                                        <MenuItem.Header>
+                                            <avalonia:SymbolIcon Symbol="Delete" ToolTip.Tip="{Binding Loc[DeleteSelectedMod]}" />
+                                        </MenuItem.Header>
+                                    </MenuItem>
+                                </MenuFlyout>
+                            </SplitButton.Flyout>
+                        </SplitButton>
+                        <SplitButton Command="{Binding ClearModsCommand}">
+                            <SplitButton.Content>
+                                <avalonia:SymbolIcon Symbol="EraserTool" ToolTip.Tip="{Binding Loc[ClearAllMod]}" />
+                            </SplitButton.Content>
+                            <SplitButton.Flyout>
+                                <MenuFlyout>
+                                    <MenuItem Command="{Binding DeleteModsCommand}">
+                                        <MenuItem.Header>
+                                            <avalonia:SymbolIcon Symbol="DeleteLines" ToolTip.Tip="{Binding Loc[DeleteAllMods]}" />
+                                        </MenuItem.Header>
+                                    </MenuItem>
+                                </MenuFlyout>
+                            </SplitButton.Flyout>
+                        </SplitButton>
                     </StackPanel>
-                    <TextBox
-                        ClearSelectionOnLostFocus="True"
-                        Text="{Binding Filter}"
-                        Watermark="{Binding Loc[KeywordInput]}" />
-                    <ListBox
-                        x:Name="ModList"
-                        ItemsSource="{Binding Mods}"
-                        SelectedItem="{Binding SelectedItem}">
+                    <TextBox Text="{Binding Filter}" Watermark="{Binding Loc[KeywordInput]}" />
+                </StackPanel>
+                <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+                    <ListBox x:Name="ModList" ItemsSource="{Binding Mods}" SelectedItem="{Binding SelectedItem}" Margin="8,0">
                         <Interaction.Behaviors>
                             <behaviors:ContextMenuPlacementTargetBehavior />
                         </Interaction.Behaviors>
@@ -182,83 +205,51 @@
                                         </BehaviorCollection>
                                     </BehaviorCollectionTemplate>
                                 </Setter>
-
                             </Style>
                         </ListBox.Styles>
                         <ListBox.ContextMenu>
                             <ContextMenu>
-                                <MenuItem
-                                    Command="{Binding OpenModPathCommand}"
-                                    CommandParameter="{Binding $parent[ContextMenu].PlacementTarget.(SelectingItemsControl.SelectedItem)}"
-                                    Header="{Binding Loc[OpenModPath]}"
-                                    IsEnabled="{Binding $parent[ContextMenu].PlacementTarget.(SelectingItemsControl.SelectedItem), Converter={x:Static ObjectConverters.IsNotNull}}" />
-                                <MenuItem
-                                    Command="{Binding ShowDataCommand}"
-                                    CommandParameter="{Binding $parent[ContextMenu].PlacementTarget.(SelectingItemsControl.SelectedItem)}"
-                                    Header="{Binding Loc[ShowData]}"
-                                    IsEnabled="{Binding $parent[ContextMenu].PlacementTarget.(SelectingItemsControl.SelectedItem), Converter={x:Static ObjectConverters.IsNotNull}}" />
-                                <MenuItem
-                                    Command="{Binding ShowImageMenuCommand}"
-                                    CommandParameter="{Binding $parent[ContextMenu].PlacementTarget.(SelectingItemsControl.SelectedItem)}"
-                                    Header="{Binding Loc[ShowImage]}"
-                                    IsEnabled="{Binding $parent[ContextMenu].PlacementTarget.(SelectingItemsControl.SelectedItem), Converter={x:Static ObjectConverters.IsNotNull}}" />
-                                <MenuItem
-                                    Command="{Binding ClearModsCommand}"
-                                    CommandParameter="{Binding $parent[ContextMenu].PlacementTarget.(SelectingItemsControl.SelectedItem)}"
-                                    Header="{Binding Loc[ClearMod]}"
-                                    IsEnabled="{Binding $parent[ContextMenu].PlacementTarget.(SelectingItemsControl.SelectedItem), Converter={x:Static ObjectConverters.IsNotNull}}" />
-                                <MenuItem
-                                    Command="{Binding LoadModCommand}"
-                                    CommandParameter="{Binding $parent[ContextMenu].PlacementTarget.(SelectingItemsControl.SelectedItem)}"
-                                    Header="{Binding Loc[LoadMod]}"
-                                    IsEnabled="{Binding $parent[ContextMenu].PlacementTarget.(SelectingItemsControl.SelectedItem), Converter={x:Static ObjectConverters.IsNotNull}}" />
+                                <MenuItem Command="{Binding OpenModPathCommand}"
+                                          CommandParameter="{Binding $parent[ContextMenu].PlacementTarget.(SelectingItemsControl.SelectedItem)}"
+                                          Header="{Binding Loc[OpenModPath]}"
+                                          IsEnabled="{Binding $parent[ContextMenu].PlacementTarget.(SelectingItemsControl.SelectedItem), Converter={x:Static ObjectConverters.IsNotNull}}" />
+                                <MenuItem Command="{Binding ShowDataCommand}"
+                                          CommandParameter="{Binding $parent[ContextMenu].PlacementTarget.(SelectingItemsControl.SelectedItem)}"
+                                          Header="{Binding Loc[ShowData]}"
+                                          IsEnabled="{Binding $parent[ContextMenu].PlacementTarget.(SelectingItemsControl.SelectedItem), Converter={x:Static ObjectConverters.IsNotNull}}" />
+                                <MenuItem Command="{Binding ShowImageMenuCommand}"
+                                          CommandParameter="{Binding $parent[ContextMenu].PlacementTarget.(SelectingItemsControl.SelectedItem)}"
+                                          Header="{Binding Loc[ShowImage]}"
+                                          IsEnabled="{Binding $parent[ContextMenu].PlacementTarget.(SelectingItemsControl.SelectedItem), Converter={x:Static ObjectConverters.IsNotNull}}" />
+                                <MenuItem Command="{Binding ExportCsvCommand}" Header="{Binding Loc[ExportCsv]}"
+                                          IsEnabled="{Binding $parent[ContextMenu].PlacementTarget.(SelectingItemsControl.SelectedItem), Converter={x:Static ObjectConverters.IsNotNull}}" />
+                                <MenuItem Command="{Binding ExportModZipCommand}"
+                                          CommandParameter="{Binding $parent[ContextMenu].PlacementTarget.(SelectingItemsControl.SelectedItem)}"
+                                          Header="{Binding Loc[ExportModZip]}"
+                                          IsEnabled="{Binding $parent[ContextMenu].PlacementTarget.(SelectingItemsControl.SelectedItem), Converter={x:Static ObjectConverters.IsNotNull}}" />
+                                <MenuItem Command="{Binding ImportModZipCommand}" Header="{Binding Loc[ImportModZip]}" />
+                                <Separator />
+                                <MenuItem Command="{Binding ClearModsCommand}"
+                                          CommandParameter="{Binding $parent[ContextMenu].PlacementTarget.(SelectingItemsControl.SelectedItem)}"
+                                          Header="{Binding Loc[ClearMod]}"
+                                          IsEnabled="{Binding $parent[ContextMenu].PlacementTarget.(SelectingItemsControl.SelectedItem), Converter={x:Static ObjectConverters.IsNotNull}}" />
+                                <MenuItem Command="{Binding LoadModCommand}"
+                                          CommandParameter="{Binding $parent[ContextMenu].PlacementTarget.(SelectingItemsControl.SelectedItem)}"
+                                          Header="{Binding Loc[LoadMod]}"
+                                          IsEnabled="{Binding $parent[ContextMenu].PlacementTarget.(SelectingItemsControl.SelectedItem), Converter={x:Static ObjectConverters.IsNotNull}}" />
                             </ContextMenu>
                         </ListBox.ContextMenu>
                     </ListBox>
-                </StackPanel>
-            </ScrollViewer>
+                </ScrollViewer>
+            </DockPanel>
         </DataTemplate>
 
-        <!--  php配置文件  -->
+        <!--  配置文件 (Profiles)  -->
         <DataTemplate DataType="explorerPane:ModIndexViewModel">
-            <ScrollViewer Width="500">
-                <ScrollViewer.DataTemplates>
-                    <DataTemplate DataType="model:ModInfo">
-                        <StackPanel>
-                            <Grid ColumnDefinitions="Auto,*,Auto" RowDefinitions="Auto,*">
-                                <TextBlock
-                                    Background="{Binding IsBase, Converter={StaticResource ModBaseBackgroundConverter}}"
-                                    FontWeight="Bold"
-                                    Text="{Binding Name}" />
-                                <TextBlock
-                                    Grid.Row="1"
-                                    Grid.Column="0"
-                                    FontSize="11"
-                                    Text="{Binding Path}"
-                                    TextWrapping="Wrap" />
-                                <StackPanel
-                                    Grid.Row="0"
-                                    Grid.Column="2"
-                                    HorizontalAlignment="Center"
-                                    Orientation="Horizontal"
-                                    Spacing="8">
-                                    <TextBlock Text="{Binding LastModified}" />
-                                </StackPanel>
-                                <StackPanel
-                                    Grid.Row="1"
-                                    Grid.Column="2"
-                                    HorizontalAlignment="Center"
-                                    Orientation="Horizontal"
-                                    Spacing="8">
-                                    <TextBlock Text="{Binding LastImport}" />
-                                </StackPanel>
-                            </Grid>
-                        </StackPanel>
-                    </DataTemplate>
-                </ScrollViewer.DataTemplates>
-                <StackPanel Spacing="5">
-                    <TextBlock FontWeight="Bold" Text="{Binding Loc[ProfileDatabase]}" />
-                    <StackPanel Orientation="Horizontal" Spacing="5">
+            <DockPanel>
+                <StackPanel DockPanel.Dock="Top" Spacing="4" Margin="8,8,8,4">
+                    <TextBlock FontWeight="Bold" FontSize="14" Text="{Binding Loc[ProfileDatabase]}" />
+                    <StackPanel Orientation="Horizontal" Spacing="4">
                         <Button Command="{Binding AddProfileCommand}">
                             <avalonia:SymbolIcon Symbol="AddCircle" ToolTip.Tip="{Binding Loc[AddProfile]}" />
                         </Button>
@@ -268,26 +259,66 @@
                         <Button Command="{Binding RefreshProfilesCommand}">
                             <avalonia:SymbolIcon Symbol="ArrowClockwise" ToolTip.Tip="{Binding Loc[RefreshProfile]}" />
                         </Button>
-                        <Button
-                            Command="{Binding ClearProfileCommand}"
-                            CommandParameter="{Binding SelectedProfile}"
-                            IsEnabled="{Binding SelectedProfile, Converter={x:Static ObjectConverters.IsNotNull}}">
+                        <Button Command="{Binding ClearProfileCommand}" CommandParameter="{Binding SelectedProfile}"
+                                IsEnabled="{Binding SelectedProfile, Converter={x:Static ObjectConverters.IsNotNull}}">
                             <avalonia:SymbolIcon Symbol="Eraser" ToolTip.Tip="{Binding Loc[ClearProfile]}" />
                         </Button>
                         <Button Command="{Binding ClearProfileCommand}">
                             <avalonia:SymbolIcon Symbol="EraserTool" ToolTip.Tip="{Binding Loc[ClearAllProfile]}" />
                         </Button>
+                        <SplitButton ToolTip.Tip="{Binding Loc[DataExportTooltip]}">
+                            <SplitButton.Content>
+                                <avalonia:SymbolIcon Symbol="DocumentBulletList" />
+                            </SplitButton.Content>
+                            <SplitButton.Flyout>
+                                <MenuFlyout>
+                                    <MenuItem Header="{Binding Loc[ExportCraftingCsv]}" Command="{Binding ExportCraftingCsvCommand}" />
+                                    <MenuItem Header="{Binding Loc[ExportItemEncyclopediaMd]}" Command="{Binding ExportItemEncyclopediaCommand}" />
+                                    <MenuItem Header="{Binding Loc[ExportLootTableJson]}" Command="{Binding ExportLootTableJsonCommand}" />
+                                    <Separator />
+                                    <MenuItem Header="{Binding Loc[ExportAllXlsx]}" Command="{Binding ExportAllXlsxCommand}" />
+                                </MenuFlyout>
+                            </SplitButton.Flyout>
+                        </SplitButton>
                     </StackPanel>
-
-                    <ListBox
-                        x:Name="ProfileList"
-                        ItemsSource="{Binding Profiles}"
-                        SelectedItem="{Binding SelectedProfile}">
+                </StackPanel>
+                <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+                    <ScrollViewer.DataTemplates>
+                        <DataTemplate DataType="model:ModInfo">
+                            <StackPanel>
+                                <Grid ColumnDefinitions="Auto,*,Auto" RowDefinitions="Auto,*">
+                                    <TextBlock Background="{Binding IsBase, Converter={StaticResource ModBaseBackgroundConverter}}"
+                                               FontWeight="Bold" Text="{Binding Name}" />
+                                    <TextBlock Grid.Row="1" Grid.Column="0" FontSize="11" Text="{Binding Path}" TextWrapping="Wrap" />
+                                    <StackPanel Grid.Row="0" Grid.Column="2" HorizontalAlignment="Center" Orientation="Horizontal" Spacing="8">
+                                        <TextBlock Text="{Binding LastModified}" />
+                                    </StackPanel>
+                                    <StackPanel Grid.Row="1" Grid.Column="2" HorizontalAlignment="Center" Orientation="Horizontal" Spacing="8">
+                                        <TextBlock Text="{Binding LastImport}" />
+                                    </StackPanel>
+                                </Grid>
+                            </StackPanel>
+                        </DataTemplate>
+                    </ScrollViewer.DataTemplates>
+                    <ListBox x:Name="ProfileList" ItemsSource="{Binding Profiles}" SelectedItem="{Binding SelectedProfile}" Margin="8,0">
                         <ListBox.Styles>
-                            <Style Selector="ListBox#ProfileList &gt; ListBoxItem">
+                            <Style Selector="ListBox#ProfileList > ListBoxItem">
                                 <Setter Property="HorizontalAlignment" Value="Stretch" />
                             </Style>
-                            <Style Selector="ListBox#ProfileList &gt; ListBoxItem Expander">
+                            <Style Selector="ListBox#ProfileList > ListBoxItem">
+                                <Setter Property="(Interaction.Behaviors)">
+                                    <BehaviorCollectionTemplate>
+                                        <BehaviorCollection>
+                                            <EventTriggerBehavior EventName="DoubleTapped">
+                                                <InvokeCommandAction
+                                                    Command="{Binding ((explorerPane:ModIndexViewModel)DataContext).OpenMergeEditorCommand, ElementName=ProfileList}"
+                                                    CommandParameter="{Binding}" />
+                                            </EventTriggerBehavior>
+                                        </BehaviorCollection>
+                                    </BehaviorCollectionTemplate>
+                                </Setter>
+                            </Style>
+                            <Style Selector="ListBox#ProfileList > ListBoxItem Expander">
                                 <Setter Property="(Interaction.Behaviors)">
                                     <BehaviorCollectionTemplate>
                                         <BehaviorCollection>
@@ -298,7 +329,7 @@
                                     </BehaviorCollectionTemplate>
                                 </Setter>
                             </Style>
-                            <Style Selector="ListBox#ProfileList &gt; ListBoxItem">
+                            <Style Selector="ListBox#ProfileList > ListBoxItem">
                                 <Setter Property="(Interaction.Behaviors)">
                                     <BehaviorCollectionTemplate>
                                         <BehaviorCollection>
@@ -309,41 +340,84 @@
                                 <Setter Property="ContextMenu">
                                     <Setter.Value>
                                         <ContextMenu DataContext="{Binding ((explorerPane:ModIndexViewModel)DataContext), ElementName=ProfileList}">
-                                            <MenuItem
-                                                Command="{Binding EditProfileCommand}"
-                                                CommandParameter="{Binding $parent[ContextMenu].PlacementTarget.DataContext}"
-                                                Header="{Binding Loc[EditProfile]}" />
-                                            <MenuItem
-                                                Command="{Binding ClearProfileCommand}"
-                                                CommandParameter="{Binding $parent[ContextMenu].PlacementTarget.DataContext}"
-                                                Header="{Binding Loc[ClearProfile]}"
-                                                IsEnabled="{Binding $parent[ContextMenu].PlacementTarget.DataContext, Converter={x:Static ObjectConverters.IsNotNull}}" />
+                                            <MenuItem Command="{Binding OpenMergeEditorCommand}"
+                                                      CommandParameter="{Binding $parent[ContextMenu].PlacementTarget.DataContext}"
+                                                      Header="{Binding Loc[OpenMergeEditor]}" />
+                                            <MenuItem Command="{Binding SetActiveProfileCommand}"
+                                                      CommandParameter="{Binding $parent[ContextMenu].PlacementTarget.DataContext}"
+                                                      Header="{Binding Loc[SetActiveProfile]}" />
+                                            <Separator />
+                                            <MenuItem Command="{Binding AddModToProfileCommand}"
+                                                      CommandParameter="{Binding $parent[ContextMenu].PlacementTarget.DataContext}"
+                                                      Header="{Binding Loc[AddModToProfile]}" />
+                                            <Separator />
+                                            <MenuItem Command="{Binding EditProfileCommand}"
+                                                      CommandParameter="{Binding $parent[ContextMenu].PlacementTarget.DataContext}"
+                                                      Header="{Binding Loc[EditProfile]}" />
+                                            <MenuItem Command="{Binding CompareProfilesCommand}"
+                                                      CommandParameter="{Binding $parent[ContextMenu].PlacementTarget.DataContext}"
+                                                      Header="{Binding Loc[CompareProfiles]}"
+                                                      IsEnabled="{Binding $parent[ContextMenu].PlacementTarget.DataContext, Converter={x:Static ObjectConverters.IsNotNull}}" />
+                                            <Separator />
+                                            <MenuItem Command="{Binding ClearProfileCommand}"
+                                                      CommandParameter="{Binding $parent[ContextMenu].PlacementTarget.DataContext}"
+                                                      Header="{Binding Loc[ClearProfile]}"
+                                                      IsEnabled="{Binding $parent[ContextMenu].PlacementTarget.DataContext, Converter={x:Static ObjectConverters.IsNotNull}}" />
                                         </ContextMenu>
                                     </Setter.Value>
                                 </Setter>
                             </Style>
                         </ListBox.Styles>
                     </ListBox>
+                </ScrollViewer>
+            </DockPanel>
+        </DataTemplate>
+
+        <!--  设置面板  -->
+        <DataTemplate DataType="{x:Type explorerPane:SettingsPaneViewModel}">
+            <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+                <StackPanel Spacing="12" Margin="12">
+                    <TextBlock FontWeight="Bold" FontSize="16" Text="{Binding Loc[Settings]}" />
+                    <StackPanel Spacing="4">
+                        <TextBlock FontWeight="SemiBold" Text="{Binding Loc[GameRootDir]}" />
+                        <DockPanel>
+                            <Button DockPanel.Dock="Right" Command="{Binding BrowseGameDirCommand}" Content="..." Width="36" />
+                            <TextBox Text="{Binding Config.GameRootDir}" Watermark="Select game root directory..." />
+                        </DockPanel>
+                    </StackPanel>
+                    <StackPanel Spacing="4">
+                        <TextBlock FontWeight="SemiBold" Text="{Binding Loc[Language]}" />
+                        <ComboBox ItemsSource="{Binding AvailableLanguages}" SelectedItem="{Binding DisplayLanguage}" />
+                    </StackPanel>
+                    <StackPanel Spacing="4">
+                        <TextBlock FontWeight="SemiBold" Text="{Binding Loc[Theme]}" />
+                        <ComboBox ItemsSource="{Binding AvailableThemes}" SelectedItem="{Binding DisplayTheme}" />
+                    </StackPanel>
+                    <StackPanel Spacing="4">
+                        <TextBlock FontWeight="SemiBold" Text="{Binding Loc[FontSize]}" />
+                        <NumericUpDown Value="{Binding DisplayFontSize}" Minimum="8" Maximum="24" Increment="1" />
+                    </StackPanel>
+                    <StackPanel Spacing="4">
+                        <TextBlock FontWeight="SemiBold" Text="{Binding Loc[AutoSaveInterval]}" />
+                        <NumericUpDown Value="{Binding DisplayAutoSaveInterval}" Minimum="0" Maximum="3600" Increment="30" />
+                    </StackPanel>
+                    <StackPanel Spacing="4">
+                        <TextBlock FontWeight="SemiBold" Text="{Binding Loc[DefaultExportFormat]}" />
+                        <ComboBox ItemsSource="{Binding AvailableExportFormats}" SelectedItem="{Binding DisplayDefaultExportFormat}" />
+                    </StackPanel>
+                    <StackPanel Spacing="4">
+                        <TextBlock FontWeight="SemiBold" Text="{Binding Loc[GridRowHeight]}" />
+                        <NumericUpDown Value="{Binding DisplayGridRowHeight}" Minimum="0" Maximum="80" Increment="2" />
+                    </StackPanel>
                 </StackPanel>
             </ScrollViewer>
         </DataTemplate>
 
-        <!--  设置面板模板  -->
-        <DataTemplate DataType="viewModels:AppConfig">
-            <StackPanel>
-                <TextBlock Text="{Binding Loc[GameRootDir]}" />
-                <TextBox IsReadOnly="True" Text="{Binding GameRootDir}" />
-            </StackPanel>
+        <!--  数据浏览器  -->
+        <DataTemplate DataType="{x:Type explorerPane:DataBrowserViewModel}">
+            <userControls:DataBrowserView DataContext="{Binding}" HorizontalAlignment="Stretch" />
         </DataTemplate>
-        <DataTemplate DataType="{x:Type explorerPane:SettingsPaneViewModel}">
-            <ScrollViewer Width="500">
-                <StackPanel>
-                    <TextBlock FontWeight="Bold" Text="{Binding Loc[Settings]}" />
-                    <GridSplitter />
-                    <ContentControl Content="{Binding Config}" />
-                </StackPanel>
-            </ScrollViewer>
-        </DataTemplate>
+
     </UserControl.DataTemplates>
-    <ContentControl Content="{Binding DataContext, ElementName=Root}" />
+    <ContentControl Content="{Binding DataContext, ElementName=Root}" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" />
 </UserControl>

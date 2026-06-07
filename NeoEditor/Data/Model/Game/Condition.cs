@@ -1,6 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
+using NeoEditor.Helper;
 
 namespace NeoEditor.Data.Model.Game;
 
@@ -52,6 +53,7 @@ public class Condition : IEntity
     [StringLength(1000)]
     [Comment("该状态下一阶段为你带来的新状态ID，可能为多个逗号分隔")]
     [Display(Name = "IdNext")]
+    [ReferenceField(typeof(Condition), Separator = ",")]
     public string IdNext { get; set; } = "0";
 
     [Column("fDuration", TypeName = "float")]

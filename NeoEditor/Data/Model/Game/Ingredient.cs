@@ -1,6 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
+using NeoEditor.Helper;
 
 namespace NeoEditor.Data.Model.Game;
 
@@ -25,11 +26,13 @@ public class Ingredient : IEntity
     [StringLength(1000)]
     [Comment("合成项所需的属性ID，可用'&'表示'与'关系")]
     [Display(Name = "RequiredProps")]
+    [ReferenceField(typeof(ItemProp), Separator = "&")]
     public string RequiredProps { get; set; } = "";
 
     [Column("strForbidProps", TypeName = "varchar(1000)")]
     [StringLength(1000)]
     [Comment("合成项不可拥有的属性ID")]
     [Display(Name = "ForbidProps")]
+    [ReferenceField(typeof(ItemProp), Separator = "&")]
     public string ForbidProps { get; set; } = "";
 }

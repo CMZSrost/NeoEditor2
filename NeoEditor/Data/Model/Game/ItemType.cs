@@ -1,6 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
+using NeoEditor.Helper;
 
 namespace NeoEditor.Data.Model.Game;
 
@@ -36,6 +37,7 @@ public class ItemType : IEntity
 
     [Column("nCondID")]
     [Comment("真实描述的状态前置ID，如53对应'精通医学'")]
+    [ReferenceField(typeof(Condition))]
     public string CondId { get; set; } = "1";
 
     [Column("vImageList", TypeName = "longtext")]
@@ -83,21 +85,25 @@ public class ItemType : IEntity
     [Column("vDegradeTreasureIDs", TypeName = "varchar(1000)")]
     [StringLength(1000)]
     [Comment("耐久消耗为0时爆出的零件，分别对应自然损耗和使用损耗")]
+    [ReferenceField(typeof(TreasureTable), Separator = ",")]
     public string DegradeTreasureIds { get; set; } = "3,3";
 
     [Column("aEquipConditions", TypeName = "longtext")]
     [Comment("该物品装备时会为你带来的状态")]
     [Display(Name = "EquipConditions")]
+    [ReferenceField(typeof(Condition), Separator = ",", Pattern = "{id}x{mult}")]
     public string EquipConditions { get; set; } = "";
 
     [Column("aPossessConditions", TypeName = "longtext")]
     [Comment("该物品持有时会为你带来的永久性状态")]
     [Display(Name = "PossessConditions")]
+    [ReferenceField(typeof(Condition), Separator = ",", Pattern = "{id}x{mult}")]
     public string PossessConditions { get; set; } = "";
 
     [Column("aUseConditions", TypeName = "longtext")]
     [Comment("使用该物品会为你带来的状态")]
     [Display(Name = "UseConditions")]
+    [ReferenceField(typeof(Condition), Separator = ",", Pattern = "{id}x{mult}")]
     public string UseConditions { get; set; } = "";
 
     [Column("aCapacities", TypeName = "varchar(1000)")]
@@ -127,27 +133,32 @@ public class ItemType : IEntity
     [StringLength(1000)]
     [Comment("该物品的属性ID列表，用于合成与检定")]
     [Display(Name = "Properties")]
+    [ReferenceField(typeof(ItemProp), Separator = ",")]
     public string Properties { get; set; } = "";
 
     [Column("aContentIDs", TypeName = "varchar(1000)")]
     [StringLength(1000)]
     [Comment("该物品的空间属性，定义作为容器能存放的物品类型")]
     [Display(Name = "ContentIds")]
+    [ReferenceField(typeof(ContainerType), Separator = ",")]
     public string ContentIds { get; set; } = "";
 
     [Column("nFormatID")]
     [Comment("该物品内部的战利品池ID")]
     [Display(Name = "FormatId")]
+    [ReferenceField(typeof(ContainerType))]
     public string FormatId { get; set; } = "3";
 
     [Column("nTreasureID")]
     [Comment("用于给物品进行大体的分类，结合containertypes使用")]
     [Display(Name = "TreasureId")]
+    [ReferenceField(typeof(TreasureTable))]
     public string TreasureId { get; set; } = "3";
 
     [Column("nComponentID")]
     [Comment("成分ID，结合treasuretable使用,可逆向合成的物品，如果由合成以外的方式获得，拆解时得到的物品ID")]
     [Display(Name = "ComponentId")]
+    [ReferenceField(typeof(ItemType), TargetKey = "{GroupId}.{SubgroupId}")]
     public string ComponentId { get; set; }
 
     [Column("bMirrored", TypeName = "tinyint(1)")]
@@ -164,12 +175,14 @@ public class ItemType : IEntity
     [StringLength(1000)]
     [Comment("耗电量ID")]
     [Display(Name = "ChargeProfiles")]
+    [ReferenceField(typeof(ChargeProfile), Separator = ",")]
     public string ChargeProfiles { get; set; } = "";
 
     [Column("aAttackModes", TypeName = "varchar(1000)")]
     [StringLength(1000)]
     [Comment("攻击模式ID列表")]
     [Display(Name = "AttackModes")]
+    [ReferenceField(typeof(AttackMode), Separator = ",")]
     public string AttackModes { get; set; } = "";
 
     [Column("nStackLimit")]
@@ -181,6 +194,7 @@ public class ItemType : IEntity
     [StringLength(1000)]
     [Comment("转变的ID，用于电子产品开关机状态切换")]
     [Display(Name = "SwitchIds")]
+    [ReferenceField(typeof(ItemType), Separator = ",", TargetKey = "{GroupId}.{SubgroupId}")]
     public string SwitchIds { get; set; } = "";
 
     [Column("aSounds", TypeName = "varchar(1000)")]

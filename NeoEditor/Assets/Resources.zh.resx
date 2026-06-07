@@ -267,6 +267,12 @@
     </data>
 
     <data name="Faction" xml:space="preserve">
+        <value>阵营</value>
+    </data>
+    <data name="FactionId" xml:space="preserve">
+        <value>所属阵营ID</value>
+    </data>
+    <data name="FactionIdDesc" xml:space="preserve">
         <value>所属阵营ID</value>
     </data>
 
@@ -508,6 +514,63 @@
     <data name="AttackModes" xml:space="preserve">
         <value>攻击方式ID</value>
     </data>
+    <data name="BarterHexes" xml:space="preserve">
+        <value>以物易物格</value>
+    </data>
+    <data name="CampTypes" xml:space="preserve">
+        <value>营地类型</value>
+    </data>
+    <data name="ContainerTypes" xml:space="preserve">
+        <value>容器类型</value>
+    </data>
+    <data name="Creatures" xml:space="preserve">
+        <value>生物</value>
+    </data>
+    <data name="CreatureSources" xml:space="preserve">
+        <value>生物来源</value>
+    </data>
+    <data name="DataFiles" xml:space="preserve">
+        <value>数据文件</value>
+    </data>
+    <data name="DmcPlaces" xml:space="preserve">
+        <value>DMC地点</value>
+    </data>
+    <data name="EncounterTriggers" xml:space="preserve">
+        <value>遭遇触发器</value>
+    </data>
+    <data name="Encounters" xml:space="preserve">
+        <value>遭遇战</value>
+    </data>
+    <data name="Factions" xml:space="preserve">
+        <value>阵营</value>
+    </data>
+    <data name="ForbiddenHexes" xml:space="preserve">
+        <value>禁止通行格</value>
+    </data>
+    <data name="GameVars" xml:space="preserve">
+        <value>游戏变量</value>
+    </data>
+    <data name="Headlines" xml:space="preserve">
+        <value>新闻</value>
+    </data>
+    <data name="Ingredients" xml:space="preserve">
+        <value>成分</value>
+    </data>
+    <data name="ItemProps" xml:space="preserve">
+        <value>物品属性</value>
+    </data>
+    <data name="ItemTypes" xml:space="preserve">
+        <value>物品类型</value>
+    </data>
+    <data name="Maps" xml:space="preserve">
+        <value>地图</value>
+    </data>
+    <data name="Recipes" xml:space="preserve">
+        <value>配方</value>
+    </data>
+    <data name="TreasureTables" xml:space="preserve">
+        <value>宝藏表</value>
+    </data>
     <data name="StackLimit" xml:space="preserve">
         <value>最大堆叠数量</value>
     </data>
@@ -570,6 +633,9 @@
     <data name="ModId" xml:space="preserve">
         <value>模组ID</value>
     </data>
+    <data name="Content" xml:space="preserve">
+        <value>内容</value>
+    </data>
     <data name="Id" xml:space="preserve">
         <value>代码标号</value>
     </data>
@@ -624,6 +690,9 @@
         <value>上一级</value>
         <comment>UpLevel</comment>
     </data>
+    <data name="Help" xml:space="preserve">
+        <value>帮助</value>
+    </data>
     <data name="MenuProject" xml:space="preserve">
         <value>项目</value>
     </data>
@@ -639,17 +708,77 @@
     <data name="AppTitle" xml:space="preserve">
         <value>Neo 编辑器</value>
     </data>
+    <data name="Home" xml:space="preserve">
+        <value>主页</value>
+    </data>
+    <data name="NewMod" xml:space="preserve">
+        <value>+ 新建 Mod</value>
+    </data>
+    <data name="ImportMod" xml:space="preserve">
+        <value>导入 Mod</value>
+    </data>
     <data name="MainContent" xml:space="preserve">
         <value>主要内容</value>
     </data>
     <data name="Settings" xml:space="preserve">
         <value>设置</value>
     </data>
+    <data name="Language" xml:space="preserve">
+        <value>语言</value>
+    </data>
+    <data name="Theme" xml:space="preserve">
+        <value>主题</value>
+    </data>
+    <data name="FontSize" xml:space="preserve">
+        <value>字体大小</value>
+    </data>
+    <data name="AutoSaveInterval" xml:space="preserve">
+        <value>自动保存间隔（秒，0=关闭）</value>
+    </data>
+    <data name="DefaultExportFormat" xml:space="preserve">
+        <value>默认导出格式</value>
+    </data>
+    <data name="GridRowHeight" xml:space="preserve">
+        <value>表格行高（0=默认）</value>
+    </data>
     <data name="ResourceManager" xml:space="preserve">
         <value>资源管理器</value>
     </data>
     <data name="KeywordInput" xml:space="preserve">
         <value>请输入关键字</value>
+    </data>
+    <data name="ModFilterAll" xml:space="preserve">
+        <value>全部Mod</value>
+    </data>
+    <data name="ShowAll" xml:space="preserve">
+        <value>显示全部</value>
+    </data>
+    <data name="ExportXml" xml:space="preserve">
+        <value>导出XML</value>
+    </data>
+    <data name="ExportXmlTooltip" xml:space="preserve">
+        <value>将数据库变更导出到XML文件</value>
+    </data>
+    <data name="Loading" xml:space="preserve">
+        <value>加载中...</value>
+    </data>
+    <data name="LocateRowTooltip" xml:space="preserve">
+        <value>定位到选中行</value>
+    </data>
+    <data name="SearchHelpTooltip" xml:space="preserve">
+        <value>搜索：关键字（搜全部列）或 列名:值（如 strName:剑）</value>
+    </data>
+    <data name="SearchHelpButtonTooltip" xml:space="preserve">
+        <value>显示可用列名</value>
+    </data>
+    <data name="SearchHelpAvailableColumns" xml:space="preserve">
+        <value>可用列名（点击插入）：</value>
+    </data>
+    <data name="ColumnManagerTooltip" xml:space="preserve">
+        <value>显示/隐藏列</value>
+    </data>
+    <data name="ColumnManagerHeader" xml:space="preserve">
+        <value>列：</value>
     </data>
     <data name="Search" xml:space="preserve">
         <value>搜索</value>
@@ -1185,8 +1314,11 @@
         <value>设置游戏根目录</value>
     </data>
     <data name="GameRootDirNotSet" xml:space="preserve">
-        <value>未设置游戏根目录选择 
+        <value>未设置游戏根目录选择
 No则退出</value>
+    </data>
+    <data name="GameRootDir" xml:space="preserve">
+        <value>游戏根目录</value>
     </data>
     <data name="ModDatabase" xml:space="preserve">
         <value>Mod 数据库</value>
@@ -1242,6 +1374,45 @@ No则退出</value>
     <data name="ModGameDataSaveMissingModMessage" xml:space="preserve">
         <value>当前没有加载可保存的 Mod 数据。</value>
     </data>
+    <data name="DiffOldLabel" xml:space="preserve">
+        <value>原始文件（磁盘）</value>
+    </data>
+    <data name="DiffNewLabel" xml:space="preserve">
+        <value>待提交（编辑）</value>
+    </data>
+    <data name="AddRow" xml:space="preserve">
+        <value>添加行</value>
+    </data>
+    <data name="DeleteRow" xml:space="preserve">
+        <value>删除行</value>
+    </data>
+    <data name="ImportTutorial" xml:space="preserve">
+        <value>导入教程...</value>
+    </data>
+    <data name="NavigateBack" xml:space="preserve">
+        <value>返回</value>
+    </data>
+    <data name="GoToReference" xml:space="preserve">
+        <value>跳转到 {0}</value>
+    </data>
+    <data name="NavigateSameEntity" xml:space="preserve">
+        <value>已在该实体处</value>
+    </data>
+    <data name="NoRowSelectedMessage" xml:space="preserve">
+        <value>未选中任何行。</value>
+    </data>
+    <data name="RefTargetNotLoaded" xml:space="preserve">
+        <value>无法跳转：当前 Mod 未加载 {0} 表。</value>
+    </data>
+    <data name="RefTargetNotFound" xml:space="preserve">
+        <value>当前 Mod 中未找到引用的 {0} id={1}，可能定义在其他 Mod 中。</value>
+    </data>
+    <data name="OpenMergeEditor" xml:space="preserve">
+        <value>打开合并视图</value>
+    </data>
+    <data name="MergeEditorTitleFormat" xml:space="preserve">
+        <value>合并视图: {0}</value>
+    </data>
     <data name="MoveUp" xml:space="preserve">
         <value>上移</value>
     </data>
@@ -1250,6 +1421,9 @@ No则退出</value>
     </data>
     <data name="EditProfileWindowTitle" xml:space="preserve">
         <value>编辑配置</value>
+    </data>
+    <data name="ProfileDescription" xml:space="preserve">
+        <value>描述</value>
     </data>
     <data name="AddProfile" xml:space="preserve">
         <value>新增配置</value>
@@ -1304,6 +1478,15 @@ No则退出</value>
     </data>
     <data name="EditProfile" xml:space="preserve">
         <value>编辑配置</value>
+    </data>
+    <data name="CompareProfiles" xml:space="preserve">
+        <value>对比配置...</value>
+    </data>
+    <data name="SetActiveProfile" xml:space="preserve">
+        <value>设为活跃配置</value>
+    </data>
+    <data name="AddModToProfile" xml:space="preserve">
+        <value>添加Mod...</value>
     </data>
     <data name="Games" xml:space="preserve">
         <value>游戏</value>
@@ -1594,4 +1777,222 @@ No则退出</value>
     <data name="ModGameDataPreparingSavePreviewDiffing" xml:space="preserve">
         <value>正在比对 XML 并生成预览...</value>
     </data>
+    <data name="ModGameDataPreparingSavePreviewValidating" xml:space="preserve">
+        <value>正在验证数据...</value>
+    </data>
+    <data name="UndoTooltip" xml:space="preserve">
+        <value>撤销 (Ctrl+Z)</value>
+    </data>
+    <data name="RedoTooltip" xml:space="preserve">
+        <value>重做 (Ctrl+Y)</value>
+    </data>
+    <data name="CloneRow" xml:space="preserve">
+        <value>克隆行</value>
+    </data>
+    <data name="FindReferences" xml:space="preserve">
+        <value>查找引用者...</value>
+    </data>
+    <data name="ExportCsv" xml:space="preserve">
+        <value>CSV</value>
+    </data>
+    <data name="ImportCsv" xml:space="preserve">
+        <value>导入</value>
+    </data>
+    <data name="ExportCsvTooltip" xml:space="preserve">
+        <value>将当前表导出为CSV</value>
+    </data>
+    <data name="ImportCsvTooltip" xml:space="preserve">
+        <value>从CSV导入到当前表</value>
+    </data>
+    <data name="ExportModZip" xml:space="preserve">
+        <value>导出为 .zip</value>
+    </data>
+    <data name="ImportModZip" xml:space="preserve">
+        <value>导入 .zip Mod</value>
+    </data>
+    <data name="ExportCraftingCsv" xml:space="preserve">
+        <value>导出合成表 (CSV)</value>
+    </data>
+    <data name="ExportItemEncyclopediaMd" xml:space="preserve">
+        <value>导出物品百科 (Markdown)</value>
+    </data>
+    <data name="ExportLootTableJson" xml:space="preserve">
+        <value>导出战利品表 (JSON)</value>
+    </data>
+    <data name="DataExportTooltip" xml:space="preserve">
+        <value>数据导出</value>
+    </data>
+    <data name="CsvImportDiffHeader" xml:space="preserve">
+        <value>导入前请检查变更</value>
+    </data>
+    <data name="CsvImportConfirm" xml:space="preserve">
+        <value>确认导入</value>
+    </data>
+    <data name="CsvImportCancel" xml:space="preserve">
+        <value>取消</value>
+    </data>
+    <data name="ValueEditorToggle" xml:space="preserve">
+        <value>切换可视化编辑器 (配方/剧情/战利品表)</value>
+    </data>
+    <data name="FieldNamesModifiers" xml:space="preserve">
+        <value>字段名 → 修正值</value>
+    </data>
+    <data name="ExportAllXlsx" xml:space="preserve">
+        <value>导出全部数据到 Excel (XLSX)</value>
+    </data>
+    <data name="FindPrevious" xml:space="preserve"><value>上一个</value></data>
+    <data name="FindNext" xml:space="preserve"><value>下一个</value></data>
+    <data name="FindMatchCase" xml:space="preserve"><value>区分大小写</value></data>
+    <data name="FindWholeWord" xml:space="preserve"><value>全词匹配</value></data>
+    <data name="FindRegex" xml:space="preserve"><value>正则</value></data>
+    <data name="FindClose" xml:space="preserve"><value>关闭</value></data>
+    <data name="FindWatermark" xml:space="preserve"><value>查找</value></data>
+    <data name="ReplaceWatermark" xml:space="preserve"><value>替换为</value></data>
+    <data name="ReplaceButton" xml:space="preserve"><value>替换</value></data>
+    <data name="ReplaceAllButton" xml:space="preserve"><value>全部</value></data>
+    <data name="FindInvalid" xml:space="preserve">
+        <value>无效</value>
+    </data>
+    <data name="FindNoMatches" xml:space="preserve"><value>无匹配</value></data>
+    <data name="FindMatchCount" xml:space="preserve"><value>{0} 个匹配</value></data>
+    <data name="FindReplaceSuccess" xml:space="preserve"><value>已替换 {0} 处。</value></data>
+    <data name="FindReplaceTitle" xml:space="preserve"><value>替换</value></data>
+
+  <data name="RefInspect" xml:space="preserve"><value>引用检查</value></data>
+  <data name="RefInspectPinned" xml:space="preserve"><value>🔒 已固定</value></data>
+  <data name="RefInspectHelp" xml:space="preserve"><value>Ctrl+左键点击青色引用 = 跳转并预览。
+Ctrl+右键点击引用 = 仅预览不跳转。
+双击引用 = 直接导航。</value></data>
+  <data name="RefInspectBack" xml:space="preserve"><value>后退（导航到上一个预览过的实体）</value></data>
+  <data name="RefInspectForward" xml:space="preserve"><value>前进</value></data>
+  <data name="RefInspectPin" xml:space="preserve"><value>固定</value></data>
+  <data name="RefInspectUnpin" xml:space="preserve"><value>取消固定</value></data>
+  <data name="RefInspectPinHelp" xml:space="preserve"><value>固定：冻结当前实体视图。取消固定前，新预览不会替换当前视图。</value></data>
+  <data name="RefInspectOpenFull" xml:space="preserve"><value>完整打开</value></data>
+  <data name="RefInspectOpenFullHelp" xml:space="preserve"><value>打开完整实体文档并导航到此实体</value></data>
+  <data name="RefInspectEmptyHint" xml:space="preserve"><value>Ctrl+点击一个青色引用在此检查。</value></data>
+  <data name="SearchTab" xml:space="preserve"><value>搜索</value></data>
+  <data name="ConflictsTab" xml:space="preserve"><value>冲突</value></data>
+  <data name="ValidationTab" xml:space="preserve"><value>验证</value></data>
+  <data name="BottomSearchWatermark" xml:space="preserve"><value>搜索所有游戏数据...（可使用 列名:值 语法）</value></data>
+  <data name="BottomSearchClear" xml:space="preserve"><value>清除搜索</value></data>
+  <data name="RunValidation" xml:space="preserve"><value>运行</value></data>
+  <data name="ModGuide" xml:space="preserve"><value>模组制作指南</value></data>
+
+  <data name="HomePageBannerWarning" xml:space="preserve"><value>⚠  游戏目录未设置</value></data>
+  <data name="HomePageBannerHelp" xml:space="preserve"><value>点击左侧边栏 ⚙ 设置，然后设置 Neo Scavenger 安装路径。</value></data>
+  <data name="HomePageOpenSettings" xml:space="preserve"><value>打开设置</value></data>
+  <data name="HomePageTitle" xml:space="preserve"><value>NeoEditor</value></data>
+  <data name="HomePageSubtitle" xml:space="preserve"><value>Neo Scavenger 模组编辑器</value></data>
+  <data name="HomePageBrowseTitle" xml:space="preserve"><value>浏览游戏数据</value></data>
+  <data name="HomePageBrowseDesc" xml:space="preserve"><value>浏览所有物品、配方、生物（只读）</value></data>
+  <data name="HomePageNewModTitle" xml:space="preserve"><value>新建模组</value></data>
+  <data name="HomePageNewModDesc" xml:space="preserve"><value>从头创建你自己的模组</value></data>
+  <data name="HomePageImportTitle" xml:space="preserve"><value>导入模组</value></data>
+  <data name="HomePageImportDesc" xml:space="preserve"><value>打开已有模组文件夹或XML文件</value></data>
+  <data name="HomePageRecentMods" xml:space="preserve"><value>最近模组</value></data>
+  <data name="HomePageEntitiesFormat" xml:space="preserve"><value>{0} 实体</value></data>
+  <data name="HomePageMergeView" xml:space="preserve"><value>合并视图</value></data>
+  <data name="HomePageMergeViewDesc" xml:space="preserve"><value>打开模组加载配置查看模组如何组合和覆盖。</value></data>
+  <data name="HomePageModsFormat" xml:space="preserve"><value>{0} 模组</value></data>
+  <data name="HomePageProfilesHint" xml:space="preserve"><value>在侧边栏 👥 面板管理配置文件</value></data>
+  <data name="HomePageDropHint" xml:space="preserve"><value>或将模组文件夹/XML 文件拖放到窗口任意位置</value></data>
+  <data name="RmOpen" xml:space="preserve"><value>打开</value></data>
+  <data name="RmOpenInExplorer" xml:space="preserve"><value>在资源管理器中打开</value></data>
+  <data name="RmCopyFullPath" xml:space="preserve"><value>复制完整路径</value></data>
+  <data name="RmRename" xml:space="preserve"><value>重命名...</value></data>
+  <data name="RmDelete" xml:space="preserve"><value>删除</value></data>
+  <data name="RightPanelEditor" xml:space="preserve"><value>可视化概览</value></data>
+  <data name="RightPanelImages" xml:space="preserve"><value>图片</value></data>
+  <data name="OverlayChainTitle" xml:space="preserve"><value>覆盖链</value></data>
+  <data name="OverlayChainWinner" xml:space="preserve"><value>胜者</value></data>
+  <data name="OverlayChainOverridden" xml:space="preserve"><value>被覆盖</value></data>
+  <data name="OverlayChainEmpty" xml:space="preserve"><value>选择一行查看覆盖链。</value></data>
+  <data name="ValueEditorTitle" xml:space="preserve"><value>可视化概览</value></data>
+  <data name="ValueEditorEmpty" xml:space="preserve"><value>选择一个实体行查看可视化。</value></data>
+  <data name="ImagePreviewFooter" xml:space="preserve"><value>✓ 找到  ✗ 缺失。双击已找到的项目打开图片。</value></data>
+  <data name="DepsTooltip" xml:space="preserve"><value>检查跨模组引用完整性</value></data>
+  <data name="ConflictsFormat" xml:space="preserve"><value>{0} 冲突</value></data>
+  <data name="CreateModToEdit" xml:space="preserve"><value>创建模组以编辑</value></data>
+  <data name="EmptyModHeader" xml:space="preserve"><value>此模组还没有实体。</value></data>
+  <data name="EmptyModDesc" xml:space="preserve"><value>点击下方 + 按钮添加物品、配方或生物。</value></data>
+  <data name="EmptyModButton" xml:space="preserve"><value>添加第一个实体</value></data>
+  <data name="ToggleLeftPanel" xml:space="preserve"><value>切换左侧面板</value></data>
+  <data name="ToggleRightPanel" xml:space="preserve"><value>切换右侧面板</value></data>
+  <data name="ToggleBottomPanel" xml:space="preserve"><value>切换底部面板</value></data>
+  <data name="DocsFormat" xml:space="preserve"><value>文档：{0}</value></data>
+  <data name="DialogRename" xml:space="preserve"><value>重命名</value></data>
+  <data name="DialogOK" xml:space="preserve"><value>确定</value></data>
+  <data name="DialogAdd" xml:space="preserve"><value>添加</value></data>
+  <data name="DialogClose" xml:space="preserve"><value>关闭</value></data>
+  <data name="DialogExportCsv" xml:space="preserve"><value>导出 CSV</value></data>
+  <data name="DialogCancel" xml:space="preserve"><value>取消</value></data>
+  <data name="DialogCreate" xml:space="preserve"><value>创建</value></data>
+  <data name="DialogAuthor" xml:space="preserve"><value>作者</value></data>
+  <data name="DialogAuthorWatermark" xml:space="preserve"><value>你的名字或团队</value></data>
+  <data name="DialogModName" xml:space="preserve"><value>模组名称</value></data>
+  <data name="DialogModNameWatermark" xml:space="preserve"><value>例如：我的超棒模组</value></data>
+  <data name="DialogNamespace" xml:space="preserve"><value>命名空间</value></data>
+  <data name="DialogNamespaceWatermark" xml:space="preserve"><value>例如：MAM</value></data>
+  <data name="DialogNamespaceHint" xml:space="preserve"><value>用于标识模组物品的短前缀，用于避免与其他模组的 ID 冲突。</value></data>
+  <data name="DialogCreateProfile" xml:space="preserve"><value>自动创建模组加载配置文件</value></data>
+  <data name="AddRowTitle" xml:space="preserve"><value>添加新行</value></data>
+  <data name="AddRowTargetMod" xml:space="preserve"><value>目标模组</value></data>
+  <data name="AddRowTargetXml" xml:space="preserve"><value>目标 XML *</value></data>
+  <data name="AddRowCopyFrom" xml:space="preserve"><value>从...复制</value></data>
+  <data name="CsvImportTitle" xml:space="preserve"><value>CSV 导入预览</value></data>
+  <data name="DependencyCheckTitle" xml:space="preserve"><value>依赖检查</value></data>
+  <data name="DependencySource" xml:space="preserve"><value>来源</value></data>
+  <data name="DependencyMod" xml:space="preserve"><value>模组</value></data>
+  <data name="DependencyField" xml:space="preserve"><value>字段</value></data>
+  <data name="DependencyTarget" xml:space="preserve"><value>目标</value></data>
+  <data name="DependencyIssue" xml:space="preserve"><value>问题</value></data>
+  <data name="ConflictTitle" xml:space="preserve"><value>字段冲突</value></data>
+  <data name="ConflictEntityType" xml:space="preserve"><value>实体类型</value></data>
+  <data name="ConflictEntity" xml:space="preserve"><value>实体</value></data>
+  <data name="ConflictField" xml:space="preserve"><value>字段</value></data>
+  <data name="ConflictMods" xml:space="preserve"><value>冲突模组</value></data>
+  <data name="MergeExportTitle" xml:space="preserve"><value>XML 导出预览</value></data>
+  <data name="MergeExportFiles" xml:space="preserve"><value>文件</value></data>
+  <data name="MergeExportInfo" xml:space="preserve"><value>查看每个文件的变更。点击左侧文件查看差异。</value></data>
+  <data name="MergeExportAll" xml:space="preserve"><value>全部导出</value></data>
+  <data name="ProfileDiffTitle" xml:space="preserve"><value>配置文件对比</value></data>
+  <data name="ProfileDiffA" xml:space="preserve"><value>配置文件 A：</value></data>
+  <data name="ProfileDiffB" xml:space="preserve"><value>配置文件 B：</value></data>
+  <data name="ProfileDiffModName" xml:space="preserve"><value>模组名称</value></data>
+  <data name="ProfileDiffPath" xml:space="preserve"><value>路径</value></data>
+  <data name="ImageViewerTitle" xml:space="preserve"><value>图片查看器</value></data>
+  <data name="ValidationReportTitle" xml:space="preserve"><value>验证报告</value></data>
+  <data name="ValidationCancelSave" xml:space="preserve"><value>取消保存</value></data>
+  <data name="ValidationSaveAnyway" xml:space="preserve"><value>仍然保存</value></data>
+  <data name="ModGameDataTitleFormat" xml:space="preserve"><value>{0} - 模组数据</value></data>
+  <data name="ModImagesTitleFormat" xml:space="preserve"><value>{0} - 图片</value></data>
+  <data name="MergeEditorTitleFormat" xml:space="preserve"><value>{0} - 合并视图</value></data>
+  <data name="NewDocumentTitleFormat" xml:space="preserve"><value>文档 {0}</value></data>
+
+  <data name="EmptyModMessage" xml:space="preserve"><value>此模组还没有实体。</value></data>
+  <data name="EmptyModHint" xml:space="preserve"><value>点击下方 + 按钮添加物品、配方或生物。</value></data>
+  <data name="AddFirstEntity" xml:space="preserve"><value>添加第一个实体</value></data>
+  <data name="ConflictsLabel" xml:space="preserve"><value>冲突</value></data>
+  <data name="QuickSave" xml:space="preserve"><value>快速保存</value></data>
+  <data name="GameDataReadOnly" xml:space="preserve"><value>游戏数据</value></data>
+  <data name="GameDataReadOnlyMessage" xml:space="preserve"><value>游戏基础数据不能直接修改。要修改游戏数据，请在 Profile 中添加一个 Merge 模式 Mod（strModName=0），或通过"新建 Mod"创建一个 namespace 为 0 的 Mod。对游戏数据的修改将被写入该覆盖 Mod。</value></data>
+  <data name="QuickSaveTooltip" xml:space="preserve"><value>仅保存到数据库 (Ctrl+S)</value></data>
+  <data name="SaveAndExport" xml:space="preserve"><value>导出</value></data>
+  <data name="SaveAndExportTooltip" xml:space="preserve"><value>保存并导出到XML文件（含差异预览）</value></data>
+  <data name="Saving" xml:space="preserve"><value>保存中...</value></data>
+  <data name="SaveTooltip" xml:space="preserve"><value>保存 (Ctrl+S)</value></data>
+  <data name="SaveAndLaunchTooltip" xml:space="preserve"><value>保存并启动游戏 (Ctrl+Shift+S)</value></data>
+  <data name="Launch" xml:space="preserve"><value>启动</value></data>
+  <data name="DiffJumpToCursor" xml:space="preserve"><value>从光标位置跳到下一个差异</value></data>
+  <data name="DiffJumpToIndex" xml:space="preserve"><value>跳转到第 # 个差异</value></data>
+  <data name="DataBrowserTitle" xml:space="preserve"><value>数据浏览器</value></data>
+  <data name="DataBrowserProperties" xml:space="preserve"><value>属性</value></data>
+  <data name="DomainCoreItems" xml:space="preserve"><value>核心物品</value></data>
+  <data name="DomainCombat" xml:space="preserve"><value>战斗</value></data>
+  <data name="DomainCrafting" xml:space="preserve"><value>合成</value></data>
+  <data name="DomainLoot" xml:space="preserve"><value>战利品</value></data>
+  <data name="DomainStory" xml:space="preserve"><value>剧情</value></data>
+  <data name="DomainMap" xml:space="preserve"><value>地图</value></data>
+  <data name="DomainOther" xml:space="preserve"><value>其他</value></data>
 </root>

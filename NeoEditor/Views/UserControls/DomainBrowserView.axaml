@@ -1,0 +1,102 @@
+<UserControl
+    x:Class="NeoEditor.Views.UserControls.DomainBrowserView"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mainContent="clr-namespace:NeoEditor.ViewModels.MainContent"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:userControls="clr-namespace:NeoEditor.Views.UserControls"
+    x:Name="Root"
+    x:DataType="mainContent:EntityBrowserDocument"
+    mc:Ignorable="d">
+    <Design.DataContext>
+        <mainContent:EntityBrowserDocument />
+    </Design.DataContext>
+
+    <Grid ColumnDefinitions="260,4,*">
+        <Border
+            Grid.Column="0"
+            BorderBrush="{DynamicResource SystemControlForegroundChromeDisabledLowBrush}"
+            BorderThickness="0,0,1,0">
+            <DockPanel>
+                <Border
+                    Padding="8,6"
+                    Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}"
+                    DockPanel.Dock="Top">
+                    <StackPanel Spacing="2">
+                        <TextBlock
+                            FontSize="13"
+                            FontWeight="SemiBold"
+                            Text="{Binding EntityType.TypeName, StringFormat={}{0} Entities}" />
+                        <TextBlock
+                            FontSize="10"
+                            Foreground="{DynamicResource SystemControlForegroundChromeDisabledLowBrush}"
+                            Text="{Binding Entities.Count, StringFormat={}{0} records}" />
+                    </StackPanel>
+                </Border>
+                <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+                    <ListBox
+                        x:Name="EntityListBox"
+                        ItemsSource="{Binding Entities}"
+                        SelectionMode="Single">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate x:DataType="mainContent:BrowserEntityRow">
+                                <StackPanel Margin="6,4">
+                                    <TextBlock
+                                        FontSize="12"
+                                        FontWeight="SemiBold"
+                                        Text="{Binding DisplayName}"
+                                        TextTrimming="CharacterEllipsis" />
+                                    <TextBlock
+                                        FontSize="10"
+                                        Foreground="{DynamicResource SystemControlForegroundChromeDisabledLowBrush}"
+                                        Text="{Binding EntityId}"
+                                        TextTrimming="CharacterEllipsis" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </ScrollViewer>
+            </DockPanel>
+        </Border>
+
+        <GridSplitter
+            Grid.Column="1"
+            Width="4"
+            Background="Transparent" />
+
+        <DockControl
+            x:Name="ViewerDockControl"
+            Grid.Column="2"
+            EnableManagedWindowLayer="True"
+            Factory="{Binding DataContext.DockFactory, ElementName=Root}"
+            InitializeFactory="True"
+            InitializeLayout="True">
+            <DockControl.DataTemplates>
+                <DataTemplate x:DataType="mainContent:EntityViewerDocument">
+                    <userControls:EntityViewerView DataContext="{Binding}" />
+                </DataTemplate>
+            </DockControl.DataTemplates>
+            <RootDock Id="ViewerRoot">
+                <ProportionalDock>
+                    <DocumentDock
+                        Id="ViewerDocumentsPane"
+                        EnableWindowDrag="False">
+                        <DocumentDock.DocumentTemplate>
+                            <DocumentTemplate>
+                                <Grid x:DataType="Document"
+                                      HorizontalAlignment="Stretch"
+                                      VerticalAlignment="Stretch">
+                                    <ContentControl
+                                        HorizontalAlignment="Stretch"
+                                        VerticalAlignment="Stretch"
+                                        Content="{Binding Context}" />
+                                </Grid>
+                            </DocumentTemplate>
+                        </DocumentDock.DocumentTemplate>
+                    </DocumentDock>
+                </ProportionalDock>
+            </RootDock>
+        </DockControl>
+    </Grid>
+</UserControl>

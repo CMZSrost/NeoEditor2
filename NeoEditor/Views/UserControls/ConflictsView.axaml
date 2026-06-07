@@ -1,0 +1,44 @@
+<UserControl
+    x:Class="NeoEditor.Views.UserControls.ConflictsView"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:mainContent="clr-namespace:NeoEditor.ViewModels.MainContent"
+    x:Name="Root"
+    x:DataType="mainContent:BottomToolsViewModel">
+    <Grid RowDefinitions="Auto,*">
+        <DockPanel Grid.Row="0" Margin="6,4">
+            <Button
+                Padding="4,2"
+                Click="OnRefreshConflictsClick"
+                Content="{Binding Loc[RefreshMods]}"
+                DockPanel.Dock="Right"
+                FontSize="10" />
+            <TextBlock
+                VerticalAlignment="Center"
+                FontSize="11"
+                Foreground="{DynamicResource SystemControlForegroundChromeDisabledLowBrush}"
+                Text="{Binding ConflictSummary}" />
+        </DockPanel>
+        <ListBox
+            Grid.Row="1"
+            FontFamily="Consolas,Courier New"
+            FontSize="11"
+            ItemsSource="{Binding ConflictEntries}">
+            <ListBox.ItemTemplate>
+                <DataTemplate DataType="mainContent:ConflictEntryViewModel">
+                    <StackPanel
+                        Margin="4,1"
+                        Orientation="Horizontal"
+                        Spacing="8">
+                        <TextBlock
+                            MinWidth="100"
+                            FontWeight="SemiBold"
+                            Text="{Binding EntityId}" />
+                        <TextBlock Foreground="{DynamicResource SystemControlForegroundChromeDisabledLowBrush}" Text="{Binding Fields}" />
+                        <TextBlock Foreground="Red" Text="{Binding FieldCount, StringFormat='{}{0}'}" />
+                    </StackPanel>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+    </Grid>
+</UserControl>

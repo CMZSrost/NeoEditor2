@@ -1,6 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
+using NeoEditor.Helper;
 
 namespace NeoEditor.Data.Model.Game;
 
@@ -31,23 +32,27 @@ public class Recipe : IEntity
     [StringLength(1000)]
     [Comment("合成需要的工具，格式如'1x1'")]
     [Display(Name = "Tools")]
+    [ReferenceField(typeof(Ingredient), Separator = "+", Pattern = "{mult}x{id}")]
     public string Tools { get; set; } = "";
 
     [Column("strConsumed", TypeName = "varchar(1000)")]
     [StringLength(1000)]
     [Comment("合成会消耗/损耗掉的物品，格式如'1x2+1x3'")]
     [Display(Name = "Consumed")]
+    [ReferenceField(typeof(Ingredient), Separator = "+", Pattern = "{mult}x{id}")]
     public string Consumed { get; set; } = "";
 
     [Column("strDestroyed", TypeName = "varchar(1000)")]
     [StringLength(1000)]
     [Comment("摧毁的物品，用于熄灭火把等")]
     [Display(Name = "Destroyed")]
+    [ReferenceField(typeof(Ingredient), Separator = "+", Pattern = "{mult}x{id}")]
     public string Destroyed { get; set; } = "";
 
     [Column("nTreasureID")]
     [Comment("调用的战利品池ID，即合成出的物品")]
     [Display(Name = "TreasureId")]
+    [ReferenceField(typeof(TreasureTable))]
     public string TreasureId { get; set; } = "3";
 
     [Column("fHours", TypeName = "float")]
@@ -63,6 +68,7 @@ public class Recipe : IEntity
     [Column("nHiddenID")]
     [Comment("是否为隐藏配方，需要捡纸片解锁")]
     [Display(Name = "HiddenId")]
+    [ReferenceField(typeof(Recipe))]
     public string HiddenId { get; set; } = "0";
 
     [Column("bIdentify", TypeName = "tinyint(1)")]
@@ -79,11 +85,13 @@ public class Recipe : IEntity
     [StringLength(1000)]
     [Comment("使用其他不同配方但相同成品的配方ID")]
     [Display(Name = "AlsoTry")]
+    [ReferenceField(typeof(Recipe), Separator = ",")]
     public string AlsoTry { get; set; } = "";
 
     [Column("nTempTreasureID")]
     [Comment("合成时在成品栏以虚影显示的合成结果ID")]
     [Display(Name = "TempTreasureId")]
+    [ReferenceField(typeof(TreasureTable))]
     public string TempTreasureId { get; set; } = "3";
 
     [Column("bDegradeOutput", TypeName = "tinyint(1)")]

@@ -1,6 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
+using NeoEditor.Helper;
 
 namespace NeoEditor.Data.Model.Game;
 
@@ -43,6 +44,7 @@ public class Creature : IEntity
     [StringLength(1000)]
     [Comment("遇到该生物会触发的状态ID列表，逗号分隔")]
     [Display(Name = "EncounterIds")]
+    [ReferenceField(typeof(Condition), Separator = ",")]
     public string EncounterIds { get; set; } = "";
 
     [Column("nMovesPerTurn")]
@@ -53,27 +55,32 @@ public class Creature : IEntity
     [Column("nTreasureID")]
     [Comment("战利品池ID（击杀掉落）")]
     [Display(Name = "TreasureId")]
+    [ReferenceField(typeof(TreasureTable))]
     public string TreasureId { get; set; } = "3";
 
     [Column("nFaction")]
     [Comment("所属阵营ID")]
-    [Display(Name = "Faction")]
+    [Display(Name = "FactionId")]
+    [ReferenceField(typeof(Faction))]
     public string Faction { get; set; } = "0";
 
     [Column("vAttackModes", TypeName = "varchar(1000)")]
     [StringLength(1000)]
     [Comment("攻击方式ID，结合attackmodes使用，可能为单个ID或逗号分隔")]
     [Display(Name = "AttackModes")]
+    [ReferenceField(typeof(AttackMode), Separator = ",")]
     public string AttackModes { get; set; } = "";
 
     [Column("vBaseConditions", TypeName = "longtext")]
     [Comment("该生物生成时的基础状态，格式如'38=1,50=0.5'")]
     [Display(Name = "BaseConditions")]
+    [ReferenceField(typeof(Condition), Separator = ",", Pattern = "{id}={value}")]
     public string BaseConditions { get; set; } = "";
 
     [Column("nCorpseID")]
     [Comment("尸体编号（战利品池编号）")]
     [Display(Name = "CorpseId")]
+    [ReferenceField(typeof(TreasureTable))]
     public string CorpseId { get; set; } = "3";
 
     [Column("vActivities", TypeName = "longtext")]

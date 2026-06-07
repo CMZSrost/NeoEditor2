@@ -1,6 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
+using NeoEditor.Helper;
 
 namespace NeoEditor.Data.Model.Game;
 
@@ -24,6 +25,7 @@ public class EncounterTrigger : IEntity
     [Column("nEncounterID")]
     [Comment("触发器的代码标号")]
     [Display(Name = "EncounterId")]
+    [ReferenceField(typeof(Encounter))]
     public int EncounterId { get; set; }
 
     [Column("fChance", TypeName = "float")]
@@ -77,5 +79,6 @@ public class EncounterTrigger : IEntity
     [Column("aHexTypes", TypeName = "longtext")]
     [Comment("可触发该触发器的固定场景ID列表，结合hextypes使用")]
     [Display(Name = "HexTypes")]
+    [ReferenceField(typeof(HexType), Separator = ",")]
     public string HexTypes { get; set; } = "";
 }

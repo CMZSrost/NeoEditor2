@@ -1,0 +1,35 @@
+<UserControl
+    x:Class="NeoEditor.Views.UserControls.ValueEditorPanel"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    x:Name="Root"
+    MinWidth="280"
+    mc:Ignorable="d">
+    <Grid RowDefinitions="Auto,*">
+        <TextBlock
+            x:Name="EditorTitle"
+            Grid.Row="0"
+            FontWeight="Bold"
+            Margin="8,6,8,4"
+            Text="{Binding Loc[ValueEditorTitle], ElementName=Root}" />
+        <ContentControl
+            x:Name="EditorHost"
+            Grid.Row="1"
+            HorizontalAlignment="Stretch"
+            VerticalAlignment="Stretch"
+            HorizontalContentAlignment="Stretch"
+            VerticalContentAlignment="Stretch" />
+        <TextBlock
+            x:Name="Placeholder"
+            Grid.Row="1"
+            IsVisible="False"
+            Text="{Binding Loc[ValueEditorEmpty], ElementName=Root}"
+            TextWrapping="Wrap"
+            Foreground="{DynamicResource SystemControlForegroundChromeDisabledBrush}"
+            VerticalAlignment="Center"
+            HorizontalAlignment="Center"
+            Margin="16,0" />
+    </Grid>
+</UserControl>

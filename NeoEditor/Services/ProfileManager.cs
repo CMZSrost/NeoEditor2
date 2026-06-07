@@ -52,6 +52,7 @@ public class ProfileManager : IProfileManager
         return entities.Select(entry => new ModLoadInfo()
         {
             Type = existedMods.ContainsKey(entry.Path) ? entry.Type : ModType.Unknown,
+            Namespace = entry.Name, // strModName from getmods.php
             Info = existedMods.ContainsKey(entry.Path) switch
             {
                 true => existedMods[entry.Path],

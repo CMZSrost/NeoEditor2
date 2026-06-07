@@ -44,7 +44,7 @@ public class ConfigService : IConfigService
         if (Design.IsDesignMode)
         {
             var json = JsonConvert.SerializeObject(Config, Formatting.Indented);
-            Console.WriteLine($"Save config: {json}");
+            Serilog.Log.Logger.Debug("Save config: {Config}", json);
         }
         else
         {

@@ -21,76 +21,133 @@
     <DockPanel>
         <userControls:MainMenuBar DockPanel.Dock="Top" />
         <userControls:MainStatusBar DockPanel.Dock="Bottom" />
-        <StackPanel
-            Margin="4"
-            Orientation="Vertical"
-            Spacing="4">
-            <Button Command="{Binding SideBar.TogglePaneCommand}" CommandParameter="Explorer">
-                <avalonia:SymbolIcon IconVariant="Regular" Symbol="Folder" />
-            </Button>
-            <Button Command="{Binding SideBar.TogglePaneCommand}" CommandParameter="ModDatabase">
-                <avalonia:SymbolIcon IconVariant="Regular" Symbol="Database" />
-            </Button>
-            <Button Command="{Binding SideBar.TogglePaneCommand}" CommandParameter="Profiles">
-                <avalonia:SymbolIcon IconVariant="Regular" Symbol="List" />
-            </Button>
-            <Button Command="{Binding SideBar.TogglePaneCommand}" CommandParameter="Search">
-                <avalonia:SymbolIcon IconVariant="Regular" Symbol="Search" />
-            </Button>
-            <Button Command="{Binding SideBar.TogglePaneCommand}" CommandParameter="Settings">
-                <avalonia:SymbolIcon IconVariant="Regular" Symbol="Settings" />
-            </Button>
-        </StackPanel>
-        <SplitView
-            DisplayMode="Inline"
-            IsPaneOpen="{Binding SideBar.SideBarExpanded}"
-            OpenPaneLength="500">
-            <SplitView.Pane>
-                <userControls:Pane DataContext="{Binding SideBar.CurrentPaneContent}" />
-            </SplitView.Pane>
 
-            <SplitView.Content>
-                <Grid ColumnDefinitions="*" RowDefinitions="Auto,*">
-                    <StackPanel
-                        Grid.Row="0"
-                        Margin="6,4"
-                        Orientation="Horizontal"
-                        Spacing="6">
-                        <Button Command="{Binding ElementName=MainWindowApp, Path=DataContext.DocumentWorkspace.AddImageCommand}">
-                            <avalonia:SymbolIcon Symbol="ImageAdd" ToolTip.Tip="{Binding Loc[AddImage]}" />
-                        </Button>
-                        <GridSplitter />
-                        <DropDownButton>
-                            <DropDownButton.Content>
-                                <StackPanel>
-                                    <avalonia:SymbolIcon Symbol="Tab" />
-                                </StackPanel>
-                            </DropDownButton.Content>
-                            <DropDownButton.Flyout>
-                                <MenuFlyout>
-                                    <MenuItem Command="{Binding ElementName=MainWindowApp, Path=DataContext.DocumentWorkspace.AddDocumentCommand}">
-                                        <MenuItem.Header>
-                                            <StackPanel>
-                                                <avalonia:SymbolIcon Symbol="TabAdd" />
-                                            </StackPanel>
-                                        </MenuItem.Header>
-                                    </MenuItem>
-                                </MenuFlyout>
-                            </DropDownButton.Flyout>
-                        </DropDownButton>
-                    </StackPanel>
-                    <userControls:DocumentWorkspaceView Grid.Row="1" DataContext="{Binding ElementName=MainWindowApp, Path=DataContext.DocumentWorkspace}" />
+        <!-- Sidebar: vertical icon bar -->
+        <Border
+            Padding="4,6"
+            Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}"
+            DockPanel.Dock="Left"
+            Width="48">
+            <StackPanel Spacing="2">
+                <!-- Group 1: Main -->
+                <Button
+                    Width="40" Height="36" Padding="4"
+                    Command="{Binding ElementName=MainWindowApp, Path=DataContext.DocumentWorkspace.CloseAllDocumentsCommand}"
+                    ToolTip.Tip="{Binding Loc[Home]}">
+                    <avalonia:SymbolIcon FontSize="18" Symbol="Home" />
+                </Button>
+                <Button
+                    Width="40" Height="36" Padding="4"
+                    Command="{Binding ElementName=MainWindowApp, Path=DataContext.DocumentWorkspace.HomePage.ImportModCommand}"
+                    ToolTip.Tip="{Binding Loc[ImportMod]}">
+                    <avalonia:SymbolIcon FontSize="18" Symbol="ArrowDownload" />
+                </Button>
 
-                    <WindowNotificationManager
-                        Name="NotificationManager"
-                        Grid.Row="0"
-                        Grid.RowSpan="{Binding $parent[Grid].RowDefinitions.Count}"
-                        Grid.Column="0"
-                        Grid.ColumnSpan="{Binding $parent[Grid].ColumnDefinitions.Count}"
-                        Position="TopRight" />
-                </Grid>
+                <Separator Margin="4,6" />
 
-            </SplitView.Content>
-        </SplitView>
+                <!-- Group 2: Mods & Profiles -->
+                <Button
+                    Width="40" Height="36" Padding="4"
+                    Command="{Binding SideBar.TogglePaneCommand}" CommandParameter="ModDatabase"
+                    ToolTip.Tip="{Binding Loc[Mods]}">
+                    <avalonia:SymbolIcon FontSize="18" Symbol="Database" />
+                </Button>
+                <Button
+                    Width="40" Height="36" Padding="4"
+                    Command="{Binding SideBar.TogglePaneCommand}" CommandParameter="Profiles"
+                    ToolTip.Tip="{Binding Loc[ProfileDatabase]}">
+                    <avalonia:SymbolIcon FontSize="18" Symbol="People" />
+                </Button>
+
+                <Separator Margin="4,6" />
+
+                <!-- Group 3: Tools -->
+                <Button
+                    Width="40" Height="36" Padding="4"
+                    Command="{Binding SideBar.TogglePaneCommand}" CommandParameter="Explorer"
+                    ToolTip.Tip="{Binding Loc[ResourceManager]}">
+                    <avalonia:SymbolIcon FontSize="18" Symbol="Folder" />
+                </Button>
+                <Button
+                    Width="40" Height="36" Padding="4"
+                    Command="{Binding SideBar.TogglePaneCommand}" CommandParameter="Search"
+                    ToolTip.Tip="{Binding Loc[Search]}">
+                    <avalonia:SymbolIcon FontSize="18" Symbol="Search" />
+                </Button>
+                <Button
+                    Width="40" Height="36" Padding="4"
+                    Command="{Binding SideBar.TogglePaneCommand}" CommandParameter="DataBrowser"
+                    ToolTip.Tip="{Binding Loc[DataBrowserTitle]}">
+                    <avalonia:SymbolIcon FontSize="18" Symbol="BookOpen" />
+                </Button>
+                <Button
+                    Width="40" Height="36" Padding="4"
+                    Command="{Binding SideBar.TogglePaneCommand}" CommandParameter="Settings"
+                    ToolTip.Tip="{Binding Loc[Settings]}">
+                    <avalonia:SymbolIcon FontSize="18" Symbol="Settings" />
+                </Button>
+            </StackPanel>
+        </Border>
+
+        <!-- Main content area -->
+        <Grid RowDefinitions="Auto,*">
+            <!-- Top toolbar bar -->
+            <Border
+                Grid.Row="0"
+                Padding="8,4"
+                Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}"
+                BorderBrush="{DynamicResource SystemControlForegroundChromeDisabledLowBrush}"
+                BorderThickness="0,0,0,1">
+                <StackPanel Orientation="Horizontal" Spacing="4">
+                    <Button Padding="8,4" FontSize="12"
+                            Content="{Binding Loc[NewMod]}"
+                            Command="{Binding ElementName=MainWindowApp, Path=DataContext.DocumentWorkspace.HomePage.NewModCommand}" />
+                    <Button Padding="8,4" FontSize="12"
+                            Content="{Binding Loc[ImportMod]}"
+                            Command="{Binding ElementName=MainWindowApp, Path=DataContext.DocumentWorkspace.HomePage.ImportModCommand}" />
+                    <Separator Width="1" Margin="4,2" />
+                    <!-- Panel toggles -->
+                    <Button Padding="4,2"
+                            ToolTip.Tip="{Binding Loc[ToggleLeftPanel]}"
+                            Command="{Binding ElementName=MainWindowApp, Path=DataContext.DocumentWorkspace.ToggleLeftPanelCommand}">
+                        <avalonia:SymbolIcon FontSize="14" Symbol="PanelLeft" />
+                    </Button>
+                    <Button Padding="4,2"
+                            ToolTip.Tip="{Binding Loc[ToggleRightPanel]}"
+                            Command="{Binding ElementName=MainWindowApp, Path=DataContext.DocumentWorkspace.ToggleRightPanelCommand}">
+                        <avalonia:SymbolIcon FontSize="14" Symbol="PanelRight" />
+                    </Button>
+                    <Button Padding="4,2"
+                            ToolTip.Tip="{Binding Loc[ToggleBottomPanel]}"
+                            Command="{Binding ElementName=MainWindowApp, Path=DataContext.DocumentWorkspace.ToggleBottomPanelCommand}">
+                        <avalonia:SymbolIcon FontSize="14" Symbol="PanelBottom" />
+                    </Button>
+                </StackPanel>
+            </Border>
+
+            <!-- Content with SplitView -->
+            <SplitView
+                Grid.Row="1"
+                DisplayMode="Inline"
+                IsPaneOpen="{Binding SideBar.SideBarExpanded}"
+                OpenPaneLength="380">
+                <SplitView.Pane>
+                    <userControls:Pane DataContext="{Binding SideBar.CurrentPaneContent}" />
+                </SplitView.Pane>
+                <SplitView.Content>
+                    <Grid>
+                        <userControls:HomePage
+                            DataContext="{Binding ElementName=MainWindowApp, Path=DataContext.DocumentWorkspace.HomePage}"
+                            IsVisible="{Binding ElementName=MainWindowApp, Path=DataContext.DocumentWorkspace.IsHomePageVisible}" />
+                        <userControls:DocumentWorkspaceView
+                            IsVisible="{Binding ElementName=MainWindowApp, Path=DataContext.DocumentWorkspace.IsHomePageVisible, Converter={x:Static BoolConverters.Not}}"
+                            DataContext="{Binding ElementName=MainWindowApp, Path=DataContext.DocumentWorkspace}" />
+                        <WindowNotificationManager
+                            Name="NotificationManager"
+                            Position="TopRight" />
+                    </Grid>
+                </SplitView.Content>
+            </SplitView>
+        </Grid>
     </DockPanel>
 </Window>

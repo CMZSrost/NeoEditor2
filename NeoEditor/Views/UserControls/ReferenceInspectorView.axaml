@@ -1,0 +1,80 @@
+<UserControl
+    x:Class="NeoEditor.Views.UserControls.ReferenceInspectorView"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:mainContent="clr-namespace:NeoEditor.ViewModels.MainContent"
+    x:DataType="mainContent:ReferenceInspectorContent">
+    <Border x:Name="OuterBorder" Padding="6,4" BorderThickness="1"
+            BorderBrush="Transparent">
+        <Grid RowDefinitions="Auto,Auto,*,Auto">
+            <!-- Pinned indicator -->
+            <TextBlock Grid.Row="0" HorizontalAlignment="Right" FontSize="10"
+                       FontWeight="Bold" Foreground="DarkOrange"
+                       Text="{Binding Loc[RefInspectPinned]}"
+                       IsVisible="{Binding IsPinned}" Margin="0,0,0,2" />
+            <!-- Header with ? info icon -->
+            <StackPanel Grid.Row="0" Spacing="4" Orientation="Horizontal">
+                <TextBlock FontSize="12" FontWeight="Bold"
+                           Text="{Binding Loc[RefInspect]}" />
+                <Border Background="{DynamicResource SystemControlForegroundChromeDisabledLowBrush}"
+                        CornerRadius="7" Width="14" Height="14"
+                        ToolTip.Tip="{Binding Loc[RefInspectHelp]}">
+                    <TextBlock Text="?" FontSize="9" FontWeight="Bold"
+                               HorizontalAlignment="Center" VerticalAlignment="Center"
+                               Foreground="{DynamicResource ThemeBackgroundBrush}" />
+                </Border>
+            </StackPanel>
+            <!-- Target info -->
+            <StackPanel Grid.Row="0" Margin="0,18,0,4" Spacing="2" IsVisible="{Binding HasContent}">
+                <StackPanel Orientation="Horizontal" Spacing="4">
+                    <TextBlock FontSize="11" FontWeight="SemiBold" Text="{Binding TargetType}" />
+                    <TextBlock FontSize="11"
+                               Foreground="{DynamicResource SystemControlForegroundChromeDisabledLowBrush}"
+                               Text="·" />
+                    <TextBlock FontSize="11" Text="{Binding TargetSubject}" />
+                </StackPanel>
+                <TextBlock FontSize="9"
+                           Foreground="{DynamicResource SystemControlForegroundChromeDisabledLowBrush}"
+                           Text="{Binding TargetRawId, StringFormat='raw: {0}'}" />
+            </StackPanel>
+
+            <!-- Back / Forward / Pin / Open buttons -->
+            <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="4" Margin="0,0,0,6">
+                <Button Content="◀" FontSize="10" Padding="4,1"
+                        ToolTip.Tip="{Binding Loc[RefInspectBack]}"
+                        IsEnabled="{Binding CanGoBack}" Click="OnBackClick" />
+                <Button Content="▶" FontSize="10" Padding="4,1"
+                        ToolTip.Tip="{Binding Loc[RefInspectForward]}"
+                        IsEnabled="{Binding CanGoForward}" Click="OnForwardClick" />
+                <Button x:Name="PinButton" FontSize="10" Padding="4,1"
+                        Content="{Binding Loc[RefInspectPin]}"
+                        Click="OnPinClick"
+                        ToolTip.Tip="{Binding Loc[RefInspectPinHelp]}" />
+                <Button Content="{Binding Loc[RefInspectOpenFull]}"
+                        FontSize="10" Padding="4,1" Click="OnOpenClick"
+                        ToolTip.Tip="{Binding Loc[RefInspectOpenFullHelp]}" />
+            </StackPanel>
+
+            <!-- Properties -->
+            <ListBox Grid.Row="2" ItemsSource="{Binding Properties}" FontSize="10"
+                     FontFamily="Consolas,Courier New">
+                <ListBox.ItemTemplate>
+                    <DataTemplate DataType="mainContent:PropEntry">
+                        <Grid ColumnDefinitions="140,*,Auto" Margin="2,1">
+                            <TextBlock Grid.Column="0" FontWeight="SemiBold" Text="{Binding Name}" />
+                            <TextBlock Grid.Column="1" Text="{Binding Value}"
+                                       TextWrapping="Wrap"
+                                       Foreground="{DynamicResource SystemControlForegroundChromeDisabledLowBrush}" />
+                        </Grid>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+
+            <!-- Empty state -->
+            <TextBlock Grid.Row="2" IsVisible="{Binding ShowEmptyState}" Margin="0,12,0,0"
+                       FontSize="10"
+                       Foreground="{DynamicResource SystemControlForegroundChromeDisabledLowBrush}"
+                       Text="{Binding Loc[RefInspectEmptyHint]}" />
+        </Grid>
+    </Border>
+</UserControl>

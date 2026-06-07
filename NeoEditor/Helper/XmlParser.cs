@@ -13,7 +13,13 @@ using NeoEditor.Helper;
 
 namespace NeoEditor.Helper;
 
-public class XmlParser
+public interface IXmlParser
+{
+    IList<T> ImportEntities<T>(XDocument doc, int modId, string filePath) where T : IEntity, new();
+    XDocument Export(IEnumerable<IEntity> entities, string databaseName = "neogame");
+}
+
+public class XmlParser : IXmlParser
 {
     private const string DefaultDatabaseName = "neogame";
 
@@ -81,8 +87,8 @@ public class XmlParser
                     }
                     catch (Exception e)
                     {
-                        Console.WriteLine(
-                            $"load failed\n{tableNode}\n column {colName} with value '{valueStr}' {e.Message}");
+                        Serilog.Log.Logger.Error(e, "[XmlParser] load failed column={ColName} value={Value}",
+                            colName, valueStr);
                         throw;
                     }
                 }
@@ -119,10 +125,11 @@ public class XmlParser
                 var tableElement = new XElement("table", new XAttribute("name", tableName));
                 foreach (var property in columnProperties)
                 {
+                    var rawValue = property.GetValue(entity);
                     var columnName = ResolveColumnName(property);
                     tableElement.Add(new XElement("column",
                         new XAttribute("name", columnName),
-                        FormatValue(property.GetValue(entity), property.PropertyType)));
+                        FormatValue(rawValue, property.PropertyType)));
                 }
 
                 databaseElement.Add(tableElement);
@@ -136,26 +143,16 @@ public class XmlParser
                 databaseElement));
     }
 
-    private object? ConvertValue(string str, Type targetType)
+    private static object? ConvertValue(string str, Type targetType)
     {
         if (string.IsNullOrWhiteSpace(str)) return null;
         try
         {
-            if (targetType == typeof(string)) return str;
-            if (targetType == typeof(int))
-                return string.IsNullOrWhiteSpace(str) ? null : int.Parse(str);
-
-            if (targetType == typeof(float))
-                return string.IsNullOrWhiteSpace(str) ? null : float.Parse(str, CultureInfo.InvariantCulture);
-
-            if (targetType == typeof(bool)) return str == "1" || str.Equals("true", StringComparison.OrdinalIgnoreCase);
-            if (targetType.BaseType == typeof(Enum)) return Enum.Parse(targetType, str);
-            // 可根据需要扩展其他类型
-            return Convert.ChangeType(str, targetType);
+            return Converter.ValueConverter.Convert(str, targetType);
         }
-        catch (Exception e)
+        catch (Exception)
         {
-            _logger.LogWarning($"Conversion error: cannot convert '{str}' to {targetType.Name}: {e.Message}");
+            // Let caller handle — XmlParser.ImportEntities catches and continues
             throw;
         }
     }
@@ -202,10 +199,17 @@ public class XmlParser
     private static string ResolveEntitySortKey(IEntity entity, Type entityType)
     {
         var keyProperty = ResolveEntityKeyProperty(entityType);
-        var keyText = keyProperty is null
-            ? string.Empty
-            : FormatValue(keyProperty.GetValue(entity), keyProperty.PropertyType);
-        return string.Concat(keyText, "|", entity.EntityId);
+        if (keyProperty is null)
+            return string.Concat(string.Empty, "|", entity.EntityId);
+
+        var keyValue = keyProperty.GetValue(entity);
+        // Numeric keys: left-pad to 10 digits so string sort = numeric sort
+        if (keyValue is int intVal)
+            return string.Concat(intVal.ToString("D10", CultureInfo.InvariantCulture), "|", entity.EntityId);
+        if (keyValue is long longVal)
+            return string.Concat(longVal.ToString("D10", CultureInfo.InvariantCulture), "|", entity.EntityId);
+
+        return string.Concat(FormatValue(keyValue, keyProperty.PropertyType), "|", entity.EntityId);
     }
 
     private static string FormatValue(object? value, Type propertyType)
@@ -219,6 +223,20 @@ public class XmlParser
         if (effectiveType == typeof(bool))
         {
             return (bool)value ? "1" : "0";
+        }
+
+        if (effectiveType.IsEnum)
+        {
+            // Enum values must be written as their underlying int, not name strings
+            return Convert.ChangeType(value, effectiveType.GetEnumUnderlyingType()).ToString()
+                ?? "0";
+        }
+
+        if (effectiveType == typeof(float) || effectiveType == typeof(double))
+        {
+            // Avoid scientific notation: use "G" with InvariantCulture, then strip trailing zeros
+            var d = (double)Convert.ChangeType(value, typeof(double));
+            return d.ToString("0.0###########################", CultureInfo.InvariantCulture);
         }
 
         if (value is IFormattable formattable)

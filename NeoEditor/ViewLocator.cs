@@ -49,9 +49,8 @@ public class ViewLocator : IDataTemplate
 
         if (data is IDockable)
             return true;
-        if (data is INotifyPropertyChanged)
-            return true;
-
+        // ViewModelBase covers all real VMs; raw INotifyPropertyChanged is too broad
+        // and catches data models like GameDataTypeTabItem that aren't controls.
         return data is ViewModelBase;
     }
 }

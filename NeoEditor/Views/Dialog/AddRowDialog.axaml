@@ -1,0 +1,75 @@
+<Window
+    x:Class="NeoEditor.Views.Dialog.AddRowDialog"
+    xmlns:dialog="clr-namespace:NeoEditor.Views.Dialog"
+    x:DataType="dialog:AddRowDialog"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:model="clr-namespace:NeoEditor.Data.Model"
+    Width="520"
+    Height="280"
+    MinWidth="400"
+    MinHeight="240"
+    Title="{Binding Loc[AddRowTitle]}"
+    WindowStartupLocation="CenterOwner"
+    mc:Ignorable="d">
+    <Grid
+        Margin="20"
+        ColumnDefinitions="Auto,*"
+        RowDefinitions="Auto,Auto,Auto,*"
+        ColumnSpacing="16"
+        RowSpacing="12">
+
+        <!-- Row 0: Target Mod -->
+        <TextBlock
+            Grid.Row="0" Grid.Column="0"
+            VerticalAlignment="Center"
+            Text="{Binding Loc[AddRowTargetMod]}" />
+        <ComboBox
+            Grid.Row="0" Grid.Column="1"
+            x:Name="ModComboBox"
+            HorizontalAlignment="Stretch"
+            IsEditable="False">
+            <ComboBox.ItemTemplate>
+                <DataTemplate DataType="model:ModLoadInfo">
+                    <TextBlock Text="{Binding Info.Name}" />
+                </DataTemplate>
+            </ComboBox.ItemTemplate>
+        </ComboBox>
+
+        <!-- Row 1: Target XML File -->
+        <TextBlock
+            Grid.Row="1" Grid.Column="0"
+            VerticalAlignment="Center"
+            Text="{Binding Loc[AddRowTargetXml]}" />
+        <ComboBox
+            Grid.Row="1" Grid.Column="1"
+            x:Name="FilePathComboBox"
+            HorizontalAlignment="Stretch"
+            IsEditable="True" />
+
+        <!-- Row 2: Copy From (hidden for simple add) -->
+        <TextBlock
+            Grid.Row="2" Grid.Column="0"
+            x:Name="CopyFromLabel"
+            VerticalAlignment="Center"
+            Text="{Binding Loc[AddRowCopyFrom]}" />
+        <ComboBox
+            Grid.Row="2" Grid.Column="1"
+            x:Name="SourceRowComboBox"
+            HorizontalAlignment="Stretch"
+            IsEditable="False" />
+
+        <!-- Row 3: Buttons -->
+        <StackPanel
+            Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2"
+            Margin="0,8,0,0"
+            HorizontalAlignment="Right"
+            Orientation="Horizontal"
+            Spacing="12">
+            <Button Click="OnCancelClick" Content="{Binding Loc[DialogCancel]}" />
+            <Button Click="OnConfirmClick" Content="{Binding Loc[DialogAdd]}" />
+        </StackPanel>
+    </Grid>
+</Window>

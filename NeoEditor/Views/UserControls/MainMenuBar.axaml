@@ -39,6 +39,8 @@
             </MenuItem.ItemTemplate>
         </MenuItem>
 
-        <MenuItem Header="{Binding Loc[Help]}" ItemsSource="{Binding HelpMenuItems}" />
+        <MenuItem x:Name="HelpMenu" Header="{Binding Loc[Help]}">
+            <MenuItem Command="{Binding ImportTutorialCommand}" Header="{Binding Loc[ImportTutorial]}" />
+        </MenuItem>
     </Menu>
 </UserControl>

@@ -12,6 +12,8 @@ public class EditorDbContext : DbContext
 
     public DbSet<ModInfo> ModInfos { get; set; }
     public DbSet<ProfileInfo> ProfileInfos { get; set; }
+    public DbSet<CommandLog> CommandLogs { get; set; }
+    public DbSet<WorkspaceSnapshot> WorkspaceSnapshots { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -33,6 +35,18 @@ public class EditorDbContext : DbContext
             e.HasIndex(m => m.Path).IsUnique(); // 以Path作为业务唯一键
             e.Property(m => m.UpdateTime).ValueGeneratedOnAddOrUpdate().HasDefaultValueSql("CURRENT_TIMESTAMP");
             e.Property(m => m.CreateTime).ValueGeneratedOnAdd().HasDefaultValueSql("CURRENT_TIMESTAMP");
+        });
+        modelBuilder.Entity<CommandLog>(e =>
+        {
+            e.HasKey(c => c.Id);
+            e.Property(c => c.TargetType).IsRequired();
+            e.Property(c => c.TargetId).IsRequired();
+            e.HasIndex(c => new { c.TargetType, c.TargetId });
+        });
+        modelBuilder.Entity<WorkspaceSnapshot>(e =>
+        {
+            e.HasKey(w => w.Id);
+            e.HasIndex(w => new { w.TargetType, w.TargetId }).IsUnique();
         });
     }
 }

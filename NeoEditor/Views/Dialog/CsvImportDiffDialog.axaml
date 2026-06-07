@@ -1,0 +1,35 @@
+<Window
+    x:Class="NeoEditor.Views.Dialog.CsvImportDiffDialog"
+    xmlns:dialog="clr-namespace:NeoEditor.Views.Dialog"
+    x:DataType="dialog:CsvImportDiffDialog"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    x:Name="Root"
+    Width="900"
+    Height="600"
+    MinWidth="600"
+    MinHeight="400"
+    Title="{Binding Loc[CsvImportTitle]}"
+    WindowStartupLocation="CenterOwner"
+    mc:Ignorable="d">
+    <Grid Margin="12" RowDefinitions="Auto,*,Auto" RowSpacing="10">
+        <TextBlock Grid.Row="0" FontWeight="Bold" Text="{Binding Loc[CsvImportDiffHeader], ElementName=Root}" />
+        <DataGrid
+            Grid.Row="1"
+            x:Name="DiffGrid"
+            AutoGenerateColumns="True"
+            IsReadOnly="True"
+            SelectionMode="Single">
+        </DataGrid>
+        <StackPanel
+            Grid.Row="2"
+            HorizontalAlignment="Right"
+            Orientation="Horizontal"
+            Spacing="16">
+            <Button Click="OnConfirmClick" Content="{Binding Loc[CsvImportConfirm], ElementName=Root}" />
+            <Button Click="OnCancelClick" Content="{Binding Loc[CsvImportCancel], ElementName=Root}" />
+        </StackPanel>
+    </Grid>
+</Window>

@@ -1,6 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
+using NeoEditor.Helper;
 
 namespace NeoEditor.Data.Model.Game;
 
@@ -22,8 +23,11 @@ public class TreasureTable : IEntity
     public string Name { get; set; } = "";
 
     [Column("aTreasures", TypeName = "text")]
-    [Comment("战利品池的内容，格式'物品IDx数量x几率'，竖线|表示或，逗号,表示和")]
+    [Comment("战利品池的内容，格式'物品IDx几率x数量'，竖线|表示或，逗号,表示和")]
     [Display(Name = "Treasures")]
+    [ReferenceField(typeof(ItemType), Separator = ",", Pattern = "{id}x{mult}",
+        TargetKey = "{GroupId}.{SubgroupId}",
+        SecondaryTargetEntityType = typeof(TreasureTable), SecondaryTargetKey = "{Id}")]
     public string Treasures { get; set; } = "";
 
     [Column("bNested", TypeName = "tinyint(1)")]

@@ -1,0 +1,39 @@
+<Window
+    x:Class="NeoEditor.Views.Dialog.ProfileDiffDialog"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:dialog="clr-namespace:NeoEditor.Views.Dialog"
+    x:Name="Root"
+    Title="{Binding Loc[ProfileDiffTitle]}"
+    Width="720" Height="480"
+    WindowStartupLocation="CenterOwner"
+    mc:Ignorable="d"
+    x:DataType="dialog:ProfileDiffDialog"
+    x:CompileBindings="True">
+    <DockPanel Margin="12">
+        <StackPanel DockPanel.Dock="Top" Spacing="6" Margin="0,0,0,12">
+            <StackPanel Orientation="Horizontal" Spacing="12">
+                <TextBlock FontWeight="Bold" Text="{Binding Loc[ProfileDiffA]}" />
+                <TextBlock x:Name="ProfileAName" />
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" Spacing="12">
+                <TextBlock FontWeight="Bold" Text="{Binding Loc[ProfileDiffB]}" />
+                <TextBlock x:Name="ProfileBName" />
+            </StackPanel>
+        </StackPanel>
+        <DataGrid x:Name="DiffGrid" AutoGenerateColumns="False" x:DataType="dialog:ProfileDiffDialog">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="{Binding Loc[ProfileDiffModName], ElementName=Root}" Binding="{Binding ModName}" Width="160"
+                    x:DataType="dialog:ProfileDiffDialog+DiffRow" />
+                <DataGridTextColumn Header="{Binding Loc[ProfileDiffA], ElementName=Root}" Binding="{Binding StatusA}" Width="120"
+                    x:DataType="dialog:ProfileDiffDialog+DiffRow" />
+                <DataGridTextColumn Header="{Binding Loc[ProfileDiffB], ElementName=Root}" Binding="{Binding StatusB}" Width="120"
+                    x:DataType="dialog:ProfileDiffDialog+DiffRow" />
+                <DataGridTextColumn Header="{Binding Loc[ProfileDiffPath], ElementName=Root}" Binding="{Binding ModPath}" Width="250"
+                    x:DataType="dialog:ProfileDiffDialog+DiffRow" />
+            </DataGrid.Columns>
+        </DataGrid>
+    </DockPanel>
+</Window>

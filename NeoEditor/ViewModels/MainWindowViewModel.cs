@@ -95,6 +95,12 @@ public partial class MainWindowViewModel : ViewModelBase
         }
     }
 
+    public void NavigateToSettings()
+    {
+        SideBar.CurrentPaneContent = App.ServiceProvider!.GetRequiredService<ExplorerPane.SettingsPaneViewModel>();
+        SideBar.SideBarExpanded = true;
+    }
+
     [RelayCommand]
     private void ChangeCulture(CultureInfo? culture)
     {
@@ -107,6 +113,58 @@ public partial class MainWindowViewModel : ViewModelBase
         CurrentCultureInfo = culture;
         Loc.SetCulture(culture);
         OnPropertyChanged(nameof(Loc));
+    }
+
+    [RelayCommand]
+    private async Task ImportTutorial()
+    {
+        if (Application.Current?.ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime desktop)
+            return;
+
+        var topLevel = TopLevel.GetTopLevel(desktop.MainWindow);
+        var storageProvider = topLevel?.StorageProvider;
+        if (storageProvider == null) return;
+
+        var files = await storageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+        {
+            Title = Loc["ImportTutorial"],
+            AllowMultiple = true,
+            FileTypeFilter = new[]
+            {
+                new FilePickerFileType("Markdown & Images")
+                {
+                    Patterns = new[] { "*.md", "*.markdown", "*.png", "*.jpg", "*.jpeg", "*.gif", "*.svg" }
+                }
+            }
+        });
+
+        if (files.Count == 0) return;
+
+        var helpDir = ResolveHelpCultureDirectory(CurrentCultureInfo);
+        if (string.IsNullOrWhiteSpace(helpDir) || !Directory.Exists(helpDir))
+        {
+            helpDir = Path.Combine(AppContext.BaseDirectory, "Help",
+                CurrentCultureInfo.TwoLetterISOLanguageName);
+            Directory.CreateDirectory(helpDir);
+        }
+
+        foreach (var file in files)
+        {
+            var filePath = file.TryGetLocalPath();
+            if (filePath == null) continue;
+            var destPath = Path.Combine(helpDir, Path.GetFileName(filePath));
+            if (!File.Exists(destPath) || await ConfirmOverwriteAsync(destPath))
+            {
+                File.Copy(filePath, destPath, overwrite: true);
+            }
+        }
+
+        ReloadHelpMenu();
+    }
+
+    private async Task<bool> ConfirmOverwriteAsync(string path)
+    {
+        return true; // For now, always overwrite
     }
 
     [RelayCommand]
@@ -130,20 +188,25 @@ public partial class MainWindowViewModel : ViewModelBase
         }
     }
 
-    private void ReloadHelpMenu()
+    public void ReloadHelpMenu()
     {
         HelpMenuItems.Clear();
 
         var helpCultureDirectory = ResolveHelpCultureDirectory(CurrentCultureInfo);
         if (string.IsNullOrWhiteSpace(helpCultureDirectory) || !Directory.Exists(helpCultureDirectory))
         {
+            _logger.LogWarning("Help: no Help/{Culture} dir found for culture {Culture}. " +
+                               "Searched from assembly dir: {Base}. " +
+                               "Place .md files in Help/zh/ or Help/en/ next to the executable.",
+                CurrentCultureInfo?.Name ?? "?", AppContext.BaseDirectory);
             return;
         }
 
         foreach (var node in BuildHelpMenuTree(helpCultureDirectory))
-        {
             HelpMenuItems.Add(node);
-        }
+
+        _logger.LogInformation("Help menu loaded {Count} items from {Dir}",
+            HelpMenuItems.Count, helpCultureDirectory);
     }
 
     private IReadOnlyList<HelpMenuNode> BuildHelpMenuTree(string helpCultureDirectory)
@@ -232,33 +295,53 @@ public partial class MainWindowViewModel : ViewModelBase
 
     private string? ResolveHelpCultureDirectory(CultureInfo culture)
     {
-        var helpRoots = new[]
-        {
-            Path.Combine(Directory.GetCurrentDirectory(), "Help"),
-            Path.Combine(AppContext.BaseDirectory, "Help")
-        }.Distinct(StringComparer.OrdinalIgnoreCase);
+        // Collect all potential Help roots
+        var candidates = new List<string>();
 
-        var cultureNames = new[]
-            {
-                culture.Name,
-                culture.TwoLetterISOLanguageName,
-                _defaultCultureCode
-            }.Where(name => !string.IsNullOrWhiteSpace(name))
+        // 1. Output directory (bin/Debug/netX.Y/Help) — CopyToOutputDirectory
+        candidates.Add(Path.Combine(AppContext.BaseDirectory, "Help"));
+
+        // 2. Current working directory
+        candidates.Add(Path.Combine(Directory.GetCurrentDirectory(), "Help"));
+
+        // 3. Walk up from assembly to find project root (handles Debug/Release, net10.0 subfolder)
+        var assemblyDir = AppContext.BaseDirectory;
+        for (int i = 0; i < 6; i++)
+        {
+            var probe = Path.Combine(assemblyDir, "Help");
+            if (Directory.Exists(probe)) { candidates.Add(probe); break; }
+            assemblyDir = Path.GetDirectoryName(assemblyDir);
+            if (assemblyDir is null) break;
+        }
+
+        var helpRoots = candidates
+            .Select(p => { try { return Path.GetFullPath(p); } catch { return null; } })
+            .Where(p => p is not null)
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToArray();
 
+        var cultureNames = new[]
+        {
+            culture.Name,
+            culture.TwoLetterISOLanguageName,
+            _defaultCultureCode
+        }.Where(name => !string.IsNullOrWhiteSpace(name)).Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
+
         foreach (var helpRoot in helpRoots)
         {
+            if (helpRoot is null || !Directory.Exists(helpRoot)) continue;
             foreach (var cultureName in cultureNames)
             {
                 var candidate = Path.Combine(helpRoot, cultureName);
-                if (Directory.Exists(candidate))
+                if (Directory.Exists(candidate) && Directory.EnumerateFiles(candidate, "*.md").Any())
                 {
+                    _logger.LogInformation("Help menu root: {Path}", candidate);
                     return candidate;
                 }
             }
         }
 
+        _logger.LogWarning("No Help directory found. Checked roots: {Roots}", string.Join(", ", helpRoots));
         return null;
     }
 

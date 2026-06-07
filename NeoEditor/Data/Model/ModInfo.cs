@@ -32,13 +32,15 @@ public class ModInfo
 
     [Column("LastModified", TypeName = "datetime")]
     [Display(Name = "LastModified")]
-    [DatabaseGenerated(DatabaseGeneratedOption.Computed)]
-    public DateTime LastModified { get; set; } // 文件最后修改时间，记录从编辑器保存的时间点
+    public DateTime LastModified { get; set; } // 编辑器保存至DB的时间点
 
     [Column("LastImport", TypeName = "datetime")]
     [Display(Name = "LastImport")]
-    [DatabaseGenerated(DatabaseGeneratedOption.Computed)]
-    public DateTime? LastImport { get; set; } // 文件最后导入时间，记录从xml导入的时间点
+    public DateTime? LastImport { get; set; } // 从XML导入至DB的时间点
+
+    /// <summary>DB中是否有未导出到XML的改动</summary>
+    [NotMapped]
+    public bool IsDirty => LastModified > (LastImport ?? DateTime.MinValue);
 
     [NotMapped] public ObservableCollection<string> XmlFilePaths { get; set; } = [];
     [NotMapped] public bool XmlFilePathsLoaded { get; set; }
@@ -46,8 +48,9 @@ public class ModInfo
 
 public class ModLoadInfo
 {
-    public ModType Type { get; set; } // 文件路径
+    public ModType Type { get; set; }
     public ModInfo Info { get; set; } = null!;
+    public string? Namespace { get; set; } // strModName from getmods.php, e.g. "NSEb" or "0"
 }
 
 // public class ModIndexInfo

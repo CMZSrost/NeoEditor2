@@ -1,14 +1,16 @@
 ﻿using System;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Messaging;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using NeoEditor.Data.Messages;
 using NeoEditor.ViewModels.ExplorerPane;
 using ModIndexViewModel = NeoEditor.ViewModels.ExplorerPane.ModIndexViewModel;
 
 namespace NeoEditor.ViewModels;
 
-public partial class MainWindowSideBarViewModel : ViewModelBase
+public partial class MainWindowSideBarViewModel : ViewModelBase, IRecipient<SwitchToSettingsMessage>
 {
     private readonly IServiceProvider _serviceProvider;
     private readonly ILogger<MainWindowSideBarViewModel> _logger;
@@ -22,16 +24,30 @@ public partial class MainWindowSideBarViewModel : ViewModelBase
     {
         _serviceProvider = serviceProvider;
         _logger = serviceProvider.GetRequiredService<ILogger<MainWindowSideBarViewModel>>();
+        IsActive = true;
+    }
+
+    public void Receive(SwitchToSettingsMessage message)
+    {
+        CurrentPaneContent = _serviceProvider.GetRequiredService<SettingsPaneViewModel>();
     }
 
     [ObservableProperty] public partial bool SideBarExpanded { get; set; }
     [ObservableProperty] public partial object? CurrentPaneContent { get; set; }
 
     [RelayCommand]
-    private void TogglePane(string paneId)
+    private void TogglePane(string? paneId)
     {
         try
         {
+            // null/empty = just collapse sidebar (used by ActivateDocument)
+            if (string.IsNullOrEmpty(paneId))
+            {
+                SideBarExpanded = false;
+                CurrentPaneContent = null;
+                return;
+            }
+
             if (_currentPaneId == paneId && SideBarExpanded)
             {
                 SideBarExpanded = false;
@@ -59,6 +75,7 @@ public partial class MainWindowSideBarViewModel : ViewModelBase
             "Settings" => _serviceProvider.GetRequiredService<SettingsPaneViewModel>(),
             "ModDatabase" => _serviceProvider.GetRequiredService<ModDatabaseViewModel>(),
             "Profiles" => _serviceProvider.GetRequiredService<ModIndexViewModel>(),
+            "DataBrowser" => _serviceProvider.GetRequiredService<DataBrowserViewModel>(),
             _ => throw new NotSupportedException()
         };
     }

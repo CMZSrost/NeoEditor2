@@ -107,18 +107,38 @@
                     Click="OnPreviousDiffClick">
                     <avalonia:SymbolIcon Symbol="ArrowUp" />
                 </Button>
-                <TextBlock
-                    x:Name="DiffNavigationText"
-                    MinWidth="96"
-                    HorizontalAlignment="Center"
-                    VerticalAlignment="Center"
-                    Text="{Binding Loc[DiffNavigationEmptyText], ElementName=Root}"
-                    TextAlignment="Center" />
+                <StackPanel Orientation="Horizontal" Spacing="2" VerticalAlignment="Center">
+                    <TextBox
+                        x:Name="DiffIndexInput"
+                        Width="36"
+                        Height="24"
+                        Padding="2,0"
+                        VerticalAlignment="Center"
+                        TextAlignment="Center"
+                        Text="{Binding CurrentDiffDisplayIndex, ElementName=Root}"
+                        Watermark="#"
+                        LostFocus="OnDiffIndexInputLostFocus"
+                        KeyDown="OnDiffIndexInputKeyDown" />
+                    <TextBlock
+                        x:Name="DiffNavigationText"
+                        MinWidth="56"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Text="{Binding Loc[DiffNavigationEmptyText], ElementName=Root}"
+                        TextAlignment="Center" />
+                </StackPanel>
                 <Button
                     x:Name="NextDiffButton"
                     MinWidth="36"
                     Click="OnNextDiffClick">
                     <avalonia:SymbolIcon Symbol="ArrowDown" />
+                </Button>
+                <Button
+                    x:Name="JumpFromCursorBtn"
+                    MinWidth="36"
+                    Click="OnJumpFromCursorClick"
+                    ToolTip.Tip="{Binding Loc[DiffJumpToCursor], ElementName=Root}">
+                    <avalonia:SymbolIcon Symbol="ArrowStepIn" />
                 </Button>
             </StackPanel>
         </Border>

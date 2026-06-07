@@ -1,6 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
+using NeoEditor.Helper;
 
 namespace NeoEditor.Data.Model.Game;
 
@@ -34,6 +35,7 @@ public class CreatureSource : IEntity
     [Column("nCreatureID")]
     [Comment("刷新的生物编号，结合creatures中的标号")]
     [Display(Name = "CreatureId")]
+    [ReferenceField(typeof(Creature))]
     public string CreatureId { get; set; } = "0";
 
     [Column("nMin")]

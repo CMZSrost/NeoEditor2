@@ -96,6 +96,15 @@ public partial class XmlDiffView : UserControl
     public LocalizationService Loc { get; }
     private ILogger<XmlDiffView> Logger { get; }
 
+    public static readonly StyledProperty<string> CurrentDiffDisplayIndexProperty =
+        AvaloniaProperty.Register<XmlDiffView, string>(nameof(CurrentDiffDisplayIndex), "");
+
+    public string CurrentDiffDisplayIndex
+    {
+        get => GetValue(CurrentDiffDisplayIndexProperty);
+        set => SetValue(CurrentDiffDisplayIndexProperty, value);
+    }
+
     public XmlDiffView()
     {
         Loc = App.ServiceProvider.GetRequiredService<LocalizationService>();
@@ -178,6 +187,68 @@ public partial class XmlDiffView : UserControl
         }
 
         NavigateToCurrentDiff();
+    }
+
+    private void OnJumpFromCursorClick(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        if (_diffBlocks.Count == 0) return;
+
+        // Determine which editor has focus, default to old (left)
+        var editor = NewEditorControl.IsFocused ? NewEditorControl : OldEditorControl;
+        var isNewText = ReferenceEquals(editor, NewEditorControl);
+        var document = editor.Document;
+        if (document is null) return;
+
+        var caretLine = document.GetLineByOffset(editor.CaretOffset)?.LineNumber ?? 1;
+
+        // Find the first diff block whose start line is AFTER the cursor
+        var foundIndex = -1;
+        for (var i = 0; i < _diffBlocks.Count; i++)
+        {
+            var blockStart = isNewText
+                ? _diffBlocks[i].NewStartLineNumber
+                : _diffBlocks[i].OldStartLineNumber;
+            if (blockStart > caretLine)
+            {
+                foundIndex = i;
+                break;
+            }
+        }
+
+        // Wrap to first diff if none found after cursor
+        if (foundIndex < 0) foundIndex = 0;
+
+        _currentDiffIndex = foundIndex;
+        NavigateToCurrentDiff();
+    }
+
+    private void OnDiffIndexInputLostFocus(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        ApplyDiffIndexInput();
+    }
+
+    private void OnDiffIndexInputKeyDown(object? sender, Avalonia.Input.KeyEventArgs e)
+    {
+        if (e.Key == Avalonia.Input.Key.Enter)
+        {
+            e.Handled = true;
+            ApplyDiffIndexInput();
+        }
+    }
+
+    private void ApplyDiffIndexInput()
+    {
+        if (_diffBlocks.Count == 0) return;
+        var input = CurrentDiffDisplayIndex?.Trim();
+        if (string.IsNullOrEmpty(input)) return;
+
+        if (int.TryParse(input, out var displayIndex) && displayIndex >= 1 && displayIndex <= _diffBlocks.Count)
+        {
+            _currentDiffIndex = displayIndex - 1;
+            NavigateToCurrentDiff();
+        }
+        // Reset display to actual current
+        UpdateDiffNavigationUi();
     }
 
     private void QueueRefreshHighlighting()
@@ -535,8 +606,9 @@ public partial class XmlDiffView : UserControl
 
         var format = Loc["DiffNavigationFormat"];
         DiffNavigationText.Text = string.IsNullOrWhiteSpace(format)
-            ? $"Diff {currentDisplayIndex}/{totalCount}"
-            : string.Format(format, currentDisplayIndex, totalCount);
+            ? $"/{totalCount}"
+            : $"/{totalCount}";
+        CurrentDiffDisplayIndex = currentDisplayIndex.ToString();
         PreviousDiffButton.IsEnabled = totalCount > 0 && _currentDiffIndex > 0;
         NextDiffButton.IsEnabled = totalCount > 0 && _currentDiffIndex < totalCount - 1;
     }

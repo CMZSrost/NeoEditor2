@@ -1,9 +1,12 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Configuration;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
@@ -28,6 +31,7 @@ using NeoEditor.Data;
 using NeoEditor.Data.Context;
 using NeoEditor.Data.Messages;
 using NeoEditor.Data.Model;
+using NeoEditor.Data.Model.Game;
 using NeoEditor.Helper;
 using NeoEditor.Services;
 using NeoEditor.ViewModels.Dialog;
@@ -42,6 +46,8 @@ public partial class ModDatabaseViewModel : ViewModelBase, IRecipient<GameRootDi
 {
     private readonly IConfigService _config;
     private readonly PhpParser _phpParser = new();
+    private readonly CsvImportExportService _csvService;
+    private readonly DataExportService _dataExportService;
     public AppConfig Config => _config.Config;
 
     private ProjectDbContextFactory _gameContextFactory;
@@ -62,7 +68,9 @@ public partial class ModDatabaseViewModel : ViewModelBase, IRecipient<GameRootDi
         App.ServiceProvider!.GetRequiredService<IDbContextFactory<EditorDbContext>>(),
         App.ServiceProvider!.GetRequiredService<EditorDbContext>(),
         App.ServiceProvider!.GetRequiredService<IModManager>(),
-        App.ServiceProvider!.GetRequiredService<IConfigService>()
+        App.ServiceProvider!.GetRequiredService<IConfigService>(),
+        App.ServiceProvider!.GetRequiredService<CsvImportExportService>(),
+        App.ServiceProvider!.GetRequiredService<DataExportService>()
     )
     {
     }
@@ -70,7 +78,9 @@ public partial class ModDatabaseViewModel : ViewModelBase, IRecipient<GameRootDi
     public ModDatabaseViewModel(ProjectDbContextFactory gameContextFactory, ILogger<ModDatabaseViewModel> logger,
         IDbContextFactory<EditorDbContext> editorContextFactory, EditorDbContext editorDbContext,
         IModManager modManager,
-        IConfigService configService)
+        IConfigService configService,
+        CsvImportExportService csvService,
+        DataExportService dataExportService)
     {
         _config = configService;
         _gameContextFactory = gameContextFactory;
@@ -78,9 +88,10 @@ public partial class ModDatabaseViewModel : ViewModelBase, IRecipient<GameRootDi
         _editorContextFactory = editorContextFactory;
         _editorDbContext = editorDbContext;
         _modManager = modManager;
+        _csvService = csvService;
+        _dataExportService = dataExportService;
         ShowImageMenuCommand = new RelayCommand<ModInfo?>(ShowImage);
-
-        Messenger.Send(new InitModMessage());
+        // Quick DB scan — no XML parsing
         Dispatcher.UIThread.InvokeAsync(() => RefreshMod());
     }
 
@@ -119,7 +130,9 @@ public partial class ModDatabaseViewModel : ViewModelBase, IRecipient<GameRootDi
                 return;
             }
 
-            await _modManager.ImportModAsync(folderPath);
+            var modInfo = await _modManager.ImportModAsync(folderPath);
+            if (modInfo is not null)
+                Messenger.Send(new OpenModGameDataDocumentMessage(modInfo));
         }
 
         Mods.Clear();
@@ -130,9 +143,28 @@ public partial class ModDatabaseViewModel : ViewModelBase, IRecipient<GameRootDi
     [RelayCommand]
     public async Task RefreshMod(ModInfo? selectedItem = null)
     {
+        // One-time: ensure Game base mod exists
+        await EnsureGameModAsync();
+
         Mods.Clear();
         Mods.AddRange(await _editorDbContext.ModInfos.ToListAsync());
-        // App.Notification.ShowSuccess(Loc["ReloadModsSuccess"], Loc["ReloadModsSuccessMessage"]);
+    }
+
+    private async Task EnsureGameModAsync()
+    {
+        await using var db = await _editorContextFactory.CreateDbContextAsync();
+        if (await db.ModInfos.FindAsync(-1) is not null) return;
+
+        db.ModInfos.Add(new ModInfo
+        {
+            ModId = -1,
+            Name = "Game",
+            Path = "data",
+            IsBase = true,
+            LastImport = DateTime.Now,
+            LastModified = DateTime.Now,
+        });
+        await db.SaveChangesAsync();
     }
 
     [RelayCommand]
@@ -225,19 +257,30 @@ public partial class ModDatabaseViewModel : ViewModelBase, IRecipient<GameRootDi
         await using var db = await _editorContextFactory.CreateDbContextAsync();
         if (selectedItem is null)
         {
-            db.ModInfos.RemoveRange(Mods);
+            var toRemove = Mods.Where(m => !m.IsBase).ToList();
+            if (toRemove.Count == 0)
+            {
+                App.Notification.ShowInfo(Loc["NoModsToClearMessage"]);
+                return;
+            }
+            db.ModInfos.RemoveRange(toRemove);
             await db.SaveChangesAsync();
-            Mods.Clear();
+            foreach (var m in toRemove) Mods.Remove(m);
         }
         else if (selectedItem.IsBase)
         {
             App.Notification.ShowWarning(Loc["BaseModCannotBeDeletedMessage"], Loc["BaseModCannotBeDeleted"]);
+            return;
         }
-
+        else
         {
-            db.ModInfos.Remove(selectedItem);
-            await db.SaveChangesAsync();
-            Mods.Remove(Mods.First(m => m.ModId == selectedItem.ModId));
+            var toRemove = await db.ModInfos.FindAsync(selectedItem.ModId);
+            if (toRemove is not null)
+            {
+                db.ModInfos.Remove(toRemove);
+                await db.SaveChangesAsync();
+                Mods.Remove(Mods.First(m => m.ModId == selectedItem.ModId));
+            }
         }
         await RefreshMod();
     }
@@ -254,13 +297,25 @@ public partial class ModDatabaseViewModel : ViewModelBase, IRecipient<GameRootDi
                 Loc["DeleteAllModsConfirmMessageDetail"], ButtonEnum.YesNo, Icon.Warning);
             var result = await msgBox.ShowWindowDialogAsync(mainWindow);
             if (result != ButtonResult.Yes) return;
-            foreach (var modInfo in Mods)
+            foreach (var modInfo in Mods.Where(m => !m.IsBase).ToList())
             {
-                await _modManager.DeleteMod(modInfo);
+                try
+                {
+                    await _modManager.DeleteMod(modInfo);
+                }
+                catch (Exception ex)
+                {
+                    App.Notification.ShowWarning($"Cannot delete {modInfo.Name}: {ex.Message}");
+                }
             }
         }
         else
         {
+            if (selectedItem.IsBase)
+            {
+                App.Notification.ShowWarning(Loc["BaseModCannotBeDeletedMessage"], Loc["BaseModCannotBeDeleted"]);
+                return;
+            }
             var msgBox = MessageBoxManager.GetMessageBoxStandard(Loc["DeleteModsConfirmMessage"],
                 Loc["DeleteModsConfirmMessageDetail"], ButtonEnum.YesNo, Icon.Warning);
             var result = await msgBox.ShowWindowDialogAsync(mainWindow);
@@ -277,19 +332,21 @@ public partial class ModDatabaseViewModel : ViewModelBase, IRecipient<GameRootDi
         try
         {
             using var db = _editorContextFactory.CreateDbContext();
-            if (db.ModInfos.Find(-1) is not null) return;
-            var mod = new ModInfo
+            ModInfo? gameMod = db.ModInfos.Find(-1);
+            if (gameMod is null)
             {
-                ModId = -1,
-                Name = "Game",
-                Path = "data",
-                IsBase = true,
-                LastImport = DateTime.Now,
-                LastModified = DateTime.Now,
-            };
-            db.ModInfos.Add(mod);
-            db.SaveChanges();
-            // Mods.Add(mod);
+                gameMod = new ModInfo
+                {
+                    ModId = -1,
+                    Name = "Game",
+                    Path = "data",
+                    IsBase = true,
+                    LastImport = DateTime.Now,
+                    LastModified = DateTime.Now,
+                };
+                db.ModInfos.Add(gameMod);
+                db.SaveChanges();
+            }
         }
         catch (Exception e)
         {
@@ -299,12 +356,12 @@ public partial class ModDatabaseViewModel : ViewModelBase, IRecipient<GameRootDi
 
     public void Receive(GameRootDirChangedMessage message)
     {
-        Dispatcher.UIThread.InvokeAsync(() => RefreshMod());
+        // Manual refresh only — user clicks the refresh button
     }
 
     public void Receive(RefreshModMessage message)
     {
-        Dispatcher.UIThread.InvokeAsync(() => RefreshMod());
+        // Manual refresh only
     }
 
     [RelayCommand]
@@ -452,5 +509,285 @@ public partial class ModDatabaseViewModel : ViewModelBase, IRecipient<GameRootDi
         }
 
         return xmlPath.Replace("\\", "/");
+    }
+
+    [RelayCommand]
+    private async Task ExportCsv(ModInfo? selectedItem = null)
+    {
+        var modInfo = selectedItem ?? SelectedItem;
+        if (modInfo is null) return;
+        if (Application.Current?.ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime
+            { MainWindow: { } mainWindow }) return;
+        if (TopLevel.GetTopLevel(mainWindow) is not { StorageProvider: { } storageProvider }) return;
+
+        var file = await storageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+        {
+            Title = "Export CSV",
+            DefaultExtension = "csv",
+            FileTypeChoices = [new FilePickerFileType("CSV Files") { Patterns = ["*.csv"] }]
+        });
+        if (file?.TryGetLocalPath() is not { } savePath) return;
+
+        try
+        {
+            using var gameDb = _gameContextFactory.CreateDbContext(Path.Combine(Directory.GetCurrentDirectory(), Data.Constants.GameDatabasePath));
+            // Export all entity types for this mod to a single CSV
+            var allEntities = new List<IEntity>();
+            foreach (var (typeName, type) in Data.Constants.GameTypes)
+            {
+                var method = typeof(GameDbContext).GetMethod(nameof(GameDbContext.Set), Type.EmptyTypes)!
+                    .MakeGenericMethod(type);
+                var dbSet = (System.Collections.IEnumerable)method.Invoke(gameDb, null)!;
+                foreach (var entity in dbSet)
+                {
+                    if (entity is IEntity ie && ie.ModId == modInfo.ModId)
+                        allEntities.Add(ie);
+                }
+            }
+
+            // Simple export: write one section per entity type
+            var sb = new System.Text.StringBuilder();
+            foreach (var group in allEntities.GroupBy(e => e.GetType().Name))
+            {
+                var entityType = Data.Constants.GameTypes[group.Key];
+                var tempPath = System.IO.Path.GetTempFileName();
+                _csvService.ExportEntitiesToCsv(group, entityType, tempPath);
+                sb.AppendLine($"# {group.Key}");
+                sb.AppendLine(System.IO.File.ReadAllText(tempPath));
+                sb.AppendLine();
+                try { System.IO.File.Delete(tempPath); } catch { }
+            }
+
+            System.IO.File.WriteAllText(savePath, sb.ToString(), System.Text.Encoding.UTF8);
+            App.Notification.ShowSuccess($"Exported to {savePath}", "CSV Export");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to export CSV");
+            App.Notification.ShowWarning($"Export failed: {ex.Message}");
+        }
+    }
+
+    [RelayCommand]
+    private async Task ImportCsv(ModInfo? selectedItem = null)
+    {
+        var modInfo = selectedItem ?? SelectedItem;
+        if (modInfo is null) return;
+        if (Application.Current?.ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime
+            { MainWindow: { } mainWindow }) return;
+        if (TopLevel.GetTopLevel(mainWindow) is not { StorageProvider: { } storageProvider }) return;
+
+        var files = await storageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+        {
+            Title = "Import CSV",
+            AllowMultiple = false,
+            FileTypeFilter = [new FilePickerFileType("CSV Files") { Patterns = ["*.csv"] }]
+        });
+        if (files is null || files.Count == 0) return;
+        if (files[0].TryGetLocalPath() is not { } csvPath) return;
+
+        // Let user select entity type to import
+        var entityTypes = Data.Constants.GameTypes.Values.OrderBy(t => t.Name).ToList();
+        if (entityTypes.Count == 0)
+        {
+            App.Notification.ShowWarning("No entity types available.", "Import CSV");
+            return;
+        }
+
+        // Import to first entity type by default (later: show type selector)
+        var entityType = entityTypes[0];
+        try
+        {
+            var modDir = ResolveModDirectory(modInfo.Path);
+            var filePath = System.IO.Path.Combine(modDir, "neogame.xml");
+            var entities = _csvService.ParseCsvToEntities(csvPath, entityType, modInfo.ModId, filePath);
+
+            if (entities.Count == 0)
+            {
+                App.Notification.ShowInfo("No valid rows found in CSV.", "Import CSV");
+                return;
+            }
+
+            // Load existing entities for comparison
+            using var gameDb = _gameContextFactory.CreateDbContext(Path.Combine(Directory.GetCurrentDirectory(), Data.Constants.GameDatabasePath));
+            var method = typeof(GameDbContext).GetMethod(nameof(GameDbContext.Set), Type.EmptyTypes)!
+                .MakeGenericMethod(entityType);
+            var dbSet = (System.Collections.IEnumerable)method.Invoke(gameDb, null)!;
+            var existing = dbSet.Cast<IEntity>().Where(e => e.ModId == modInfo.ModId).ToList();
+
+            var diffs = _csvService.CompareEntities(entities, existing.Cast<object>().ToList(), entityType);
+            if (diffs.Count == 0)
+            {
+                App.Notification.ShowInfo("No differences found. Nothing to import.", "Import CSV");
+                return;
+            }
+
+            var confirmed = await CsvImportDiffDialog.ShowAsync(mainWindow, diffs);
+            if (!confirmed) return;
+
+            // Upsert imported entities using the DbSet
+            var dbSetType = typeof(Microsoft.EntityFrameworkCore.DbSet<>).MakeGenericType(entityType);
+            var addMethod = dbSetType.GetMethod("Add", [entityType]);
+            if (addMethod is null) return;
+
+            foreach (var entity in entities.Cast<IEntity>())
+            {
+                var existingEntity = existing.FirstOrDefault(e =>
+                    ResolveEntityKeyValue(e) == ResolveEntityKeyValue(entity));
+                if (existingEntity is not null)
+                {
+                    // Copy values from imported entity to existing tracked entity
+                    foreach (var prop in entityType.GetProperties())
+                    {
+                        if (prop.DeclaringType == typeof(IEntity)) continue;
+                        if (prop.GetCustomAttribute<System.ComponentModel.DataAnnotations.Schema.ColumnAttribute>() is null) continue;
+                        if (!prop.CanWrite) continue;
+                        prop.SetValue(existingEntity, prop.GetValue(entity));
+                    }
+                }
+                else
+                {
+                    addMethod.Invoke(dbSet, [entity]);
+                }
+            }
+            await gameDb.SaveChangesAsync();
+
+            App.Notification.ShowSuccess($"Imported {entities.Count} rows into {entityType.Name} for {modInfo.Name}.", "Import CSV");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to import CSV");
+            App.Notification.ShowWarning($"Import failed: {ex.Message}");
+        }
+    }
+
+    [RelayCommand]
+    private async Task ExportModZip(ModInfo? selectedItem = null)
+    {
+        var modInfo = selectedItem ?? SelectedItem;
+        if (modInfo is null) return;
+        if (Application.Current?.ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime
+            { MainWindow: { } mainWindow }) return;
+        if (TopLevel.GetTopLevel(mainWindow) is not { StorageProvider: { } storageProvider }) return;
+
+        var suggestedName = $"{modInfo.Name}_{DateTime.Now:yyyyMMdd}.zip";
+        var file = await storageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+        {
+            Title = "Export Mod as .zip",
+            SuggestedFileName = suggestedName,
+            FileTypeChoices = [new FilePickerFileType("ZIP Archive") { Patterns = ["*.zip"] }]
+        });
+        if (file?.TryGetLocalPath() is not { } savePath) return;
+
+        try
+        {
+            await _modManager.ExportModToZipAsync(modInfo, savePath);
+            App.Notification.ShowSuccess($"Exported to {savePath}", "Mod Export");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to export mod zip");
+            App.Notification.ShowWarning($"Export failed: {ex.Message}");
+        }
+    }
+
+    [RelayCommand]
+    private async Task ImportModZip()
+    {
+        if (Application.Current?.ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime
+            { MainWindow: { } mainWindow }) return;
+        if (TopLevel.GetTopLevel(mainWindow) is not { StorageProvider: { } storageProvider }) return;
+
+        var files = await storageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+        {
+            Title = "Import Mod from .zip",
+            AllowMultiple = false,
+            FileTypeFilter = [new FilePickerFileType("ZIP Archive") { Patterns = ["*.zip"] }]
+        });
+        if (files is null || files.Count == 0) return;
+        if (files[0].TryGetLocalPath() is not { } zipPath) return;
+
+        try
+        {
+            var modInfo = await _modManager.ImportModFromZipAsync(zipPath);
+            await RefreshMod();
+            App.Notification.ShowSuccess($"Imported mod: {modInfo.Name}", "Mod Import");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to import mod zip");
+            App.Notification.ShowWarning($"Import failed: {ex.Message}");
+        }
+    }
+
+    [RelayCommand]
+    private async Task ExportCraftingCsv()
+    {
+        var dateStr = DateTime.Now.ToString("yyyyMMdd");
+        await ExportWithDialog("Export Crafting Table", "*.csv",
+            _dataExportService.ExportCraftingTableAsync, $"crafting_table_{dateStr}.csv");
+    }
+
+    [RelayCommand]
+    private async Task ExportItemEncyclopedia()
+    {
+        var dateStr = DateTime.Now.ToString("yyyyMMdd");
+        await ExportWithDialog("Export Item Encyclopedia", "*.md",
+            _dataExportService.ExportItemEncyclopediaMdAsync, $"item_encyclopedia_{dateStr}.md");
+    }
+
+    [RelayCommand]
+    private async Task ExportLootTableJson()
+    {
+        var dateStr = DateTime.Now.ToString("yyyyMMdd");
+        await ExportWithDialog("Export Loot Tables", "*.json",
+            _dataExportService.ExportLootTableJsonAsync, $"loot_tables_{dateStr}.json");
+    }
+
+    [RelayCommand]
+    private async Task ExportAllXlsx()
+    {
+        var dateStr = DateTime.Now.ToString("yyyyMMdd");
+        await ExportWithDialog("Export All to Excel", "*.xlsx",
+            _dataExportService.ExportAllToXlsxAsync, $"neoscavenger_data_{dateStr}.xlsx");
+    }
+
+    private async Task ExportWithDialog(string title, string pattern, Func<string, Task> exportFunc,
+        string? suggestedName = null)
+    {
+        if (Application.Current?.ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime
+            { MainWindow: { } mainWindow }) return;
+        if (TopLevel.GetTopLevel(mainWindow) is not { StorageProvider: { } storageProvider }) return;
+
+        var file = await storageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+        {
+            Title = title,
+            SuggestedFileName = suggestedName,
+            FileTypeChoices = [new FilePickerFileType("Export") { Patterns = [pattern] }]
+        });
+        if (file?.TryGetLocalPath() is not { } savePath) return;
+
+        try
+        {
+            await exportFunc(savePath);
+            App.Notification.ShowSuccess($"Exported to {savePath}", title);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Export failed for {Title}", title);
+            App.Notification.ShowWarning($"Export failed: {ex.Message}");
+        }
+    }
+
+    private static object? ResolveEntityKeyValue(IEntity entity)
+    {
+        var type = entity.GetType();
+        var keyProp = type.GetProperties()
+            .FirstOrDefault(p =>
+            {
+                var col = p.GetCustomAttribute<System.ComponentModel.DataAnnotations.Schema.ColumnAttribute>();
+                return col?.Name == "id" || col?.Name == "nID";
+            });
+        return keyProp?.GetValue(entity);
     }
 }

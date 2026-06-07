@@ -1,0 +1,39 @@
+<UserControl
+    x:Class="NeoEditor.Views.UserControls.ImagePreviewView"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:mainContent="clr-namespace:NeoEditor.ViewModels.MainContent"
+    x:DataType="mainContent:ImagePreviewContent">
+    <Border Padding="4">
+        <Grid RowDefinitions="Auto,*,Auto">
+            <TextBlock Grid.Row="0" FontSize="11" FontWeight="SemiBold" Margin="0,0,0,4"
+                       Text="{Binding StatusText}" TextWrapping="Wrap" />
+            <ListBox Grid.Row="1" ItemsSource="{Binding ImagePaths}" FontSize="10"
+                     x:Name="ImageList"
+                     FontFamily="Consolas,Courier New">
+                <ListBox.ItemTemplate>
+                    <DataTemplate DataType="mainContent:ImageEntry">
+                        <StackPanel Orientation="Horizontal" Spacing="4">
+                            <TextBlock Text="✓" FontWeight="Bold"
+                                       Foreground="Green"
+                                       IsVisible="{Binding IsFound}" />
+                            <TextBlock Text="✗" FontWeight="Bold"
+                                       Foreground="Red"
+                                       IsVisible="{Binding !IsFound}" />
+                            <TextBlock Text="{Binding DisplayText}" TextWrapping="Wrap" />
+                            <TextBlock Text="{Binding FieldName, StringFormat='[{0}]'}"
+                                       Foreground="{DynamicResource SystemControlForegroundChromeDisabledLowBrush}"
+                                       FontSize="9" />
+                        </StackPanel>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+            <StackPanel Grid.Row="2" Margin="0,4,0,0" Spacing="2">
+                <TextBlock FontSize="9"
+                           Foreground="{DynamicResource SystemControlForegroundChromeDisabledLowBrush}"
+                           TextWrapping="Wrap"
+                           Text="{Binding Loc[ImagePreviewFooter]}" />
+            </StackPanel>
+        </Grid>
+    </Border>
+</UserControl>

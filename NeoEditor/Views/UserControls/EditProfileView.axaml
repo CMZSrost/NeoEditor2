@@ -5,6 +5,7 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:model="clr-namespace:NeoEditor.Data.Model"
+    xmlns:dd="using:Avalonia.Xaml.Interactions.DragAndDrop"
     xmlns:userControls="clr-namespace:NeoEditor.Views.UserControls"
     xmlns:viewModels="clr-namespace:NeoEditor.ViewModels"
     x:Name="Root"
@@ -151,7 +152,7 @@
                     ItemsSource="{Binding Entries}"
                     SelectedItem="{Binding SelectedEntry}">
                     <Interaction.Behaviors>
-                        <ContextDropBehavior Handler="{Binding DataGridDropHandler}" />
+                        <dd:ContextDropBehavior Handler="{Binding DataGridDropHandler}" />
                     </Interaction.Behaviors>
                     <DataGrid.Styles>
                         <Style Selector="DataGridRow">
@@ -159,7 +160,7 @@
                                 <BehaviorCollectionTemplate>
                                     <BehaviorCollection>
                                         <!--  Make rows draggable  -->
-                                        <ContextDragBehavior />
+                                        <dd:ContextDragBehavior />
                                     </BehaviorCollection>
                                 </BehaviorCollectionTemplate>
                             </Setter>

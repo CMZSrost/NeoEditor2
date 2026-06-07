@@ -1,6 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
+using NeoEditor.Helper;
 
 namespace NeoEditor.Data.Model.Game;
 
@@ -24,5 +25,6 @@ public class Faction : IEntity
     [Column("dictFactions", TypeName = "longtext")]
     [Comment("与其他派系的声望关系，格式如'0=-100,1=1,2=-100'")]
     [Display(Name = "DictFactions")]
+    [ReferenceField(typeof(Faction), Separator = ",", Pattern = "{id}={value}")]
     public string DictFactions { get; set; } = "";
 }

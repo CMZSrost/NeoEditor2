@@ -1,6 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
+using NeoEditor.Helper;
 
 namespace NeoEditor.Data.Model.Game;
 
@@ -58,50 +59,58 @@ public class BattleMove : IEntity
 
     [Column("vUsConditions", TypeName = "varchar(1000)")]
     [StringLength(1000)]
-    [Comment("需要我方处于的状态，负号表示非，即不处于该状态'")]
+    [Comment("需要我方处于的状态，格式如'[98,0,0],[339,0,0]'（[]三元素组：[条件ID,参数1,参数2]，逗号分隔）")]
     [Display(Name = "UsConditions")]
+    [ReferenceField(typeof(Condition), Separator = "],[", Pattern = "[{id}")]
     public string UsConditions { get; set; } = "";
 
     [Column("vThemConditions", TypeName = "varchar(1000)")]
     [StringLength(1000)]
-    [Comment("需要对方处于的状态，负号表示非，即不处于该状态")]
+    [Comment("需要对方处于的状态，格式同vUsConditions")]
     [Display(Name = "ThemConditions")]
+    [ReferenceField(typeof(Condition), Separator = "],[", Pattern = "[{id}")]
     public string ThemConditions { get; set; } = "";
 
     [Column("vPairConditions", TypeName = "varchar(1000)")]
     [StringLength(1000)]
-    [Comment("该行动对自己带来的影响")]
+    [Comment("该行动对自己带来的影响，格式同vUsConditions")]
     [Display(Name = "PairConditions")]
+    [ReferenceField(typeof(Condition), Separator = "],[", Pattern = "[{id}")]
     public string PairConditions { get; set; } = "";
 
     [Column("vUsFailConditions", TypeName = "varchar(1000)")]
     [StringLength(1000)]
-    [Comment("行动失败时会为自己带来的状态")]
+    [Comment("行动失败时会为自己带来的状态，格式同vUsConditions")]
     [Display(Name = "UsFailConditions")]
+    [ReferenceField(typeof(Condition), Separator = "],[", Pattern = "[{id}")]
     public string UsFailConditions { get; set; } = "";
 
     [Column("vThemFailConditions", TypeName = "varchar(1000)")]
     [StringLength(1000)]
     [Comment("行动失败时会为敌方带来的状态（官方所有数据均未填写）")]
     [Display(Name = "ThemFailConditions")]
+    [ReferenceField(typeof(Condition), Separator = "],[", Pattern = "[{id}")]
     public string ThemFailConditions { get; set; } = "";
 
     [Column("vPairFailConditions", TypeName = "varchar(1000)")]
     [StringLength(1000)]
-    [Comment("行动失败时会为自己带来的影响")]
+    [Comment("行动失败时会为自己带来的影响，格式同vUsConditions")]
     [Display(Name = "PairFailConditions")]
+    [ReferenceField(typeof(Condition), Separator = "],[", Pattern = "[{id}")]
     public string PairFailConditions { get; set; } = "";
 
     [Column("vUsPreConditions", TypeName = "varchar(1000)")]
     [StringLength(1000)]
     [Comment("执行该行动的前置要求，格式如'137,151,-143'（负数表示不可拥有该状态）")]
     [Display(Name = "UsPreConditions")]
+    [ReferenceField(typeof(Condition), Separator = ",")]
     public string UsPreConditions { get; set; } = "";
 
     [Column("vThemPreConditions", TypeName = "varchar(1000)")]
     [StringLength(1000)]
-    [Comment("敌方需要满足的前置条件")]
+    [Comment("敌方需要满足的前置条件，格式同vUsPreConditions")]
     [Display(Name = "ThemPreConditions")]
+    [ReferenceField(typeof(Condition), Separator = ",")]
     public string ThemPreConditions { get; set; } = "";
 
     [Column("nSeeThem")]

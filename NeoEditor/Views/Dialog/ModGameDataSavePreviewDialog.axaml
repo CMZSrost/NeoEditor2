@@ -15,19 +15,24 @@
     mc:Ignorable="d">
     <Grid
         Margin="12"
-        RowDefinitions="Auto,*,Auto"
+        RowDefinitions="Auto,Auto,*,Auto"
         RowSpacing="10">
         <TextBlock Text="{Binding Loc[ModGameDataSavePreviewNote], ElementName=Root}" TextWrapping="Wrap" />
 
+        <Grid Grid.Row="1" ColumnDefinitions="*,14,*">
+            <TextBlock Grid.Column="0" Text="{Binding Loc[DiffOldLabel], ElementName=Root}" FontWeight="Bold" />
+            <TextBlock Grid.Column="2" Text="{Binding Loc[DiffNewLabel], ElementName=Root}" FontWeight="Bold" />
+        </Grid>
+
         <userControls:XmlDiffView
-            Grid.Row="1"
+            Grid.Row="2"
             DocSyntax="XML"
             NewXml="{Binding NewXml, ElementName=Root}"
             OldXml="{Binding OldXml, ElementName=Root}"
             ReadOnly="True" />
 
         <StackPanel
-            Grid.Row="2"
+            Grid.Row="3"
             HorizontalAlignment="Center"
             Orientation="Horizontal"
             Spacing="16">
