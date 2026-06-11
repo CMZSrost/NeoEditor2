@@ -19,4 +19,6 @@ public class Headline : IEntity
     [Comment("头版头条具体文本内容")]
     [Display(Name = "HeadlineText")]
     public string HeadlineText { get; set; } = "";
+
+    public override string Subject => $"News #{Id}";
 }

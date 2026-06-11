@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
 using NeoEditor.Helper;
@@ -158,7 +158,7 @@ public class ItemType : IEntity
     [Column("nComponentID")]
     [Comment("成分ID，结合treasuretable使用,可逆向合成的物品，如果由合成以外的方式获得，拆解时得到的物品ID")]
     [Display(Name = "ComponentId")]
-    [ReferenceField(typeof(ItemType), TargetKey = "{GroupId}.{SubgroupId}")]
+    [ReferenceField(typeof(TreasureTable))]
     public string ComponentId { get; set; }
 
     [Column("bMirrored", TypeName = "tinyint(1)")]
@@ -180,9 +180,9 @@ public class ItemType : IEntity
 
     [Column("aAttackModes", TypeName = "varchar(1000)")]
     [StringLength(1000)]
-    [Comment("攻击模式ID列表")]
+    [Comment("攻击模式ID列表，格式'{持有部位}={AttackModeId}'，如'20=1,21=2'")]
     [Display(Name = "AttackModes")]
-    [ReferenceField(typeof(AttackMode), Separator = ",")]
+    [ReferenceField(typeof(AttackMode), Separator = ",", Pattern = "{value}={id}")]
     public string AttackModes { get; set; } = "";
 
     [Column("nStackLimit")]

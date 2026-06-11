@@ -60,7 +60,7 @@ public class ReferenceIntegrityRule : IValidationRule
     private static void CheckSegment(string segment, IEntity entity, string colName,
         Type targetType, string? pattern, string? targetKey, ValidationReport report)
     {
-        var rawId = ReferenceHelper.ExtractRawId(segment, pattern);
+        var rawId = ReferenceParser.ExtractRawId(segment, pattern);
         if (string.IsNullOrWhiteSpace(rawId) || rawId == "0") return;
 
         // Simple int ID: resolve via FindBestMatch

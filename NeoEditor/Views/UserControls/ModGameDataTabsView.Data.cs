@@ -83,6 +83,7 @@ public partial class ModGameDataTabsView
                     new(modInfo.Name, idVal, entityType, entity.EntityId, entity.Subject)
                 };
                 MergeStore.EntityModNames[entity.EntityId] = modInfo.Name;
+                MergeStore.EntityNamespaces[entity.EntityId] = modInfo.Name; // directory name as namespace for single-mod
             }
 
             Tabs.Add(new GameDataTypeTabItem
@@ -96,6 +97,10 @@ public partial class ModGameDataTabsView
 
         _logger.LogInformation("[ReloadTabs] loaded {TabCount} tabs for mod '{ModName}'",
             Tabs.Count, modInfo.Name);
+
+        // Build reference index for O(1) navigation lookups
+        await MergeStore.Index.BuildAsync();
+
         _persistSequence = 0;
         _commandsSinceSnapshot = 0;
         await RestoreCommandsFromLogAsync();
@@ -695,6 +700,11 @@ public partial class ModGameDataTabsView
             MergeStore.EntityModNames[kv.Key] = kv.Value;
             GenericDataGridHelper.EntityModNames[kv.Key] = kv.Value;
         }
+        foreach (var kv in mergeResult.EntityNamespaces)
+        {
+            MergeStore.EntityNamespaces[kv.Key] = kv.Value;
+            GenericDataGridHelper.EntityNamespaces[kv.Key] = kv.Value;
+        }
         foreach (var kv in mergeResult.OverlayChains)
         {
             MergeStore.OverlayChainDisplay[kv.Key] = kv.Value;
@@ -757,6 +767,10 @@ public partial class ModGameDataTabsView
         _logger.LogInformation(
             "[ReloadMergeTabs] completed: {TabCount} tabs, {TotalOverridden} overridden entities across all types",
             Tabs.Count, _overriddenEntityIds.Count);
+
+        // Build reference index for O(1) navigation lookups
+        await MergeStore.Index.BuildAsync();
+
         var cacheKey = $"profile_{profileInfo.ProfileId}";
         TabSnapshotCache[cacheKey] = (Tabs, MergeStore, EditStore);
         PopulateModFilterCombo(profileInfo);

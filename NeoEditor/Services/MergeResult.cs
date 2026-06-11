@@ -21,6 +21,7 @@ public record TypeMergeData(
 public record MergeResult(
     IReadOnlyList<TypeMergeData> Types,
     IReadOnlyDictionary<string, string> EntityModNames,
+    IReadOnlyDictionary<string, string> EntityNamespaces,
     IReadOnlyDictionary<string, List<OverlayChainEntry>> OverlayChains,
     IReadOnlyDictionary<(string EntityId, string ColumnName), string> FieldSources,
     IReadOnlySet<(string EntityId, string ColumnName)> FieldConflicts,

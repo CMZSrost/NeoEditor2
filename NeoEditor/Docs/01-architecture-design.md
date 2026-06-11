@@ -301,6 +301,8 @@ flowchart LR
 
 ## 5. 游戏内引用系统（modName:modId）
 
+> 详细设计文档: [14-reference-resolution-system.md](14-reference-resolution-system.md)
+
 ### 5.1 引用格式
 
 游戏中不同数据实体间的引用使用 `modName:modId` 格式，例如 `NSE:42` 或 `0:152`：
@@ -322,60 +324,67 @@ AttackMode.vAttackerConditions = "211x1.0,NSE:42x1"
 "NSE", "FoD" 等 → AddOn Mod 的内部名称（strModName）
 ```
 
-### 5.3 关键设计挑战
+### 5.3 实际实现的四层架构
 
-1.  **主键列名不一致**: 不同数据实体使用不同的主键列名
-    
-    -   大多数表使用 `id` 作为主键
-    -   `Recipe` 使用 `nID`
-    -   `TreasureTable` 使用 `id`
-2.  **ID 是 int，引用是 string**: `modName:modId` 组合后是一个字符串。数据库存储的 ID 字段是 `int` 或 `string`，编辑器需要能：
-    
-    -   解析引用字符串 → 提取 `modName` 和 `modId`
-    -   在编辑器中以可读方式展示引用（如超链接跳转）
-    -   编辑时根据当前上下文生成正确的 `modName:modId`
-3.  **引用完整性**: 引用的目标必须在合并后的数据中存在
-    
-
-### 5.4 ReferenceService 设计
-
-```mermaid
-classDiagram
-    class ReferenceService {
-        +ParseReference(string raw) ModReference
-        +ResolveReference(ModReference ref, Type targetType) IEntity
-        +FormatReference(int id, string modName) string
-        +ValidateReference(ModReference ref) bool
-    }
-
-    class ModReference {
-        +string ModName
-        +int ModId
-        +float Multiplier
-        +bool IsDefaultNamespace
-    }
-
-    class ReferenceFieldDescriptor {
-        +string PropertyName
-        +Type TargetEntityType
-        +string FormatPattern
-        +bool IsMultiValue
-    }
-
-    ReferenceService --> ModReference
-    ReferenceService --> ReferenceFieldDescriptor
+```
+┌──────────────────────────────────────────────┐
+│ 元数据层: [ReferenceField] Attribute           │
+│   声明: 目标类型 / 分隔符 / 解析模式(TargetKey)  │
+├──────────────────────────────────────────────┤
+│ 解析层: ReferencePattern (策略) + ReferenceHelper │
+│   5种格式策略: Id / IdXMult / MultXId /          │
+│   IdEqualsValue / BracketId                     │
+├──────────────────────────────────────────────┤
+│ 编排层: GenericDataGridHelper                   │
+│   FindBestMatch() — 反射匹配实体                 │
+│   NavigateToReferenceForce() — 跳转+Peek        │
+│   ConfigureColumn() — 引用列 UI 模板生成         │
+├──────────────────────────────────────────────┤
+│ 事件层: SearchableDataGrid                      │
+│   Ctrl 键追踪 / Tapped 导航 / ContextRequested   │
+│   Peek                                                  │
+└──────────────────────────────────────────────┘
 ```
 
-引用字段的格式模式：
+### 5.4 核心组件
 
-| 模式 | 示例 | 说明 |
+| 组件 | 文件 | 职责 |
 |------|------|------|
-| 简单ID | `"8"` | 单个ID，默认命名空间 |
-| 命名空间ID | `"NSE:42"` | 带命名空间的ID |
-| 逗号分隔 | `"12,13,14"` | 多个目标 |
-| 带倍率 | `"211x1.0"` | IDx数值 |
-| 带数量和ID | `"1x2+1x3"` | `数量x成分ID+数量x成分ID` (配方专用) |
-| 混合复杂 | `"211x1.0,NSE:42x1"` | 多段带命名空间的带倍率引用 |
+| `[ReferenceField]` | `Helper/ReferenceFieldAttribute.cs` | 标记属性为引用字段，声明 TargetEntityType / Separator / Pattern / TargetKey / SecondaryTarget |
+| `ReferencePattern` | `Helper/ReferencePattern.cs` | 策略模式，5 种格式的 ID 提取 + 显示格式化 |
+| `ReferenceHelper` | `Helper/ReferenceHelper.cs` | 纯函数工具集：ParseReference / DecomposeId / ExtractRawId / ParseMultiValue |
+| `GenericDataGridHelper` | `Helper/GenericDataGridHelper.cs` | 核心编排：FindBestMatch（反射匹配）、导航路由、列配置（1056 行） |
+| `SearchableDataGrid` | `Views/UserControls/SearchableDataGrid.axaml.cs` | DataGrid 事件层：Ctrl 键追踪、Tapped/Ctrl+RightClick 触发导航 |
+
+### 5.5 引用格式模式
+
+| 模式 | Pattern 配置 | 示例 | 说明 |
+|------|-------------|------|------|
+| 简单ID | `{id}` (默认) | `"8"`, `"NSE:42"` | 单个ID，可选命名空间前缀 |
+| IDx倍率 | `{id}x{mult}` | `"211x1.0"` | ID后跟x倍率 |
+| 数量xID | `{mult}x{id}` | `"1x2"` | 数量前置于ID（配方专用） |
+| ID=值 | `{id}={value}` | `"38=1"` | ID赋值格式 |
+| 方括号ID | `[{id}` | `"[42,SomeData]"` | 方括号包裹 |
+| 多值 | `Separator=","` | `"12,13,14"` | 逗号/竖线分隔多个目标 |
+
+### 5.6 复合键查找
+
+部分实体的引用使用复合键（如 TreasureTable 用 GroupId+SubgroupId）：
+
+```csharp
+[ReferenceField(typeof(TreasureTable), TargetKey = "{GroupId}.{SubgroupId}")]
+```
+`DecomposeId("86.6", keyInfo)` → `{GroupId:86, SubgroupId:6}`，然后用这两个 key 在目标实体列表中反射匹配。
+
+### 5.7 已知问题
+
+| # | 问题 | 影响 |
+|---|------|------|
+| 1 | `FindBestMatch` 中 `is int val` 对 long/null 类型失效 | 所有实体匹配，总是跳转到 id=1 |
+| 2 | DataGrid 列索引映射：`rowPanel.Children.IndexOf(cell)` 与 `dg.Columns` 不对齐 | 可能读到错误的列属性 |
+| 3 | GDH 静态 `_activeMergeStore` 多 DataGrid 竞争 | 多个 DataGrid 同时可见时读到错误 store |
+
+详见 [14-reference-resolution-system.md](14-reference-resolution-system.md) 第七节。
 
 ---
 
@@ -502,6 +511,47 @@ flowchart LR
     F --> H[在表格中灰色显示被覆盖行 + Tooltip说明]
     G --> I[在单元格上标记来源Mod颜色]
 ```
+
+### 6.6 统一引用解析管线
+
+可视化器和 DataGrid 引用列共用同一套解析系统，避免双路径不一致。
+
+```mermaid
+flowchart TB
+    A[可视化器调用<br/>LookupRef&lt;T&gt;] --> B[ReferenceIndex.Lookup<br/>sourceEid + propName + rawId]
+    B --> C{上下文感知命中?}
+    C -->|是| D[返回目标 EntityId]
+    C -->|否| E[EntityModNames 同 mod 优先]
+    E --> F[返回目标 EntityId]
+    F --> G[ReferenceLookups 中查找实体]
+    D --> G
+    G --> H[返回 T?]
+```
+
+**核心组件**：
+
+| 组件 | 文件 | 职责 |
+|------|------|------|
+| `ReferenceIndex` | `Helper/ReferenceIndex.cs` | 上下文感知索引：`(sourceEid, propName, rawId)` → `targetEid`。同 mod 优先，全局 MergedId 回退 |
+| `EntityMergeStore` | `Services/EntityMergeStore.cs` | 每视图的合并状态，持有 `ReferenceLookups` + `EntityModNames` + `Index` |
+| `ReferenceResolver.LookupRef<T>()` | `Helper/ReferenceResolver.cs` | 统一解析入口：优先走 `ReferenceIndex`，回退 `EntityModNames` |
+| `GenericDataGridHelper.ActiveMergeStore` | `Helper/GenericDataGridHelper.cs` | 公开当前活跃 Store，让 `LookupRef` 访问索引 |
+
+**数据浏览器引用索引**：
+
+```
+EntityBrowserDocument.RebuildBrowserIndexAsync()
+  ├── 创建 EntityMergeStore
+  ├── 填充 ReferenceLookups（24 类型全量）
+  ├── 填充 EntityModNames（EntityId → Mod 名）
+  ├── Index.BuildAsync()  ← 构建上下文感知索引
+  └── SetActiveStores(store, null)
+```
+
+**索引生命周期**：
+- 首次数据浏览器打开 → 惰性构建
+- 侧边栏 `Rebuild Index` 按钮 → 手动重建
+- `SaveProfileMessage` / `RefreshModMessage` / `InitModMessage` / `CellEditedMessage` → 自动失效 → 下次重建
 
 ---
 

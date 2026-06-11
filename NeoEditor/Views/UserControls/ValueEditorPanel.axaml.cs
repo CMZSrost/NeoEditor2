@@ -2,6 +2,8 @@ using System;
 using System.Linq;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Layout;
+using Avalonia.Media;
 using Avalonia.VisualTree;
 using CommunityToolkit.Mvvm.Messaging;
 using Microsoft.Extensions.DependencyInjection;
@@ -85,13 +87,97 @@ public partial class ValueEditorPanel : UserControl
         {
             _currentEntityType = entityType;
             _currentEntity = entity;
-            EditorTitle.Text = Loc["RightPanelEditor"] + " - " + (entity.Subject ?? entityType.Name);
+
+            // Badge info: ModId:Name, MergedId, primary key
+            var modName = GenericDataGridHelper.EntityModNames.TryGetValue(entity.EntityId, out var mn)
+                ? mn : $"mod_{entity.ModId}";
+            var mergedId = GenericDataGridHelper.EntityMergedIds.TryGetValue(entity.EntityId, out var mid)
+                ? mid : -1;
+            var pkProp = entity.GetType().GetProperty("Id") ?? entity.GetType().GetProperty("nID");
+            var pkVal = pkProp?.GetValue(entity) is int pk ? pk : -1;
+            EditorTitle.Text = $"{Loc["RightPanelEditor"]} - {entity.Subject ?? entityType.Name}  [mod={entity.ModId}:{modName} mid={mergedId} pk={pkVal} eid={entity.EntityId[..8]}]";
+
             var overview = visualizer.BuildOverview(entity);
+
+            // Wrap with mod badge header so ALL entity types show ModId:ModName
+            var wrapper = new StackPanel();
+            wrapper.Children.Add(new Border
+            {
+                CornerRadius = new CornerRadius(3),
+                Background = Brush.Parse("#0D000000"),
+                Padding = new Thickness(8, 4),
+                Margin = new Thickness(8, 6, 8, 2),
+                Child = new StackPanel
+                {
+                    Orientation = Orientation.Horizontal,
+                    Spacing = 8,
+                    Children =
+                    {
+                        new TextBlock
+                        {
+                            Text = entity.Subject ?? entityType.Name,
+                            FontWeight = FontWeight.Bold,
+                            FontSize = 12,
+                            VerticalAlignment = VerticalAlignment.Center
+                        },
+                        new Border
+                        {
+                            CornerRadius = new CornerRadius(3),
+                            Background = Brush.Parse(entity.ModId >= 10000 ? "#1B5E20" : "#1565C0"),
+                            Padding = new Thickness(6, 2),
+                            Child = new TextBlock
+                            {
+                                Text = $"{entity.ModId}:{modName}",
+                                FontSize = 10,
+                                Foreground = Brushes.White
+                            }
+                        },
+                        new Border
+                        {
+                            CornerRadius = new CornerRadius(3),
+                            Background = Brush.Parse("#E65100"),
+                            Padding = new Thickness(5, 2),
+                            Child = new TextBlock
+                            {
+                                Text = $"mid={mergedId}",
+                                FontSize = 10,
+                                Foreground = Brushes.White
+                            }
+                        },
+                        new Border
+                        {
+                            CornerRadius = new CornerRadius(3),
+                            Background = Brush.Parse("#6A1B9A"),
+                            Padding = new Thickness(5, 2),
+                            Child = new TextBlock
+                            {
+                                Text = $"pk={pkVal}",
+                                FontSize = 10,
+                                Foreground = Brushes.White
+                            }
+                        },
+                        new Border
+                        {
+                            CornerRadius = new CornerRadius(3),
+                            Background = Brush.Parse("#37474F"),
+                            Padding = new Thickness(5, 2),
+                            Child = new TextBlock
+                            {
+                                Text = entity.EntityId.Length > 10 ? entity.EntityId[..10] : entity.EntityId,
+                                FontSize = 9,
+                                Foreground = Brushes.White
+                            }
+                        }
+                    }
+                }
+            });
+            wrapper.Children.Add(overview);
+
             // Only wrap in ScrollViewer if the visualizer didn't already
-            EditorHost.Content = overview is ScrollViewer ? overview :
+            EditorHost.Content = overview is ScrollViewer ? wrapper :
                 new ScrollViewer
                 {
-                    Content = overview,
+                    Content = wrapper,
                     HorizontalScrollBarVisibility = Avalonia.Controls.Primitives.ScrollBarVisibility.Auto,
                     VerticalScrollBarVisibility = Avalonia.Controls.Primitives.ScrollBarVisibility.Auto
                 };
@@ -106,11 +192,17 @@ public partial class ValueEditorPanel : UserControl
                 _currentEntityType = entityType;
                 _activeEditorControl = editor.CreateEditor();
                 EditorHost.Content = _activeEditorControl;
-                EditorTitle.Text = editor.EditorName;
             }
             if (_currentEntity != entity && _activeEditorControl is not null)
                 editor.UpdateEntity(entity);
             _currentEntity = entity;
+            var modName2 = GenericDataGridHelper.EntityModNames.TryGetValue(entity.EntityId, out var mn2)
+                ? mn2 : $"mod_{entity.ModId}";
+            var mergedId2 = GenericDataGridHelper.EntityMergedIds.TryGetValue(entity.EntityId, out var mid2)
+                ? mid2 : -1;
+            var pkProp2 = entity.GetType().GetProperty("Id") ?? entity.GetType().GetProperty("nID");
+            var pkVal2 = pkProp2?.GetValue(entity) is int pk2 ? pk2 : -1;
+            EditorTitle.Text = $"{editor.EditorName}  [mod={entity.ModId}:{modName2} mid={mergedId2} pk={pkVal2} eid={entity.EntityId[..8]}]";
         }
         else
         {

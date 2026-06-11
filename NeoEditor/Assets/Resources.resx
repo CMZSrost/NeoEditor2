@@ -1,4 +1,4 @@
-﻿<root>
+<root>
     <resheader name="resmimetype">
         <value>text/microsoft-resx</value>
     </resheader>
@@ -2029,4 +2029,119 @@ Double-click to navigate directly.</value></data>
   <data name="DomainStory" xml:space="preserve"><value>Story</value></data>
   <data name="DomainMap" xml:space="preserve"><value>Map</value></data>
   <data name="DomainOther" xml:space="preserve"><value>Other</value></data>
+  <!-- Visualizer display labels -->
+  <data name="Vis.RawData" xml:space="preserve"><value>Raw Data</value></data>
+  <data name="Vis.Stats" xml:space="preserve"><value>Stats</value></data>
+  <data name="Vis.Total" xml:space="preserve"><value>Total</value></data>
+  <data name="Vis.Effective" xml:space="preserve"><value>Effective</value></data>
+  <data name="Vis.Cut" xml:space="preserve"><value>Cut</value></data>
+  <data name="Vis.Blunt" xml:space="preserve"><value>Blunt</value></data>
+  <data name="Vis.DmgBonus" xml:space="preserve"><value>Dmg Bonus</value></data>
+  <data name="Vis.Ammo" xml:space="preserve"><value>Ammo</value></data>
+  <data name="Vis.AttackerConditions" xml:space="preserve"><value>Attacker Conditions</value></data>
+  <data name="Vis.AttackPhrases" xml:space="preserve"><value>Attack Phrases</value></data>
+  <data name="Vis.ReferencedBy" xml:space="preserve"><value>Referenced by</value></data>
+  <data name="Vis.CombatMelee" xml:space="preserve"><value>Melee Combat</value></data>
+  <data name="Vis.CombatRanged" xml:space="preserve"><value>Ranged Combat</value></data>
+  <data name="Vis.PerUse" xml:space="preserve"><value>Per Use</value></data>
+  <data name="Vis.PerHour" xml:space="preserve"><value>Per Hour</value></data>
+  <data name="Vis.PerHourEquipped" xml:space="preserve"><value>Per Hr Equipped</value></data>
+  <data name="Vis.PerHex" xml:space="preserve"><value>Per Hex</value></data>
+  <data name="Vis.Degradeable" xml:space="preserve"><value>Degradeable</value></data>
+  <data name="Vis.Type" xml:space="preserve"><value>Type</value></data>
+  <data name="Vis.Duration" xml:space="preserve"><value>Duration</value></data>
+  <data name="Vis.NextStage" xml:space="preserve"><value>Next Stage</value></data>
+  <data name="Vis.Transfer" xml:space="preserve"><value>Transfer</value></data>
+  <data name="Vis.Tiles" xml:space="preserve"><value>tiles</value></data>
+  <data name="Vis.Base" xml:space="preserve"><value>base</value></data>
+  <data name="Vis.TransferDesc" xml:space="preserve"><value>Arrows/ammo stay on target or drop on ground</value></data>
+  <data name="Vis.ExpandTooltip" xml:space="preserve"><value>Click to expand details · Ctrl+Click to navigate</value></data>
+  <data name="Vis.CtrlClickHint" xml:space="preserve"><value>Ctrl+Click to open full detail</value></data>
+  <data name="Vis.SoundTooltip" xml:space="preserve"><value>Sound cue — embedded in game SWF, not playable directly</value></data>
+  <data name="Vis.StackableHint" xml:space="preserve"><value>Stacks multiplicatively</value></data>
+  <data name="Vis.ResetTimerHint" xml:space="preserve"><value>Resets timer on re-apply</value></data>
+  <data name="Vis.Chance" xml:space="preserve"><value>Chance</value></data>
+  <data name="Vis.Priority" xml:space="preserve"><value>Priority</value></data>
+  <data name="Vis.Fatigue" xml:space="preserve"><value>Fatigue</value></data>
+  <data name="Vis.Detect" xml:space="preserve"><value>Detect</value></data>
+  <data name="Vis.Range" xml:space="preserve"><value>Range</value></data>
+  <data name="Vis.Exposure" xml:space="preserve"><value>Req. Exposure</value></data>
+  <data name="Vis.Order" xml:space="preserve"><value>AI Order</value></data>
+  <data name="Vis.MinCharges" xml:space="preserve"><value>Min Charges</value></data>
+  <data name="Vis.Offensive" xml:space="preserve"><value>Offensive</value></data>
+  <data name="Vis.Retreat" xml:space="preserve"><value>Retreat</value></data>
+  <data name="Vis.Passive" xml:space="preserve"><value>Passive</value></data>
+  <data name="Vis.Action" xml:space="preserve"><value>Action</value></data>
+  <data name="Vis.NonAttack" xml:space="preserve"><value>Non-Attack</value></data>
+  <data name="Vis.OnSuccess" xml:space="preserve"><value>On Success</value></data>
+  <data name="Vis.OnFail" xml:space="preserve"><value>On Fail</value></data>
+  <data name="Vis.Description" xml:space="preserve"><value>Description</value></data>
+  <data name="Vis.BattleMove.UsPreCond" xml:space="preserve"><value>Us Pre-Conditions</value></data>
+  <data name="Vis.BattleMove.ThemPreCond" xml:space="preserve"><value>Them Pre-Conditions</value></data>
+  <data name="Vis.BattleMove.UsRequired" xml:space="preserve"><value>Us Required Conditions</value></data>
+  <data name="Vis.BattleMove.ThemRequired" xml:space="preserve"><value>Them Required Conditions</value></data>
+  <data name="Vis.BattleMove.SelfEffects" xml:space="preserve"><value>Self Effects</value></data>
+  <data name="Vis.BattleMove.UsFail" xml:space="preserve"><value>Us Fail Conditions</value></data>
+  <data name="Vis.BattleMove.ThemFail" xml:space="preserve"><value>Them Fail Conditions</value></data>
+  <data name="Vis.BattleMove.PairFail" xml:space="preserve"><value>Pair Fail Conditions</value></data>
+  <data name="Vis.BattleMove.Conditions" xml:space="preserve"><value>Conditions</value></data>
+  <data name="Vis.BattleMove.Flags" xml:space="preserve"><value>behavior</value></data>
+  <data name="Vis.Move" xml:space="preserve"><value>Move</value></data>
+  <data name="Vis.Exposure.Hidden" xml:space="preserve"><value>Hidden</value></data>
+  <data name="Vis.Exposure.Seen" xml:space="preserve"><value>Seen</value></data>
+  <data name="Vis.Exposure.Any" xml:space="preserve"><value>Any</value></data>
+  <data name="Vis.Alertness" xml:space="preserve"><value>Alertness</value></data>
+  <data name="Vis.VisibilityMod" xml:space="preserve"><value>Visibility</value></data>
+  <data name="Vis.HealPerHour" xml:space="preserve"><value>Heal / Hr</value></data>
+  <data name="Vis.SleepQuality" xml:space="preserve"><value>Sleep Quality</value></data>
+  <data name="Vis.TempAdjust" xml:space="preserve"><value>Temp Adjust</value></data>
+  <data name="Vis.Capacity" xml:space="preserve"><value>Capacity</value></data>
+  <data name="Vis.CampStats" xml:space="preserve"><value>Camp Stats</value></data>
+  <data name="Vis.LootTable" xml:space="preserve"><value>Loot Table</value></data>
+  <data name="Vis.DataPoints" xml:space="preserve"><value>Data Points</value></data>
+  <data name="Vis.MapDefinition" xml:space="preserve"><value>Map Definition</value></data>
+  <data name="Vis.HeadlineText" xml:space="preserve"><value>Headline</value></data>
+  <data name="Vis.Value" xml:space="preserve"><value>Value</value></data>
+  <data name="Vis.Loot" xml:space="preserve"><value>Loot</value></data>
+  <data name="Vis.ORGroup" xml:space="preserve"><value>OR Group</value></data>
+  <data name="Vis.ORGroups" xml:space="preserve"><value>OR Groups</value></data>
+  <data name="Vis.TotalItems" xml:space="preserve"><value>Total Items</value></data>
+  <data name="Vis.Quantity" xml:space="preserve"><value>Qty</value></data>
+  <data name="Vis.Position" xml:space="preserve"><value>Position</value></data>
+  <data name="Vis.Count" xml:space="preserve"><value>Count</value></data>
+  <data name="Vis.Spawn" xml:space="preserve"><value>Spawn</value></data>
+  <data name="Vis.Creature" xml:space="preserve"><value>Creature</value></data>
+  <data name="Vis.Diplomacy" xml:space="preserve"><value>Diplomacy</value></data>
+  <data name="Vis.Members" xml:space="preserve"><value>Members</value></data>
+  <data name="Vis.UsedBy" xml:space="preserve"><value>Used by</value></data>
+  <data name="Vis.Content" xml:space="preserve"><value>Content</value></data>
+  <data name="Vis.Weight" xml:space="preserve"><value>Weight</value></data>
+  <data name="Vis.StackLimit" xml:space="preserve"><value>Stack Limit</value></data>
+  <data name="Vis.Durability" xml:space="preserve"><value>Durability</value></data>
+  <data name="Vis.SlotDepth" xml:space="preserve"><value>Slot Depth</value></data>
+  <data name="Vis.Mirrored" xml:space="preserve"><value>Mirrored</value></data>
+  <data name="Vis.MirroredDesc" xml:space="preserve"><value>Mirrored — dual-wield</value></data>
+  <data name="Vis.Identified" xml:space="preserve"><value>Identified</value></data>
+  <data name="Vis.UseSlots" xml:space="preserve"><value>Use Slots</value></data>
+  <data name="Vis.SocketLocked" xml:space="preserve"><value>Socket Locked</value></data>
+  <data name="Vis.SocketLockedDesc" xml:space="preserve"><value>Locked — cannot be moved by player</value></data>
+  <data name="Vis.Format" xml:space="preserve"><value>Format</value></data>
+  <data name="Vis.AsContainer" xml:space="preserve"><value>As Container</value></data>
+  <data name="Vis.Properties" xml:space="preserve"><value>Properties</value></data>
+  <data name="Vis.AttackModes" xml:space="preserve"><value>Attack Modes</value></data>
+  <data name="Vis.Equipment" xml:space="preserve"><value>Equipment</value></data>
+  <data name="Vis.EquipSlots" xml:space="preserve"><value>Equip Slots</value></data>
+  <data name="Vis.WhenEquipped" xml:space="preserve"><value>When Equipped</value></data>
+  <data name="Vis.WhenUsed" xml:space="preserve"><value>When Used</value></data>
+  <data name="Vis.WhenCarried" xml:space="preserve"><value>When Carried</value></data>
+  <data name="Vis.AcceptsContent" xml:space="preserve"><value>Accepts Content</value></data>
+  <data name="Vis.Degradation" xml:space="preserve"><value>Degradation</value></data>
+  <data name="Vis.BreakParts" xml:space="preserve"><value>Break Parts</value></data>
+  <data name="Vis.ChargeAmmo" xml:space="preserve"><value>Charge / Ammo</value></data>
+  <data name="Vis.SwitchStates" xml:space="preserve"><value>Switch States</value></data>
+  <data name="Vis.References" xml:space="preserve"><value>References</value></data>
+  <data name="Vis.TreasureTable" xml:space="preserve"><value>Treasure Table</value></data>
+  <data name="Vis.RequiredCondition" xml:space="preserve"><value>Required Condition</value></data>
+  <data name="Vis.Component" xml:space="preserve"><value>Component</value></data>
+  <data name="Vis.Toggleable" xml:space="preserve"><value>Toggleable</value></data>
 </root>

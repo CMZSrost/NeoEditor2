@@ -122,6 +122,7 @@ public partial class App : Application
                 services.AddSingleton<ISearchService>(sp => sp.GetRequiredService<SearchService>());
                 services.AddSingleton<FieldDescriptionService>();
                 services.AddSingleton<IWorkspacePersistenceService, WorkspacePersistenceService>();
+                services.AddSingleton<Helper.INavigationRouter, Services.NavigationRouter>();
 
                 // Custom table editors
                 services.AddSingleton<Views.UserControls.Editors.RecipeFlowchartEditor>();
@@ -253,10 +254,22 @@ public partial class App : Application
         visualizerRegistry.Register(new Views.UserControls.Editors.EncounterTriggerEntityVisualizer());
         visualizerRegistry.Register(new Views.UserControls.Editors.CreatureSourceEntityVisualizer());
         visualizerRegistry.Register(new Views.UserControls.Editors.DmcPlaceEntityVisualizer());
+        // Remaining tables
+        visualizerRegistry.Register(new Views.UserControls.Editors.BarterHexEntityVisualizer());
+        visualizerRegistry.Register(new Views.UserControls.Editors.DataFileEntityVisualizer());
+        visualizerRegistry.Register(new Views.UserControls.Editors.GameVarEntityVisualizer());
+        visualizerRegistry.Register(new Views.UserControls.Editors.HeadlineEntityVisualizer());
+        visualizerRegistry.Register(new Views.UserControls.Editors.ForbiddenHexEntityVisualizer());
+        visualizerRegistry.Register(new Views.UserControls.Editors.MapEntityVisualizer());
 
         InitDatabase<EditorDbContext>(ServiceProvider);
         InitDatabase<GameDbContext>(ServiceProvider);
         RunEditorDbMigrations(ServiceProvider);
+
+        // Build the global browser reference index eagerly on startup.
+        // This index persists as a static singleton (GDH.BrowserStore) for the entire session.
+        // It is only rebuilt when profile changes or mod is saved (via InvalidateIndex).
+        Helper.AsyncHelper.FireAndForget(ViewModels.MainContent.EntityBrowserDocument.EnsureIndexBuiltAsync());
 
         // Initialize field descriptions from .docx
         InitializeFieldDescriptions();

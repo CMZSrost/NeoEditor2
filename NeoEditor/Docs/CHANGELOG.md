@@ -2,6 +2,276 @@
 
 ---
 
+## Stage 23 — IReferenceResolver 接口化 + 可视化本地化 + ValueEditor Peek (v0.22.0-dev) | 2026-06-11
+
+### IReferenceResolver 接口
+| 项目 | 说明 |
+|------|------|
+| 新增 `Helper/IReferenceResolver.cs` | 定义正规引用解析接口：`LookupRef` / `LookupSubject` / `ReverseLookup` / `NavigateTo*` |
+| `ReferenceResolver` 重写 | 从 static class → `class : IReferenceResolver`，有 `static Instance`，DI 注册为 singleton |
+| ~80 处调用点 | 全部改为 `ReferenceResolver.Instance.xxx` |
+
+### 删除的过时 API
+| 删除 | 替代 |
+|------|------|
+| `FindByKey<T>()` | `LookupRef<T>()` |
+| `GetDedupedInt<T>()` | 批量: `GDH.GetEntities<T>()`；单次: `LookupRef<T>()` |
+| `GetDedupedComposite<T>()` | `GDH.GetCompositeEntities<T>()` |
+| `GetDedupedList<T>()` | `GDH.GetDedupedEntities<T>()` |
+| `FindReverseReferences()` (全量扫描 O(n*m)) | `ResolveReverseRefs(store, entityId)` (走 Index.ReverseLookup) |
+| `ResolveSubject/ResolveMultiRef/CreateNavItem/WireNavOnCtrlClick` | 删除（零调用） |
+
+### DataGrid ConfigureColumn 统一
+| 之前 | 之后 |
+|------|------|
+| `LookupSubjectByRawId` 自建 30 行 → Index.LookupDisplay → FindBestMatch O(n) 兜底 | 一行委托 `ReferenceResolver.Instance.LookupSubject(...)`，纯 Index |
+
+### ReferenceIndex 磁盘持久化
+| 项目 | 说明 |
+|------|------|
+| `ReferenceIndex.SaveToDisk(path)` | 序列化全部字典（forward/nsForward/reverse/display/merged/bizKey）到 JSON |
+| `ReferenceIndex.TryLoadFromDisk(path)` | 从 JSON 恢复，跳过昂贵 BuildAsync |
+| `BrowserStore` null 修复 | `TryLoadFromDiskCache` 不再绕过 BrowserStore 创建 |
+| `InvalidateIndex` 修复 | 同时删除轻量 cache + Index cache 两个文件 |
+
+### 可视化本地化
+| 项目 | 说明 |
+|------|------|
+| `VisHelper.Loc(key)` | 可视化专用本地化快捷方式，调用 `App.Localizor[key]` |
+| 新增 ~30 个 `Vis.*` 资源键 | `Vis.RawData`, `Vis.Stats`, `Vis.Cut`, `Vis.Blunt`, `Vis.Total`, `Vis.Effective`, `Vis.Ammo`, `Vis.AttackerConditions`, `Vis.AttackPhrases`, `Vis.ReferencedBy`, `Vis.CombatMelee/Ranged`, `Vis.Tiles`, `Vis.Base`, 等 |
+| `Resources.zh.resx` 翻译修正 | `Morale` → 士气补正；`Vis.AttackerConditions` → 攻击带来的状态 |
+
+### Ctrl+Click Peek 到 ValueEditor
+| 项目 | 说明 |
+|------|------|
+| `ReferenceResolver.NavigateTo` 现在附带 Peek | 调用 `GDH.PeekEntity(type, entityId)` → 发送 `VisualEditorRequestedMessage` |
+| `ValueEditorPanel` 接收 | 渲染 `visualizer.BuildOverview(entity)` 到右侧面板 |
+| `Router.Navigate` "not handled" 降级 | Warning → Debug（数据浏览器无 INavigationTarget 是正常情况） |
+
+### AttackMode Detail UI 改进
+| 改进 | 说明 |
+|------|------|
+| fMorale 百分比显示 | 公式 `(1+士气)*(1+加成)*伤害`，`fMorale=0.25` 显示 `25% (base)` |
+| Effective 伤害行 | 士气加成后有效伤害：`(Cut+Blunt) × (1+fMorale)`，格式 `5.6 (1.25 × 4.5)` |
+| Sound 语义图标 | 无图片时根据 Sound 分类显示对应 FluentIcon + emoji |
+| 反向引用面板 | 使用 `store.Index.ReverseLookup()` 预建 `_reverse` 字典 |
+| 引用徽章 Ctrl+Click | NavigateTo + Peek 到右侧 ValueEditor 面板 |
+| 全部标签本地化 | `VisHelper.Loc(key)` 替换硬编码英文字符串 |
+
+### 关键 Bug 修复
+| Bug | 修复 |
+|-----|------|
+| **Detail 引用全部显示 raw 文本** | `LookupRef`/`LookupSubject`/`NavigateToByKeyFor` 只查 `ActiveMergeStore` → 改为 `ActiveMergeStore ?? BrowserStore` |
+| **`_indexBuilt=true` 但 BrowserStore=null** | 重构 `RebuildBrowserIndexAsync`，Store 创建后才标记 |
+| **`InvalidateIndex` 后每次全量重建** | ReferenceIndex 磁盘持久化 |
+| **Ctrl+Click Peek 无反应** | `PeekEntity` 从 `Router.Peek` 改为发送 `VisualEditorRequestedMessage` |
+
+### 文档更新
+| 文档 | 更新内容 |
+|------|---------|
+| `15-reference-system-refactoring-plan.md` | Phase 5/6/7 实施记录 + Bug 记录表 B1-B5 + 过时章节标记 |
+| `09-current-status.md` | 引用系统 Phase 1-7，IReferenceResolver 路径图 |
+| `14-reference-resolution-system.md` | 新增 IReferenceResolver/ReferenceResolver 文件清单，FindBestMatch 兜底标记过时 |
+| `20-data-class-field-reference.md` | fMorale 说明订正 |
+| `21-entity-detail-ui-design-guide.md` | 本地化模式、引用解析规范 |
+| `Resources.resx` / `Resources.zh.resx` | 新增 ~30 个 `Vis.*` 显示键 |
+
+---
+
+## Stage 22 — ReferenceResolver 清理 + 可视化器统一 LookupRef (v0.22.0-dev) | 2026-06-11
+
+> 此阶段内容已被 Stage 23 包含并扩展，仅保留标题作为归档。
+
+
+
+## Stage 21 — Detail UI 设计指南文档 (v0.22.0-dev) | 2026-06-10
+
+### 新增文档
+| 项目 | 说明 |
+|------|------|
+| `21-entity-detail-ui-design-guide.md` | Entity Detail UI 设计参考指南 |
+
+### 文档内容
+| 章节 | 涵盖 |
+|------|------|
+| 布局规范 (7 条规则) | ScrollViewer → Raw Data Expander → Hero Header → 面板优先级 |
+| Hero Header 模式 (2 种) | 有图 / 无图两种 Header 布局，组件清单，图片加载逻辑 |
+| 数据面板类型 (7 种) | StatBar / StatCard / MiniBadge / 文本面板 / 关系横条 / 配对表 / 反向引用 |
+| MiniBadge 标准配色 | 12 种引用目标类型的 bg/fg 配色表 |
+| Overview 设计规范 | 260px 窄高布局，组件排版顺序 |
+| 引用处理规范 | 解析优先级、默认值跳过规则 |
+| VisHelper API 清单 | 11 个共享组件的签名和用途 |
+| 既定改进方案 (7 项) | P1 反向引用 → P6 Tooltip 预览 → P7 动作按钮 |
+| 设计反模式 (10 条) | 避免用 TreeView 罗列、空面板占位、私有组件等 |
+| 类型到面板映射 | 按数据特征选择面板类型的速查表 |
+| 新增 Visualizer 清单 | 11 项检查列表 |
+
+---
+
+## Stage 20 — 引用解析修复 + 全局索引持久化 (v0.22.0-dev) | 2026-06-10
+
+### 引用解析修复
+| 项目 | 说明 |
+|------|------|
+| `ReferenceResolver.FindByKey<T>(key, sourceEntity)` | 新方法：同 mod 优先，最高 ModId 兜底，不依赖 ReferenceIndex |
+| `LookupRef` fallback 修复 | 从 `ReferenceField` attribute 读取 pattern 提取 ID，处理命名空间前缀 |
+| 全部 visualizer 切换 | `GetDedupedInt` → `FindByKey`，`NavigateToByKeyFor` → `NavigateTo(typeof(T), entityId)` |
+
+### 全局浏览器索引持久化
+| 项目 | 说明 |
+|------|------|
+| `GDH.BrowserStore` | 全局 static 单例 `EntityMergeStore`，应用启动时构建 |
+| `EntityBrowserDocument.GlobalBrowserCache` | `Dictionary<Type, Dictionary<int, CacheEntry>>`，序列化到 `browser_index_cache.json` |
+| 磁盘缓存 | `%LocalAppData%/NeoEditor/browser_index_cache.json`，重启毫秒级加载，无需 rebuild |
+| `EnsureIndexBuiltAsync()` | 去重防并发，`EntityViewerView` 渲染前等待索引就绪 |
+| `InvalidateIndex()` | 删除磁盘缓存 + 清内存，Profile/Mod 变更时触发 |
+
+### 字段标签订正
+| 类型 | 修正内容 |
+|------|---------|
+| Encounter | `Story` → `Normal`（符合 EncounterType 枚举） |
+| Condition | `Permanent` → `Instant`（瞬时的/一次性施加），`Temporary` → `Duration`，Color 加正负面标注 |
+| BattleMove | 新增 `StrId` 徽章，`See Us/Them` → `Exposure`，新增 `AI Order` |
+| Recipe | Hero Header 新增 `DegradeOutput: On/Off` |
+| Creature | Faction 名称解析（不再仅显示 #ID） |
+| Encounter | 新增 `RemoveTreasureId` 引用面板 |
+
+### 修改文件
+| 文件 | 关键改动 |
+|------|---------|
+| `Helper/ReferenceResolver.cs` | 新增 `FindByKey<T>()` 返回 `(Subject, EntityId)?` |
+| `Helper/GenericDataGridHelper.cs` | 新增 `BrowserStore`, `ReferenceLookups` 回退链 |
+| `ViewModels/MainContent/Documents.cs` | `BrowserIndexCacheEntry`, `GlobalBrowserCache`, 磁盘缓存序列化 |
+| `Views/.../EntityViewerView.axaml.cs` | 异步 `BuildContentAsync` 等待索引 |
+| `Views/.../Editors/EntityVisualizers.cs` | 全部 `FindByKey` 调用点更新 |
+| `App.axaml.cs` | 启动时 `FireAndForget(RebuildBrowserIndexAsync)` |
+
+---
+
+## Stage 19 — 全类型可视化器卡式重设计 (v0.21.0-dev) | 2026-06-10
+
+### 可视化器全面升级
+所有 25 个实体类型的 `BuildDetail` 和 `BuildOverview` 均按 AttackMode 的 Card 模式重写：
+
+| 类型 | Detail | Overview |
+|------|--------|----------|
+| **Recipe** | Hero Header（名称+类型标签+Hours/Reverse）+ 原料徽章面板（Tools/Consumed/Destroyed）+ 产品预览 + AlsoTry 备选配方 | 类型标签+中心名称+Stats卡(Hours/Reverse/Hidden/Tools/Consumed) |
+| **TreasureTable** | Hero Header（ID+Nested/Suppress/Identify标签）+ 战利品概率面板（每项含物品名/概率徽章/数量）| 中心名称+标签+Stats卡(OR组数/物品总数) |
+| **Encounter** | Hero Header（图片+ID+剧情类型标签）+ 剧情文本面板 + 回应面板 + 引用面板（战利品/状态/前置条件/生物/传送/意外） | 图片缩略图+类型标签+名称+剧情摘要+Stats卡(Price/Type/Loot/Accident/Creature) |
+| **Creature** | Hero Header（图片+ID+Moves标签）+ 派系/攻击方式/基础状态/遭遇状态/战利品/尸体战利品徽章面板 + 活动描述 | 图片缩略图+名称+公开名+Stats卡(Moves/Faction/Attacks) |
+| **Condition** | Hero Header（ID+致命/永久/堆叠标签+持续时间/颜色/传染范围）+ 描述 + FieldNames→Modifiers 三列配对表 + 效果文本 + 下一阶段条件链徽章 | 严重级别徽章+名称+Stats卡(Duration/Color/Transfer)+下一阶段数 |
+| **BattleMove** | Hero Header（ID+行为标签标志+类型/几率/优先级/疲劳/探测/范围/视野）+ 描述/成功/失败文本面板 + 全部条件组(8组)徽章面板 | 行为类型徽章+名称+Stats卡(Type/Chance/Priority/Fatigue/Detect/Range) |
+| **HexType** | Hero Header（ID+可通行标签+移动消耗/能见度/遭遇范围）+ 光线等级六列表 + 战利品/营地/进入状态引用徽章面板 | 可通行标签+名称+Stats卡(Cost/Visibility/EncRange) |
+| **Faction** | Hero Header（ID）+ 外交关系横条面板（名称+彩色关系条+数值+描述）+ 成员生物徽章面板 | 名称+Stats卡(关系数/成员数) |
+| **Ingredient** | Hero Header（ID）+ 必需属性/禁止属性徽章面板 + 反向引用（哪些Recipe使用） | 名称+Stats卡(Required/Forbidden属性数) |
+| **ItemProp** | Hero Header（ID+属性名）+ 反向引用（被哪些实体引用）徽章面板 | 属性名+ID标签 |
+| **EncounterTrigger** | Hero Header（ID+触发类型标签+几率标签）+ 区域/日期范围 + 遭遇/HexType引用徽章面板 | 触发类型徽章+名称+Stats卡(Chance/Encounter) |
+| **CampType** | Hero Header（图片+ID+容量标签）+ 营地Stats卡（Capacity/Alertness/Sleep/Heal）+ 战利品引用 | 图片缩略图+名称+Stats卡(Sleep/Heal/Visibility/Alertness) |
+| **ChargeProfile** | Hero Header（ID+可降级标签+物品ID）+ 消耗率Stats卡（PerUse/PerHour/PerHrEquipped/PerHex）| 名称+降级标签+速率概要+物品ID |
+| **ContainerType** | Hero Header（ID+名称）+ 反向引用（哪些ItemType使用） | 名称+ID标签 |
+| **CreatureSource** | Hero Header（ID+坐标/数量标签+权重）+ 生物引用徽章面板 | 名称+Stats卡(Position/Count/Weight) |
+| **DmcPlace** | Hero Header（图片+ID+坐标标签）+ 遭遇引用徽章面板 | 图片缩略图+名称+Stats卡(Position/Encounter) |
+
+### 新增可视化器（6个此前无 visualizer 的类型）
+| 类型 | Detail | Overview |
+|------|--------|----------|
+| **BarterHex** | Hero Header（ID+Buy标签+坐标+RestockTT）| 商店类型标签+名称+Stats卡(Position/RestockTT) |
+| **DataFile** | Hero Header（图片+ID+价值标签）+ 数据内容文本面板 | 图片缩略图+名称+价值标签 |
+| **GameVar** | Hero Header（类型标签+名称+值）| 名称+类型标签+Value |
+| **Headline** | Hero Header（ID）+ 报纸标题文本面板 | 名称+标题预览 |
+| **ForbiddenHex** | Hero Header（ID+Forbidden标签+坐标）| 名称+Stats卡(Position) |
+| **Map** | Hero Header（ID+数据点数）+ 地图定义文本面板 | 名称+数据点数 |
+
+### 共享组件
+| 组件 | 位置 | 说明 |
+|------|------|------|
+| `VisHelper.StatBar` | VisHelper | 进度条组件（从AttackMode提取） |
+| `VisHelper.BuildExpander` | VisHelper | 可折叠面板组件（从AttackMode提取） |
+| `VisHelper.OvSectionLabel` | VisHelper | Overview章节标签（从AttackMode提取） |
+| `VisHelper.BuildStatCard` | VisHelper | 键值对Stats卡片 |
+| AttackMode 清理 | 移除私有 StatBar / BuildExpander / OvSectionLabel 重复实现 |
+
+### 注册更新
+- `App.axaml.cs` 新增 6 个 visualizer 注册：BarterHex / DataFile / GameVar / Headline / ForbiddenHex / Map
+
+### 修改文件
+| 文件 | 关键改动 |
+|------|---------|
+| `Views/.../Editors/EntityVisualizers.cs` | 19个现有 visualizer 全部重写为Card模式 + 6个新增 visualizer + VisHelper 共享组件 |
+| `App.axaml.cs` | 注册 6 个新 visualizer |
+
+---
+
+## Stage 17 — 引用系统重构 Phase 3+4 + 列可见性 + 行高稳定 (v0.19.0-dev) | 2026-06-10
+
+### 引用导航系统重构 (Phase 3 — 导航层)
+| 项目 | 说明 |
+|------|------|
+| `INavigationTarget` | 导航目标接口：`CanNavigate` / `NavigateTo` / `Priority` |
+| `INavigationRouter` | DI 单例路由器：`RegisterTarget` / `UnregisterTarget` / `Navigate` / `Peek` |
+| `NavigationRouter` | 责任链实现，Priority 降序，稳定排序，同 Priority 下最近附加优先 |
+| `ModGameDataTabsView` 实现 `INavigationTarget` | Attach 注册 / Detach 注销，Priority=50，CanNavigate 检查 Tab 匹配 |
+| `DocumentWorkspaceViewModel` | PeekHandler 从 GDH 静态委托迁移到 `INavigationRouter.PeekHandler` |
+
+### 引用导航系统重构 (Phase 4 — GDH 清理)
+| 项目 | 说明 |
+|------|------|
+| 移除 `_activeViews` / `RegisterNavigateTarget` | 替代为 `INavigationRouter.RegisterTarget` |
+| 移除 `PeekRequested` 静态委托 | 替代为 `INavigationRouter.PeekHandler` |
+| 移除 `IsPeekPinned` / `NavigateToImpl` | 不再需要 |
+| `NavigateToReferenceForce` 改为委托路由器 | 解析 EntityId → Router.Navigate + Router.Peek |
+| `NavigateTo` / `NavigateToByEntityId` 保留 | 改为通过路由器+索引查找，供外部调用者使用 |
+
+### DataGrid 改进
+| 项目 | 说明 |
+|------|------|
+| 行高虚拟化抖动修复 | `OnLoadingRow` 中每行独立计算高度（基于多值引用段数），直接设 `row.Height`，绕过列虚拟化测量 |
+| 列虚拟化关闭 | `SearchableDataGrid.axaml` 加 `EnableColumnVirtualization="False"`（11.3 不支持，已移除） |
+| `SwitchTabItemsSource` NRE 修复 | 大数据量切 tab 时 DataGrid 内部 `RemoveAutoGeneratedColumns` NRE — 先 `AutoGenerateColumns=false` 再设 ItemsSource，延迟恢复 |
+| Mod 列 `SortMemberPath` | 补上 `SortMemberPath = "Mod"`，使列管理器能保存/恢复其可见性 |
+
+### 列可见性全局配置
+| 项目 | 说明 |
+|------|------|
+| `ColumnVisibilityKeys` | 统一数据源：`GetKeys(entityType)` 返回全部列 key（实体属性 + ModId/FilePath/EntityId + MergedId + Mod） |
+| 侧边栏设置面板 | `Expander "Column Visibility"` + 每表 Expander + CheckBox 列表 + All/None 按钮 |
+| 双向实时同步 | 两边都是增量 Add/Remove → 发送 `ColumnVisibilityChangedMessage` → DataGrid 收到即时更新 |
+| 默认全可见 | 不再是 "默认隐藏 ModId/FilePath/EntityId"，全部列默认可见 |
+| 移除硬编码 hiddenProps | DataGrid `OnAutoGeneratingColumn` 改用 `ColumnVisibilityKeys.IsVisible()` |
+
+### ItemType Overview 可视化
+| 项目 | 说明 |
+|------|------|
+| 重写 `BuildOverview` | 适配窄高面板 (~260px)：居中 88px 缩略图 + 身份 + Stats 两列网格 + Properties 标签 + Equipment / Container / Degrade / Refs / ReverseRefs 卡片 |
+
+### 新增文件
+| 文件 | 说明 |
+|------|------|
+| `Helper/INavigationTarget.cs` | 导航目标接口 |
+| `Helper/INavigationRouter.cs` | 导航路由器接口 |
+| `Services/NavigationRouter.cs` | 导航路由器实现 |
+| `Helper/ColumnVisibilityKeys.cs` | 列可见性统一 key 源 |
+
+### 修改文件
+| 文件 | 关键改动 |
+|------|---------|
+| `Helper/GenericDataGridHelper.cs` | 移除静态导航状态，委托给 Router |
+| `Views/.../SearchableDataGrid.axaml` / `.cs` | 列可见性配置恢复、行高冻结、合成列支持 |
+| `Views/.../ModGameDataTabsView.axaml.cs` / `Tab.cs` | 实现 INavigationTarget、ToggleColumnVisibility 增量更新 |
+| `ViewModels/.../DocumentWorkspaceViewModel.cs` | PeekHandler 迁移到 Router |
+| `ViewModels/.../SettingsPaneViewModel.cs` | 列可见性配置 + TableColumnGroup/ColumnOption |
+| `Views/.../Pane.axaml` | Column Visibility Expander + All/None 按钮 |
+| `Views/.../Editors/EntityVisualizers.cs` | ItemType BuildOverview 重写 |
+| `App.axaml.cs` | 注册 INavigationRouter DI |
+| `ViewModels/.../ReferenceInspectorContent.cs` | 移除 IsPeekPinned 引用 |
+| `Data/Messages/AppConfigMessages.cs` | 新增 ColumnVisibilityChangedMessage |
+
+### 已知限制
+- .NET 10.0 SDK 未安装，本次改动无法本地编译验证（用户侧 Rider 编译通过）
+- `PersistColumnVisibility` 已改为增量 `ToggleColumnVisibility`，旧方法保留但不再调用
+
+---
+
 ## Stage 16 — ItemType 卡片式可视化 + 数据浏览器三层结构 (v0.18.0-dev) | 2026-06-06
 
 ### 数据浏览器三层结构
@@ -1578,3 +1848,132 @@
 3. **像素画编辑器**：缺少逐像素手绘工具
 4. **批量编辑**：多行选中批量改同字段未实现
 5. **Markdown 链接内部打开**：LiveMarkdown.Avalonia 1.9.2 `LinkCommand` 绑定需验证运行时行为
+
+---
+
+## Stage 17 — 引用系统重构 (v0.18.0-dev Phase 2) | 2026-06-08
+
+### 新增文件
+| 文件 | 说明 |
+|------|------|
+| `Helper/ReferenceParser.cs` | 纯函数解析层：`ParsedRef` / `TargetKeyInfo` / `ResolvedRefSegment` / `ParsedReferenceField` 类型 + 所有解析方法 |
+| `Helper/ReferenceIndex.cs` | Context-aware 引用索引：`(sourceEntityId, propertyName, rawId) → targetEntityId`，O(1) 查找 |
+
+### 重构文件
+| 文件 | 变更 |
+|------|------|
+| `Helper/ReferenceHelper.cs` | 所有方法标记 `[Obsolete]`，委托到 `ReferenceParser` |
+| `Helper/ReferenceFieldAttribute.cs` | 不变 |
+| `Helper/ReferencePattern.cs` | `IdPattern` / `IdXMultPattern` 新增 `-` 否定前缀剥离（`ExtractRawId("-115")` → `"115"`），`FormatExtraInfo` 报告 `"-"` |
+| `Helper/GenericDataGridHelper.cs` | Bug 1 修复（`Convert.ToInt64` 类型安全比较）；新增 `FindBestMatch(sourceEid, propName)` 重载；`LookupSubjectByRawId` 接受 source context；导航路径传递 sourceEid |
+| `Views/UserControls/SearchableDataGrid.axaml.cs` | Bug 2 修复（Cell 计数替代 `IndexOf`）；`ColumnMetaCache` 缓存；排序路径安全模式；多值单元格 `Tag=rawText` |
+| `Views/UserControls/ModGameDataTabsView.axaml.cs` | NavigateToEntityImpl 改用 `SharedDataGrid` + `DoScrollToEntity` 重试机制 |
+| `Views/UserControls/ModGameDataTabsView.Tab.cs` | `SwitchTabItemsSource`（try-catch + 安全重置） |
+| `Views/UserControls/ModGameDataTabsView.Data.cs` | `await Index.BuildAsync()` 异步索引构建 |
+| `Services/EntityMergeStore.cs` | 新增 `Index` 属性（lazy init `ReferenceIndex`） |
+
+### 迁移文件（ReferenceHelper → ReferenceParser）
+`ReferenceResolver.cs` / `DataExportService.cs` / `ReferenceIntegrityRule.cs` / `EditorHelper.cs` / `EntityVisualizers.cs` / `ModGameDataTabsView.Operations.cs`
+
+### 已修复 Bug (7 个)
+| # | 问题 | 修复 |
+|---|------|------|
+| 1 | FindBestMatch `is int val` 对 long/null/EF 代理失效 → 总是返回 id=1 | `Convert.ToInt64` 类型安全比较 |
+| 2 | DataGrid 列索引 `Children.IndexOf(cell)` 含 RowHeader 偏移 | Cell 计数 + `ColumnMetaCache` |
+| 3 | 渲染与跳转解析不一致（不同路径查不同 key） | 统一走 `index.Lookup(sourceEid, propName, type, rawId)` |
+| 4 | 多值单元格用显示文本当 rawId → 解析出垃圾 | `TextBlock.Tag = rawText` |
+| 5 | `-` 前缀被当 ID 一部分 → 索引查负数 | `ReferencePattern` 剥离 `-`，`FormatExtraInfo` 报告 |
+| 6 | 显示缓存 key 冲突（MergedId vs businessKey） | 缓存 key 改为 EntityId（全局唯一） |
+| 7 | DataGrid `RemoveAutoGeneratedColumns` NRE 崩溃 | `SwitchTabItemsSource` try-catch + 安全重置 |
+
+### 架构
+- 四层结构：交互层 → 编排层(GDH) → 索引层(ReferenceIndex) → 解析层(ReferenceParser+Pattern)
+- Index Build 异步：`Task.Run` 后台线程，不阻塞 UI
+- 索引键：`(sourceEntityId, propertyName, rawId)` context-aware
+- 查找优先级：context-aware → 同模组主键 → MergedId → 全局主键
+
+---
+
+## Stage 18 — AttackMode 可视化深化 + 数据浏览器引用索引 (v0.20.0-dev) | 2026-06-10
+
+### AttackMode Detail 卡片式重设计
+
+Hero Header（Image + Badge 行 + Name + WieldPhrase 引文 + Notes）：
+
+| 元素 | 设计 |
+|------|------|
+| 图片区 | 128x128 圆角缩略图，无图片时用 `SymbolIcon`（`Flash` 近战 / `Target` 远程）|
+| ID 徽章 | 蓝底白字 `ID: N` |
+| 类型徽章 | 绿色近战 / 红色远程，带射程：`Melee (1 tile)` / `Ranged (80 tiles)` |
+| 名称 | 18px Bold，自动换行 |
+| WieldPhrase | 斜体引文格式，120 字符截断，灰色 `#666` |
+| Notes | 12px，灰色 |
+
+Combat Fieldset — 基于 nType 的图标标题（`SymbolIcon` + "Melee Combat" / "Ranged Combat"）+ 进度条：
+
+| 属性 | 条形颜色 | 缩放 |
+|------|---------|------|
+| Range | `#607D8B` 灰蓝 | max(Range, 10) |
+| Cut | `#E53935` 红 | max(Cut, Blunt, 2.0) |
+| Blunt | `#FB8C00` 橙 | max(Cut, Blunt, 2.0) |
+| Morale | 绿（>25%）/ 红（<25%）/ 灰（=25% 基础值） | Morale 值直接映射 |
+
+穿透：●○ 圆点 + 等级（仅 >0 时显示）
+音效：紫色可点击徽章 `▶ cueName`，ToolTip 说明 "embedded in game SWF"
+Transfer 标记：绿色文字行
+
+**Attacker Conditions** — 解析 `{id}x{mult}` 模式引用，同 mod 实体优先
+
+**Attack Phrases** — 按半角/全角逗号切分，蓝色 WrapPanel 徽章，显示计数
+
+**Ammo（Charge Profiles）** — 解析 ChargeProfile 引用，显示计数标题 + 可点击徽章（Ctrl+Click 导航）
+
+### 统一引用解析 — `LookupRef`
+
+**问题**：可视化器用 `GetDedupedInt<T>()` 自己建字典 → 按 `ModId` 去重，DataGrid 用 `ReferenceIndex.Lookup()` 上下文感知解析。两套路径不一致，引用解析频繁出错。
+
+**根本解决方案**：
+- `ReferenceResolver.LookupRef<T>(sourceEntity, propertyName, rawId)` — 唯一入口
+  - 优先：`ReferenceIndex.Lookup(sourceEid, propName, targetType, rawId)` — 与 DataGrid 完全相同
+  - 回退：`EntityModNames` 同 mod 优先 — 与 `ReferenceIndex.ResolveTargetEntityId` 同逻辑
+  - 回退：最高 `ModId`
+- `NavigateToByKeyFor<T>(key, sourceEntity)` — 导航入口，改用 `Index.LookupGlobal`
+- 可视化器不再建字典，每 ID 逐走 `LookupRef`
+- `GenericDataGridHelper.ActiveMergeStore` — 新增公开属性供 `LookupRef` 访问索引
+
+### 数据浏览器引用索引
+
+**架构**：复用与合并视图相同的 `EntityMergeStore` → `ReferenceIndex` 管道。
+
+| 组件 | 职责 |
+|------|------|
+| `EntityBrowserDocument.RebuildBrowserIndexAsync()` | 为全部 24 类型创建 `EntityMergeStore`，填充 `ReferenceLookups` + `EntityModNames`，`Index.BuildAsync()` 构建索引，调用 `SetActiveStores` |
+| `EntityBrowserDocument.InvalidateIndex()` | 在 mod/profile 变更后设置 `_indexBuilt = false` |
+| `DataBrowserViewModel` | 监听 `SaveProfileMessage` / `RefreshModMessage` / `InitModMessage` / `CellEditedMessage` 自动失效 |
+| 侧边栏 "Rebuild Index" 按钮 | `Symbol.ArrowSync` 图标，绑定到 `RebuildIndexCommand` |
+
+**调用时机**：
+- 首次 `EntityBrowserDocument` 打开时惰性构建
+- 侧边栏按钮手动触发重建 → 全量重建 Store + Index
+- Mod/Profile 变更 → 自动失效 → 下次浏览器打开时重建
+
+### AttackPhrases 分隔符
+
+从仅支持半角逗号 `Split(',')` 改为 `Split(',', '，')`，正确处理中文标点。
+
+### nType 图标：文本 → FluentIcons
+
+所有 nType 图标（detail hero 占位图、combat 标题）从文字字符替换为 `SymbolIcon`：
+- 近战 `Symbol.Flash`
+- 远程 `Symbol.Target`
+
+### 数据浏览器 ListBox 搜索过滤
+
+`DomainBrowserView.axaml` — 列表上方新增 `Watermark="Filter..."` 的 TextBox，按 `DisplayName` 和 `EntityId` 大小写不敏感匹配。`_allEntities` 保留完整后备列表，`ApplyFilter()` 重建 `Entities`。
+
+### 设计原则
+
+- **可视化器不直接访问数据库**：通过 `ReferenceResolver.LookupRef<T>()` 解析，优先走 `ReferenceIndex.Lookup`（与 DataGrid 同源），回退 `EntityModNames`
+- **单一路径引用解析**：`ReferenceIndex` 是唯一真实数据源。可视化器和 DataGrid 走同一套解析逻辑，杜绝双路径不一致
+- **上下文感知解析**：无命名空间前缀的引用优先在同一 mod 内解析；带命名空间前缀的引用在指定命名空间内查找
+- **索引已缓存**：活跃 merge store 成为所有引用的真实数据源；无数据重复

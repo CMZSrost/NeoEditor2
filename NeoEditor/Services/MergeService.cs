@@ -41,6 +41,7 @@ public class MergeService : IMergeService
     {
         var types = new List<TypeMergeData>();
         var entityModNames = new Dictionary<string, string>();
+        var entityNamespaces = new Dictionary<string, string>();
         var overlayChains = new Dictionary<string, List<OverlayChainEntry>>();
         var fieldSources = new Dictionary<(string, string), string>();
         var fieldConflicts = new HashSet<(string, string)>();
@@ -62,8 +63,8 @@ public class MergeService : IMergeService
 
             var typeResult = ComputeTypeMerge(
                 allItems, entityType,
-                entityModNames, overlayChains, fieldSources, fieldConflicts,
-                entityMergedIds, overriddenEntityIds, showAll);
+                entityModNames, entityNamespaces, overlayChains, fieldSources, fieldConflicts,
+                entityMergedIds, overriddenEntityIds, showAll, namespaceToModName);
 
             types.Add(typeResult);
 
@@ -74,6 +75,7 @@ public class MergeService : IMergeService
         return new MergeResult(
             types,
             entityModNames,
+            entityNamespaces,
             overlayChains,
             fieldSources,
             fieldConflicts,
@@ -88,12 +90,14 @@ public class MergeService : IMergeService
         List<(IEntity Entity, int LoadIndex, string ModName, bool IsMerge)> allItems,
         Type entityType,
         Dictionary<string, string> entityModNames,
+        Dictionary<string, string> entityNamespaces,
         Dictionary<string, List<OverlayChainEntry>> overlayChains,
         Dictionary<(string, string), string> fieldSources,
         HashSet<(string, string)> fieldConflicts,
         Dictionary<string, int> entityMergedIds,
         HashSet<string> overriddenEntityIds,
-        bool showAll)
+        bool showAll,
+        Dictionary<string, string> namespaceToModName)
     {
         var keyProp = ResolveEntityKeyProperty(entityType);
         var mergedDict = new Dictionary<string, (IEntity Entity, int LoadIndex, string ModName)>();
@@ -232,6 +236,20 @@ public class MergeService : IMergeService
                 overlayChains[entity.EntityId] =
                     new List<OverlayChainEntry> { new(modName, idVal, entityType, entity.EntityId, entity.Subject) };
             }
+        }
+
+        // Populate entity namespaces (strModName) for ReferenceIndex
+        // Build ModId → strModName mapping
+        var modIdToNs = new Dictionary<int, string> { [-1] = "0" };
+        var dirToNs = new Dictionary<string, string>();
+        foreach (var (ns, dir) in namespaceToModName)
+            dirToNs[dir] = ns; // last-write wins for duplicate dirs
+        foreach (var (entity, _, _, _) in allItems)
+        {
+            var ns = entity.ModId == -1 ? "0"
+                : dirToNs.TryGetValue(entityModNames.GetValueOrDefault(entity.EntityId, ""), out var n) ? n
+                : entityModNames.GetValueOrDefault(entity.EntityId, "");
+            entityNamespaces[entity.EntityId] = ns;
         }
 
         // Sort by load index then key

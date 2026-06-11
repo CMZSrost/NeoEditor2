@@ -37,7 +37,21 @@ public static class EditorHelper
         if (entity is null) return new TabItem { Header = "Overview", Content = tree };
 
         var entityType = entity.GetType();
-        var root = NewNode(entity.Subject, Brushes.DodgerBlue, true);
+
+        // Header with modId:modName badge
+        var headerPanel = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 6 };
+        headerPanel.Children.Add(new TextBlock { Text = entity.Subject, FontWeight = FontWeight.Bold, Foreground = Brushes.DodgerBlue, VerticalAlignment = VerticalAlignment.Center });
+        var modName = Helper.GenericDataGridHelper.EntityModNames.TryGetValue(entity.EntityId, out var mn)
+            ? mn : $"mod_{entity.ModId}";
+        headerPanel.Children.Add(new Border
+        {
+            CornerRadius = new CornerRadius(3),
+            Background = Brush.Parse("#20000000"),
+            Padding = new Thickness(5, 1),
+            Child = new TextBlock { Text = $"{entity.ModId}:{modName}", FontSize = 9, Foreground = Brush.Parse("#888"), VerticalAlignment = VerticalAlignment.Center }
+        });
+        var root = new TreeViewItem { IsExpanded = true, Header = headerPanel };
+
         var props = entityType.GetProperties()
             .Where(p => p.GetCustomAttribute<ColumnAttribute>() is not null && p.DeclaringType != typeof(IEntity))
             .OrderBy(p => p.MetadataToken);
@@ -78,15 +92,13 @@ public static class EditorHelper
         }
 
         // Reverse references for specific types
-        if (entity is ItemProp ip)
+        var store = GenericDataGridHelper.ActiveMergeStore ?? GenericDataGridHelper.BrowserStore;
+        if (store is not null)
         {
-            var revRefs = ReferenceResolver.FindReverseReferences(typeof(ItemProp), ip.Id);
-            AddReverseRefsNode(root, revRefs);
-        }
-        else if (entity is Ingredient ing)
-        {
-            var revRefs = ReferenceResolver.FindReverseReferences(typeof(Ingredient), ing.Id);
-            AddReverseRefsNode(root, revRefs);
+            if (entity is ItemProp ip)
+                AddReverseRefsNode(root, ReferenceResolver.ResolveReverseRefs(store, ip.EntityId));
+            else if (entity is Ingredient ing)
+                AddReverseRefsNode(root, ReferenceResolver.ResolveReverseRefs(store, ing.EntityId));
         }
 
         // Condition: FieldNames ↔ Modifiers paired display
@@ -115,16 +127,16 @@ public static class EditorHelper
         root.Items.Add(pairNode);
     }
 
-    private static void AddReverseRefsNode(TreeViewItem root, List<(Type, string, IEntity)> refs)
+    private static void AddReverseRefsNode(TreeViewItem root, List<(Type SrcType, string SrcSubject, string SrcEntityId, string PropName)> refs)
     {
         if (refs.Count == 0) return;
         var revNode = NewNode("Referenced By", Brushes.DarkMagenta, true);
-        foreach (var (srcType, _, srcEntity) in refs)
+        foreach (var (srcType, srcSubject, srcEid, _) in refs)
         {
-            var label = $"{srcType.Name}: {srcEntity.Subject}";
+            var label = $"{srcType.Name}: {srcSubject}";
             var child = NewNode(label, Brushes.Magenta);
             child.Cursor = new Cursor(StandardCursorType.Hand);
-            child.PointerPressed += (_, e) => { if ((e.KeyModifiers & KeyModifiers.Control) != 0) ReferenceResolver.NavigateTo(srcType, srcEntity.EntityId); };
+            child.PointerPressed += (_, e) => { if ((e.KeyModifiers & KeyModifiers.Control) != 0) ReferenceResolver.Instance.NavigateTo(srcType, srcEid); };
             revNode.Items.Add(child);
         }
         root.Items.Add(revNode);
@@ -164,7 +176,7 @@ public static class EditorHelper
     private static void ResolveSingleRefItem(TreeViewItem parent, string trimmed, ReferenceFieldAttribute attr,
         Type targetType)
     {
-        var actualId = ReferenceHelper.ExtractRawId(trimmed, attr.Pattern);
+        var actualId = ReferenceParser.ExtractRawId(trimmed, attr.Pattern);
         // Use the same FindBestMatch logic as the DataGrid for consistent resolution
         var match = GenericDataGridHelper.FindBestMatch(targetType, actualId, attr.TargetKey);
         var displayText = match?.Subject ?? actualId;
@@ -176,7 +188,7 @@ public static class EditorHelper
         {
             var m = match;
             child.Cursor = new Cursor(StandardCursorType.Hand);
-            child.PointerPressed += (_, e) => { if ((e.KeyModifiers & KeyModifiers.Control) != 0) ReferenceResolver.NavigateTo(targetType, m.EntityId); };
+            child.PointerPressed += (_, e) => { if ((e.KeyModifiers & KeyModifiers.Control) != 0) ReferenceResolver.Instance.NavigateTo(targetType, m.EntityId); };
         }
         parent.Items.Add(child);
     }
@@ -260,7 +272,7 @@ public static class EditorHelper
     {
         try
         {
-            var hexTypes = ReferenceResolver.GetDedupedInt<HexType>();
+            var hexTypes = GenericDataGridHelper.GetEntities<HexType>();
             var bmp = HexMapRenderer.Render(strDef, hexTypes, 4);
             var sp = new StackPanel { Orientation = Orientation.Vertical, Margin = new Thickness(4, 2) };
             sp.Children.Add(new TextBlock { Text = "Map Preview", FontSize = 9, TextWrapping = TextWrapping.Wrap });

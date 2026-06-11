@@ -1,6 +1,8 @@
 # NeoEditor 开发状态总览
 
-> 更新日期：2026-06-07 · 版本 v0.18.0-dev · 基于 Stage 16
+> 更新日期：2026-06-11 · 版本 v0.22.0-dev · Stage 23 (可视化本地化 + ValueEditor Peek)
+> 引用系统设计文档: [14-reference-resolution-system.md](14-reference-resolution-system.md) · [15-reference-system-refactoring-plan.md](15-reference-system-refactoring-plan.md)
+> UI 设计参考: [21-entity-detail-ui-design-guide.md](21-entity-detail-ui-design-guide.md)
 
 ---
 
@@ -8,10 +10,10 @@
 
 ```
 核心编辑功能     ██████████████████  95%
-UI / 面板系统    ████████████████░░  90%
-数据可视化       ████████░░░░░░░░░░  40%  ← ItemType 完成，其余待跟进
+UI / 面板系统    ████████████████░░  92%
+数据可视化       ██████████████████  95%  ← 全部 25 类型 Card 模式 + 引用解析 + 全局索引持久化完成
 数据验证与诊断   ██████████░░░░░░░░  50%
-架构重构         ██████████████░░░░  80%
+架构重构         ██████████████████  95%  ← 引用系统 Phase 1-4 + 数据浏览器索引复用完成
 ```
 
 ---
@@ -39,13 +41,36 @@ UI / 面板系统    ████████████████░░  90%
 | 合并视图空状态引导 | ✅ |
 | GridRowHeight 即时生效（设置面板修改无需重启） | ✅ |
 
-### 引用系统
+### 引用系统（Phase 1-7 全部完成）
 | 功能 | 状态 |
 |------|:--:|
-| 46+ ReferenceField（多值/复合键/SecondaryTarget） + ReferencePattern 策略（5 实现） | ✅ |
-| Ctrl+左键 = 跳转（含 SecondaryTarget fallback），Ctrl+右键 = Peek | ✅ |
-| Ctrl+Hover 显示 Subject + 反向引用查询 | ✅ |
-| TreasureTable `aTreasures` 多段 x 格式解析已修复 | ✅ |
+| 46+ ReferenceField + ReferencePattern 策略（5 实现） | ✅ |
+| ReferenceParser 解析层 / ReferenceIndex 索引层 | ✅ |
+| INavigationRouter 责任链导航 + INavigationTarget（Phase 3） | ✅ |
+| GDH 静态状态清理 + 导航委托路由器（Phase 4） | ✅ |
+| IReferenceResolver 接口 + ReferenceResolver 实例化（Phase 5-6） | ✅ |
+| DataGrid ConfigureColumn 统一走 LookupSubject（Phase 6） | ✅ |
+| ReferenceIndex 磁盘持久化（Phase 7） | ✅ |
+| Ctrl+左键 = 跳转 + Peek，Ctrl+右键 = Peek，Ctrl+Hover | ✅ |
+| 列可见性全局配置（ColumnVisibilityKeys + 侧边栏 + 双向同步） | ✅ |
+| DataGrid 行高独立计算（防虚拟化抖动） | ✅ |
+
+**正规引用解析路径**：
+```
+IReferenceResolver
+  ├─ LookupRef<T>(source, propName, rawId)     → 可视化器
+  ├─ LookupSubject(srcEid, propName, type, rawId) → DataGrid
+  ├─ ReverseLookup(store, entityId)             → 反向引用
+  └─ NavigateTo(type, entityId)                 → 导航
+         ↓
+  ReferenceIndex (内存, per-store)
+    ├─ _forward / _nsForward → O(1) context-aware lookup
+    ├─ _reverse → O(1) reverse lookup
+    └─ _display → Subject cache
+```
+
+> 引用系统设计文档: [14-reference-resolution-system.md](14-reference-resolution-system.md)
+> 重构方案: [15-reference-system-refactoring-plan.md](15-reference-system-refactoring-plan.md)
 
 ### 保存系统
 | 功能 | 快捷键 | 说明 | 状态 |
@@ -70,19 +95,58 @@ UI / 面板系统    ████████████████░░  90%
 | **第 3 层：实体查看** — 点击 ListBox 实体 → `EntityViewerDocument` + `EntityViewerView` 渲染 visualizer | ✅ |
 | IEntityVisualizer 架构：BuildDetail / BuildOverview 接口 | ✅ |
 | EntityVisualizerRegistry：按类型注册 + EF 代理类型兼容 | ✅ |
-| 已实现 visualizer：17 个（ItemType / Recipe / TreasureTable / Encounter / Creature / Condition / AttackMode / BattleMove / HexType / Faction / Ingredient / ItemProp / EncounterTrigger / CampType / ChargeProfile / ContainerType / CreatureSource / DmcPlace + Default） | ✅ |
-| ItemType visualizer 卡片式重设计（主图+画廊+stat bar+属性标签+引用条） | ✅ |
-| ⚠️ 其余 visualizer 内容为纯文本 TreeView，缺乏图片/关系图等真正可视化 | 🔴 待开发 |
+| 已实现 visualizer：25 个（全 24 表 + Default）全部采用 AttackMode 级 Card 模式可视化 | ✅ |
+| 全部 visualizer Detail + Overview 均为 Card 模式（HeroHeader+Stats+Batch引用徽章+RawData可折叠面板） | ✅ |
+| 新增 6 个此前无 visualizer 的类型：BarterHex / DataFile / GameVar / Headline / ForbiddenHex / Map | ✅ |
 | ⚠️ 嵌套 Dock（查看区 DockControl）在 `Dock.Avalonia 11.3.11.16` 上无法渲染，已改用 TabControl | 🟡 待调查 | |
 
 ### 可视化系统
+| 功能 | 状态 |
+|------|:--:|
+| 本地化 | ✅ `VisHelper.Loc(key)` + ~30 个 `Vis.*` 资源键（中/英） |
+| Ctrl+Click Peek | ✅ `NavigateTo` 附带 `VisualEditorRequestedMessage` → ValueEditor 面板渲染 Overview |
+| AttackMode Detail | ✅ HeroHeader + Combat Panel(含Effective伤害行) + Ammo/Conditions/Phrases 徽章 + 反向引用面板 + Sound语义图标 |
+| AttackMode Overview | ✅ 缩略图 + Stats(含Morale百分比) + Ammo徽章 + Sound徽章 |
+
 | 实体 | 旧编辑器(ICustomTableEditor) | 新 Detail | 新 Overview | 状态 |
 |------|-----------|-----------|-------------|:--:|
 | Recipe | Recipe Tree | 纯文本 | 纯文本 | ⚠️ 骨架就绪，需丰富 |
 | Encounter | Story Graph | 纯文本 | 纯文本 | ⚠️ 骨架就绪，需丰富 |
 | TreasureTable | Treasure Tree | 纯文本 | 纯文本 | ⚠️ 骨架就绪，需丰富 |
-| ItemType | SpriteShow+WearShow | 纯文本 | 纯文本 | ⚠️ 骨架就绪，需丰富 |
-| 其余 20 类型 | EntityOverviewEditor | 属性树 | 字段列表 | ⚠️ 骨架就绪，需丰富 |
+| ItemType | SpriteShow+WearShow | 卡片式（图片/画廊/Stat Bars/属性标签） | 窄高面板（图片/身份/Stats/属性/装备/引用卡片） | ✅ 完成 |
+| AttackMode | EntityOverviewEditor | 卡片式（Hero Header + Combat Fieldset 进度条 + 弹药/条件/短语徽章） | 窄高面板（图片/身份/Stats/弹药/音效） | ✅ 完成 |
+| Recipe | EntityOverviewEditor | 卡片式（Hero Header + 原料徽章面板 + 产品预览 + AlsoTry） | 类型标签+Stats卡(Hours/Reverse/Tools/Consumed) | ✅ 完成 |
+| TreasureTable | EntityOverviewEditor | 卡片式（Hero Header + 战利品概率面板含物品名/概率徽章/数量） | 名称+Stats卡(OR组数/物品总数) | ✅ 完成 |
+| Encounter | EntityOverviewEditor | 卡片式（图片Hero+剧情文本+回应+引用全徽章面板） | 图片缩略图+类型标签+Stats卡 | ✅ 完成 |
+| Creature | EntityOverviewEditor | 卡片式（图片Hero+派系/攻击/状态/战利品全徽章面板） | 图片缩略图+Stats卡 | ✅ 完成 |
+| Condition | EntityOverviewEditor | 卡片式（Hero+FieldNames→Modifiers三列表+效果+条件链徽章） | 严重级别徽章+Stats卡 | ✅ 完成 |
+| BattleMove | EntityOverviewEditor | 卡片式（Hero+行为标签+文本面板+8组条件徽章） | 行为类型徽章+Stats卡 | ✅ 完成 |
+| HexType | EntityOverviewEditor | 卡片式（Hero+光线等级六列表+战利品/营地/状态引用徽章） | 可通行标签+Stats卡 | ✅ 完成 |
+| Faction | EntityOverviewEditor | 卡片式（Hero+外交关系横条面板+成员生物徽章） | 名称+Stats卡 | ✅ 完成 |
+| Ingredient | EntityOverviewEditor | 卡片式（Hero+必需/禁止属性徽章+Recipe反向引用） | 名称+Stats卡 | ✅ 完成 |
+| ItemProp | EntityOverviewEditor | 卡片式（Hero+反向引用徽章面板） | 属性名+ID标签 | ✅ 完成 |
+| EncounterTrigger | EntityOverviewEditor | 卡片式（Hero+触发类型标签+日期/区域+遭遇/Hex引用徽章） | 触发类型徽章+Stats卡 | ✅ 完成 |
+| CampType | EntityOverviewEditor | 卡片式（图片Hero+Stats卡+战利品引用） | 图片缩略图+Stats卡 | ✅ 完成 |
+| ChargeProfile | EntityOverviewEditor | 卡片式（Hero+消耗率Stats卡） | 名称+降级标签+速率概要 | ✅ 完成 |
+| ContainerType | EntityOverviewEditor | 卡片式（Hero+ItemType反向引用徽章） | 名称+ID标签 | ✅ 完成 |
+| CreatureSource | EntityOverviewEditor | 卡片式（Hero+坐标/数量+生物引用徽章） | 名称+Stats卡 | ✅ 完成 |
+| DmcPlace | EntityOverviewEditor | 卡片式（图片Hero+遭遇引用徽章） | 图片缩略图+Stats卡 | ✅ 完成 |
+| BarterHex | — (新增) | 卡片式（Hero+Buy标签+坐标） | 商店类型标签+Stats卡 | ✅ 完成 |
+| DataFile | — (新增) | 卡片式（图片Hero+数据内容文本面板） | 图片缩略图+价值标签 | ✅ 完成 |
+| GameVar | — (新增) | 卡片式（Hero+类型/名称/值） | 名称+类型标签+Value | ✅ 完成 |
+| Headline | — (新增) | 卡片式（Hero+报纸标题文本面板） | 名称+标题预览 | ✅ 完成 |
+| ForbiddenHex | — (新增) | 卡片式（Hero+Forbidden标签+坐标） | 名称+Stats卡 | ✅ 完成 |
+| Map | — (新增) | 卡片式（Hero+地图定义文本面板） | 名称+数据点数 | ✅ 完成 |
+
+### 数据浏览器引用索引
+| 功能 | 状态 |
+|------|:--:|
+| `EntityMergeStore` → `ReferenceIndex` 管道（与合并视图复用，`Index.BuildAsync()` 构建） | ✅ |
+| `RebuildBrowserIndexAsync()` — 24 类型 + `ReferenceLookups` + `EntityModNames` + `Index.BuildAsync` | ✅ |
+| 侧边栏 `Rebuild Index` 按钮（ArrowSync 图标） | ✅ |
+| Mod/Profile 变更消息自动索引失效 | ✅ |
+| `ReferenceResolver.LookupRef<T>()` — 走 `ReferenceIndex.Lookup` 统一解析（与 DataGrid 同源） | ✅ |
+| ListBox 搜索过滤（`DomainBrowserView` TextBox） | ✅ |
 
 ### 导入导出
 | 功能 | 状态 |
@@ -165,11 +229,16 @@ DocumentWorkspaceView.axaml
 ### 🚨 热修复需求
 | 问题 | 说明 |
 |------|------|
+| ~~可视化器引用解析显示为纯文本~~ | ✅ Stage 20 修复：`FindByKey` 同 mod 优先 + 全局磁盘缓存索引 |
+| ~~Ctrl+Click 导航总是跳转到 id=1~~ | ✅ 已修复 |
+| ~~DataGrid 列索引映射偏移~~ | ✅ 已修复 |
+| ~~多 DataGrid 实例竞争全局静态状态~~ | ✅ Phase 3 修复：INavigationRouter 替代 static _activeViews |
+| ~~GDH 静态导航状态~~ | ✅ Phase 4 清理 |
 | ModDatabase Expander 箭头遮挡文字 | 需调整 Padding |
-| IMessenger.Send 单参数重载不可用 | CommunityToolkit.Mvvm 8.4.0 疑似只有双参数 Send<T,TToken> |
+| IMessenger.Send 单参数重载不可用 | CommunityToolkit.Mvvm 8.4.0 |
 | 侧边栏 Import 按钮弹两次对话框 | 已移除 FilePicker 回退，待验证 |
 
-### P0 — 当前焦点：可视化内容丰富
+### P0 — 当前焦点：可视化内容丰富（ItemType 详情+概览完成）
 
 **当前 visualizer 是纯文本骨架，需要注入真正的可视化组件：**
 
@@ -209,6 +278,30 @@ DocumentWorkspaceView.axaml
 | 像素画手绘工具 | 画笔/橡皮擦/填充/取色/透明化 |
 | 像素编辑器 ↔ ModImages 联动 | 双击打开 / 保存后注册 |
 | Validation 详情展示 | 底部面板完整条目 |
+
+### 本次对话已完成（Stage 17）
+| 项目 | 说明 |
+|------|------|
+| ✅ 引用导航重构 Phase 3+4 | INavigationRouter 责任链 + GDH 清理 |
+| ✅ DataGrid 行高稳定 | 每行独立计算高度，冻结后不再受虚拟化影响 |
+| ✅ Apple tab 切换 NRE | SwitchTabItemsSource 先 AutoGenerateColumns=false |
+| ✅ 列可见性全局配置 | ColumnVisibilityKeys + 侧边栏面板 + 双向同步 |
+| ✅ ItemType Overview | 窄高面板完整可视化 |
+
+### 本次对话已完成（Stage 20）
+| 项目 | 说明 |
+|------|------|
+| ✅ 全 19 个现有 visualizer 重写 | Recipe ~ DmcPlace 全部从 TreeView 升级为 AttackMode 级 Card 模式 |
+| ✅ 新增 6 个 visualizer | BarterHex / DataFile / GameVar / Headline / ForbiddenHex / Map |
+| ✅ VisHelper 共享组件 | StatBar / BuildExpander / OvSectionLabel / BuildStatCard 提取到 VisHelper |
+| ✅ AttackMode 清理 | 移除私有 StatBar / BuildExpander / OvSectionLabel 重复实现 |
+| ✅ 引用解析修复 | `FindByKey<T>(key, sourceEntity)` — 同 mod 优先，不依赖 ReferenceIndex 就绪 |
+| ✅ LookupRef fallback 修复 | 从 ReferenceField attribute 读取 pattern 提取 ID + 命名空间前缀处理 |
+| ✅ 全局索引持久化 | `GDH.BrowserStore` + `GlobalBrowserCache` 磁盘缓存（`browser_index_cache.json`） |
+| ✅ 索引构建时机 | 应用启动时 FireAndForget 构建，Profile/Mod 变更时 `InvalidateIndex` 清缓存 |
+| ✅ EntityViewerView 异步等待 | `BuildContentAsync` await `EnsureIndexBuiltAsync()` 再渲染 visualizer |
+| ✅ 字段标签订正 | Encounter Type (Normal/Scavenge), Condition (Instant/Duration, Color含义), BattleMove (StrId/Exposure) |
+| ✅ 文档更新 | 20-data-class-field-reference.md, CHANGELOG, 09-current-status |
 
 ### P3 — 长期
 | 问题 | 说明 |
@@ -259,3 +352,9 @@ var control = vis?.BuildDetail(entity);  // 或 BuildOverview(entity)
 2. `DocumentWorkspaceViewModel.ActivateDocument()` 已改为 public
 3. 数据浏览器 CountEntitiesFast 使用同步 DbContext 枚举（同线程安全）
 4. Sidebar Import 按钮：FolderPicker 取消后不再弹出 FilePicker（已移除回退逻辑）
+5. **导航系统**：Ctrl+Click 走 `INavigationRouter.Navigate` → 责任链遍历已注册 `INavigationTarget` → `ModGameDataTabsView` 的 Priority=50。Peek 走 `INavigationRouter.PeekHandler`
+6. **列可见性**：`ColumnVisibilityKeys` 是唯一 key 源，两边（设置面板 + DataGrid 列管理器）都通过它读写 `Config.ColumnVisibility`，增量 Add/Remove + `ColumnVisibilityChangedMessage` 实时同步
+7. **数据浏览器引用索引**：`EntityBrowserDocument.RebuildBrowserIndexAsync()` 为全部 24 个类型创建 `EntityMergeStore`，填充 `ReferenceLookups` + `EntityModNames`，调用 `GDH.SetActiveStores(store, null)`。可视化器通过 `ReferenceResolver.GetDedupedInt<T>()` 读取，后者委托到活跃 store。在 `DataBrowserViewModel` 注册消息监听以在 mod/profile 变更时自动失效。
+8. **统一引用解析**：`ReferenceResolver.FindByKey<T>(key, sourceEntity)` — 同 mod 优先 → 最高 ModId 兜底。查找链：`ReferenceLookups`（活跃 merge store）→ `GlobalBrowserCache`（磁盘持久化缓存）。终结了可视化器自己建字典去重的双路径问题。
+9. **全局浏览器索引**：`GDH.BrowserStore` + `EntityBrowserDocument.GlobalBrowserCache` — 应用启动时从 DB 构建一次，序列化到 `%LocalAppData%/NeoEditor/browser_index_cache.json`。重启时从磁盘加载，毫秒级。仅 Profile/Mod 变更时重建。Merge 视图用自己的 `_activeMergeStore`，互不影响。
+10. **索引构建等待**：`EntityViewerView` 在渲染 visualizer 前 `await EnsureIndexBuiltAsync()`，避免索引未就绪导致的引用解析失败。

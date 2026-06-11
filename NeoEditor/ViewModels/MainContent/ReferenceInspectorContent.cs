@@ -138,7 +138,6 @@ public partial class ReferenceInspectorContent : LocalizedObservableObject
     public void TogglePin()
     {
         IsPinned = !IsPinned;
-        Helper.GenericDataGridHelper.IsPeekPinned = IsPinned;
         // On unpin, sync display to current history entry
         if (!IsPinned && _current is not null)
             ApplySnapshot(_current);

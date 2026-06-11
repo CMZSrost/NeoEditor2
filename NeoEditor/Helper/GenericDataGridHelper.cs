@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
@@ -15,6 +15,7 @@ using System.Collections.Generic;
 using Avalonia.Media;
 using CommunityToolkit.Mvvm.Messaging;
 using Microsoft.Extensions.DependencyInjection;
+using NeoEditor.Data.Messages;
 using NeoEditor.Data.Model.Game;
 using NeoEditor.Services;
 
@@ -22,11 +23,38 @@ namespace NeoEditor.Helper
 {
     public static class GenericDataGridHelper
     {
+        // ── Router bridge ────────────────────────────────────────────────────
+        // Navigation is delegated to INavigationRouter (DI singleton).
+        // Lazily resolved from App.ServiceProvider since GDH is static and
+        // cannot use constructor injection.
+        private static INavigationRouter? _router;
+        private static INavigationRouter Router =>
+            _router ??= App.ServiceProvider!.GetRequiredService<INavigationRouter>();
+
         // ── Instance store bridge ───────────────────────────────────────────
         // Stores are pushed by SearchableDataGrid.OnAttachedToVisualTree via SetActiveStores().
         // All public static properties delegate to the active stores for converter compatibility.
         private static EntityMergeStore? _activeMergeStore;
         private static EditTrackingStore? _activeEditStore;
+
+        /// <summary>The currently active merge store (for ReferenceIndex access).</summary>
+        public static EntityMergeStore? ActiveMergeStore => _activeMergeStore;
+
+        /// <summary>Global persistent browser store. Built once from the "Game" profile data,
+        /// reused across the entire editor session. Only rebuilt on profile change or mod save.</summary>
+        private static EntityMergeStore? _browserStore;
+        public static EntityMergeStore? BrowserStore
+        {
+            get => _browserStore;
+            set { _browserStore = value; }
+        }
+
+        // ── Column metadata cache ──────────────────────────────────────────
+        // Maps (DataGrid, propertyName) → ReferenceFieldAttribute.
+        // Populated by ConfigureColumn, consumed by SearchableDataGrid navigation to
+        // avoid the Bug 2 column-index mismatch (RowHeader offset in Children.IndexOf).
+        internal static Dictionary<DataGrid, Dictionary<string, ReferenceFieldAttribute>> ColumnMetaCache { get; }
+            = new();
 
         /// <summary>Set the active per-DataGrid stores. Called by SearchableDataGrid on attach/detach.</summary>
         public static void SetActiveStores(EntityMergeStore? mergeStore, EditTrackingStore? editStore)
@@ -54,7 +82,7 @@ namespace NeoEditor.Helper
 
         /// <summary>Populated by ModGameDataTabsView before rendering, used for ComboBox items in reference columns.</summary>
         public static Dictionary<Type, List<object>> ReferenceLookups =>
-            _activeMergeStore?.ReferenceLookups ?? _emptyRefLookups;
+            _activeMergeStore?.ReferenceLookups ?? _browserStore?.ReferenceLookups ?? _emptyRefLookups;
 
         /// <summary>Field description service for column tooltips. Set by App startup.</summary>
         public static Services.FieldDescriptionService? FieldDescriptions { get; set; }
@@ -62,36 +90,58 @@ namespace NeoEditor.Helper
         /// <summary>Clear the Subject lookup cache (called on data reload).</summary>
         public static void ClearSubjectCache() => (_activeMergeStore?.SubjectCache ?? _emptySubjectCache).Clear();
 
+        /// <summary>Build a deduped dictionary of entities by int key from the active ReferenceLookups. Highest ModId wins for dupes.</summary>
+        public static Dictionary<int, T> GetEntities<T>() where T : IEntity
+        {
+            if (!ReferenceLookups.TryGetValue(typeof(T), out var list) || list is null) return [];
+            var keyProp = typeof(T).GetProperty("Id") ?? typeof(T).GetProperty("nID");
+            if (keyProp is null) return [];
+            return list.OfType<T>()
+                .GroupBy(e => keyProp.GetValue(e) is int id ? id : 0)
+                .ToDictionary(g => g.Key, g => g.OrderByDescending(e => e.ModId).First());
+        }
+
+        /// <summary>Build a deduped dictionary keyed by a composite string selector. Highest ModId wins for dupes.</summary>
+        public static Dictionary<string, T> GetCompositeEntities<T>(Func<T, string> keySelector) where T : IEntity
+        {
+            if (!ReferenceLookups.TryGetValue(typeof(T), out var list) || list is null) return [];
+            return list.OfType<T>()
+                .GroupBy(keySelector)
+                .ToDictionary(g => g.Key, g => g.OrderByDescending(e => e.ModId).First());
+        }
+
+        /// <summary>Get all entities of a type deduped by int key. Highest ModId wins for dupes.</summary>
+        public static List<T> GetDedupedEntities<T>() where T : IEntity
+        {
+            if (!ReferenceLookups.TryGetValue(typeof(T), out var list) || list is null) return [];
+            var keyProp = typeof(T).GetProperty("Id") ?? typeof(T).GetProperty("nID");
+            return list.OfType<T>()
+                .GroupBy(e => keyProp?.GetValue(e)?.ToString() ?? e.EntityId)
+                .Select(g => g.OrderByDescending(e => e.ModId).First())
+                .ToList();
+        }
+
         /// <summary>Format a single segment of a multi-value reference field with Subject name.</summary>
-        private static string FormatSegmentDisplay(string segment, Type targetType, string? pattern, string? targetKey = null)
+        private static string FormatSegmentDisplay(string segment, Type targetType, string? pattern,
+            string sourceEntityId, string propertyName, string? targetKey = null)
         {
             if (string.IsNullOrWhiteSpace(segment)) return segment;
 
             var pat = ReferencePattern.FromName(pattern);
             var rawId = pat.ExtractRawId(segment);
-            var parsed = ReferenceHelper.ParseWithPattern(segment, pattern);
+            var parsed = ReferenceParser.ParseWithPattern(segment, pattern);
 
-            var subject = LookupSubjectByRawId(targetType, rawId, targetKey);
+            var subject = LookupSubjectByRawId(targetType, rawId, sourceEntityId, propertyName, targetKey);
             if (string.IsNullOrEmpty(subject)) return segment;
 
             return pat.FormatDisplay(segment, subject, parsed.ModName);
         }
 
-        private static readonly List<WeakReference<object>> _activeViews = new();
-
-        public static void RegisterNavigateTarget(object view)
-        {
-            _activeViews.RemoveAll(w => !w.TryGetTarget(out _));
-            _activeViews.Add(new WeakReference<object>(view));
-        }
-
-        public static Func<Type, string, IEntity?, bool>? PeekRequested;
-
-        /// <summary>Toggled by ReferenceInspector Pin button. When true, Ctrl+RightClick peek is suppressed.</summary>
-        public static bool IsPeekPinned { get; set; }
-
         /// <summary>Set by Ctrl+PointerPressed, checked by ContextRequested to suppress right-click menu.</summary>
         private static bool _ctrlWasPressed;
+
+        /// <summary>Set after a Tunnel handler has processed navigation, to prevent double-navigation from nested handlers.</summary>
+        internal static bool NavigationHandled { get; set; }
 
         public static void RaiseCellEditCommitted(IEntity entity, string propertyName, object? oldValue, object? newValue)
             => App.ServiceProvider!.GetRequiredService<CommunityToolkit.Mvvm.Messaging.IMessenger>()
@@ -117,13 +167,17 @@ namespace NeoEditor.Helper
             _activeMergeStore?.OverriddenEntityIds ?? _emptyOverridden;
 
         public static Dictionary<string, string> EntityModNames =>
-            _activeMergeStore?.EntityModNames ?? _emptyModNames;
+            _activeMergeStore?.EntityModNames ?? _browserStore?.EntityModNames ?? _emptyModNames;
+
+        /// <summary>Entity EntityId → strModName (namespace). Base game = "0".</summary>
+        public static Dictionary<string, string> EntityNamespaces =>
+            _activeMergeStore?.EntityNamespaces ?? _browserStore?.EntityNamespaces ?? _emptyModNames;
 
         public static Dictionary<string, string> NamespaceToModName =>
             _activeMergeStore?.NamespaceToModName ?? _emptyNamespace;
 
         public static Dictionary<string, int> EntityMergedIds =>
-            _activeMergeStore?.EntityMergedIds ?? _emptyMergedIds;
+            _activeMergeStore?.EntityMergedIds ?? _browserStore?.EntityMergedIds ?? _emptyMergedIds;
 
         public static Dictionary<(string, string), string> FieldSources =>
             _activeMergeStore?.FieldSources ?? _emptyFieldSources;
@@ -164,134 +218,192 @@ namespace NeoEditor.Helper
         /// <summary>Look up an entity's Subject by type and business key id from ReferenceLookups.</summary>
         private static string? LookupSubject(Type entityType, int id)
         {
-            return LookupSubjectByRawId(entityType, id.ToString(), null);
+            return LookupSubjectByRawId(entityType, id.ToString(), "", "");
         }
 
         /// <summary>Look up an entity's Subject using TargetKey to decompose the raw ID value.
         /// Prefers the match with the highest ModId (overlay chain winner).
         /// Falls back to secondaryEntityType if primary lookup fails.</summary>
-        private static string? LookupSubjectByRawId(Type entityType, string rawId, string? targetKey,
+        private static string? LookupSubjectByRawId(Type entityType, string rawId,
+            string sourceEntityId, string propertyName,
+            string? targetKey = null,
             Type? secondaryEntityType = null, string? secondaryTargetKey = null)
         {
-            var cacheKey = (entityType, rawId);
-            if (SubjectCache.TryGetValue(cacheKey, out var cached))
-                return cached;
-
-            var best = FindBestMatch(entityType, rawId, targetKey);
-            if (best is null && secondaryEntityType is not null)
-            {
-                best = FindBestMatch(secondaryEntityType, rawId, secondaryTargetKey);
-            }
-            var result = best?.Subject;
-            SubjectCache[cacheKey] = result;
-            return result;
+            return ReferenceResolver.Instance.LookupSubject(sourceEntityId, propertyName, entityType, rawId, secondaryEntityType);
         }
 
         /// <summary>Resolve an entity's EntityId using TargetKey decomposition.
         /// Prefers the match with the highest ModId (overlay chain winner).</summary>
-        public static string? ResolveEntityIdByTargetKey(Type entityType, string rawId, string? targetKey)
+        public static string? ResolveEntityIdByTargetKey(Type entityType, string rawId, string? targetKey,
+            string sourceEntityId = "", string propertyName = "")
         {
-            var best = FindBestMatch(entityType, rawId, targetKey);
+            // Phase 2: try O(1) index lookup first, fall through to FindBestMatch on miss
+            var index = _activeMergeStore?.Index;
+            if (index is not null)
+            {
+                var entityId = index.Lookup(sourceEntityId, propertyName, entityType, rawId);
+                if (entityId is not null) return entityId;
+                // Index miss — fall through to FindBestMatch
+            }
+
+            var best = FindBestMatch(entityType, rawId, targetKey, sourceEntityId, propertyName);
             return best?.EntityId;
         }
 
-        /// <summary>Find the best entity match preferring namespace match, then highest ModId.</summary>
         internal static IEntity? FindBestMatch(Type entityType, string rawId, string? targetKey)
+            => FindBestMatch(entityType, rawId, targetKey, "", "");
+
+        /// <summary>Find the best entity match with source context for context-aware index lookup.</summary>
+        internal static IEntity? FindBestMatch(Type entityType, string rawId, string? targetKey,
+            string sourceEntityId, string propertyName)
         {
-            // Extract namespace prefix before DecomposeId strips it
+            // Try index lookup first — both active merge store AND browser store
+            var index = _activeMergeStore?.Index ?? _browserStore?.Index;
+            if (index is not null)
+            {
+                var entityId = index.Lookup(sourceEntityId, propertyName, entityType, rawId);
+                if (entityId is not null
+                    && ReferenceLookups.TryGetValue(entityType, out var indexedEntities))
+                {
+                    foreach (var obj in indexedEntities)
+                    {
+                        if (obj is IEntity e && e.EntityId == entityId)
+                            return e;
+                    }
+                }
+                // Index miss — fall through to O(n) scan below (don't return null early)
+            }
+
+            // O(n) scan (fallback when index is null, or index miss)
+            // New model: namespace prefix → lookup by (type, ns, primary key);
+            //            no prefix → lookup by MergedId
             string? nsPrefix = null;
             var colonIdx = rawId.IndexOf(':');
+            var idOnly = rawId;
             if (colonIdx > 0)
             {
                 nsPrefix = rawId[..colonIdx];
-                // Use id-only part for decomposition to keep key matching working
-                rawId = rawId[(colonIdx + 1)..];
+                idOnly = rawId[(colonIdx + 1)..];
             }
 
-            var keyInfo = ReferenceHelper.ParseTargetKey(targetKey);
-            var keyValues = ReferenceHelper.DecomposeId(rawId, keyInfo);
+            Serilog.Log.Logger.Debug(
+                "[GDH:FindBest] O(n) fallback type={Type} rawId={RawId} ns={Ns} idOnly={IdOnly}",
+                entityType.Name, rawId, nsPrefix ?? "(none)", idOnly);
 
             if (!ReferenceLookups.TryGetValue(entityType, out var list))
                 return null;
 
-            IEntity? best = null;
-            var bestModId = int.MinValue;
-            IEntity? nsMatch = null;
-            var nsMatchModId = int.MinValue;
-
-            foreach (var obj in list)
+            if (nsPrefix is not null)
             {
-                if (obj is not IEntity entity) continue;
-                var match = true;
-                foreach (var kv in keyValues)
+                // Namespace-prefixed: match by primary key within namespace
+                var keyInfo = ReferenceParser.ParseTargetKey(targetKey);
+                var keyValues = ReferenceParser.DecomposeId(idOnly, keyInfo);
+
+                IEntity? nsMatch = null;
+                var nsMatchModId = int.MinValue;
+
+                foreach (var obj in list)
                 {
-                    var prop = entityType.GetProperty(kv.Key,
-                        System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public);
-                    if (prop?.GetValue(entity) is int val && val != kv.Value)
+                    if (obj is not IEntity entity) continue;
+                    if (!EntityNamespaces.TryGetValue(entity.EntityId, out var ens) || ens != nsPrefix)
+                        continue;
+
+                    var match = true;
+                    foreach (var kv in keyValues)
                     {
-                        match = false;
-                        break;
+                        var prop = entityType.GetProperty(kv.Key,
+                            System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public);
+                        var propValue = prop?.GetValue(entity);
+                        if (propValue != null && !Equals(Convert.ToInt64(propValue), Convert.ToInt64(kv.Value)))
+                        {
+                            match = false;
+                            break;
+                        }
+                    }
+                    if (match && entity.ModId > nsMatchModId)
+                    {
+                        nsMatch = entity;
+                        nsMatchModId = entity.ModId;
                     }
                 }
-                if (match)
+
+                Serilog.Log.Logger.Debug(
+                    "[GDH:FindBest] NS result type={Type} ns={Ns} pk={Pk} → {Result}",
+                    entityType.Name, nsPrefix, idOnly, nsMatch?.EntityId ?? "(null)");
+                return nsMatch;
+            }
+            else
+            {
+                // No namespace prefix: lookup by MergedId
+                if (!int.TryParse(idOnly, out var mergedId))
                 {
-                    if (entity.ModId > bestModId)
+                    Serilog.Log.Logger.Debug(
+                        "[GDH:FindBest] non-prefixed idOnly='{IdOnly}' not an int → null", idOnly);
+                    return null;
+                }
+
+                IEntity? best = null;
+                var bestModId = int.MinValue;
+
+                foreach (var obj in list)
+                {
+                    if (obj is not IEntity entity) continue;
+                    if (EntityMergedIds.TryGetValue(entity.EntityId, out var mid) && mid == mergedId
+                        && entity.ModId > bestModId)
                     {
                         best = entity;
                         bestModId = entity.ModId;
                     }
-                    // Prefer entity whose namespace matches the prefix
-                    if (nsPrefix is not null
-                        && EntityModNames.TryGetValue(entity.EntityId, out var modName))
+                }
+
+                // Diagnostic: also find what primary-key-based match would return for comparison
+                var keyProp = entityType.GetProperty("Id") ?? entityType.GetProperty("nID");
+                var pkMatchCandidates = new List<string>();
+                if (keyProp is not null)
+                {
+                    foreach (var obj in list)
                     {
-                        // Direct match: modName == nsPrefix
-                        if (modName == nsPrefix && entity.ModId > nsMatchModId)
-                        {
-                            nsMatch = entity;
-                            nsMatchModId = entity.ModId;
-                        }
-                        // Also match via NamespaceToModName: strModName → ModName
-                        if (NamespaceToModName.TryGetValue(nsPrefix, out var mappedDir)
-                            && mappedDir == modName
-                            && entity.ModId > nsMatchModId)
-                        {
-                            nsMatch = entity;
-                            nsMatchModId = entity.ModId;
-                        }
+                        if (obj is not IEntity entity) continue;
+                        if (keyProp.GetValue(entity) is int pk && pk == mergedId)
+                            pkMatchCandidates.Add($"{entity.EntityId}(mod={entity.ModId})");
                     }
                 }
-            }
 
-            return nsMatch ?? best;
+                Serilog.Log.Logger.Debug(
+                    "[GDH:FindBest] MergedId result type={Type} mid={Mid} → {Result} modId={ModId} (pkMatch={PkMatch})",
+                    entityType.Name, mergedId, best?.EntityId ?? "(null)", best?.ModId ?? -999,
+                    string.Join(", ", pkMatchCandidates));
+                return best;
+            }
         }
 
         public static void NavigateTo(Type entityType, int id)
         {
-            NavigateToImpl(entityType, entityId: null, businessId: id);
+            // Try to resolve business key → EntityId via the active index
+            var entityId = _activeMergeStore?.Index.LookupGlobal(entityType, id.ToString());
+            if (entityId is not null)
+            {
+                Router.Navigate(entityType, entityId);
+                return;
+            }
+            Serilog.Log.Logger.Warning("[GDH:Nav] Could not resolve {EntityType} id={Id} to EntityId", entityType.Name, id);
+        }
+
+        public static void PeekEntity(Type entityType, string entityId)
+        {
+            if (string.IsNullOrEmpty(entityId)) return;
+            // Find the actual entity for the ValueEditor panel
+            IEntity? entity = null;
+            if (ReferenceLookups.TryGetValue(entityType, out var list) && list is not null)
+                entity = list.OfType<IEntity>().FirstOrDefault(e => e.EntityId == entityId);
+            App.ServiceProvider!.GetRequiredService<IMessenger>()
+                .Send(new VisualEditorRequestedMessage(entityType, entity));
         }
 
         public static void NavigateToByEntityId(Type entityType, string entityId)
         {
-            NavigateToImpl(entityType, entityId, businessId: null);
-        }
-
-        private static void NavigateToImpl(Type entityType, string? entityId, int? businessId)
-        {
-            _activeViews.RemoveAll(w => !w.TryGetTarget(out _));
-            foreach (var wr in _activeViews)
-            {
-                if (wr.TryGetTarget(out var view) && view is Views.UserControls.ModGameDataTabsView tabsView)
-                {
-                    if (tabsView.Tabs.Any(t => t.EntityType == entityType))
-                    {
-                        if (entityId is not null)
-                            tabsView.NavigateToEntityByEntityId(entityType, entityId);
-                        else if (businessId.HasValue)
-                            tabsView.NavigateToEntity(entityType, businessId.Value);
-                        return;
-                    }
-                }
-            }
+            if (string.IsNullOrEmpty(entityId)) return;
+            Router.Navigate(entityType, entityId);
         }
 
         public static List<OverlayChainEntry> GetOverlayChain(IEntity entity)
@@ -300,76 +412,56 @@ namespace NeoEditor.Helper
         }
 
         /// <summary>Navigate to reference ALWAYS (even if peek handler is active). Used by Ctrl+LeftClick.</summary>
-        private static void NavigateToReferenceForce(Type targetType, string rawId, string? targetKey,
-            Type? secondaryTargetType = null, string? secondaryTargetKey = null)
+        internal static void NavigateToReferenceForce(Type targetType, string rawId, string? targetKey,
+            Type? secondaryTargetType = null, string? secondaryTargetKey = null,
+            string sourceEntityId = "", string propertyName = "")
         {
-            // Peek (always pushes to history; pin only freezes display, not history)
-            var (resolvedType, targetEntity) = ResolveWithSecondary(targetType, rawId, targetKey, secondaryTargetType, secondaryTargetKey);
-            PeekRequested?.Invoke(resolvedType, targetEntity?.EntityId ?? rawId, targetEntity);
+            if (rawId == "0") return;
 
-            // Always navigate using the resolved entity type
-            DoNavigateToReference(resolvedType, rawId, targetKey);
+            // Resolve entity
+            var (resolvedType, targetEntity) = ResolveWithSecondary(targetType, rawId, targetKey,
+                secondaryTargetType, secondaryTargetKey, sourceEntityId, propertyName);
+
+            // Peek via router
+            Router.Peek(resolvedType, targetEntity?.EntityId ?? rawId, targetEntity);
+
+            // Navigate via router (using resolved EntityId when available)
+            var entityId = ResolveEntityIdByTargetKey(resolvedType, rawId, targetKey, sourceEntityId, propertyName);
+            bool navigated = false;
+            if (entityId is not null)
+                navigated = Router.Navigate(resolvedType, entityId);
+
+            // Fallback: if router didn't find a target, try numeric-only lookup
+            if (!navigated)
+            {
+                var colonIdx = rawId.IndexOf(':');
+                var numericPart = colonIdx > 0 ? rawId[(colonIdx + 1)..] : rawId;
+                if (int.TryParse(numericPart, out var intId) && intId >= 0)
+                    NavigateTo(resolvedType, intId);
+            }
         }
 
         /// <summary>Resolve a reference trying primary then secondary target.</summary>
         private static (Type resolvedType, IEntity? entity) ResolveWithSecondary(
             Type targetType, string rawId, string? targetKey,
-            Type? secondaryTargetType, string? secondaryTargetKey)
+            Type? secondaryTargetType, string? secondaryTargetKey,
+            string sourceEntityId = "", string propertyName = "")
         {
-            var entity = FindBestMatch(targetType, rawId, targetKey);
+            var entity = FindBestMatch(targetType, rawId, targetKey, sourceEntityId, propertyName);
             if (entity is not null) return (targetType, entity);
 
             if (secondaryTargetType is not null)
             {
-                entity = FindBestMatch(secondaryTargetType, rawId, secondaryTargetKey);
+                entity = FindBestMatch(secondaryTargetType, rawId, secondaryTargetKey, sourceEntityId, propertyName);
                 if (entity is not null) return (secondaryTargetType, entity);
             }
 
-            // Last-resort: try numeric-only lookup for namespace-prefixed IDs
             var colonIdx = rawId.IndexOf(':');
             var numericPart = colonIdx > 0 ? rawId[(colonIdx + 1)..] : rawId;
             if (int.TryParse(numericPart, out var intId) && intId >= 0)
-                entity = FindBestMatch(targetType, intId.ToString(), null);
+                entity = FindBestMatch(targetType, intId.ToString(), null, sourceEntityId, propertyName);
 
             return (targetType, entity);
-        }
-
-        private static void NavigateToReference(Type targetType, string rawId, string? targetKey)
-        {
-            // Try peek first - if a handler shows it in Reference Inspector, don't navigate
-            var targetEntity = FindBestMatch(targetType, rawId, targetKey);
-            // Also try secondary if primary fails (from ReferenceFieldAttribute)
-            if (targetEntity is null)
-            {
-                // Try simple int parse for fallback lookup
-                var colonIdx = rawId.IndexOf(':');
-                var numericPart = colonIdx > 0 ? rawId[(colonIdx + 1)..] : rawId;
-                if (int.TryParse(numericPart, out var intId) && intId >= 0)
-                    targetEntity = FindBestMatch(targetType, intId.ToString(), null);
-            }
-
-            if (PeekRequested?.Invoke(targetType, rawId, targetEntity) == true)
-                return; // Peek handled, don't navigate
-
-            DoNavigateToReference(targetType, rawId, targetKey);
-        }
-
-        private static void DoNavigateToReference(Type targetType, string rawId, string? targetKey)
-        {
-            var entityId = ResolveEntityIdByTargetKey(targetType, rawId, targetKey);
-            if (entityId is null)
-            {
-                var colonIdx = rawId.IndexOf(':');
-                var numericPart = colonIdx > 0 ? rawId[(colonIdx + 1)..] : rawId;
-                if (int.TryParse(numericPart, out var intId) && intId >= 0)
-                {
-                    NavigateTo(targetType, intId);
-                    return;
-                }
-                NavigateTo(targetType, 0);
-                return;
-            }
-            NavigateToByEntityId(targetType, entityId);
         }
 
         public static void ConfigureColumn<T>(DataGridAutoGeneratingColumnEventArgs e, Func<string, string> localizer)
@@ -454,14 +546,14 @@ namespace NeoEditor.Helper
                         string display;
                         if (!isMulti)
                         {
-                            var rawId = ReferenceHelper.ExtractRawId(raw, pattern);
-                            var subject = LookupSubjectByRawId(targetType, rawId, refAttr.TargetKey, refAttr.SecondaryTargetEntityType, refAttr.SecondaryTargetKey);
+                            var rawId = ReferenceParser.ExtractRawId(raw, pattern);
+                            var sourceEid = (item as IEntity)?.EntityId ?? "";
+                            var subject = LookupSubjectByRawId(targetType, rawId, sourceEid, e.PropertyName,
+                                refAttr.TargetKey, refAttr.SecondaryTargetEntityType, refAttr.SecondaryTargetKey);
                             if (!string.IsNullOrEmpty(subject))
                             {
-                                var (modName, id) = ReferenceHelper.ParseReference(raw);
-                                display = id < 0 || rawId.StartsWith('-')
-                                    ? $"~{subject}"
-                                    : $"{subject} ({rawId})";
+                                var parsed = ReferenceParser.ParseWithPattern(raw, pattern);
+                                display = ReferencePattern.FromName(pattern).FormatDisplay(raw, subject, parsed.ModName);
                             }
                             else
                             {
@@ -535,9 +627,11 @@ namespace NeoEditor.Helper
                                             Foreground = Avalonia.Media.Brushes.Gray
                                         });
 
-                                    var segDisplay = FormatSegmentDisplay(andPart, targetType, pattern, refAttr.TargetKey);
+                                    var segDisplay = FormatSegmentDisplay(andPart, targetType, pattern,
+                                        (item as IEntity)?.EntityId ?? "", e.PropertyName, refAttr.TargetKey);
                                     var segTb = new TextBlock
                                     {
+                                        Tag = andPart, // raw segment for navigation lookup
                                         Text = segDisplay,
                                         VerticalAlignment = VerticalAlignment.Center,
                                         Foreground = Avalonia.Media.Brushes.Teal,
@@ -568,13 +662,18 @@ namespace NeoEditor.Helper
                                         {
                                             if (pmArgs is PointerEventArgs pe && (pe.KeyModifiers & KeyModifiers.Control) != 0)
                                             {
-                                                var partRawId = ReferenceHelper.ExtractRawId(capturedPart, pattern);
-                                                var subject = LookupSubjectByRawId(targetType, partRawId, refAttr.TargetKey, refAttr.SecondaryTargetEntityType, refAttr.SecondaryTargetKey);
+                                                var partRawId = ReferenceParser.ExtractRawId(capturedPart, pattern);
+                                                var subject = LookupSubjectByRawId(targetType, partRawId,
+                                                    (item as IEntity)?.EntityId ?? "", e.PropertyName,
+                                                    refAttr.TargetKey, refAttr.SecondaryTargetEntityType, refAttr.SecondaryTargetKey);
                                                 var label = string.IsNullOrEmpty(subject) ? capturedPart : $"{subject} ({partRawId})";
                                                 ToolTip.SetTip(segBorder, $"{targetType.Name}: {label}");
                                             }
                                         }
-                                        catch { }
+                                        catch (Exception ex)
+                                        {
+                                            Serilog.Log.Logger.Verbose(ex, "[GDH:Hover] Multi-seg hover threw for {TargetType}", targetType.Name);
+                                        }
                                     }, RoutingStrategies.Bubble, true);
 
                                     segBorder.PointerExited += (_, _) =>
@@ -598,8 +697,9 @@ namespace NeoEditor.Helper
                                         {
                                             if (args is PointerPressedEventArgs pp && (pp.KeyModifiers & KeyModifiers.Control) != 0)
                                             {
+                                                if (NavigationHandled) { NavigationHandled = false; return; }
                                                 _ctrlWasPressed = true;
-                                                var clickedRawId = ReferenceHelper.ExtractRawId(capturedPart, pattern);
+                                                var clickedRawId = ReferenceParser.ExtractRawId(capturedPart, pattern);
                                                 if (string.IsNullOrWhiteSpace(clickedRawId)) return;
                                                 pp.Handled = true;
 
@@ -613,18 +713,29 @@ namespace NeoEditor.Helper
                                                         ?? (int.TryParse(clickedRawId, out var intId) && intId >= 0
                                                             ? FindBestMatch(targetType, intId.ToString(), null)
                                                             : null);
-                                                    PeekRequested?.Invoke(targetType, target?.EntityId ?? clickedRawId, target);
+                                                    try
+                                                    {
+                                                        Router.Peek(targetType, target?.EntityId ?? clickedRawId, target);
+                                                    }
+                                                    catch (Exception ex)
+                                                    {
+                                                        Serilog.Log.Logger.Warning(ex, "[GDH:Peek] Multi-seg peek threw for {TargetType} rawId={RawId}", targetType.Name, clickedRawId);
+                                                    }
                                                 }
                                                 else
                                                 {
                                                     // Jump – peek AND navigate (with secondary target support)
                                                     NavigateToReferenceForce(targetType, clickedRawId, refAttr.TargetKey,
-                                                        refAttr.SecondaryTargetEntityType, refAttr.SecondaryTargetKey);
+                                                        refAttr.SecondaryTargetEntityType, refAttr.SecondaryTargetKey,
+                                                        (item as IEntity)?.EntityId ?? "", e.PropertyName);
                                                 }
                                             }
                                         }
-                                        catch { }
-                                    }, RoutingStrategies.Bubble, true);
+                                        catch (Exception ex)
+                                        {
+                                            Serilog.Log.Logger.Error(ex, "[GDH:PtrPressed] Multi-seg handler threw for {TargetType}", targetType.Name);
+                                        }
+                                    }, RoutingStrategies.Tunnel, true);
 
                                     // Suppress right-click context menu after Ctrl+Click
                                     segBorder.AddHandler(Control.ContextRequestedEvent, (_, ctxArgs) =>
@@ -641,7 +752,7 @@ namespace NeoEditor.Helper
                         else
                         {
                             // Single-value: Ctrl+Hover tooltip, Ctrl+Click to navigate
-                            var singleParsed = ReferenceHelper.ParseReference(raw);
+                            var singleParsed = ReferenceParser.ParseReference(raw);
                             var refColNameSingle = property.GetCustomAttribute<ColumnAttribute>()?.Name ?? property.Name;
                             grid.Cursor = new Avalonia.Input.Cursor(Avalonia.Input.StandardCursorType.Hand);
 
@@ -653,15 +764,20 @@ namespace NeoEditor.Helper
                                     if (pmArgs is PointerEventArgs pe && (pe.KeyModifiers & KeyModifiers.Control) != 0)
                                     {
                                         var currentRaw = property.GetValue(item)?.ToString() ?? "";
-                                        var rawId = ReferenceHelper.ExtractRawId(currentRaw, pattern);
-                                        var subject = LookupSubjectByRawId(targetType, rawId, refAttr.TargetKey, refAttr.SecondaryTargetEntityType, refAttr.SecondaryTargetKey);
+                                        var rawId = ReferenceParser.ExtractRawId(currentRaw, pattern);
+                                        var subject = LookupSubjectByRawId(targetType, rawId,
+                                            (item as IEntity)?.EntityId ?? "", e.PropertyName,
+                                            refAttr.TargetKey, refAttr.SecondaryTargetEntityType, refAttr.SecondaryTargetKey);
                                         if (!string.IsNullOrEmpty(subject))
                                         {
                                             ToolTip.SetTip(grid, $"{targetType.Name}: {subject} ({rawId})");
                                         }
                                     }
                                 }
-                                catch { }
+                                catch (Exception ex)
+                                {
+                                    Serilog.Log.Logger.Verbose(ex, "[GDH:Hover] Single-val hover threw for {TargetType}", targetType.Name);
+                                }
                             }, RoutingStrategies.Bubble, true);
 
                             grid.PointerExited += (_, _) =>
@@ -685,9 +801,10 @@ namespace NeoEditor.Helper
                                 {
                                     if (args is PointerPressedEventArgs pp && (pp.KeyModifiers & KeyModifiers.Control) != 0)
                                     {
+                                        if (NavigationHandled) { NavigationHandled = false; return; }
                                         _ctrlWasPressed = true;
                                         var currentRaw = property.GetValue(item)?.ToString() ?? "";
-                                        var rawId = ReferenceHelper.ExtractRawId(currentRaw, pattern);
+                                        var rawId = ReferenceParser.ExtractRawId(currentRaw, pattern);
                                         if (string.IsNullOrWhiteSpace(rawId)) return;
                                         pp.Handled = true;
 
@@ -701,18 +818,29 @@ namespace NeoEditor.Helper
                                                 ?? (int.TryParse(rawId, out var intId) && intId >= 0
                                                     ? FindBestMatch(targetType, intId.ToString(), null)
                                                     : null);
-                                            PeekRequested?.Invoke(targetType, target?.EntityId ?? rawId, target);
+                                            try
+                                            {
+                                                Router.Peek(targetType, target?.EntityId ?? rawId, target);
+                                            }
+                                            catch (Exception ex)
+                                            {
+                                                Serilog.Log.Logger.Warning(ex, "[GDH:Peek] Single-val peek threw for {TargetType} rawId={RawId}", targetType.Name, rawId);
+                                            }
                                         }
                                         else
                                         {
                                             // Jump – navigate + peek (with secondary target support)
                                             NavigateToReferenceForce(targetType, rawId, refAttr.TargetKey,
-                                                refAttr.SecondaryTargetEntityType, refAttr.SecondaryTargetKey);
+                                                refAttr.SecondaryTargetEntityType, refAttr.SecondaryTargetKey,
+                                                (item as IEntity)?.EntityId ?? "", e.PropertyName);
                                         }
                                     }
                                 }
-                                catch { }
-                            }, RoutingStrategies.Bubble, true);
+                                catch (Exception ex)
+                                {
+                                    Serilog.Log.Logger.Error(ex, "[GDH:PtrPressed] Single-val handler threw for {TargetType}", targetType.Name);
+                                }
+                            }, RoutingStrategies.Tunnel, true);
 
                             // Suppress right-click context menu after Ctrl+Click
                             grid.AddHandler(Control.ContextRequestedEvent, (_, ctxArgs) =>

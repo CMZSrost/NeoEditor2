@@ -11,7 +11,7 @@ public static class LoggingExtensions
         IConfiguration configuration, string logFilePath = "logs/modeditor-.log")
     {
         var loggerConfig = new LoggerConfiguration()
-            .MinimumLevel.Verbose()
+            .MinimumLevel.Information()
             .Enrich.FromLogContext()
             .WriteTo.Console()
             .WriteTo.File(logFilePath,

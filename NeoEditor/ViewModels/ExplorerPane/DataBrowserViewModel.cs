@@ -4,9 +4,11 @@ using System.Threading.Tasks;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Messaging;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using NeoEditor.Data.Context;
+using NeoEditor.Data.Messages;
 using NeoEditor.Data.Model;
 using NeoEditor.Helper;
 using NeoEditor.ViewModels.MainContent;
@@ -30,6 +32,17 @@ public partial class DataBrowserViewModel : ViewModelBase
     {
         _gameDbFactory = gameDbFactory;
         Helper.AsyncHelper.FireAndForget(LoadDomainsAsync());
+
+        // Invalidate reference index when mods or profiles change
+        Messenger.Register<SaveProfileMessage>(this, (_, _) => InvalidateIndex());
+        Messenger.Register<RefreshModMessage>(this, (_, _) => InvalidateIndex());
+        Messenger.Register<InitModMessage>(this, (_, _) => InvalidateIndex());
+        Messenger.Register<CellEditedMessage>(this, (_, _) => InvalidateIndex());
+    }
+
+    private static void InvalidateIndex()
+    {
+        EntityBrowserDocument.InvalidateIndex();
     }
 
     private async Task LoadDomainsAsync()
@@ -80,4 +93,13 @@ public partial class DataBrowserViewModel : ViewModelBase
 
     [RelayCommand]
     private async Task RefreshAsync() { DomainGroups.Clear(); await LoadDomainsAsync(); }
+
+    [RelayCommand]
+    private async Task RebuildIndexAsync()
+    {
+        StatusText = "Rebuilding index...";
+        MainContent.EntityBrowserDocument.InvalidateIndex();
+        await MainContent.EntityBrowserDocument.EnsureIndexBuiltAsync();
+        StatusText = "Index rebuilt.";
+    }
 }

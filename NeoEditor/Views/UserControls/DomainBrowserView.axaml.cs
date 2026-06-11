@@ -28,6 +28,14 @@ public partial class DomainBrowserView : UserControl
         InitializeComponent();
         EntityListBox.AddHandler(InputElement.PointerPressedEvent, OnEntityClicked,
             RoutingStrategies.Bubble, true);
+        SearchBox.AddHandler(TextBox.TextChangedEvent, OnSearchTextChanged,
+            RoutingStrategies.Bubble, true);
+    }
+
+    private void OnSearchTextChanged(object? sender, TextChangedEventArgs e)
+    {
+        if (_doc is not null)
+            _doc.FilterText = SearchBox.Text ?? "";
     }
 
     protected override void OnDataContextChanged(EventArgs e)
@@ -56,17 +64,25 @@ public partial class DomainBrowserView : UserControl
         }
 
         // CRITICAL FIX: Set Proportion to NaN so ProportionalStackPanel auto-assigns it.
-        // Default Proportion=0 is treated as "valid" by PSP (IsValidProportion(0)==true),
-        // which means PSP allocates 0 width → blank rendering.
-        // NaN triggers PSP's AssignUnassignedProportions to auto-assign a proper proportion.
         if (_viewerDocDock is IDockable dockable)
         {
             dockable.Proportion = double.NaN;
         }
 
-        Console.WriteLine($"[DB] FindDocumentDock: found={_viewerDocDock is not null}, Layout={layout?.Id}");
+        // Wire closing event to clean up ViewerTabs when user closes a dock document
+        if (_doc is not null)
+        {
+            _doc.DockFactory.DockableClosing += (_, args) =>
+            {
+                if (args.Dockable?.Context is EntityViewerDocument evd)
+                {
+                    _doc.ViewerTabs.Remove(evd);
+                    Console.WriteLine($"[DB] Removed from ViewerTabs: {evd.Entity.EntityId}");
+                }
+            };
+        }
 
-        // Log visual tree
+        Console.WriteLine($"[DB] FindDocumentDock: found={_viewerDocDock is not null}, Layout={layout?.Id}");
         Dispatcher.UIThread.Post(LogVisualTree, DispatcherPriority.Render);
     }
 

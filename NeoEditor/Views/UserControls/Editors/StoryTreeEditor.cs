@@ -29,7 +29,7 @@ public class StoryTreeEditor : ICustomTableEditor
         _tabs.Items.Clear();
         _enc = entity as Encounter;
         if (_enc is null) return;
-        _allEnc = ReferenceResolver.GetDedupedInt<Encounter>();
+        _allEnc = GenericDataGridHelper.GetEntities<Encounter>();
 
         _tabs.Items.Add(EditorHelper.MakeTab("Story Flow", BuildStoryFlow()));
         _tabs.Items.Add(EditorHelper.MakeTab("Text Editor", BuildTextEditor()));
@@ -96,7 +96,7 @@ public class StoryTreeEditor : ICustomTableEditor
             foreach (var p in parents)
             {
                 var n = EditorHelper.NewNode($"{Trunc(p.Name, 30)}", Brushes.Orange);
-                EditorHelper.NavOnCtrl(n, () => ReferenceResolver.NavigateTo(typeof(Encounter), p.EntityId));
+                EditorHelper.NavOnCtrl(n, () => ReferenceResolver.Instance.NavigateTo(typeof(Encounter), p.EntityId));
                 lf.Items.Add(n);
             }
             root.Items.Add(lf);
@@ -126,7 +126,7 @@ public class StoryTreeEditor : ICustomTableEditor
                 var name = _allEnc.TryGetValue(cid, out var ce) ? ce.Name ?? "?" : "?";
                 var n = EditorHelper.NewNode($"{Trunc(name, 25)} (w:{wgt:F2})", Brushes.Green);
                 if (_allEnc.TryGetValue(cid, out var e2))
-                    EditorHelper.NavOnCtrl(n, () => ReferenceResolver.NavigateTo(typeof(Encounter), e2.EntityId));
+                    EditorHelper.NavOnCtrl(n, () => ReferenceResolver.Instance.NavigateTo(typeof(Encounter), e2.EntityId));
                 lt.Items.Add(n);
             }
             root.Items.Add(lt);
@@ -207,7 +207,7 @@ public class StoryTreeEditor : ICustomTableEditor
                 if (_allEnc.TryGetValue(cid, out var e2))
                 {
                     var btn = new Button { Content = "Go", Padding = new Thickness(4, 0), FontSize = 10 };
-                    btn.Click += (_, _) => ReferenceResolver.NavigateTo(typeof(Encounter), e2.EntityId);
+                    btn.Click += (_, _) => ReferenceResolver.Instance.NavigateTo(typeof(Encounter), e2.EntityId);
                     row.Children.Add(btn);
                 }
                 sp.Children.Add(row);
@@ -224,7 +224,7 @@ public class StoryTreeEditor : ICustomTableEditor
             Foreground = Brushes.Gray, Margin = new Thickness(0, 8, 0, 0) });
         try
         {
-            var triggers = ReferenceResolver.GetDedupedInt<EncounterTrigger>();
+            var triggers = GenericDataGridHelper.GetEntities<EncounterTrigger>();
             var myTriggers = triggers.Values
                 .Where(t => t.EncounterId.ToString() == e.Id.ToString())
                 .ToList();
@@ -367,7 +367,7 @@ public class StoryTreeEditor : ICustomTableEditor
         foreach (var p in parents)
         {
             var n = EditorHelper.NewNode($"{Trunc(p.Name, 35)}", Brushes.Orange);
-            EditorHelper.NavOnCtrl(n, () => ReferenceResolver.NavigateTo(typeof(Encounter), p.EntityId));
+            EditorHelper.NavOnCtrl(n, () => ReferenceResolver.Instance.NavigateTo(typeof(Encounter), p.EntityId));
             lf.Items.Add(n);
         }
         root.Items.Add(parents.Count > 0 ? lf : EditorHelper.NewNode("(Root)", Brushes.Gray));
@@ -388,7 +388,7 @@ public class StoryTreeEditor : ICustomTableEditor
             {
                 var name = _allEnc.TryGetValue(cid, out var ce) ? Trunc(ce.Name, 35) : $"Encounter #{cid}";
                 var n = EditorHelper.NewNode($"{name} (w:{wgt:F3})", Brushes.Green);
-                if (_allEnc.TryGetValue(cid, out var e2)) EditorHelper.NavOnCtrl(n, () => ReferenceResolver.NavigateTo(typeof(Encounter), e2.EntityId));
+                if (_allEnc.TryGetValue(cid, out var e2)) EditorHelper.NavOnCtrl(n, () => ReferenceResolver.Instance.NavigateTo(typeof(Encounter), e2.EntityId));
                 lt.Items.Add(n);
             }
             root.Items.Add(lt);

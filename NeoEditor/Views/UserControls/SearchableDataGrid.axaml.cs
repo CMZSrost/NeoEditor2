@@ -9,6 +9,7 @@ using System.Reflection;
 using Avalonia;
 using Avalonia.Collections;
 using Avalonia.Controls;
+using Avalonia.Input;
 using Avalonia.Media;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
@@ -125,8 +126,212 @@ public partial class SearchableDataGrid : UserControl
                 grid.MainGrid.RowHeight = msg.RowHeight > 0 ? msg.RowHeight : double.NaN;
             });
 
-        MainGrid.AddHandler(Control.ContextRequestedEvent, OnContextMenuOpening,
+        WeakReferenceMessenger.Default.Register<SearchableDataGrid, Data.Messages.ColumnVisibilityChangedMessage>(
+            this, (grid, msg) => grid.OnColumnVisibilityChanged(msg.TableName));
+
+        // Row height freeze: each row's height is captured after its first layout
+        // and then pinned, preventing column-virtualization from changing it on
+        // horizontal scroll. See OnLoadingRow.
+
+        MainGrid.AddHandler(Control.ContextRequestedEvent, OnContextMenuOpeningOrPeek,
             Avalonia.Interactivity.RoutingStrategies.Tunnel);
+
+        // Track Ctrl key state because DataGrid consumes all PointerPressed events.
+        // Use KeyDown/KeyUp on MainGrid to reliably detect Ctrl being held.
+        MainGrid.KeyDown += (_, e) =>
+        {
+            if (e.Key == Avalonia.Input.Key.LeftCtrl || e.Key == Avalonia.Input.Key.RightCtrl)
+                _isCtrlHeld = true;
+        };
+        MainGrid.KeyUp += (_, e) =>
+        {
+            if (e.Key == Avalonia.Input.Key.LeftCtrl || e.Key == Avalonia.Input.Key.RightCtrl)
+                _isCtrlHeld = false;
+        };
+        MainGrid.LostFocus += (_, _) => _isCtrlHeld = false;
+
+        // Use Tapped event for Ctrl+LeftClick navigation.
+        // Tapped fires after the tap gesture completes — DataGrid does not intercept this event,
+        // unlike PointerPressed which it consumes for row selection and cell editing.
+        MainGrid.Tapped += OnMainGridTappedNavigation;
+    }
+
+    /// <summary>Tracks whether the Ctrl key is currently held down.</summary>
+    private static bool _isCtrlHeld;
+
+    /// <summary>
+    /// Handles Ctrl+LeftClick on the DataGrid for reference navigation using the Tapped event.
+    /// DataGrid consumes PointerPressed events, but Tapped fires reliably after the tap gesture.
+    /// Ctrl key state is tracked via KeyDown/KeyUp since TappedEventArgs has no KeyModifiers.
+    /// </summary>
+    private void OnMainGridTappedNavigation(object? sender, Avalonia.Input.TappedEventArgs e)
+    {
+        if (!_isCtrlHeld) return;
+        if (Helper.GenericDataGridHelper.NavigationHandled) { Helper.GenericDataGridHelper.NavigationHandled = false; return; }
+        if (sender is not DataGrid dg) return;
+
+        var source = e.Source as Avalonia.Visual;
+        if (source is null) return;
+
+        var cell = source.FindAncestorOfType<DataGridCell>();
+        if (cell is null) return;
+        var row = cell.FindAncestorOfType<DataGridRow>();
+        if (row is null) return;
+
+        // Find column by cell position within the row. Count only DataGridCell children
+        // to skip RowHeader and other internal visuals that offset the index.
+        var rowPanel = cell.Parent as Panel;
+        if (rowPanel is null) return;
+        var colIdx = 0;
+        foreach (var child in rowPanel.Children)
+        {
+            if (child == cell) break;
+            if (child is DataGridCell) colIdx++;
+        }
+        var visibleCols = dg.Columns.Where(c => c.IsVisible).ToList();
+        if (colIdx >= visibleCols.Count) return;
+        var column = visibleCols[colIdx];
+        var propName = column.SortMemberPath;
+        if (string.IsNullOrEmpty(propName)) return;
+
+        var dataItem = row.DataContext;
+        if (dataItem is null) return;
+        var entityType = dataItem.GetType();
+
+        // Prefer cached ReferenceFieldAttribute (populated during column generation)
+        var refAttr = GenericDataGridHelper.ColumnMetaCache.TryGetValue(dg, out var meta)
+            && meta.TryGetValue(propName, out var cachedAttr)
+            ? cachedAttr
+            : null;
+        if (refAttr is null) return;
+
+        var propInfo = entityType.GetProperty(propName);
+        var rawValue = propInfo?.GetValue(dataItem)?.ToString();
+        if (string.IsNullOrWhiteSpace(rawValue)) return;
+
+        var rawId = ReferenceParser.ExtractRawId(rawValue, refAttr.Pattern);
+        if (string.IsNullOrWhiteSpace(rawId)) return;
+
+        if (refAttr.IsMultiValue)
+        {
+            var sourceTb = source as TextBlock;
+            if (sourceTb is not null)
+            {
+                var rawText = sourceTb.Tag?.ToString() ?? sourceTb.Text;
+                if (!string.IsNullOrWhiteSpace(rawText))
+                    rawId = ReferenceParser.ExtractRawId(rawText, refAttr.Pattern);
+            }
+        }
+
+        try
+        {
+            var sourceEid = (dataItem as IEntity)?.EntityId ?? "";
+            Helper.GenericDataGridHelper.NavigateToReferenceForce(
+                refAttr.TargetEntityType, rawId, refAttr.TargetKey,
+                refAttr.SecondaryTargetEntityType, refAttr.SecondaryTargetKey,
+                sourceEid, propName);
+        }
+        catch (Exception ex)
+        {
+            Serilog.Log.Logger.Error(ex, "[Sdg:Tapped] NavigateToReferenceForce threw for {TargetType} rawId={RawId}",
+                refAttr.TargetEntityType.Name, rawId);
+        }
+    }
+
+    /// <summary>
+    /// Ctrl+RightClick: suppress the context menu and peek instead.
+    /// Normal right-click: show the standard context menu.
+    /// </summary>
+    private void OnContextMenuOpeningOrPeek(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        if (_isCtrlHeld)
+        {
+            // Ctrl+RightClick → peek, don't show context menu
+            if (sender is not DataGrid dg) return;
+            var source = e.Source as Avalonia.Visual;
+            if (source is null) return;
+
+            // Trigger peek for the cell under cursor
+            TriggerPeekForCell(dg, source);
+            e.Handled = true;
+            _isCtrlHeld = false; // reset in case KeyUp was missed
+            return;
+        }
+
+        // Normal right-click: show context menu
+        var selected = MainGrid.SelectedItems.Count > 0;
+        CloneMenuItem.IsVisible = selected;
+        FindRefsMenuItem.IsVisible = selected;
+    }
+
+    /// <summary>Trigger peek (ReferenceInspector) for the cell under cursor during Ctrl+RightClick.</summary>
+    private static void TriggerPeekForCell(DataGrid dg, Avalonia.Visual source)
+    {
+        var cell = source.FindAncestorOfType<DataGridCell>();
+        if (cell is null) return;
+        var row = cell.FindAncestorOfType<DataGridRow>();
+        if (row is null) return;
+
+        var rowPanel = cell.Parent as Panel;
+        if (rowPanel is null) return;
+        // Count only DataGridCell children to skip RowHeader offset
+        var colIdx = 0;
+        foreach (var child in rowPanel.Children)
+        {
+            if (child == cell) break;
+            if (child is DataGridCell) colIdx++;
+        }
+        var visibleCols = dg.Columns.Where(c => c.IsVisible).ToList();
+        if (colIdx >= visibleCols.Count) return;
+        var column = visibleCols[colIdx];
+        var propName = column.SortMemberPath;
+        if (string.IsNullOrEmpty(propName)) return;
+
+        var dataItem = row.DataContext;
+        if (dataItem is null) return;
+
+        // Prefer cached ReferenceFieldAttribute
+        var refAttr = GenericDataGridHelper.ColumnMetaCache.TryGetValue(dg, out var meta)
+            && meta.TryGetValue(propName, out var cachedAttr)
+            ? cachedAttr
+            : null;
+        if (refAttr is null) return;
+
+        var propInfo = dataItem.GetType().GetProperty(propName);
+        var rawValue = propInfo?.GetValue(dataItem)?.ToString();
+        if (string.IsNullOrWhiteSpace(rawValue)) return;
+
+        var rawId = ReferenceParser.ExtractRawId(rawValue, refAttr.Pattern);
+        if (string.IsNullOrWhiteSpace(rawId)) return;
+
+        if (refAttr.IsMultiValue)
+        {
+            var sourceTb = source as TextBlock;
+            if (sourceTb is not null)
+            {
+                var rawText = sourceTb.Tag?.ToString() ?? sourceTb.Text;
+                if (!string.IsNullOrWhiteSpace(rawText))
+                    rawId = ReferenceParser.ExtractRawId(rawText, refAttr.Pattern);
+            }
+        }
+
+        try
+        {
+            var target = Helper.GenericDataGridHelper.FindBestMatch(
+                refAttr.TargetEntityType, rawId, refAttr.TargetKey)
+                ?? (refAttr.SecondaryTargetEntityType is not null
+                    ? Helper.GenericDataGridHelper.FindBestMatch(
+                        refAttr.SecondaryTargetEntityType, rawId, refAttr.SecondaryTargetKey)
+                    : null);
+
+            var router = App.ServiceProvider!.GetRequiredService<Helper.INavigationRouter>();
+            router.Peek(refAttr.TargetEntityType, target?.EntityId ?? rawId, target);
+        }
+        catch (Exception ex)
+        {
+            Serilog.Log.Logger.Error(ex, "[Sdg:Peek] TriggerPeekForCell threw for {TargetType} rawId={RawId}",
+                refAttr.TargetEntityType.Name, rawId);
+        }
     }
 
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
@@ -157,8 +362,61 @@ public partial class SearchableDataGrid : UserControl
     {
         base.OnDetachedFromVisualTree(e);
         _slog.LogDebug("[SdgDetach]");
+        GenericDataGridHelper.ColumnMetaCache.Remove(MainGrid);
         if (MergeStore is not null || EditStore is not null)
             GenericDataGridHelper.SetActiveStores(null, null);
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    //  Per-row height freeze — prevents column-virtualization jitter
+    // ═══════════════════════════════════════════════════════════════════════
+
+    /// <summary>Cached multi-value reference properties per entity type, for fast row-height estimation.</summary>
+    private static readonly Dictionary<Type, PropertyInfo[]> _multiRefPropsCache = new();
+
+    /// <summary>
+    /// <summary>
+    /// Compute row height from entity data. Scans all multi-value reference
+    /// fields to determine how many lines of badges the row needs, then
+    /// returns a pixel height. Rows with more segments get taller.
+    /// Reference columns are ~160px, each badge ~80px → ~2 badges per line.
+    /// </summary>
+    private static double ComputeRowHeight(IEntity entity)
+    {
+        var entityType = entity.GetType();
+        if (!_multiRefPropsCache.TryGetValue(entityType, out var refProps))
+        {
+            refProps = entityType.GetProperties(BindingFlags.Instance | BindingFlags.Public)
+                .Where(p => p.GetCustomAttribute<ReferenceFieldAttribute>()?.Separator is not null)
+                .ToArray();
+            _multiRefPropsCache[entityType] = refProps;
+        }
+
+        int maxSegments = 0;
+        foreach (var prop in refProps)
+        {
+            var val = prop.GetValue(entity)?.ToString();
+            if (string.IsNullOrWhiteSpace(val)) continue;
+            var refAttr = prop.GetCustomAttribute<ReferenceFieldAttribute>()!;
+            var totalParts = 0;
+            foreach (var part in val.Split(refAttr.Separator![0]))
+            {
+                var trimmed = part.Trim();
+                if (trimmed.Length == 0) continue;
+                totalParts++;
+                // Secondary separator: "a|b" within a segment counts as 2 visual badges
+                if (trimmed.Contains('|') || (refAttr.Separator != "," && trimmed.Contains(',')))
+                    totalParts++;
+            }
+            maxSegments = Math.Max(maxSegments, totalParts);
+        }
+
+        // Base row height for one line of content. Each additional visual
+        // line (roughly 2 badges per ~160px column) adds lineHeight px.
+        const double baseHeight = 34;
+        const double lineHeight = 26;
+        int extraLines = Math.Max(0, (maxSegments - 1) / 2);
+        return 1.5 * (baseHeight + extraLines * lineHeight);
     }
 
     private ListSortDirection _lastDirection = ListSortDirection.Ascending;
@@ -206,9 +464,20 @@ public partial class SearchableDataGrid : UserControl
         {
             var items = list.Cast<object>().ToList();
             SortItems(items, prop);
-
-            Dispatcher.UIThread.Post(() => { MainGrid.ItemsSource = new ObservableCollection<object>(items); },
-                DispatcherPriority.Background);
+            Dispatcher.UIThread.Post(() =>
+            {
+                try
+                {
+                    MainGrid.AutoGenerateColumns = false;
+                    MainGrid.Columns.Clear();
+                    MainGrid.ItemsSource = new ObservableCollection<object>(items);
+                    MainGrid.AutoGenerateColumns = true;
+                }
+                catch
+                {
+                    try { MainGrid.AutoGenerateColumns = false; MainGrid.Columns.Clear(); MainGrid.ItemsSource = null; } catch { }
+                }
+            }, DispatcherPriority.Background);
         }
     }
 
@@ -327,6 +596,10 @@ public partial class SearchableDataGrid : UserControl
                 e.Row.Background = new SolidColorBrush(Color.FromRgb(255, 255, 220));
             else
                 e.Row.Background = null;
+
+            // Pin row height from content so horizontal scroll doesn't change it
+            if (double.IsNaN(MainGrid.RowHeight) || MainGrid.RowHeight <= 0)
+                e.Row.Height = ComputeRowHeight(entity);
         }
     }
 
@@ -413,6 +686,7 @@ public partial class SearchableDataGrid : UserControl
                     Header = modColHeader,
                     IsReadOnly = true,
                     Width = new DataGridLength(120),
+                    SortMemberPath = "Mod",
                     Binding = new global::Avalonia.Data.Binding("EntityId")
                     {
                         Converter = new Helper.Converter.ModNameColumnConverter()
@@ -424,13 +698,6 @@ public partial class SearchableDataGrid : UserControl
         {
             var modCol = dataGrid.Columns.FirstOrDefault(c => c.Header?.ToString() == "Mod");
             if (modCol != null) dataGrid.Columns.Remove(modCol);
-        }
-
-        // Hide internal tracking columns by default (can be re-shown via column manager)
-        var hiddenProps = new HashSet<string> { "ModId", "FilePath", "EntityId" };
-        if (hiddenProps.Contains(e.PropertyName))
-        {
-            e.Column.IsVisible = false;
         }
 
         // Try to get the runtime item type (handles ObservableCollection<object> where T is object)
@@ -455,24 +722,64 @@ public partial class SearchableDataGrid : UserControl
         if (modelType != null)
             GenericDataGridHelper.ConfigureColumn(e, key => App.Localizor[key] ?? key, modelType);
 
-        // Apply persisted column visibility config (per-table)
+        // Populate column metadata cache for navigation (Bug 2 fix)
+        if (modelType != null && !e.Cancel)
+        {
+            var propInfo = modelType.GetProperty(e.PropertyName);
+            var refAttr = propInfo?.GetCustomAttribute<Helper.ReferenceFieldAttribute>();
+            if (refAttr is not null)
+            {
+                if (!GenericDataGridHelper.ColumnMetaCache.TryGetValue(dataGrid, out var meta))
+                    GenericDataGridHelper.ColumnMetaCache[dataGrid] = meta = new();
+                meta[e.PropertyName] = refAttr;
+            }
+        }
+
+        // Apply persisted column visibility from the shared ColumnVisibilityKeys source.
+        // Default is all-visible; config entries track user-hidden columns via absence from set.
         if (modelType != null)
-            ApplyColumnVisibilityConfig(e, modelType);
+        {
+            var tableName = Helper.ColumnVisibilityKeys.GetTableName(modelType);
+            if (tableName is not null)
+            {
+                var cv = App.ServiceProvider.GetService<Services.IConfigService>()?.Config?.ColumnVisibility;
+                if (cv is not null)
+                {
+                    // Current column
+                    var propName = e.PropertyName ?? e.Column.SortMemberPath;
+                    if (!string.IsNullOrEmpty(propName))
+                        e.Column.IsVisible = Helper.ColumnVisibilityKeys.IsVisible(cv, tableName, propName);
+
+                    // Bulk-update all already-inserted columns (synthetic + previously generated)
+                    foreach (var col in dataGrid.Columns)
+                    {
+                        var key = col.SortMemberPath;
+                        if (string.IsNullOrEmpty(key)) continue;
+                        col.IsVisible = Helper.ColumnVisibilityKeys.IsVisible(cv, tableName, key);
+                    }
+                }
+            }
+        }
     }
 
-    private static void ApplyColumnVisibilityConfig(DataGridAutoGeneratingColumnEventArgs e, Type modelType)
+    /// <summary>Live-update column visibility when changed in settings or DataGrid column manager.</summary>
+    private void OnColumnVisibilityChanged(string tableName)
     {
-        var tableName = modelType.GetCustomAttribute<TableAttribute>()?.Name;
-        if (tableName is null) return;
+        var cv = App.ServiceProvider.GetService<Services.IConfigService>()?.Config?.ColumnVisibility;
+        if (cv is null) return;
 
-        var configSvc = App.ServiceProvider.GetService<Services.IConfigService>();
-        if (configSvc?.Config?.ColumnVisibility is not { } cv) return;
+        // Only apply if this DataGrid is currently showing the matching table
+        if (ItemsSource is not System.Collections.IEnumerable items) return;
+        var first = items.Cast<object>().FirstOrDefault();
+        if (first is null) return;
+        var currentTable = Helper.ColumnVisibilityKeys.GetTableName(first.GetType());
+        if (currentTable != tableName) return;
 
-        if (!cv.TryGetValue(tableName, out var visibleCols)) return;
-
-        var propName = e.PropertyName ?? e.Column.SortMemberPath;
-        if (string.IsNullOrEmpty(propName)) return;
-
-        e.Column.IsVisible = visibleCols.Contains(propName);
+        foreach (var col in MainGrid.Columns)
+        {
+            var key = col.SortMemberPath;
+            if (string.IsNullOrEmpty(key)) continue;
+            col.IsVisible = Helper.ColumnVisibilityKeys.IsVisible(cv, tableName, key);
+        }
     }
 }

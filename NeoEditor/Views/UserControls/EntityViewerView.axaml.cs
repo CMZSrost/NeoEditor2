@@ -17,20 +17,28 @@ public partial class EntityViewerView : UserControl
     protected override void OnDataContextChanged(System.EventArgs e)
     {
         base.OnDataContextChanged(e);
-        Console.WriteLine($"[EV] OnDataContextChanged: type={DataContext?.GetType().Name ?? "null"}");
         if (DataContext is not EntityViewerDocument doc) return;
+
+        // Wait for reference index to be ready, then build the visualizer
+        _ = BuildContentAsync(doc);
+    }
+
+    private async System.Threading.Tasks.Task BuildContentAsync(EntityViewerDocument doc)
+    {
+        await EntityBrowserDocument.EnsureIndexBuiltAsync();
 
         var visualizers = App.ServiceProvider!.GetRequiredService<EntityVisualizerRegistry>();
         var visualizer = visualizers.Get(doc.Entity.GetType());
         var content = visualizer?.BuildDetail(doc.Entity)
                       ?? Editors.EditorHelper.BuildOverviewTab(doc.Entity);
-        Console.WriteLine($"[EV] Built content: {content?.GetType().Name ?? "null"}");
-        Content = new ScrollViewer
+        await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
         {
-            Content = content,
-            HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
-            VerticalScrollBarVisibility = ScrollBarVisibility.Auto
-        };
-        Console.WriteLine($"[EV] Content set, Bounds={Bounds}");
+            Content = new ScrollViewer
+            {
+                Content = content,
+                HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
+                VerticalScrollBarVisibility = ScrollBarVisibility.Auto
+            };
+        });
     }
 }

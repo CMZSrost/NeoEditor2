@@ -34,7 +34,7 @@ using NeoEditor.Data.Command;
 
 namespace NeoEditor.Views.UserControls;
 
-public partial class ModGameDataTabsView : UserControl
+public partial class ModGameDataTabsView : UserControl, Helper.INavigationTarget
 {
     // Cache tabs + store snapshot per view key (profile_N or mod_N)
     private static readonly Dictionary<string, (ObservableCollection<GameDataTypeTabItem> Tabs,
@@ -60,6 +60,7 @@ public partial class ModGameDataTabsView : UserControl
     // NOT readonly — may be replaced by cached stores on attach.
     internal Services.EntityMergeStore MergeStore { get; private set; } = new();
     internal Services.EditTrackingStore EditStore { get; private set; } = new();
+    private readonly Helper.INavigationRouter _navigationRouter;
     private readonly IFilterService _filterService = new FilterService();
     private readonly IWorkspacePersistenceService _workspacePersistence;
     private int _persistSequence;
@@ -282,6 +283,7 @@ public partial class ModGameDataTabsView : UserControl
         _xmlParser = App.ServiceProvider.GetRequiredService<IXmlParser>();
         _workspacePersistence = App.ServiceProvider.GetRequiredService<IWorkspacePersistenceService>();
         _messenger = App.ServiceProvider.GetRequiredService<IMessenger>();
+        _navigationRouter = App.ServiceProvider.GetRequiredService<Helper.INavigationRouter>();
         InitializeComponent();
         PersistenceDebugText = "Init...";
         SharedDataGrid.CanEditEntity = entity => !IsMergeView || entity.ModId != -1;
@@ -291,7 +293,6 @@ public partial class ModGameDataTabsView : UserControl
                 Loc["GameDataReadOnly"]);
         IsLoading = true;
         UpdateSavePreviewUiState();
-        GenericDataGridHelper.RegisterNavigateTarget(this);
         _messenger.Register<ShowAllRequestedMessage>(this, (_, _) => ShowAllEntities = true);
         _messenger.Register<CellEditedMessage>(this, (_, m) => MarkTabDirty(m.EntityType));
 
@@ -369,6 +370,13 @@ public partial class ModGameDataTabsView : UserControl
         var prop = entity.GetType().GetProperty(propertyName,
             System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public);
         if (prop is null) return;
+
+        // Incrementally update reference index for [ReferenceField] properties
+        if (prop.GetCustomAttribute<Helper.ReferenceFieldAttribute>() is not null)
+        {
+            MergeStore.Index.UpdateField(entity, propertyName,
+                oldValue?.ToString(), newValue?.ToString());
+        }
 
         var colAttr = prop.GetCustomAttribute<ColumnAttribute>();
         var colName = colAttr?.Name ?? propertyName;
@@ -504,70 +512,110 @@ public partial class ModGameDataTabsView : UserControl
             return;
         }
 
-        _logger.LogDebug("[NavigateToEntity] switching to tab {targetTab.Header}, Tabs count={Tabs.Count}");
+        _logger.LogInformation("[NavigateToEntity] switching to tab={TabHeader}, entityType={EntityType} {SearchMode}={SearchValue}",
+            targetTab.Header, entityType.Name, searchMode, searchValue);
         DataTabs.SelectedItem = targetTab;
 
-        // Scroll after tab content is rendered.
+        // Wait for the tab content DataGrid to be created and loaded before searching.
+        // Use Post with Loaded priority + a retry on Render priority as fallback.
+        DoScrollToEntity(entityType, entityId, businessId, searchMode, searchValue, 0);
+    }
+
+    private void DoScrollToEntity(Type entityType, string? entityId, int? businessId,
+        string searchMode, string searchValue, int attempt)
+    {
+        if (attempt > 3) return; // give up after 3 attempts
+
+        var priority = attempt == 0 ? DispatcherPriority.Loaded : DispatcherPriority.Background;
         Dispatcher.UIThread.Post(() =>
         {
             try
             {
-            // Find the active DataGrid: prefer matching by entity type, fall back to any DataGrid
-            var allGrids = DataTabs.GetVisualDescendants().OfType<DataGrid>().ToList();
-            var dataGrid = allGrids.FirstOrDefault(dg =>
-            {
-                var first = (dg.ItemsSource as IEnumerable)?.Cast<object>().FirstOrDefault();
-                return first?.GetType() == entityType;
-            }) ?? allGrids.FirstOrDefault();
-            _logger.LogDebug("[NavigateToEntity] found {entityType.Name} DataGrid: {dataGrid is not null} (total grids: {allGrids.Count})");
+            // SharedDataGrid is the single DataGrid below the TabControl — always present.
+            var dataGrid = (SharedDataGrid?.GetVisualDescendants().OfType<DataGrid>().FirstOrDefault())
+                ?? DataTabs.GetVisualDescendants().OfType<DataGrid>().FirstOrDefault();
 
-            if (dataGrid is null) return;
+            if (dataGrid is null)
+            {
+                if (attempt == 0)
+                    DoScrollToEntity(entityType, entityId, businessId, searchMode, searchValue, attempt + 1);
+                else
+                    _logger.LogWarning("[NavigateToEntity] no DataGrid found after {Attempt} attempts", attempt);
+                return;
+            }
 
             var targetIndex = -1;
             var idx = 0;
             object? targetItem = null;
 
             var source = dataGrid.ItemsSource as IEnumerable ?? Enumerable.Empty<object>();
+            var itemCount = source.Cast<object>().Count();
+
+            _logger.LogInformation("[DoScroll] attempt={Attempt} itemCount={ItemCount} cols={Cols}",
+                attempt, itemCount, dataGrid.Columns.Count);
+
+            // If the tab switch failed (0 items), retry the switch
+            if (itemCount == 0 && attempt < 2)
+            {
+                var tab = Tabs.FirstOrDefault(t => t.EntityType == entityType);
+                if (tab is not null)
+                {
+                    _logger.LogInformation("[DoScroll] retrying switch for {EntityType}, tab items={TabCount}",
+                        entityType.Name, tab.ItemsSource?.Cast<object>().Count() ?? -1);
+                    try
+                    {
+                        SwitchTabItemsSource(SharedDataGrid, tab.ItemsSource);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "[DoScroll] retry switch threw");
+                        try { SharedDataGrid.ItemsSource = tab.ItemsSource; } catch { }
+                    }
+                    source = dataGrid.ItemsSource as IEnumerable ?? Enumerable.Empty<object>();
+                    itemCount = source.Cast<object>().Count();
+                    _logger.LogInformation("[DoScroll] after retry: itemCount={ItemCount}", itemCount);
+                }
+            }
+
+            if (itemCount == 0)
+            {
+                _logger.LogWarning("[NavigateToEntity] still 0 items after retry for {EntityType}, cols={Cols}",
+                    entityType.Name, dataGrid.Columns.Count);
+                return;
+            }
+
             foreach (var item in source)
             {
                 bool match;
                 if (entityId is not null)
-                {
-                    // Navigate by EntityId (merge view): match against the entity's unique identity
                     match = item is IEntity e && e.EntityId == entityId;
-                }
                 else if (businessId.HasValue)
                 {
-                    // Navigate by business key (single mod view)
                     var keyProp = ResolveEntityKeyProperty(entityType);
                     var val = keyProp?.GetValue(item);
                     match = (val is int intVal && intVal == businessId.Value)
                          || val?.ToString() == businessId.Value.ToString();
                 }
-                else
-                {
-                    match = false;
-                }
+                else { match = false; }
 
-                if (match)
-                {
-                    targetItem = item;
-                    targetIndex = idx;
-                    break;
-                }
+                if (match) { targetItem = item; targetIndex = idx; break; }
                 idx++;
             }
 
-            if (targetItem is null) { _logger.LogDebug("[NavigateToEntity] {searchMode}={searchValue} not found"); return; }
+            if (targetItem is null)
+            {
+                _logger.LogWarning("[NavigateToEntity] {SearchMode}={SearchValue} not found among {ItemCount} items (firstEid={FirstEid})",
+                    searchMode, searchValue, idx,
+                    source.Cast<object>().FirstOrDefault() is IEntity fe ? fe.EntityId[..Math.Min(16, fe.EntityId.Length)] : "none");
+                return;
+            }
 
-            // Opt: same-entity navigation → notify
             if (ReferenceEquals(targetItem, dataGrid.SelectedItem))
             {
                 App.Notification.ShowInfo(Loc["NavigateSameEntity"], "Navigate");
                 return;
             }
 
-            // Fallback: business-key navigation may hit an overridden entity → block + prompt
             if (entityId is null && !ShowAllEntities && targetItem is IEntity te
                 && GenericDataGridHelper.OverriddenEntityIds.Contains(te.EntityId))
             {
@@ -575,12 +623,10 @@ public partial class ModGameDataTabsView : UserControl
                 return;
             }
 
-            // Select and scroll to the target row
             dataGrid.SelectedItem = targetItem;
             dataGrid.SelectedIndex = targetIndex;
             dataGrid.ScrollIntoView(targetItem, null);
 
-            // Center the row if possible (ScrollIntoView may stop at edges)
             Dispatcher.UIThread.Post(() =>
             {
                 var sv = dataGrid.GetVisualDescendants().OfType<ScrollViewer>().FirstOrDefault();
@@ -593,15 +639,17 @@ public partial class ModGameDataTabsView : UserControl
             }, DispatcherPriority.Background);
 
             dataGrid.Focus();
-            _logger.LogDebug("[NavigateToEntity] Selected {entityType.Name} {searchMode}={searchValue} at index={targetIndex}");
+            _logger.LogInformation("[NavigateToEntity] ✓ Selected {EntityType} {SearchMode}={SearchValue} at index={TargetIndex}",
+                entityType.Name, searchMode, searchValue, targetIndex);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "[NavigateToEntity] callback failed for {EntityType} {SearchMode}={SearchValue}",
                     entityType.Name, searchMode, searchValue);
             }
-        }, DispatcherPriority.Loaded);
+        }, priority);
     }
+    
 
     private int? GetSelectedEntityId()
     {

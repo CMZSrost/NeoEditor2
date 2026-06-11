@@ -207,7 +207,7 @@ public partial class ModGameDataTabsView
                     {
                         foreach (var seg in raw.Split(separator[0]))
                         {
-                            var id = ReferenceHelper.ExtractRawId(seg.Trim(), refAttr.Pattern);
+                            var id = ReferenceParser.ExtractRawId(seg.Trim(), refAttr.Pattern);
                             if (id == targetKeyVal)
                             {
                                 results.Add((entity.Subject, colName, type, entity.EntityId));
@@ -217,7 +217,7 @@ public partial class ModGameDataTabsView
                     }
                     else
                     {
-                        var id = ReferenceHelper.ExtractRawId(raw, refAttr.Pattern);
+                        var id = ReferenceParser.ExtractRawId(raw, refAttr.Pattern);
                         if (id == targetKeyVal)
                             results.Add((entity.Subject, colName, type, entity.EntityId));
                     }

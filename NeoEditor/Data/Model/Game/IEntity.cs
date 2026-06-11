@@ -36,7 +36,7 @@ public class IEntity
         {
             var type = GetType();
             // Try common name-like properties first
-            foreach (var name in new[] { "strName", "Name", "strLabel", "strTitle", "PropertyName", "strPropertyName" })
+            foreach (var name in new[] { "strName", "Name", "strLabel", "strTitle", "PropertyName", "strPropertyName", "Description", "HeadlineText" })
             {
                 var prop = type.GetProperty(name, BindingFlags.Instance | BindingFlags.Public | BindingFlags.IgnoreCase);
                 if (prop?.GetValue(this) is string s && s.Length > 0)

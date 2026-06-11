@@ -1,5 +1,8 @@
 using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Globalization;
+using System.Linq;
 using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
@@ -11,6 +14,7 @@ using CommunityToolkit.Mvvm.Messaging;
 using Microsoft.Extensions.DependencyInjection;
 using NeoEditor.Data.Messages;
 using Microsoft.Extensions.Logging;
+using NeoEditor.Helper;
 using NeoEditor.Services;
 
 namespace NeoEditor.ViewModels.ExplorerPane;
@@ -102,6 +106,50 @@ public partial class SettingsPaneViewModel : ViewModelBase
         }
     }
 
+    // ═══════════════════════════════════════════════════════════════════════
+    //  Column visibility config
+    // ═══════════════════════════════════════════════════════════════════════
+
+    public ObservableCollection<TableColumnGroup> TableColumns { get; } = new();
+
+    public void LoadColumnVisibilityConfig()
+    {
+        TableColumns.Clear();
+        var cv = Config.ColumnVisibility;
+
+        foreach (var entityType in ColumnVisibilityKeys.AllEntityTypes
+                     .OrderBy(t => ColumnVisibilityKeys.GetTableName(t) ?? t.Name))
+        {
+            var tableName = ColumnVisibilityKeys.GetTableName(entityType);
+            if (tableName is null) continue;
+
+            var group = new TableColumnGroup
+            {
+                TableName = tableName,
+                EntityType = entityType,
+                Columns = new List<ColumnOption>(),
+                Config = _config
+            };
+
+            // All column keys from the single source of truth — identical to
+            // what the DataGrid's SortMemberPath produces.
+            foreach (var key in ColumnVisibilityKeys.GetKeys(entityType))
+            {
+                var displayName = ColumnVisibilityKeys.GetDisplayName(entityType, key);
+                var opt = new ColumnOption
+                {
+                    Key = key,
+                    DisplayName = displayName,
+                    Group = group,
+                    IsVisible = ColumnVisibilityKeys.IsVisible(cv, tableName, key)
+                };
+                group.Columns.Add(opt);
+            }
+
+            TableColumns.Add(group);
+        }
+    }
+
     public SettingsPaneViewModel() : this(
         App.ServiceProvider!.GetRequiredService<ILogger<ResourceManagerViewModel>>(),
         App.ServiceProvider!.GetRequiredService<LocalizationService>(),
@@ -115,6 +163,7 @@ public partial class SettingsPaneViewModel : ViewModelBase
         _config = configService;
         _logger = logger;
         _localizationService = localizationService;
+        LoadColumnVisibilityConfig();
     }
 
     [RelayCommand]
@@ -158,5 +207,82 @@ public partial class SettingsPaneViewModel : ViewModelBase
             "Dark" => Avalonia.Styling.ThemeVariant.Dark,
             _ => Avalonia.Styling.ThemeVariant.Default
         };
+    }
+}
+
+public class TableColumnGroup
+{
+    public required string TableName { get; init; }
+    public required Type EntityType { get; init; }
+    public required List<ColumnOption> Columns { get; init; }
+    public required IConfigService Config { get; init; }
+
+    public IRelayCommand SelectAllCommand { get; }
+    public IRelayCommand SelectNoneCommand { get; }
+
+    public TableColumnGroup()
+    {
+        SelectAllCommand = new CommunityToolkit.Mvvm.Input.RelayCommand(() => SetAll(true));
+        SelectNoneCommand = new CommunityToolkit.Mvvm.Input.RelayCommand(() => SetAll(false));
+    }
+
+    public void SetAll(bool visible)
+    {
+        var cv = Config.Config.ColumnVisibility;
+        ColumnVisibilityKeys.SeedAllVisible(cv, EntityType);
+        var set = cv[TableName];
+
+        foreach (var col in Columns)
+        {
+            col.SetSilent(visible);
+            if (visible) set.Add(col.Key);
+            else set.Remove(col.Key);
+        }
+        AsyncHelper.FireAndForget(Config.SaveAsync());
+        WeakReferenceMessenger.Default.Send(
+            new Data.Messages.ColumnVisibilityChangedMessage { TableName = TableName });
+    }
+}
+
+public partial class ColumnOption : ObservableObject
+{
+    public required string Key { get; init; }
+    public required string DisplayName { get; init; }
+    public required TableColumnGroup Group { get; init; }
+
+    private bool _isVisible;
+    public bool IsVisible
+    {
+        get => _isVisible;
+        set
+        {
+            if (!SetProperty(ref _isVisible, value)) return;
+            ToggleInConfig(value);
+        }
+    }
+
+    internal void ToggleInConfig(bool visible)
+    {
+        var cv = Group.Config.Config.ColumnVisibility;
+        var tableName = Group.TableName;
+        if (!cv.TryGetValue(tableName, out _))
+        {
+            // First toggle: seed with ALL keys so we don't accidentally hide everything else
+            ColumnVisibilityKeys.SeedAllVisible(cv, Group.EntityType);
+        }
+        var set = cv[tableName];
+        if (visible) set.Add(Key);
+        else set.Remove(Key);
+        AsyncHelper.FireAndForget(Group.Config.SaveAsync());
+        WeakReferenceMessenger.Default
+            .Send(new Data.Messages.ColumnVisibilityChangedMessage { TableName = tableName });
+    }
+
+    /// <summary>Set IsVisible without triggering individual config save (used by SetAll).</summary>
+    internal void SetSilent(bool visible)
+    {
+        if (_isVisible == visible) return;
+        _isVisible = visible;
+        OnPropertyChanged(nameof(IsVisible));
     }
 }

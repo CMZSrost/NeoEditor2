@@ -17,6 +17,10 @@ public class EntityMergeStore
     /// <summary>Entity EntityId → source mod directory name.</summary>
     public Dictionary<string, string> EntityModNames { get; } = new();
 
+    /// <summary>Entity EntityId → strModName (namespace) for reference resolution.
+    /// Base game = "0", mods = their strModName. Used by ReferenceIndex for same-namespace grouping.</summary>
+    public Dictionary<string, string> EntityNamespaces { get; } = new();
+
     /// <summary>Entity EntityId → merged auto-increment ID (populated during merge).</summary>
     public Dictionary<string, int> EntityMergedIds { get; } = new();
 
@@ -36,15 +40,22 @@ public class EntityMergeStore
     public Dictionary<string, string> NamespaceToModName { get; } = new();
 
     /// <summary>Subject lookup cache: (entityType, rawId) → resolved subject string.</summary>
+    [Obsolete("Use ReferenceIndex.LookupDisplay instead. Kept for backward compat.")]
     public Dictionary<(Type EntityType, string RawId), string?> SubjectCache { get; } = new();
 
     /// <summary>ModIds that participate in key-based overriding (Game base + strModName=0 mods).</summary>
     public HashSet<int> MergeSpaceModIds { get; } = new();
 
+    // ── Reference index ────────────────────────────────────────────────────
+    private ReferenceIndex? _index;
+    /// <summary>Per-store reference index. Lazily initialized. Replaces FindBestMatch scan.</summary>
+    public ReferenceIndex Index => _index ??= new ReferenceIndex(this);
+
     public void Clear()
     {
         ReferenceLookups.Clear();
         EntityModNames.Clear();
+        EntityNamespaces.Clear();
         EntityMergedIds.Clear();
         OverriddenEntityIds.Clear();
         OverlayChainDisplay.Clear();
@@ -53,5 +64,6 @@ public class EntityMergeStore
         NamespaceToModName.Clear();
         SubjectCache.Clear();
         MergeSpaceModIds.Clear();
+        _index?.Clear();
     }
 }

@@ -1,4 +1,4 @@
-﻿<root>
+<root>
     <resheader name="resmimetype">
         <value>text/microsoft-resx</value>
     </resheader>
@@ -41,7 +41,7 @@
     </data>
 
     <data name="Morale" xml:space="preserve">
-        <value>该武器默认为你带来的士气补正</value>
+        <value>士气补正</value>
     </data>
     <data name="WieldPhrase" xml:space="preserve">
         <value>使用该武器进入战斗时的文字描述</value>
@@ -1995,4 +1995,119 @@ Ctrl+右键点击引用 = 仅预览不跳转。
   <data name="DomainStory" xml:space="preserve"><value>剧情</value></data>
   <data name="DomainMap" xml:space="preserve"><value>地图</value></data>
   <data name="DomainOther" xml:space="preserve"><value>其他</value></data>
+  <!-- Visualizer display labels -->
+  <data name="Vis.RawData" xml:space="preserve"><value>原始数据</value></data>
+  <data name="Vis.Stats" xml:space="preserve"><value>属性</value></data>
+  <data name="Vis.Total" xml:space="preserve"><value>总计</value></data>
+  <data name="Vis.Effective" xml:space="preserve"><value>有效伤害</value></data>
+  <data name="Vis.Cut" xml:space="preserve"><value>切割</value></data>
+  <data name="Vis.Blunt" xml:space="preserve"><value>钝器</value></data>
+  <data name="Vis.DmgBonus" xml:space="preserve"><value>伤害加成</value></data>
+  <data name="Vis.Ammo" xml:space="preserve"><value>弹药</value></data>
+  <data name="Vis.AttackerConditions" xml:space="preserve"><value>攻击带来的状态</value></data>
+  <data name="Vis.AttackPhrases" xml:space="preserve"><value>攻击文本</value></data>
+  <data name="Vis.ReferencedBy" xml:space="preserve"><value>被引用</value></data>
+  <data name="Vis.CombatMelee" xml:space="preserve"><value>近战</value></data>
+  <data name="Vis.CombatRanged" xml:space="preserve"><value>远程</value></data>
+  <data name="Vis.PerUse" xml:space="preserve"><value>每次使用</value></data>
+  <data name="Vis.PerHour" xml:space="preserve"><value>每小时</value></data>
+  <data name="Vis.PerHourEquipped" xml:space="preserve"><value>装备时每小时</value></data>
+  <data name="Vis.PerHex" xml:space="preserve"><value>每格</value></data>
+  <data name="Vis.Degradeable" xml:space="preserve"><value>可降级</value></data>
+  <data name="Vis.Type" xml:space="preserve"><value>类型</value></data>
+  <data name="Vis.Duration" xml:space="preserve"><value>持续</value></data>
+  <data name="Vis.NextStage" xml:space="preserve"><value>下一阶段</value></data>
+  <data name="Vis.Transfer" xml:space="preserve"><value>转移</value></data>
+  <data name="Vis.Tiles" xml:space="preserve"><value>格</value></data>
+  <data name="Vis.Base" xml:space="preserve"><value>基础值</value></data>
+  <data name="Vis.TransferDesc" xml:space="preserve"><value>弹药留在目标身上或掉落地面</value></data>
+  <data name="Vis.ExpandTooltip" xml:space="preserve"><value>点击展开详情 · Ctrl+点击跳转</value></data>
+  <data name="Vis.CtrlClickHint" xml:space="preserve"><value>Ctrl+点击打开完整详情</value></data>
+  <data name="Vis.SoundTooltip" xml:space="preserve"><value>音效提示 — 内嵌于游戏 SWF，无法直接播放</value></data>
+  <data name="Vis.StackableHint" xml:space="preserve"><value>可叠加（乘法）</value></data>
+  <data name="Vis.ResetTimerHint" xml:space="preserve"><value>重新施加时重置计时</value></data>
+  <data name="Vis.Chance" xml:space="preserve"><value>发动几率</value></data>
+  <data name="Vis.Priority" xml:space="preserve"><value>优先级</value></data>
+  <data name="Vis.Fatigue" xml:space="preserve"><value>疲劳值</value></data>
+  <data name="Vis.Detect" xml:space="preserve"><value>被发现几率</value></data>
+  <data name="Vis.Range" xml:space="preserve"><value>距离</value></data>
+  <data name="Vis.Exposure" xml:space="preserve"><value>所需暴露度</value></data>
+  <data name="Vis.Order" xml:space="preserve"><value>AI顺序</value></data>
+  <data name="Vis.MinCharges" xml:space="preserve"><value>最小充能</value></data>
+  <data name="Vis.Offensive" xml:space="preserve"><value>攻击性</value></data>
+  <data name="Vis.Retreat" xml:space="preserve"><value>撤退</value></data>
+  <data name="Vis.Passive" xml:space="preserve"><value>被动</value></data>
+  <data name="Vis.Action" xml:space="preserve"><value>动作</value></data>
+  <data name="Vis.NonAttack" xml:space="preserve"><value>非攻击动作</value></data>
+  <data name="Vis.OnSuccess" xml:space="preserve"><value>执行成功</value></data>
+  <data name="Vis.OnFail" xml:space="preserve"><value>执行失败</value></data>
+  <data name="Vis.Description" xml:space="preserve"><value>描述</value></data>
+  <data name="Vis.BattleMove.UsPreCond" xml:space="preserve"><value>我方前置条件</value></data>
+  <data name="Vis.BattleMove.ThemPreCond" xml:space="preserve"><value>敌方前置条件</value></data>
+  <data name="Vis.BattleMove.UsRequired" xml:space="preserve"><value>我方须处于的状态</value></data>
+  <data name="Vis.BattleMove.ThemRequired" xml:space="preserve"><value>敌方须处于的状态</value></data>
+  <data name="Vis.BattleMove.SelfEffects" xml:space="preserve"><value>自身附加状态</value></data>
+  <data name="Vis.BattleMove.UsFail" xml:space="preserve"><value>我方失败获得</value></data>
+  <data name="Vis.BattleMove.ThemFail" xml:space="preserve"><value>敌方失败获得</value></data>
+  <data name="Vis.BattleMove.PairFail" xml:space="preserve"><value>失败后自身附加</value></data>
+  <data name="Vis.BattleMove.Conditions" xml:space="preserve"><value>条件</value></data>
+  <data name="Vis.BattleMove.Flags" xml:space="preserve"><value>行为标签</value></data>
+  <data name="Vis.Move" xml:space="preserve"><value>移动</value></data>
+  <data name="Vis.Exposure.Hidden" xml:space="preserve"><value>隐藏</value></data>
+  <data name="Vis.Exposure.Seen" xml:space="preserve"><value>可见</value></data>
+  <data name="Vis.Exposure.Any" xml:space="preserve"><value>任意</value></data>
+  <data name="Vis.Alertness" xml:space="preserve"><value>警戒值</value></data>
+  <data name="Vis.VisibilityMod" xml:space="preserve"><value>可见值</value></data>
+  <data name="Vis.HealPerHour" xml:space="preserve"><value>恢复/小时</value></data>
+  <data name="Vis.SleepQuality" xml:space="preserve"><value>睡眠质量</value></data>
+  <data name="Vis.TempAdjust" xml:space="preserve"><value>温度调节</value></data>
+  <data name="Vis.Capacity" xml:space="preserve"><value>营地大小</value></data>
+  <data name="Vis.CampStats" xml:space="preserve"><value>营地属性</value></data>
+  <data name="Vis.LootTable" xml:space="preserve"><value>战利品</value></data>
+  <data name="Vis.DataPoints" xml:space="preserve"><value>数据点数</value></data>
+  <data name="Vis.MapDefinition" xml:space="preserve"><value>地图定义</value></data>
+  <data name="Vis.HeadlineText" xml:space="preserve"><value>头条内容</value></data>
+  <data name="Vis.Value" xml:space="preserve"><value>数值</value></data>
+  <data name="Vis.Loot" xml:space="preserve"><value>战利品</value></data>
+  <data name="Vis.ORGroup" xml:space="preserve"><value>或组</value></data>
+  <data name="Vis.ORGroups" xml:space="preserve"><value>或分组</value></data>
+  <data name="Vis.TotalItems" xml:space="preserve"><value>物品总数</value></data>
+  <data name="Vis.Quantity" xml:space="preserve"><value>数量</value></data>
+  <data name="Vis.Position" xml:space="preserve"><value>位置</value></data>
+  <data name="Vis.Count" xml:space="preserve"><value>数量</value></data>
+  <data name="Vis.Spawn" xml:space="preserve"><value>刷新</value></data>
+  <data name="Vis.Creature" xml:space="preserve"><value>生物</value></data>
+  <data name="Vis.Diplomacy" xml:space="preserve"><value>外交关系</value></data>
+  <data name="Vis.Members" xml:space="preserve"><value>成员</value></data>
+  <data name="Vis.UsedBy" xml:space="preserve"><value>被使用</value></data>
+  <data name="Vis.Content" xml:space="preserve"><value>内容</value></data>
+  <data name="Vis.Weight" xml:space="preserve"><value>重量</value></data>
+  <data name="Vis.StackLimit" xml:space="preserve"><value>最大堆叠</value></data>
+  <data name="Vis.Durability" xml:space="preserve"><value>耐久度</value></data>
+  <data name="Vis.SlotDepth" xml:space="preserve"><value>层级</value></data>
+  <data name="Vis.Mirrored" xml:space="preserve"><value>镜像</value></data>
+  <data name="Vis.MirroredDesc" xml:space="preserve"><value>镜像 — 双持</value></data>
+  <data name="Vis.Identified" xml:space="preserve"><value>已识别</value></data>
+  <data name="Vis.UseSlots" xml:space="preserve"><value>使用位置</value></data>
+  <data name="Vis.SocketLocked" xml:space="preserve"><value>锁定槽位</value></data>
+  <data name="Vis.SocketLockedDesc" xml:space="preserve"><value>锁定 — 无法被玩家移动</value></data>
+  <data name="Vis.Format" xml:space="preserve"><value>格式</value></data>
+  <data name="Vis.AsContainer" xml:space="preserve"><value>空间大小</value></data>
+  <data name="Vis.Properties" xml:space="preserve"><value>属性</value></data>
+  <data name="Vis.AttackModes" xml:space="preserve"><value>攻击模式</value></data>
+  <data name="Vis.Equipment" xml:space="preserve"><value>装备</value></data>
+  <data name="Vis.EquipSlots" xml:space="preserve"><value>装备槽位</value></data>
+  <data name="Vis.WhenEquipped" xml:space="preserve"><value>装备时</value></data>
+  <data name="Vis.WhenUsed" xml:space="preserve"><value>使用时</value></data>
+  <data name="Vis.WhenCarried" xml:space="preserve"><value>持有时</value></data>
+  <data name="Vis.AcceptsContent" xml:space="preserve"><value>可容纳类型</value></data>
+  <data name="Vis.Degradation" xml:space="preserve"><value>耐久消耗</value></data>
+  <data name="Vis.BreakParts" xml:space="preserve"><value>损坏掉落</value></data>
+  <data name="Vis.ChargeAmmo" xml:space="preserve"><value>充能/弹药</value></data>
+  <data name="Vis.SwitchStates" xml:space="preserve"><value>切换状态</value></data>
+  <data name="Vis.References" xml:space="preserve"><value>引用</value></data>
+  <data name="Vis.TreasureTable" xml:space="preserve"><value>战利品表</value></data>
+  <data name="Vis.RequiredCondition" xml:space="preserve"><value>需求条件</value></data>
+  <data name="Vis.Component" xml:space="preserve"><value>成分</value></data>
+  <data name="Vis.Toggleable" xml:space="preserve"><value>可切换</value></data>
 </root>

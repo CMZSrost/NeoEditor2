@@ -297,10 +297,10 @@ public class DataExportService
             var parts = seg.Trim().Split('x');
             if (parts.Length < 2) return seg;
             var itemId = parts[0];
-            var decomposer = ReferenceHelper.ParseTargetKey("{GroupId}.{SubgroupId}");
+            var decomposer = ReferenceParser.ParseTargetKey("{GroupId}.{SubgroupId}");
             var item = itemTypes.FirstOrDefault(it =>
             {
-                var decomposed = ReferenceHelper.DecomposeId(itemId, decomposer);
+                var decomposed = ReferenceParser.DecomposeId(itemId, decomposer);
                 return decomposed.TryGetValue("GroupId", out var gid) && it.GroupId == gid
                     && decomposed.TryGetValue("SubgroupId", out var sid) && it.SubgroupId == sid;
             });
@@ -315,7 +315,7 @@ public class DataExportService
         return string.Join(", ", raw.Split(separator).Select(seg =>
         {
             // Extract the actual ID using the pattern (e.g., "{id}x{mult}" → extract part before first x)
-            var actualId = ReferenceHelper.ExtractRawId(seg.Trim(), pattern);
+            var actualId = ReferenceParser.ExtractRawId(seg.Trim(), pattern);
             var val = CsvImportExportService.ConvertValue(actualId, typeof(int));
             var id = val is int i ? i : 0;
             if (id > 0 && lookup.TryGetValue(id, out var entity))
@@ -423,9 +423,9 @@ public class DataExportService
     private static string ResolveSingleRef(string rawId, System.Collections.IList list, string? targetKey, string? pattern)
     {
         // Extract the actual ID from the segment using the pattern
-        var actualId = ReferenceHelper.ExtractRawId(rawId, pattern);
-        var keyInfo = ReferenceHelper.ParseTargetKey(targetKey);
-        var decomposed = ReferenceHelper.DecomposeId(actualId, keyInfo);
+        var actualId = ReferenceParser.ExtractRawId(rawId, pattern);
+        var keyInfo = ReferenceParser.ParseTargetKey(targetKey);
+        var decomposed = ReferenceParser.DecomposeId(actualId, keyInfo);
         foreach (var obj in list)
         {
             if (obj is not IEntity entity) continue;

@@ -33,6 +33,7 @@ public abstract class ReferencePattern
     public static readonly ReferencePattern IdXMult = new IdXMultPattern();
     public static readonly ReferencePattern MultXId = new MultXIdPattern();
     public static readonly ReferencePattern IdEqualsValue = new IdEqualsValuePattern();
+    public static readonly ReferencePattern ValueEqualsId = new ValueEqualsIdPattern();
     public static readonly ReferencePattern BracketId = new BracketIdPattern();
 
     /// <summary>Resolve a pattern from a pattern name string.</summary>
@@ -41,6 +42,7 @@ public abstract class ReferencePattern
         "{id}x{mult}" => IdXMult,
         "{mult}x{id}" => MultXId,
         "{id}={value}" => IdEqualsValue,
+        "{value}={id}" => ValueEqualsId,
         "[{id}" => BracketId,
         _ => Id
     };
@@ -69,7 +71,23 @@ public abstract class ReferencePattern
     private sealed class IdPattern : ReferencePattern
     {
         public IdPattern() : base("Id") { }
-        public override string ExtractRawId(string segment) => segment.Trim();
+        public override string ExtractRawId(string segment)
+        {
+            var trimmed = segment.Trim();
+            return trimmed.StartsWith('-') ? trimmed[1..].Trim() : trimmed;
+        }
+        public override string FormatDisplay(string segment, string? subject, string? modName)
+        {
+            if (string.IsNullOrEmpty(subject)) return segment;
+            var isNeg = segment.TrimStart().StartsWith('-');
+            var negPrefix = isNeg ? "~" : "";
+            var modPrefix = !string.IsNullOrEmpty(modName) && modName != "0" ? modName + ":" : "";
+            return $"{negPrefix}{modPrefix}{subject} ({ExtractRawId(segment)})";
+        }
+        public override string FormatExtraInfo(string segment)
+        {
+            return segment.TrimStart().StartsWith('-') ? "-" : "";
+        }
     }
 
     private sealed class IdXMultPattern : ReferencePattern
@@ -78,8 +96,11 @@ public abstract class ReferencePattern
         public override string ExtractRawId(string segment)
         {
             var trimmed = segment.Trim();
-            var xIdx = trimmed.IndexOf('x');
-            return xIdx > 0 ? trimmed[..xIdx].Trim() : trimmed;
+            // Strip leading '-' (negation modifier) if present
+            var isNeg = trimmed.StartsWith('-');
+            var body = isNeg ? trimmed[1..].Trim() : trimmed;
+            var xIdx = body.IndexOf('x');
+            return xIdx > 0 ? body[..xIdx].Trim() : body;
         }
         public override string FormatDisplay(string segment, string? subject, string? modName)
         {
@@ -93,9 +114,13 @@ public abstract class ReferencePattern
         }
         public override string FormatExtraInfo(string segment)
         {
-            var xIdx = segment.IndexOf('x');
-            if (xIdx <= 0) return "";
-            return $"x{FmtPct(segment[(xIdx + 1)..].Trim())}";
+            var trimmed = segment.Trim();
+            var isNeg = trimmed.StartsWith('-');
+            var xIdx = trimmed.LastIndexOf('x');
+            var result = "";
+            if (isNeg) result += "-";
+            if (xIdx > 0) result += $"x{FmtPct(trimmed[(xIdx + 1)..].Trim())}";
+            return result;
         }
     }
 
@@ -137,6 +162,31 @@ public abstract class ReferencePattern
             var eqIdx = segment.IndexOf('=');
             if (eqIdx <= 0) return "";
             return $"= {FmtPct(segment[(eqIdx + 1)..].Trim())}";
+        }
+    }
+
+    private sealed class ValueEqualsIdPattern : ReferencePattern
+    {
+        public ValueEqualsIdPattern() : base("ValueEqualsId") { }
+        public override string ExtractRawId(string segment)
+        {
+            var trimmed = segment.Trim();
+            var eqIdx = trimmed.IndexOf('=');
+            return eqIdx > 0 ? trimmed[(eqIdx + 1)..].Trim() : trimmed;
+        }
+        public override string FormatDisplay(string segment, string? subject, string? modName)
+        {
+            if (string.IsNullOrEmpty(subject)) return segment;
+            var modPrefix = !string.IsNullOrEmpty(modName) && modName != "0" ? modName + ":" : "";
+            var eqIdx = segment.IndexOf('=');
+            var prefix = eqIdx > 0 ? segment[..(eqIdx + 1)] : "";
+            return $"{prefix}{modPrefix}{subject}";
+        }
+        public override string FormatExtraInfo(string segment)
+        {
+            var eqIdx = segment.IndexOf('=');
+            if (eqIdx <= 0) return "";
+            return segment[..eqIdx].Trim();
         }
     }
 

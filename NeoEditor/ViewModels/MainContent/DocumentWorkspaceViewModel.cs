@@ -108,8 +108,9 @@ public partial class DocumentWorkspaceViewModel : ViewModelBase,
         ValidationTool = new ValidationTool(BottomTools);
         // Tool items collections kept for potential future use
 
-        // Peek: Ctrl+Click reference → show in Reference Inspector. Return true to block navigation.
-        Helper.GenericDataGridHelper.PeekRequested = (type, rawId, entity) =>
+        // Peek: Ctrl+Click reference → show in Reference Inspector via NavigationRouter.
+        var navRouter = serviceProvider.GetRequiredService<Helper.INavigationRouter>();
+        navRouter.PeekHandler = (type, rawId, entity) =>
         {
             ReferenceInspector.ShowEntity(type, rawId, entity);
             return entity is not null; // block navigation when entity found (peek-only)

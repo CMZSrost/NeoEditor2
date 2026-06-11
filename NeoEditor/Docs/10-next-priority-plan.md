@@ -119,9 +119,36 @@
 
 | # | 问题 | 状态 | 备注 |
 |---|------|:--:|------|
-| 1 | 排序箭头不显示 | 🔴 | Avalonia 11.3 框架限制 |
-| 2 | IMessenger.Send 单参数重载 | 🔴 | CommunityToolkit.Mvvm 8.4.0 疑似移除，需显式传 token |
-| 3 | ModDatabase Expander 箭头遮挡 | 🟡 | 需调 Padding |
-| 4 | TreasureTable aTreasures 混合引用 | ✅ | 已修复 |
-| 5 | ValueEditorPanel 空白 | 🟡 | 可视化器内容不丰富，需先完善 visualizer |
-| 6 | 嵌套 DockControl 空白 | ✅ | DocumentWorkspaceView 已改用 ToolDock + UserControl 内联方式（非嵌套 DockControl），四区域布局正常渲染。EntityBrowserView 仍使用 TabControl 作为查看区容器 |
+| 1 | **Ctrl+Click 导航总是跳转到 id=1** | 🔴 | `FindBestMatch` 中 `is int val` 对 long/null/EF代理类型失效。详见 [14-reference-resolution-system.md](14-reference-resolution-system.md) Bug 1 |
+| 2 | **DataGrid 列索引映射偏移** | 🔴 | `rowPanel.Children.IndexOf(cell)` 与 `dg.Columns` 不对齐（RowHeader 偏移）。详见 [14-reference-resolution-system.md](14-reference-resolution-system.md) Bug 2 |
+| 3 | 排序箭头不显示 | 🔴 | Avalonia 11.3 框架限制 |
+| 4 | IMessenger.Send 单参数重载 | 🔴 | CommunityToolkit.Mvvm 8.4.0 疑似移除，需显式传 token |
+| 5 | ModDatabase Expander 箭头遮挡 | 🟡 | 需调 Padding |
+| 6 | TreasureTable aTreasures 混合引用 | ✅ | 已修复 |
+| 7 | ValueEditorPanel 空白 | 🟡 | 可视化器内容不丰富，需先完善 visualizer |
+| 8 | 嵌套 DockControl 空白 | ✅ | DocumentWorkspaceView 已改用 ToolDock + UserControl 内联方式（非嵌套 DockControl），四区域布局正常渲染。EntityBrowserView 仍使用 TabControl 作为查看区容器 |
+
+---
+## 零-B、本轮待修复（引用系统 Bug）
+
+> 详见 [14-reference-resolution-system.md](14-reference-resolution-system.md)
+
+### Bug 1: FindBestMatch 类型比较 (GenericDataGridHelper.cs:233)
+
+```csharp
+// 当前代码（有 Bug）
+if (prop?.GetValue(entity) is int val && val != kv.Value)
+```
+当属性值为 `long`、`null` 或 EF 代理装箱值时，`is int` = false → `match` 保持 true → 所有实体匹配 → 第一个（id=1）胜出。
+
+**修复方向**：用 `Convert.ToInt64` + `Equals` 替代 `is int` 模式匹配。
+
+### Bug 2: 列索引映射 (SearchableDataGrid.axaml.cs:176-179)
+
+```csharp
+var colIdx = rowPanel.Children.IndexOf(cell);  // 包含 RowHeader
+var column = visibleCols[colIdx];                // 不包含 RowHeader
+```
+DataGridRow 的内部可视子元素（RowHeader）计入 `Children` 索引，但与 `dg.Columns` 不同步。
+
+**修复方向**：在 `ConfigureColumn` 阶段缓存 `Dictionary<DataGridColumn, ReferenceFieldAttribute>` 映射，导航时直接用 `cell.Column` 或缓存查表。

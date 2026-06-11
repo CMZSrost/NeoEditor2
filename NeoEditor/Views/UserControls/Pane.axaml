@@ -409,6 +409,37 @@
                         <TextBlock FontWeight="SemiBold" Text="{Binding Loc[GridRowHeight]}" />
                         <NumericUpDown Value="{Binding DisplayGridRowHeight}" Minimum="0" Maximum="80" Increment="2" />
                     </StackPanel>
+
+                    <!-- Column Visibility -->
+                    <Expander Header="Column Visibility" IsExpanded="False" Margin="0,8,0,0">
+                        <ScrollViewer MaxHeight="400" HorizontalScrollBarVisibility="Disabled">
+                            <ItemsControl ItemsSource="{Binding TableColumns}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Expander Header="{Binding TableName}" IsExpanded="False" Margin="0,2">
+                                            <StackPanel Margin="8,4,0,4">
+                                                <StackPanel Orientation="Horizontal" Spacing="6" Margin="0,0,0,4">
+                                                    <Button Content="All" FontSize="10" Padding="6,2"
+                                                            Command="{Binding SelectAllCommand}" />
+                                                    <Button Content="None" FontSize="10" Padding="6,2"
+                                                            Command="{Binding SelectNoneCommand}" />
+                                                </StackPanel>
+                                                <ItemsControl ItemsSource="{Binding Columns}">
+                                                    <ItemsControl.ItemTemplate>
+                                                        <DataTemplate>
+                                                            <CheckBox IsChecked="{Binding IsVisible}"
+                                                                      Content="{Binding DisplayName}"
+                                                                      Margin="0,1" />
+                                                        </DataTemplate>
+                                                    </ItemsControl.ItemTemplate>
+                                                </ItemsControl>
+                                            </StackPanel>
+                                        </Expander>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+                    </Expander>
                 </StackPanel>
             </ScrollViewer>
         </DataTemplate>

@@ -26,10 +26,10 @@ public class RecipeFlowchartEditor : ICustomTableEditor
     {
         if (_tabs is null) return; _tabs.Items.Clear();
         _recipe = entity as Recipe; if (_recipe is null) return;
-        _ingredients = ReferenceResolver.GetDedupedInt<Ingredient>();
-        _tt = ReferenceResolver.GetDedupedInt<TreasureTable>();
-        _itemProps = ReferenceResolver.GetDedupedInt<ItemProp>();
-        _itemTypes = ReferenceResolver.GetDedupedList<ItemType>();
+        _ingredients = GenericDataGridHelper.GetEntities<Ingredient>();
+        _tt = GenericDataGridHelper.GetEntities<TreasureTable>();
+        _itemProps = GenericDataGridHelper.GetEntities<ItemProp>();
+        _itemTypes = GenericDataGridHelper.GetDedupedEntities<ItemType>();
 
         _tabs.Items.Add(EditorHelper.BuildOverviewTab(_recipe));
         _tabs.Items.Add(EditorHelper.MakeTab("Recipe Tree", BuildRecipeTree()));
@@ -70,7 +70,7 @@ public class RecipeFlowchartEditor : ICustomTableEditor
             var node = EditorHelper.NewNode($"{name} x{qty}");
             if (ing is not null)
             {
-                EditorHelper.NavOnCtrl(node, () => ReferenceResolver.NavigateToByKey<Ingredient>(id));
+                EditorHelper.NavOnCtrl(node, () => ReferenceResolver.Instance.NavigateToByKey<Ingredient>(id));
                 AddProps(node, ing.RequiredProps, "Required", Brushes.DarkOrange, Brushes.Orange);
                 AddProps(node, ing.ForbidProps, "Forbidden", Brushes.IndianRed, Brushes.Red);
             }
@@ -88,7 +88,7 @@ public class RecipeFlowchartEditor : ICustomTableEditor
             if (int.TryParse(s.Trim(), out var pid) && _itemProps.TryGetValue(pid, out var p))
             {
                 var child = EditorHelper.NewNode(p.PropertyName, leaf);
-                EditorHelper.NavOnCtrl(child, () => ReferenceResolver.NavigateToByKey<ItemProp>(pid));
+                EditorHelper.NavOnCtrl(child, () => ReferenceResolver.Instance.NavigateToByKey<ItemProp>(pid));
                 n.Items.Add(child);
             }
         }
@@ -109,7 +109,7 @@ public class RecipeFlowchartEditor : ICustomTableEditor
             var it = _itemTypes?.FirstOrDefault(x => $"{x.GroupId}.{x.SubgroupId}" == itemId);
             var name = it?.Name ?? itemId;
             var child = EditorHelper.NewNode($"{name} ({itemId}) qty:{qty}");
-            if (it is not null) EditorHelper.NavOnCtrl(child, () => ReferenceResolver.NavigateTo(typeof(ItemType), it.EntityId));
+            if (it is not null) EditorHelper.NavOnCtrl(child, () => ReferenceResolver.Instance.NavigateTo(typeof(ItemType), it.EntityId));
             n.Items.Add(child);
         }
         return n;
@@ -118,14 +118,14 @@ public class RecipeFlowchartEditor : ICustomTableEditor
     private TreeViewItem BuildAlsoTry(string raw)
     {
         var n = EditorHelper.NewNode("Also Try", Brushes.Purple, true);
-        var lookup = ReferenceResolver.GetDedupedInt<Recipe>();
+        var lookup = GenericDataGridHelper.GetEntities<Recipe>();
         foreach (var seg in raw.Split(','))
         {
             if (int.TryParse(seg.Trim(), out var id))
             {
                 var name = lookup.TryGetValue(id, out var r) ? r.Name : $"Recipe #{id}";
                 var child = EditorHelper.NewNode(name);
-                EditorHelper.NavOnCtrl(child, () => ReferenceResolver.NavigateToByKey<Recipe>(id));
+                EditorHelper.NavOnCtrl(child, () => ReferenceResolver.Instance.NavigateToByKey<Recipe>(id));
                 n.Items.Add(child);
             }
         }
