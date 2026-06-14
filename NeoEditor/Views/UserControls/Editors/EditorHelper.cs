@@ -38,9 +38,8 @@ public static class EditorHelper
 
         var entityType = entity.GetType();
 
-        // Header with modId:modName badge
+        // Header with modId:modName badge first, then subject, then entityId badge
         var headerPanel = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 6 };
-        headerPanel.Children.Add(new TextBlock { Text = entity.Subject, FontWeight = FontWeight.Bold, Foreground = Brushes.DodgerBlue, VerticalAlignment = VerticalAlignment.Center });
         var modName = Helper.GenericDataGridHelper.EntityModNames.TryGetValue(entity.EntityId, out var mn)
             ? mn : $"mod_{entity.ModId}";
         headerPanel.Children.Add(new Border
@@ -49,6 +48,15 @@ public static class EditorHelper
             Background = Brush.Parse("#20000000"),
             Padding = new Thickness(5, 1),
             Child = new TextBlock { Text = $"{entity.ModId}:{modName}", FontSize = 9, Foreground = Brush.Parse("#888"), VerticalAlignment = VerticalAlignment.Center }
+        });
+        headerPanel.Children.Add(new TextBlock { Text = entity.Subject, FontWeight = FontWeight.Bold, Foreground = Brushes.DodgerBlue, VerticalAlignment = VerticalAlignment.Center });
+        var eidShort = entity.EntityId.Length > 10 ? entity.EntityId[..10] + "…" : entity.EntityId;
+        headerPanel.Children.Add(new Border
+        {
+            CornerRadius = new CornerRadius(3),
+            Background = Brush.Parse("#37474F"),
+            Padding = new Thickness(5, 1),
+            Child = new TextBlock { Text = eidShort, FontSize = 9, Foreground = Brushes.White, VerticalAlignment = VerticalAlignment.Center }
         });
         var root = new TreeViewItem { IsExpanded = true, Header = headerPanel };
 
@@ -70,7 +78,7 @@ public static class EditorHelper
             if (refAttr is not null && !string.IsNullOrWhiteSpace(strVal))
             {
                 var refNode = NewNode(label, Brushes.HotPink, true);
-                BuildRefChildren(refNode, strVal, refAttr);
+                BuildRefChildren(refNode, strVal, refAttr, entity.EntityId);
                 root.Items.Add(refNode);
             }
             else if (!string.IsNullOrWhiteSpace(strVal))
@@ -91,7 +99,7 @@ public static class EditorHelper
             }
         }
 
-        // Reverse references for specific types
+        // Reverse references for types that are referenced by others
         var store = GenericDataGridHelper.ActiveMergeStore ?? GenericDataGridHelper.BrowserStore;
         if (store is not null)
         {
@@ -99,11 +107,27 @@ public static class EditorHelper
                 AddReverseRefsNode(root, ReferenceResolver.ResolveReverseRefs(store, ip.EntityId));
             else if (entity is Ingredient ing)
                 AddReverseRefsNode(root, ReferenceResolver.ResolveReverseRefs(store, ing.EntityId));
+            else if (entity is Encounter enc)
+                AddReverseRefsNode(root, ReferenceResolver.ResolveReverseRefs(store, enc.EntityId));
+            else if (entity is Condition condRef)
+                AddReverseRefsNode(root, ReferenceResolver.ResolveReverseRefs(store, condRef.EntityId));
+            else if (entity is TreasureTable tt)
+                AddReverseRefsNode(root, ReferenceResolver.ResolveReverseRefs(store, tt.EntityId));
+            else if (entity is Recipe recipe)
+                AddReverseRefsNode(root, ReferenceResolver.ResolveReverseRefs(store, recipe.EntityId));
+            else if (entity is Creature creature)
+                AddReverseRefsNode(root, ReferenceResolver.ResolveReverseRefs(store, creature.EntityId));
+            else if (entity is ItemType it)
+                AddReverseRefsNode(root, ReferenceResolver.ResolveReverseRefs(store, it.EntityId));
         }
 
         // Condition: FieldNames ↔ Modifiers paired display
         if (entity is Condition cond)
             AddConditionPairedFields(root, cond);
+
+        // Overlay chain for merge-heavy entity types — expand each overlay layer
+        if (entity is Condition || entity is TreasureTable || entity is Recipe || entity is Creature || entity is Encounter || entity is ItemType)
+            AddOverlayChainNode(root, entity);
 
         tree.Items.Add(root);
         return new TabItem { Header = "Overview", Content = new ScrollViewer { Content = tree, HorizontalScrollBarVisibility = Avalonia.Controls.Primitives.ScrollBarVisibility.Auto } };
@@ -127,6 +151,57 @@ public static class EditorHelper
         root.Items.Add(pairNode);
     }
 
+    private static void AddOverlayChainNode(TreeViewItem root, IEntity entity)
+    {
+        var chain = GenericDataGridHelper.GetOverlayChain(entity);
+        if (chain.Count <= 1) return; // single overlay = no merge
+
+        var chainLabel = _loc is not null ? _loc["Vis.OverlayChain"] : "Overlay Chain";
+        var chainNode = NewNode($"{chainLabel} ({chain.Count} layers)", Brushes.DarkOrange, true);
+
+        // Get FieldSources for per-field overlay annotation
+        var fieldSources = GenericDataGridHelper.FieldSources;
+        var entityType = entity.GetType();
+        var props = entityType.GetProperties()
+            .Where(p => p.GetCustomAttribute<ColumnAttribute>() is not null && p.DeclaringType != typeof(IEntity))
+            .OrderBy(p => p.MetadataToken)
+            .ToList();
+
+        for (int i = 0; i < chain.Count; i++)
+        {
+            var entry = chain[i];
+            var isWinner = i == chain.Count - 1;
+            var prefix = isWinner ? "→ " : "   ";
+            var entryLabel = $"{prefix}[{entry.ModName}] {entry.Subject} (id={entry.Id})";
+            var entryNode = NewNode(entryLabel, isWinner ? Brushes.DodgerBlue : Brushes.Teal, true);
+
+            // Show fields contributed by this overlay
+            int contributed = 0;
+            foreach (var prop in props)
+            {
+                var colAttr = prop.GetCustomAttribute<ColumnAttribute>();
+                var colName = colAttr?.Name ?? prop.Name;
+                var key = (entity.EntityId, colName);
+                if (fieldSources.TryGetValue(key, out var sourceMod) && sourceMod == entry.ModName)
+                {
+                    var displayName = prop.GetCustomAttribute<DisplayAttribute>()?.Name;
+                    var label = _loc is not null && displayName is not null ? _loc[displayName] : displayName ?? colName;
+                    var val = prop.GetValue(entity);
+                    var strVal = val is bool b ? (b ? "1" : "0") : val?.ToString() ?? "";
+                    if (strVal.Length > 60) strVal = strVal[..57] + "...";
+                    entryNode.Items.Add(NewNode($"{label}: {strVal}", Brushes.CadetBlue));
+                    contributed++;
+                }
+            }
+            var countNote = contributed > 0 ? $" ({contributed} fields)" : " (no unique fields)";
+            entryNode.Header = new TextBlock { Text = entryLabel + countNote, Foreground = isWinner ? Brushes.DodgerBlue : Brushes.Teal };
+
+            chainNode.Items.Add(entryNode);
+        }
+
+        root.Items.Add(chainNode);
+    }
+
     private static void AddReverseRefsNode(TreeViewItem root, List<(Type SrcType, string SrcSubject, string SrcEntityId, string PropName)> refs)
     {
         if (refs.Count == 0) return;
@@ -142,7 +217,7 @@ public static class EditorHelper
         root.Items.Add(revNode);
     }
 
-    private static void BuildRefChildren(TreeViewItem parent, string raw, ReferenceFieldAttribute attr)
+    private static void BuildRefChildren(TreeViewItem parent, string raw, ReferenceFieldAttribute attr, string sourceEntityId)
     {
         var targetType = attr.TargetEntityType;
         if (!GenericDataGridHelper.ReferenceLookups.TryGetValue(targetType, out var list) || list is null) return;
@@ -157,13 +232,13 @@ public static class EditorHelper
                 var orGroupNode = NewNode("OR Group", Brushes.CornflowerBlue, true);
                 foreach (var orSeg in orParts)
                 {
-                    ResolveSingleRefItem(orGroupNode, orSeg.Trim(), attr, targetType);
+                    ResolveSingleRefItem(orGroupNode, orSeg.Trim(), attr, targetType, sourceEntityId);
                 }
                 parent.Items.Add(orGroupNode);
             }
             else
             {
-                ResolveSingleRefItem(parent, seg.Trim(), attr, targetType);
+                ResolveSingleRefItem(parent, seg.Trim(), attr, targetType, sourceEntityId);
             }
         }
     }
@@ -174,11 +249,11 @@ public static class EditorHelper
     }
 
     private static void ResolveSingleRefItem(TreeViewItem parent, string trimmed, ReferenceFieldAttribute attr,
-        Type targetType)
+        Type targetType, string sourceEntityId)
     {
         var actualId = ReferenceParser.ExtractRawId(trimmed, attr.Pattern);
-        // Use the same FindBestMatch logic as the DataGrid for consistent resolution
-        var match = GenericDataGridHelper.FindBestMatch(targetType, actualId, attr.TargetKey);
+        // Use the same FindBestMatch logic as the DataGrid for consistent resolution, with source context for same-mod priority
+        var match = GenericDataGridHelper.FindBestMatch(targetType, actualId, attr.TargetKey, sourceEntityId, "");
         var displayText = match?.Subject ?? actualId;
         var extra = FormatExtraInfo(trimmed, attr.Pattern);
         if (!string.IsNullOrEmpty(extra)) displayText += $" ({extra})";
@@ -205,9 +280,19 @@ public static class EditorHelper
             var colonIdx = rawName.IndexOf(':');
             var name = colonIdx > 0 ? rawName[(colonIdx + 1)..] : rawName;
             string? foundPath = null;
+            var candidates = name.Contains('.') ? new[] { name } : new[] { name + ".png", name };
             foreach (var dir in searchDirs)
             {
-                try { var c = Directory.GetFiles(dir, name, SearchOption.AllDirectories).FirstOrDefault(); if (c is not null) { foundPath = c; break; } } catch { }
+                try
+                {
+                    foreach (var c in candidates)
+                    {
+                        var f = Directory.GetFiles(dir, c, SearchOption.AllDirectories).FirstOrDefault();
+                        if (f is not null) { foundPath = f; break; }
+                    }
+                    if (foundPath is not null) break;
+                }
+                catch { }
             }
             if (foundPath is null) continue;
 

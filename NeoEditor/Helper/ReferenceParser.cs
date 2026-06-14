@@ -309,9 +309,15 @@ public static class ReferenceParser
     public static string NormalizeNamespace(string? ns)
         => IsDefaultNamespace(ns) ? "" : (ns ?? "");
 
-    /// <summary>Build the canonical lookup key: "{namespace}:{extractedId}", with default namespace stripped.</summary>
+    /// <summary>Build the canonical lookup key: "{namespace}:{extractedId}", with default namespace stripped.
+    /// Also strips "=value" suffix (e.g., "38=1" → "38") for IdEqualsValue patterns.</summary>
     public static string BuildLookupKey(string extractedId)
     {
+        // Strip "=value" suffix first (handles IdEqualsValue pattern)
+        var eqIdx = extractedId.IndexOf('=');
+        if (eqIdx > 0)
+            extractedId = extractedId[..eqIdx].Trim();
+
         var colonIdx = extractedId.IndexOf(':');
         if (colonIdx <= 0) return extractedId; // no namespace prefix
 

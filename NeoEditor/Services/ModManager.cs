@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
@@ -174,6 +174,9 @@ public class ModManager : IModManager
                 mod.LastImport = DateTime.Now;
                 await editorDb.SaveChangesAsync();
             }
+
+            // Invalidate browser index so it gets rebuilt with the newly loaded data
+            BrowserIndexService.Invalidate();
         }
         catch (Exception e)
         {

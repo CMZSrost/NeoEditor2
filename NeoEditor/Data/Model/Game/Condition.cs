@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
 using NeoEditor.Helper;
@@ -29,7 +29,7 @@ public class Condition : IEntity
 
     [Column("aFieldNames", TypeName = "varchar(1000)")]
     [StringLength(1000)]
-    [Comment("该状态为你带来的效果字段列表，如'm_fHealPerHourMod,m_fImmuneRestoreRate'等")]
+    [Comment("效果字段列表(与aModifiers对应,共74种): m_fHealPerHourMod=恢复, m_fImmuneRestoreRate=免疫恢复, m_fBloodRestoreRate=血液恢复, fMovesPerTurnModifier=移动点, m_fEncumberanceLimit=负重, m_fMoraleHidden=隐藏士气, m_fDefense=闪避, Asleep=沉睡, fSleepQuality=睡眠质量, m_fSleepAwareness=睡眠意识, fFoodConsumptionRate=食物消耗, fWaterConsumptionRate=水消耗, BaseDetectionLevel=警觉值, MinSafeTemp=最低安全温度, MaxSafeTemp=最高安全温度, m_fFatigueModifier=疲劳修饰, fPassiveRewarmPerHour=被动升温, m_fMorale=士气, m_fBloodLeft=血液总量, BodyInsulation=热量散发, m_fVisibility=可见度, MinLightLevel=最小亮度, AttDmgMult=攻击伤害, LightLevel=光照, 等。修改方式有百分比/0-1/0~?/0.1or1四种")]
     [Display(Name = "FieldNames")]
     public string FieldNames { get; set; } = "";
 

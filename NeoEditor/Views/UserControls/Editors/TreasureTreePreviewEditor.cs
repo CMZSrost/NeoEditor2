@@ -24,7 +24,7 @@ public class TreasureTreePreviewEditor : ICustomTableEditor
         if (_tabs is null) return; _tabs.Items.Clear();
         _table = entity as TreasureTable; if (_table is null) return;
         _allTables = GenericDataGridHelper.GetEntities<TreasureTable>();
-        _itemTypes = GenericDataGridHelper.GetCompositeEntities<ItemType>(it => $"{it.GroupId}.{it.SubgroupId}");
+        _itemTypes = GenericDataGridHelper.GetCompositeEntities<ItemType>(it => $"{it.GroupId}.{it.SubgroupId}", _table.ModId);
 
         _tabs.Items.Add(EditorHelper.BuildOverviewTab(_table));
         _tabs.Items.Add(EditorHelper.MakeTab("Treasure Tree", BuildTree()));

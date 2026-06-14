@@ -28,7 +28,6 @@ public interface IMergeService
 public class MergeService : IMergeService
 {
     private static readonly Dictionary<Type, PropertyInfo[]> ColumnPropsCache = new();
-    private static readonly Dictionary<Type, PropertyInfo?> KeyPropCache = new();
 
     public async Task<MergeResult> ComputeMergeAsync(
         GameDbContext db,
@@ -299,14 +298,7 @@ public class MergeService : IMergeService
     }
 
     private static PropertyInfo? ResolveEntityKeyProperty(Type entityType)
-    {
-        if (KeyPropCache.TryGetValue(entityType, out var cached)) return cached;
-        var props = entityType.GetProperties(BindingFlags.Instance | BindingFlags.Public);
-        var keyProp = props.FirstOrDefault(p => p.Name == "Id")
-            ?? props.FirstOrDefault(p => p.Name == "nID");
-        KeyPropCache[entityType] = keyProp;
-        return keyProp;
-    }
+        => EntityHelper.ResolveKeyProperty(entityType);
 
     private static string GetEntityKey(IEntity entity, PropertyInfo? keyProp)
     {

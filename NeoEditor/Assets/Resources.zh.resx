@@ -1089,7 +1089,7 @@
         <value>剧情发生时在玩家脚下移除的战利品池ID</value>
     </data>
     <data name="ConditionsDesc" xml:space="preserve">
-        <value>该剧情的附带状态ID列表，逗号分隔</value>
+        <value>该剧情的获得状态ID列表，逗号分隔</value>
     </data>
     <data name="PreConditionsDesc" xml:space="preserve">
         <value>出现该剧情时必要的前置状态，负数表示不可拥有该状态</value>
@@ -1858,256 +1858,388 @@ No则退出</value>
     <data name="FindReplaceSuccess" xml:space="preserve"><value>已替换 {0} 处。</value></data>
     <data name="FindReplaceTitle" xml:space="preserve"><value>替换</value></data>
 
-  <data name="RefInspect" xml:space="preserve"><value>引用检查</value></data>
-  <data name="RefInspectPinned" xml:space="preserve"><value>🔒 已固定</value></data>
-  <data name="RefInspectHelp" xml:space="preserve"><value>Ctrl+左键点击青色引用 = 跳转并预览。
+    <data name="RefInspect" xml:space="preserve"><value>引用检查</value></data>
+    <data name="RefInspectPinned" xml:space="preserve"><value>🔒 已固定</value></data>
+    <data name="RefInspectHelp" xml:space="preserve"><value>Ctrl+左键点击青色引用 = 跳转并预览。
 Ctrl+右键点击引用 = 仅预览不跳转。
 双击引用 = 直接导航。</value></data>
-  <data name="RefInspectBack" xml:space="preserve"><value>后退（导航到上一个预览过的实体）</value></data>
-  <data name="RefInspectForward" xml:space="preserve"><value>前进</value></data>
-  <data name="RefInspectPin" xml:space="preserve"><value>固定</value></data>
-  <data name="RefInspectUnpin" xml:space="preserve"><value>取消固定</value></data>
-  <data name="RefInspectPinHelp" xml:space="preserve"><value>固定：冻结当前实体视图。取消固定前，新预览不会替换当前视图。</value></data>
-  <data name="RefInspectOpenFull" xml:space="preserve"><value>完整打开</value></data>
-  <data name="RefInspectOpenFullHelp" xml:space="preserve"><value>打开完整实体文档并导航到此实体</value></data>
-  <data name="RefInspectEmptyHint" xml:space="preserve"><value>Ctrl+点击一个青色引用在此检查。</value></data>
-  <data name="SearchTab" xml:space="preserve"><value>搜索</value></data>
-  <data name="ConflictsTab" xml:space="preserve"><value>冲突</value></data>
-  <data name="ValidationTab" xml:space="preserve"><value>验证</value></data>
-  <data name="BottomSearchWatermark" xml:space="preserve"><value>搜索所有游戏数据...（可使用 列名:值 语法）</value></data>
-  <data name="BottomSearchClear" xml:space="preserve"><value>清除搜索</value></data>
-  <data name="RunValidation" xml:space="preserve"><value>运行</value></data>
-  <data name="ModGuide" xml:space="preserve"><value>模组制作指南</value></data>
+    <data name="RefInspectBack" xml:space="preserve"><value>后退（导航到上一个预览过的实体）</value></data>
+    <data name="RefInspectForward" xml:space="preserve"><value>前进</value></data>
+    <data name="RefInspectPin" xml:space="preserve"><value>固定</value></data>
+    <data name="RefInspectUnpin" xml:space="preserve"><value>取消固定</value></data>
+    <data name="RefInspectPinHelp" xml:space="preserve"><value>固定：冻结当前实体视图。取消固定前，新预览不会替换当前视图。</value></data>
+    <data name="RefInspectOpenFull" xml:space="preserve"><value>完整打开</value></data>
+    <data name="RefInspectOpenFullHelp" xml:space="preserve"><value>打开完整实体文档并导航到此实体</value></data>
+    <data name="RefInspectEmptyHint" xml:space="preserve"><value>Ctrl+点击一个青色引用在此检查。</value></data>
+    <data name="SearchTab" xml:space="preserve"><value>搜索</value></data>
+    <data name="ConflictsTab" xml:space="preserve"><value>冲突</value></data>
+    <data name="ValidationTab" xml:space="preserve"><value>验证</value></data>
+    <data name="BottomSearchWatermark" xml:space="preserve"><value>搜索所有游戏数据...（可使用 列名:值 语法）</value></data>
+    <data name="BottomSearchClear" xml:space="preserve"><value>清除搜索</value></data>
+    <data name="RunValidation" xml:space="preserve"><value>运行</value></data>
+    <data name="ModGuide" xml:space="preserve"><value>模组制作指南</value></data>
 
-  <data name="HomePageBannerWarning" xml:space="preserve"><value>⚠  游戏目录未设置</value></data>
-  <data name="HomePageBannerHelp" xml:space="preserve"><value>点击左侧边栏 ⚙ 设置，然后设置 Neo Scavenger 安装路径。</value></data>
-  <data name="HomePageOpenSettings" xml:space="preserve"><value>打开设置</value></data>
-  <data name="HomePageTitle" xml:space="preserve"><value>NeoEditor</value></data>
-  <data name="HomePageSubtitle" xml:space="preserve"><value>Neo Scavenger 模组编辑器</value></data>
-  <data name="HomePageBrowseTitle" xml:space="preserve"><value>浏览游戏数据</value></data>
-  <data name="HomePageBrowseDesc" xml:space="preserve"><value>浏览所有物品、配方、生物（只读）</value></data>
-  <data name="HomePageNewModTitle" xml:space="preserve"><value>新建模组</value></data>
-  <data name="HomePageNewModDesc" xml:space="preserve"><value>从头创建你自己的模组</value></data>
-  <data name="HomePageImportTitle" xml:space="preserve"><value>导入模组</value></data>
-  <data name="HomePageImportDesc" xml:space="preserve"><value>打开已有模组文件夹或XML文件</value></data>
-  <data name="HomePageRecentMods" xml:space="preserve"><value>最近模组</value></data>
-  <data name="HomePageEntitiesFormat" xml:space="preserve"><value>{0} 实体</value></data>
-  <data name="HomePageMergeView" xml:space="preserve"><value>合并视图</value></data>
-  <data name="HomePageMergeViewDesc" xml:space="preserve"><value>打开模组加载配置查看模组如何组合和覆盖。</value></data>
-  <data name="HomePageModsFormat" xml:space="preserve"><value>{0} 模组</value></data>
-  <data name="HomePageProfilesHint" xml:space="preserve"><value>在侧边栏 👥 面板管理配置文件</value></data>
-  <data name="HomePageDropHint" xml:space="preserve"><value>或将模组文件夹/XML 文件拖放到窗口任意位置</value></data>
-  <data name="RmOpen" xml:space="preserve"><value>打开</value></data>
-  <data name="RmOpenInExplorer" xml:space="preserve"><value>在资源管理器中打开</value></data>
-  <data name="RmCopyFullPath" xml:space="preserve"><value>复制完整路径</value></data>
-  <data name="RmRename" xml:space="preserve"><value>重命名...</value></data>
-  <data name="RmDelete" xml:space="preserve"><value>删除</value></data>
-  <data name="RightPanelEditor" xml:space="preserve"><value>可视化概览</value></data>
-  <data name="RightPanelImages" xml:space="preserve"><value>图片</value></data>
-  <data name="OverlayChainTitle" xml:space="preserve"><value>覆盖链</value></data>
-  <data name="OverlayChainWinner" xml:space="preserve"><value>胜者</value></data>
-  <data name="OverlayChainOverridden" xml:space="preserve"><value>被覆盖</value></data>
-  <data name="OverlayChainEmpty" xml:space="preserve"><value>选择一行查看覆盖链。</value></data>
-  <data name="ValueEditorTitle" xml:space="preserve"><value>可视化概览</value></data>
-  <data name="ValueEditorEmpty" xml:space="preserve"><value>选择一个实体行查看可视化。</value></data>
-  <data name="ImagePreviewFooter" xml:space="preserve"><value>✓ 找到  ✗ 缺失。双击已找到的项目打开图片。</value></data>
-  <data name="DepsTooltip" xml:space="preserve"><value>检查跨模组引用完整性</value></data>
-  <data name="ConflictsFormat" xml:space="preserve"><value>{0} 冲突</value></data>
-  <data name="CreateModToEdit" xml:space="preserve"><value>创建模组以编辑</value></data>
-  <data name="EmptyModHeader" xml:space="preserve"><value>此模组还没有实体。</value></data>
-  <data name="EmptyModDesc" xml:space="preserve"><value>点击下方 + 按钮添加物品、配方或生物。</value></data>
-  <data name="EmptyModButton" xml:space="preserve"><value>添加第一个实体</value></data>
-  <data name="ToggleLeftPanel" xml:space="preserve"><value>切换左侧面板</value></data>
-  <data name="ToggleRightPanel" xml:space="preserve"><value>切换右侧面板</value></data>
-  <data name="ToggleBottomPanel" xml:space="preserve"><value>切换底部面板</value></data>
-  <data name="DocsFormat" xml:space="preserve"><value>文档：{0}</value></data>
-  <data name="DialogRename" xml:space="preserve"><value>重命名</value></data>
-  <data name="DialogOK" xml:space="preserve"><value>确定</value></data>
-  <data name="DialogAdd" xml:space="preserve"><value>添加</value></data>
-  <data name="DialogClose" xml:space="preserve"><value>关闭</value></data>
-  <data name="DialogExportCsv" xml:space="preserve"><value>导出 CSV</value></data>
-  <data name="DialogCancel" xml:space="preserve"><value>取消</value></data>
-  <data name="DialogCreate" xml:space="preserve"><value>创建</value></data>
-  <data name="DialogAuthor" xml:space="preserve"><value>作者</value></data>
-  <data name="DialogAuthorWatermark" xml:space="preserve"><value>你的名字或团队</value></data>
-  <data name="DialogModName" xml:space="preserve"><value>模组名称</value></data>
-  <data name="DialogModNameWatermark" xml:space="preserve"><value>例如：我的超棒模组</value></data>
-  <data name="DialogNamespace" xml:space="preserve"><value>命名空间</value></data>
-  <data name="DialogNamespaceWatermark" xml:space="preserve"><value>例如：MAM</value></data>
-  <data name="DialogNamespaceHint" xml:space="preserve"><value>用于标识模组物品的短前缀，用于避免与其他模组的 ID 冲突。</value></data>
-  <data name="DialogCreateProfile" xml:space="preserve"><value>自动创建模组加载配置文件</value></data>
-  <data name="AddRowTitle" xml:space="preserve"><value>添加新行</value></data>
-  <data name="AddRowTargetMod" xml:space="preserve"><value>目标模组</value></data>
-  <data name="AddRowTargetXml" xml:space="preserve"><value>目标 XML *</value></data>
-  <data name="AddRowCopyFrom" xml:space="preserve"><value>从...复制</value></data>
-  <data name="CsvImportTitle" xml:space="preserve"><value>CSV 导入预览</value></data>
-  <data name="DependencyCheckTitle" xml:space="preserve"><value>依赖检查</value></data>
-  <data name="DependencySource" xml:space="preserve"><value>来源</value></data>
-  <data name="DependencyMod" xml:space="preserve"><value>模组</value></data>
-  <data name="DependencyField" xml:space="preserve"><value>字段</value></data>
-  <data name="DependencyTarget" xml:space="preserve"><value>目标</value></data>
-  <data name="DependencyIssue" xml:space="preserve"><value>问题</value></data>
-  <data name="ConflictTitle" xml:space="preserve"><value>字段冲突</value></data>
-  <data name="ConflictEntityType" xml:space="preserve"><value>实体类型</value></data>
-  <data name="ConflictEntity" xml:space="preserve"><value>实体</value></data>
-  <data name="ConflictField" xml:space="preserve"><value>字段</value></data>
-  <data name="ConflictMods" xml:space="preserve"><value>冲突模组</value></data>
-  <data name="MergeExportTitle" xml:space="preserve"><value>XML 导出预览</value></data>
-  <data name="MergeExportFiles" xml:space="preserve"><value>文件</value></data>
-  <data name="MergeExportInfo" xml:space="preserve"><value>查看每个文件的变更。点击左侧文件查看差异。</value></data>
-  <data name="MergeExportAll" xml:space="preserve"><value>全部导出</value></data>
-  <data name="ProfileDiffTitle" xml:space="preserve"><value>配置文件对比</value></data>
-  <data name="ProfileDiffA" xml:space="preserve"><value>配置文件 A：</value></data>
-  <data name="ProfileDiffB" xml:space="preserve"><value>配置文件 B：</value></data>
-  <data name="ProfileDiffModName" xml:space="preserve"><value>模组名称</value></data>
-  <data name="ProfileDiffPath" xml:space="preserve"><value>路径</value></data>
-  <data name="ImageViewerTitle" xml:space="preserve"><value>图片查看器</value></data>
-  <data name="ValidationReportTitle" xml:space="preserve"><value>验证报告</value></data>
-  <data name="ValidationCancelSave" xml:space="preserve"><value>取消保存</value></data>
-  <data name="ValidationSaveAnyway" xml:space="preserve"><value>仍然保存</value></data>
-  <data name="ModGameDataTitleFormat" xml:space="preserve"><value>{0} - 模组数据</value></data>
-  <data name="ModImagesTitleFormat" xml:space="preserve"><value>{0} - 图片</value></data>
-  <data name="MergeEditorTitleFormat" xml:space="preserve"><value>{0} - 合并视图</value></data>
-  <data name="NewDocumentTitleFormat" xml:space="preserve"><value>文档 {0}</value></data>
+    <data name="HomePageBannerWarning" xml:space="preserve"><value>⚠  游戏目录未设置</value></data>
+    <data name="HomePageBannerHelp" xml:space="preserve"><value>点击左侧边栏 ⚙ 设置，然后设置 Neo Scavenger 安装路径。</value></data>
+    <data name="HomePageOpenSettings" xml:space="preserve"><value>打开设置</value></data>
+    <data name="HomePageTitle" xml:space="preserve"><value>NeoEditor</value></data>
+    <data name="HomePageSubtitle" xml:space="preserve"><value>Neo Scavenger 模组编辑器</value></data>
+    <data name="HomePageBrowseTitle" xml:space="preserve"><value>浏览游戏数据</value></data>
+    <data name="HomePageBrowseDesc" xml:space="preserve"><value>浏览所有物品、配方、生物（只读）</value></data>
+    <data name="HomePageNewModTitle" xml:space="preserve"><value>新建模组</value></data>
+    <data name="HomePageNewModDesc" xml:space="preserve"><value>从头创建你自己的模组</value></data>
+    <data name="HomePageImportTitle" xml:space="preserve"><value>导入模组</value></data>
+    <data name="HomePageImportDesc" xml:space="preserve"><value>打开已有模组文件夹或XML文件</value></data>
+    <data name="HomePageRecentMods" xml:space="preserve"><value>最近模组</value></data>
+    <data name="HomePageEntitiesFormat" xml:space="preserve"><value>{0} 实体</value></data>
+    <data name="HomePageMergeView" xml:space="preserve"><value>合并视图</value></data>
+    <data name="HomePageMergeViewDesc" xml:space="preserve"><value>打开模组加载配置查看模组如何组合和覆盖。</value></data>
+    <data name="HomePageModsFormat" xml:space="preserve"><value>{0} 模组</value></data>
+    <data name="HomePageProfilesHint" xml:space="preserve"><value>在侧边栏 👥 面板管理配置文件</value></data>
+    <data name="HomePageDropHint" xml:space="preserve"><value>或将模组文件夹/XML 文件拖放到窗口任意位置</value></data>
+    <data name="RmOpen" xml:space="preserve"><value>打开</value></data>
+    <data name="RmOpenInExplorer" xml:space="preserve"><value>在资源管理器中打开</value></data>
+    <data name="RmCopyFullPath" xml:space="preserve"><value>复制完整路径</value></data>
+    <data name="RmRename" xml:space="preserve"><value>重命名...</value></data>
+    <data name="RmDelete" xml:space="preserve"><value>删除</value></data>
+    <data name="RightPanelEditor" xml:space="preserve"><value>可视化概览</value></data>
+    <data name="RightPanelImages" xml:space="preserve"><value>图片</value></data>
+    <data name="OverlayChainTitle" xml:space="preserve"><value>覆盖链</value></data>
+    <data name="OverlayChainWinner" xml:space="preserve"><value>胜者</value></data>
+    <data name="OverlayChainOverridden" xml:space="preserve"><value>被覆盖</value></data>
+    <data name="OverlayChainEmpty" xml:space="preserve"><value>选择一行查看覆盖链。</value></data>
+    <data name="ValueEditorTitle" xml:space="preserve"><value>可视化概览</value></data>
+    <data name="ValueEditorEmpty" xml:space="preserve"><value>选择一个实体行查看可视化。</value></data>
+    <data name="ImagePreviewFooter" xml:space="preserve"><value>✓ 找到  ✗ 缺失。双击已找到的项目打开图片。</value></data>
+    <data name="DepsTooltip" xml:space="preserve"><value>检查跨模组引用完整性</value></data>
+    <data name="ConflictsFormat" xml:space="preserve"><value>{0} 冲突</value></data>
+    <data name="CreateModToEdit" xml:space="preserve"><value>创建模组以编辑</value></data>
+    <data name="EmptyModHeader" xml:space="preserve"><value>此模组还没有实体。</value></data>
+    <data name="EmptyModDesc" xml:space="preserve"><value>点击下方 + 按钮添加物品、配方或生物。</value></data>
+    <data name="EmptyModButton" xml:space="preserve"><value>添加第一个实体</value></data>
+    <data name="ToggleLeftPanel" xml:space="preserve"><value>切换左侧面板</value></data>
+    <data name="ToggleRightPanel" xml:space="preserve"><value>切换右侧面板</value></data>
+    <data name="ToggleBottomPanel" xml:space="preserve"><value>切换底部面板</value></data>
+    <data name="DocsFormat" xml:space="preserve"><value>文档：{0}</value></data>
+    <data name="DialogRename" xml:space="preserve"><value>重命名</value></data>
+    <data name="DialogOK" xml:space="preserve"><value>确定</value></data>
+    <data name="DialogAdd" xml:space="preserve"><value>添加</value></data>
+    <data name="DialogClose" xml:space="preserve"><value>关闭</value></data>
+    <data name="DialogExportCsv" xml:space="preserve"><value>导出 CSV</value></data>
+    <data name="DialogCancel" xml:space="preserve"><value>取消</value></data>
+    <data name="DialogCreate" xml:space="preserve"><value>创建</value></data>
+    <data name="DialogAuthor" xml:space="preserve"><value>作者</value></data>
+    <data name="DialogAuthorWatermark" xml:space="preserve"><value>你的名字或团队</value></data>
+    <data name="DialogModName" xml:space="preserve"><value>模组名称</value></data>
+    <data name="DialogModNameWatermark" xml:space="preserve"><value>例如：我的超棒模组</value></data>
+    <data name="DialogNamespace" xml:space="preserve"><value>命名空间</value></data>
+    <data name="DialogNamespaceWatermark" xml:space="preserve"><value>例如：MAM</value></data>
+    <data name="DialogNamespaceHint" xml:space="preserve"><value>用于标识模组物品的短前缀，用于避免与其他模组的 ID 冲突。</value></data>
+    <data name="DialogCreateProfile" xml:space="preserve"><value>自动创建模组加载配置文件</value></data>
+    <data name="AddRowTitle" xml:space="preserve"><value>添加新行</value></data>
+    <data name="AddRowTargetMod" xml:space="preserve"><value>目标模组</value></data>
+    <data name="AddRowTargetXml" xml:space="preserve"><value>目标 XML *</value></data>
+    <data name="AddRowCopyFrom" xml:space="preserve"><value>从...复制</value></data>
+    <data name="CsvImportTitle" xml:space="preserve"><value>CSV 导入预览</value></data>
+    <data name="DependencyCheckTitle" xml:space="preserve"><value>依赖检查</value></data>
+    <data name="DependencySource" xml:space="preserve"><value>来源</value></data>
+    <data name="DependencyMod" xml:space="preserve"><value>模组</value></data>
+    <data name="DependencyField" xml:space="preserve"><value>字段</value></data>
+    <data name="DependencyTarget" xml:space="preserve"><value>目标</value></data>
+    <data name="DependencyIssue" xml:space="preserve"><value>问题</value></data>
+    <data name="ConflictTitle" xml:space="preserve"><value>字段冲突</value></data>
+    <data name="ConflictEntityType" xml:space="preserve"><value>实体类型</value></data>
+    <data name="ConflictEntity" xml:space="preserve"><value>实体</value></data>
+    <data name="ConflictField" xml:space="preserve"><value>字段</value></data>
+    <data name="ConflictMods" xml:space="preserve"><value>冲突模组</value></data>
+    <data name="MergeExportTitle" xml:space="preserve"><value>XML 导出预览</value></data>
+    <data name="MergeExportFiles" xml:space="preserve"><value>文件</value></data>
+    <data name="MergeExportInfo" xml:space="preserve"><value>查看每个文件的变更。点击左侧文件查看差异。</value></data>
+    <data name="MergeExportAll" xml:space="preserve"><value>全部导出</value></data>
+    <data name="ProfileDiffTitle" xml:space="preserve"><value>配置文件对比</value></data>
+    <data name="ProfileDiffA" xml:space="preserve"><value>配置文件 A：</value></data>
+    <data name="ProfileDiffB" xml:space="preserve"><value>配置文件 B：</value></data>
+    <data name="ProfileDiffModName" xml:space="preserve"><value>模组名称</value></data>
+    <data name="ProfileDiffPath" xml:space="preserve"><value>路径</value></data>
+    <data name="ImageViewerTitle" xml:space="preserve"><value>图片查看器</value></data>
+    <data name="ValidationReportTitle" xml:space="preserve"><value>验证报告</value></data>
+    <data name="ValidationCancelSave" xml:space="preserve"><value>取消保存</value></data>
+    <data name="ValidationSaveAnyway" xml:space="preserve"><value>仍然保存</value></data>
+    <data name="ModGameDataTitleFormat" xml:space="preserve"><value>{0} - 模组数据</value></data>
+    <data name="ModImagesTitleFormat" xml:space="preserve"><value>{0} - 图片</value></data>
+    <data name="MergeEditorTitleFormat" xml:space="preserve"><value>{0} - 合并视图</value></data>
+    <data name="NewDocumentTitleFormat" xml:space="preserve"><value>文档 {0}</value></data>
 
-  <data name="EmptyModMessage" xml:space="preserve"><value>此模组还没有实体。</value></data>
-  <data name="EmptyModHint" xml:space="preserve"><value>点击下方 + 按钮添加物品、配方或生物。</value></data>
-  <data name="AddFirstEntity" xml:space="preserve"><value>添加第一个实体</value></data>
-  <data name="ConflictsLabel" xml:space="preserve"><value>冲突</value></data>
-  <data name="QuickSave" xml:space="preserve"><value>快速保存</value></data>
-  <data name="GameDataReadOnly" xml:space="preserve"><value>游戏数据</value></data>
-  <data name="GameDataReadOnlyMessage" xml:space="preserve"><value>游戏基础数据不能直接修改。要修改游戏数据，请在 Profile 中添加一个 Merge 模式 Mod（strModName=0），或通过"新建 Mod"创建一个 namespace 为 0 的 Mod。对游戏数据的修改将被写入该覆盖 Mod。</value></data>
-  <data name="QuickSaveTooltip" xml:space="preserve"><value>仅保存到数据库 (Ctrl+S)</value></data>
-  <data name="SaveAndExport" xml:space="preserve"><value>导出</value></data>
-  <data name="SaveAndExportTooltip" xml:space="preserve"><value>保存并导出到XML文件（含差异预览）</value></data>
-  <data name="Saving" xml:space="preserve"><value>保存中...</value></data>
-  <data name="SaveTooltip" xml:space="preserve"><value>保存 (Ctrl+S)</value></data>
-  <data name="SaveAndLaunchTooltip" xml:space="preserve"><value>保存并启动游戏 (Ctrl+Shift+S)</value></data>
-  <data name="Launch" xml:space="preserve"><value>启动</value></data>
-  <data name="DiffJumpToCursor" xml:space="preserve"><value>从光标位置跳到下一个差异</value></data>
-  <data name="DiffJumpToIndex" xml:space="preserve"><value>跳转到第 # 个差异</value></data>
-  <data name="DataBrowserTitle" xml:space="preserve"><value>数据浏览器</value></data>
-  <data name="DataBrowserProperties" xml:space="preserve"><value>属性</value></data>
-  <data name="DomainCoreItems" xml:space="preserve"><value>核心物品</value></data>
-  <data name="DomainCombat" xml:space="preserve"><value>战斗</value></data>
-  <data name="DomainCrafting" xml:space="preserve"><value>合成</value></data>
-  <data name="DomainLoot" xml:space="preserve"><value>战利品</value></data>
-  <data name="DomainStory" xml:space="preserve"><value>剧情</value></data>
-  <data name="DomainMap" xml:space="preserve"><value>地图</value></data>
-  <data name="DomainOther" xml:space="preserve"><value>其他</value></data>
-  <!-- Visualizer display labels -->
-  <data name="Vis.RawData" xml:space="preserve"><value>原始数据</value></data>
-  <data name="Vis.Stats" xml:space="preserve"><value>属性</value></data>
-  <data name="Vis.Total" xml:space="preserve"><value>总计</value></data>
-  <data name="Vis.Effective" xml:space="preserve"><value>有效伤害</value></data>
-  <data name="Vis.Cut" xml:space="preserve"><value>切割</value></data>
-  <data name="Vis.Blunt" xml:space="preserve"><value>钝器</value></data>
-  <data name="Vis.DmgBonus" xml:space="preserve"><value>伤害加成</value></data>
-  <data name="Vis.Ammo" xml:space="preserve"><value>弹药</value></data>
-  <data name="Vis.AttackerConditions" xml:space="preserve"><value>攻击带来的状态</value></data>
-  <data name="Vis.AttackPhrases" xml:space="preserve"><value>攻击文本</value></data>
-  <data name="Vis.ReferencedBy" xml:space="preserve"><value>被引用</value></data>
-  <data name="Vis.CombatMelee" xml:space="preserve"><value>近战</value></data>
-  <data name="Vis.CombatRanged" xml:space="preserve"><value>远程</value></data>
-  <data name="Vis.PerUse" xml:space="preserve"><value>每次使用</value></data>
-  <data name="Vis.PerHour" xml:space="preserve"><value>每小时</value></data>
-  <data name="Vis.PerHourEquipped" xml:space="preserve"><value>装备时每小时</value></data>
-  <data name="Vis.PerHex" xml:space="preserve"><value>每格</value></data>
-  <data name="Vis.Degradeable" xml:space="preserve"><value>可降级</value></data>
-  <data name="Vis.Type" xml:space="preserve"><value>类型</value></data>
-  <data name="Vis.Duration" xml:space="preserve"><value>持续</value></data>
-  <data name="Vis.NextStage" xml:space="preserve"><value>下一阶段</value></data>
-  <data name="Vis.Transfer" xml:space="preserve"><value>转移</value></data>
-  <data name="Vis.Tiles" xml:space="preserve"><value>格</value></data>
-  <data name="Vis.Base" xml:space="preserve"><value>基础值</value></data>
-  <data name="Vis.TransferDesc" xml:space="preserve"><value>弹药留在目标身上或掉落地面</value></data>
-  <data name="Vis.ExpandTooltip" xml:space="preserve"><value>点击展开详情 · Ctrl+点击跳转</value></data>
-  <data name="Vis.CtrlClickHint" xml:space="preserve"><value>Ctrl+点击打开完整详情</value></data>
-  <data name="Vis.SoundTooltip" xml:space="preserve"><value>音效提示 — 内嵌于游戏 SWF，无法直接播放</value></data>
-  <data name="Vis.StackableHint" xml:space="preserve"><value>可叠加（乘法）</value></data>
-  <data name="Vis.ResetTimerHint" xml:space="preserve"><value>重新施加时重置计时</value></data>
-  <data name="Vis.Chance" xml:space="preserve"><value>发动几率</value></data>
-  <data name="Vis.Priority" xml:space="preserve"><value>优先级</value></data>
-  <data name="Vis.Fatigue" xml:space="preserve"><value>疲劳值</value></data>
-  <data name="Vis.Detect" xml:space="preserve"><value>被发现几率</value></data>
-  <data name="Vis.Range" xml:space="preserve"><value>距离</value></data>
-  <data name="Vis.Exposure" xml:space="preserve"><value>所需暴露度</value></data>
-  <data name="Vis.Order" xml:space="preserve"><value>AI顺序</value></data>
-  <data name="Vis.MinCharges" xml:space="preserve"><value>最小充能</value></data>
-  <data name="Vis.Offensive" xml:space="preserve"><value>攻击性</value></data>
-  <data name="Vis.Retreat" xml:space="preserve"><value>撤退</value></data>
-  <data name="Vis.Passive" xml:space="preserve"><value>被动</value></data>
-  <data name="Vis.Action" xml:space="preserve"><value>动作</value></data>
-  <data name="Vis.NonAttack" xml:space="preserve"><value>非攻击动作</value></data>
-  <data name="Vis.OnSuccess" xml:space="preserve"><value>执行成功</value></data>
-  <data name="Vis.OnFail" xml:space="preserve"><value>执行失败</value></data>
-  <data name="Vis.Description" xml:space="preserve"><value>描述</value></data>
-  <data name="Vis.BattleMove.UsPreCond" xml:space="preserve"><value>我方前置条件</value></data>
-  <data name="Vis.BattleMove.ThemPreCond" xml:space="preserve"><value>敌方前置条件</value></data>
-  <data name="Vis.BattleMove.UsRequired" xml:space="preserve"><value>我方须处于的状态</value></data>
-  <data name="Vis.BattleMove.ThemRequired" xml:space="preserve"><value>敌方须处于的状态</value></data>
-  <data name="Vis.BattleMove.SelfEffects" xml:space="preserve"><value>自身附加状态</value></data>
-  <data name="Vis.BattleMove.UsFail" xml:space="preserve"><value>我方失败获得</value></data>
-  <data name="Vis.BattleMove.ThemFail" xml:space="preserve"><value>敌方失败获得</value></data>
-  <data name="Vis.BattleMove.PairFail" xml:space="preserve"><value>失败后自身附加</value></data>
-  <data name="Vis.BattleMove.Conditions" xml:space="preserve"><value>条件</value></data>
-  <data name="Vis.BattleMove.Flags" xml:space="preserve"><value>行为标签</value></data>
-  <data name="Vis.Move" xml:space="preserve"><value>移动</value></data>
-  <data name="Vis.Exposure.Hidden" xml:space="preserve"><value>隐藏</value></data>
-  <data name="Vis.Exposure.Seen" xml:space="preserve"><value>可见</value></data>
-  <data name="Vis.Exposure.Any" xml:space="preserve"><value>任意</value></data>
-  <data name="Vis.Alertness" xml:space="preserve"><value>警戒值</value></data>
-  <data name="Vis.VisibilityMod" xml:space="preserve"><value>可见值</value></data>
-  <data name="Vis.HealPerHour" xml:space="preserve"><value>恢复/小时</value></data>
-  <data name="Vis.SleepQuality" xml:space="preserve"><value>睡眠质量</value></data>
-  <data name="Vis.TempAdjust" xml:space="preserve"><value>温度调节</value></data>
-  <data name="Vis.Capacity" xml:space="preserve"><value>营地大小</value></data>
-  <data name="Vis.CampStats" xml:space="preserve"><value>营地属性</value></data>
-  <data name="Vis.LootTable" xml:space="preserve"><value>战利品</value></data>
-  <data name="Vis.DataPoints" xml:space="preserve"><value>数据点数</value></data>
-  <data name="Vis.MapDefinition" xml:space="preserve"><value>地图定义</value></data>
-  <data name="Vis.HeadlineText" xml:space="preserve"><value>头条内容</value></data>
-  <data name="Vis.Value" xml:space="preserve"><value>数值</value></data>
-  <data name="Vis.Loot" xml:space="preserve"><value>战利品</value></data>
-  <data name="Vis.ORGroup" xml:space="preserve"><value>或组</value></data>
-  <data name="Vis.ORGroups" xml:space="preserve"><value>或分组</value></data>
-  <data name="Vis.TotalItems" xml:space="preserve"><value>物品总数</value></data>
-  <data name="Vis.Quantity" xml:space="preserve"><value>数量</value></data>
-  <data name="Vis.Position" xml:space="preserve"><value>位置</value></data>
-  <data name="Vis.Count" xml:space="preserve"><value>数量</value></data>
-  <data name="Vis.Spawn" xml:space="preserve"><value>刷新</value></data>
-  <data name="Vis.Creature" xml:space="preserve"><value>生物</value></data>
-  <data name="Vis.Diplomacy" xml:space="preserve"><value>外交关系</value></data>
-  <data name="Vis.Members" xml:space="preserve"><value>成员</value></data>
-  <data name="Vis.UsedBy" xml:space="preserve"><value>被使用</value></data>
-  <data name="Vis.Content" xml:space="preserve"><value>内容</value></data>
-  <data name="Vis.Weight" xml:space="preserve"><value>重量</value></data>
-  <data name="Vis.StackLimit" xml:space="preserve"><value>最大堆叠</value></data>
-  <data name="Vis.Durability" xml:space="preserve"><value>耐久度</value></data>
-  <data name="Vis.SlotDepth" xml:space="preserve"><value>层级</value></data>
-  <data name="Vis.Mirrored" xml:space="preserve"><value>镜像</value></data>
-  <data name="Vis.MirroredDesc" xml:space="preserve"><value>镜像 — 双持</value></data>
-  <data name="Vis.Identified" xml:space="preserve"><value>已识别</value></data>
-  <data name="Vis.UseSlots" xml:space="preserve"><value>使用位置</value></data>
-  <data name="Vis.SocketLocked" xml:space="preserve"><value>锁定槽位</value></data>
-  <data name="Vis.SocketLockedDesc" xml:space="preserve"><value>锁定 — 无法被玩家移动</value></data>
-  <data name="Vis.Format" xml:space="preserve"><value>格式</value></data>
-  <data name="Vis.AsContainer" xml:space="preserve"><value>空间大小</value></data>
-  <data name="Vis.Properties" xml:space="preserve"><value>属性</value></data>
-  <data name="Vis.AttackModes" xml:space="preserve"><value>攻击模式</value></data>
-  <data name="Vis.Equipment" xml:space="preserve"><value>装备</value></data>
-  <data name="Vis.EquipSlots" xml:space="preserve"><value>装备槽位</value></data>
-  <data name="Vis.WhenEquipped" xml:space="preserve"><value>装备时</value></data>
-  <data name="Vis.WhenUsed" xml:space="preserve"><value>使用时</value></data>
-  <data name="Vis.WhenCarried" xml:space="preserve"><value>持有时</value></data>
-  <data name="Vis.AcceptsContent" xml:space="preserve"><value>可容纳类型</value></data>
-  <data name="Vis.Degradation" xml:space="preserve"><value>耐久消耗</value></data>
-  <data name="Vis.BreakParts" xml:space="preserve"><value>损坏掉落</value></data>
-  <data name="Vis.ChargeAmmo" xml:space="preserve"><value>充能/弹药</value></data>
-  <data name="Vis.SwitchStates" xml:space="preserve"><value>切换状态</value></data>
-  <data name="Vis.References" xml:space="preserve"><value>引用</value></data>
-  <data name="Vis.TreasureTable" xml:space="preserve"><value>战利品表</value></data>
-  <data name="Vis.RequiredCondition" xml:space="preserve"><value>需求条件</value></data>
-  <data name="Vis.Component" xml:space="preserve"><value>成分</value></data>
-  <data name="Vis.Toggleable" xml:space="preserve"><value>可切换</value></data>
+    <data name="EmptyModMessage" xml:space="preserve"><value>此模组还没有实体。</value></data>
+    <data name="EmptyModHint" xml:space="preserve"><value>点击下方 + 按钮添加物品、配方或生物。</value></data>
+    <data name="AddFirstEntity" xml:space="preserve"><value>添加第一个实体</value></data>
+    <data name="ConflictsLabel" xml:space="preserve"><value>冲突</value></data>
+    <data name="QuickSave" xml:space="preserve"><value>快速保存</value></data>
+    <data name="GameDataReadOnly" xml:space="preserve"><value>游戏数据</value></data>
+    <data name="GameDataReadOnlyMessage" xml:space="preserve"><value>游戏基础数据不能直接修改。要修改游戏数据，请在 Profile 中添加一个 Merge 模式 Mod（strModName=0），或通过"新建 Mod"创建一个 namespace 为 0 的 Mod。对游戏数据的修改将被写入该覆盖 Mod。</value></data>
+    <data name="QuickSaveTooltip" xml:space="preserve"><value>仅保存到数据库 (Ctrl+S)</value></data>
+    <data name="SaveAndExport" xml:space="preserve"><value>导出</value></data>
+    <data name="SaveAndExportTooltip" xml:space="preserve"><value>保存并导出到XML文件（含差异预览）</value></data>
+    <data name="Saving" xml:space="preserve"><value>保存中...</value></data>
+    <data name="SaveTooltip" xml:space="preserve"><value>保存 (Ctrl+S)</value></data>
+    <data name="SaveAndLaunchTooltip" xml:space="preserve"><value>保存并启动游戏 (Ctrl+Shift+S)</value></data>
+    <data name="Launch" xml:space="preserve"><value>启动</value></data>
+    <data name="DiffJumpToCursor" xml:space="preserve"><value>从光标位置跳到下一个差异</value></data>
+    <data name="DiffJumpToIndex" xml:space="preserve"><value>跳转到第 # 个差异</value></data>
+    <data name="DataBrowserTitle" xml:space="preserve"><value>数据浏览器</value></data>
+    <data name="BrowserIndexBuilding" xml:space="preserve"><value>索引构建中，请稍候...</value></data>
+    <data name="BrowserIndexBuildingTitle" xml:space="preserve"><value>索引构建中</value></data>
+    <data name="DataBrowserProperties" xml:space="preserve"><value>属性</value></data>
+    <data name="DomainCoreItems" xml:space="preserve"><value>核心物品</value></data>
+    <data name="DomainCombat" xml:space="preserve"><value>战斗</value></data>
+    <data name="DomainCrafting" xml:space="preserve"><value>合成</value></data>
+    <data name="DomainLoot" xml:space="preserve"><value>战利品</value></data>
+    <data name="DomainStory" xml:space="preserve"><value>剧情</value></data>
+    <data name="DomainMap" xml:space="preserve"><value>地图</value></data>
+    <data name="DomainOther" xml:space="preserve"><value>其他</value></data>
+    <!-- Visualizer display labels -->
+    <data name="Vis.RawData" xml:space="preserve"><value>原始数据</value></data>
+    <data name="Vis.Stats" xml:space="preserve"><value>属性</value></data>
+    <data name="Vis.Total" xml:space="preserve"><value>总计</value></data>
+    <data name="Vis.Effective" xml:space="preserve"><value>有效伤害</value></data>
+    <data name="Vis.Cut" xml:space="preserve"><value>切割</value></data>
+    <data name="Vis.Blunt" xml:space="preserve"><value>钝器</value></data>
+    <data name="Vis.DmgBonus" xml:space="preserve"><value>伤害加成</value></data>
+    <data name="Vis.Ammo" xml:space="preserve"><value>弹药</value></data>
+    <data name="Vis.AttackerConditions" xml:space="preserve"><value>攻击带来的状态</value></data>
+    <data name="Vis.AttackPhrases" xml:space="preserve"><value>攻击文本</value></data>
+    <data name="Vis.ReferencedBy" xml:space="preserve"><value>被引用</value></data>
+    <data name="Vis.CombatMelee" xml:space="preserve"><value>近战</value></data>
+    <data name="Vis.CombatRanged" xml:space="preserve"><value>远程</value></data>
+    <data name="Vis.PerUse" xml:space="preserve"><value>每次使用</value></data>
+    <data name="Vis.PerHour" xml:space="preserve"><value>每小时</value></data>
+    <data name="Vis.PerHourEquipped" xml:space="preserve"><value>装备时每小时</value></data>
+    <data name="Vis.PerHex" xml:space="preserve"><value>每格</value></data>
+    <data name="Vis.Degradeable" xml:space="preserve"><value>可降级</value></data>
+    <data name="Vis.Type" xml:space="preserve"><value>类型</value></data>
+    <data name="Vis.Duration" xml:space="preserve"><value>持续</value></data>
+    <data name="Vis.NextStage" xml:space="preserve"><value>下一阶段</value></data>
+    <data name="Vis.Transfer" xml:space="preserve"><value>转移</value></data>
+    <data name="Vis.Tiles" xml:space="preserve"><value>格</value></data>
+    <data name="Vis.Base" xml:space="preserve"><value>基础值</value></data>
+    <data name="Vis.TransferDesc" xml:space="preserve"><value>弹药留在目标身上或掉落地面</value></data>
+    <data name="Vis.ExpandTooltip" xml:space="preserve"><value>点击展开详情 · Ctrl+点击跳转</value></data>
+    <data name="Vis.CtrlClickHint" xml:space="preserve"><value>Ctrl+点击打开完整详情</value></data>
+    <data name="Vis.SoundTooltip" xml:space="preserve"><value>音效提示 — 内嵌于游戏 SWF，无法直接播放</value></data>
+    <data name="Vis.StackableHint" xml:space="preserve"><value>可叠加（乘法）</value></data>
+    <data name="Vis.ResetTimerHint" xml:space="preserve"><value>重新施加时重置计时</value></data>
+    <data name="Vis.Chance" xml:space="preserve"><value>发动几率</value></data>
+    <data name="Vis.Priority" xml:space="preserve"><value>优先级</value></data>
+    <data name="Vis.Fatigue" xml:space="preserve"><value>疲劳值</value></data>
+    <data name="Vis.Detect" xml:space="preserve"><value>被发现几率</value></data>
+    <data name="Vis.Range" xml:space="preserve"><value>距离</value></data>
+    <data name="Vis.Exposure" xml:space="preserve"><value>所需暴露度</value></data>
+    <data name="Vis.Order" xml:space="preserve"><value>AI顺序</value></data>
+    <data name="Vis.MinCharges" xml:space="preserve"><value>最小充能</value></data>
+    <data name="Vis.Offensive" xml:space="preserve"><value>攻击性</value></data>
+    <data name="Vis.Retreat" xml:space="preserve"><value>撤退</value></data>
+    <data name="Vis.Passive" xml:space="preserve"><value>被动</value></data>
+    <data name="Vis.Action" xml:space="preserve"><value>动作</value></data>
+    <data name="Vis.NonAttack" xml:space="preserve"><value>非攻击动作</value></data>
+    <data name="Vis.OnSuccess" xml:space="preserve"><value>执行成功</value></data>
+    <data name="Vis.OnFail" xml:space="preserve"><value>执行失败</value></data>
+    <data name="Vis.Description" xml:space="preserve"><value>描述</value></data>
+    <data name="Vis.BattleMove.UsPreCond" xml:space="preserve"><value>我方前置条件</value></data>
+    <data name="Vis.BattleMove.ThemPreCond" xml:space="preserve"><value>敌方前置条件</value></data>
+    <data name="Vis.BattleMove.UsRequired" xml:space="preserve"><value>我方须处于的状态</value></data>
+    <data name="Vis.BattleMove.ThemRequired" xml:space="preserve"><value>敌方须处于的状态</value></data>
+    <data name="Vis.BattleMove.SelfEffects" xml:space="preserve"><value>自身附加状态</value></data>
+    <data name="Vis.BattleMove.UsFail" xml:space="preserve"><value>我方失败获得</value></data>
+    <data name="Vis.BattleMove.ThemFail" xml:space="preserve"><value>敌方失败获得</value></data>
+    <data name="Vis.BattleMove.PairFail" xml:space="preserve"><value>失败后自身附加</value></data>
+    <data name="Vis.BattleMove.Conditions" xml:space="preserve"><value>条件</value></data>
+    <data name="Vis.BattleMove.Flags" xml:space="preserve"><value>行为标签</value></data>
+    <data name="Vis.Move" xml:space="preserve"><value>移动</value></data>
+    <data name="Vis.Exposure.Hidden" xml:space="preserve"><value>隐藏</value></data>
+    <data name="Vis.Exposure.Seen" xml:space="preserve"><value>可见</value></data>
+    <data name="Vis.Exposure.Any" xml:space="preserve"><value>任意</value></data>
+    <data name="Vis.Alertness" xml:space="preserve"><value>警戒值</value></data>
+    <data name="Vis.VisibilityMod" xml:space="preserve"><value>可见值</value></data>
+    <data name="Vis.HealPerHour" xml:space="preserve"><value>恢复/小时</value></data>
+    <data name="Vis.SleepQuality" xml:space="preserve"><value>睡眠质量</value></data>
+    <data name="Vis.TempAdjust" xml:space="preserve"><value>温度调节</value></data>
+    <data name="Vis.Capacity" xml:space="preserve"><value>营地大小</value></data>
+    <data name="Vis.CampStats" xml:space="preserve"><value>营地属性</value></data>
+    <data name="Vis.LootTable" xml:space="preserve"><value>战利品</value></data>
+    <data name="Vis.DataPoints" xml:space="preserve"><value>数据点数</value></data>
+    <data name="Vis.MapDefinition" xml:space="preserve"><value>地图定义</value></data>
+    <data name="Vis.HeadlineText" xml:space="preserve"><value>头条内容</value></data>
+    <data name="Vis.Value" xml:space="preserve"><value>数值</value></data>
+    <data name="Vis.Loot" xml:space="preserve"><value>战利品</value></data>
+    <data name="Vis.ORGroup" xml:space="preserve"><value>或组</value></data>
+    <data name="Vis.ORGroups" xml:space="preserve"><value>或分组</value></data>
+    <data name="Vis.TotalItems" xml:space="preserve"><value>物品总数</value></data>
+    <data name="Vis.Quantity" xml:space="preserve"><value>数量</value></data>
+    <data name="Vis.Position" xml:space="preserve"><value>位置</value></data>
+    <data name="Vis.Count" xml:space="preserve"><value>数量</value></data>
+    <data name="Vis.Spawn" xml:space="preserve"><value>刷新</value></data>
+    <data name="Vis.Creature" xml:space="preserve"><value>生物</value></data>
+    <data name="Vis.Diplomacy" xml:space="preserve"><value>外交关系</value></data>
+    <data name="Vis.Members" xml:space="preserve"><value>成员</value></data>
+    <data name="Vis.UsedBy" xml:space="preserve"><value>被使用</value></data>
+    <data name="Vis.Content" xml:space="preserve"><value>内容</value></data>
+    <data name="Vis.Weight" xml:space="preserve"><value>重量</value></data>
+    <data name="Vis.StackLimit" xml:space="preserve"><value>最大堆叠</value></data>
+    <data name="Vis.Durability" xml:space="preserve"><value>耐久度</value></data>
+    <data name="Vis.SlotDepth" xml:space="preserve"><value>层级</value></data>
+    <data name="Vis.Mirrored" xml:space="preserve"><value>镜像</value></data>
+    <data name="Vis.MirroredDesc" xml:space="preserve"><value>镜像 — 双持</value></data>
+    <data name="Vis.Identified" xml:space="preserve"><value>已识别</value></data>
+    <data name="Vis.UseSlots" xml:space="preserve"><value>使用位置</value></data>
+    <data name="Vis.SocketLocked" xml:space="preserve"><value>锁定槽位</value></data>
+    <data name="Vis.SocketLockedDesc" xml:space="preserve"><value>锁定 — 无法被玩家移动</value></data>
+    <data name="Vis.Format" xml:space="preserve"><value>格式</value></data>
+    <data name="Vis.AsContainer" xml:space="preserve"><value>空间大小</value></data>
+    <data name="Vis.Properties" xml:space="preserve"><value>属性</value></data>
+    <data name="Vis.AttackModes" xml:space="preserve"><value>攻击模式</value></data>
+    <data name="Vis.Equipment" xml:space="preserve"><value>装备</value></data>
+    <data name="Vis.EquipSlots" xml:space="preserve"><value>装备槽位</value></data>
+    <data name="Vis.WhenEquipped" xml:space="preserve"><value>装备时</value></data>
+    <data name="Vis.WhenUsed" xml:space="preserve"><value>使用时</value></data>
+    <data name="Vis.WhenCarried" xml:space="preserve"><value>持有时</value></data>
+    <data name="Vis.AcceptsContent" xml:space="preserve"><value>可容纳类型</value></data>
+    <data name="Vis.Degradation" xml:space="preserve"><value>耐久消耗</value></data>
+    <data name="Vis.BreakParts" xml:space="preserve"><value>损坏掉落</value></data>
+    <data name="Vis.ChargeAmmo" xml:space="preserve"><value>充能/弹药</value></data>
+    <data name="Vis.SwitchStates" xml:space="preserve"><value>切换状态</value></data>
+    <data name="Vis.References" xml:space="preserve"><value>引用</value></data>
+    <data name="Vis.TreasureTable" xml:space="preserve"><value>战利品表</value></data>
+    <data name="Vis.RequiredCondition" xml:space="preserve"><value>需求条件</value></data>
+    <data name="Vis.Required" xml:space="preserve"><value>需求</value></data>
+    <data name="Vis.Relations" xml:space="preserve"><value>外交关系</value></data>
+    <data name="Vis.Component" xml:space="preserve"><value>成分</value></data>
+    <data name="Vis.Toggleable" xml:space="preserve"><value>可切换</value></data>
+    <data name="Vis.SpaceAttrs" xml:space="preserve"><value>空间属性</value></data>
+    <data name="Vis.Name" xml:space="preserve"><value>名称</value></data>
+    <data name="Vis.Forbidden" xml:space="preserve"><value>禁止</value></data>
+    <data name="Vis.ForbiddenHex" xml:space="preserve"><value>禁止通行格</value></data>
+    <data name="Vis.ShopBuys" xml:space="preserve"><value>购买物品</value></data>
+    <data name="Vis.ShopSells" xml:space="preserve"><value>仅出售</value></data>
+    <data name="Vis.ShopBuysLabel" xml:space="preserve"><value>商店（收购买卖）</value></data>
+    <data name="Vis.ShopSellsLabel" xml:space="preserve"><value>商店（仅售）</value></data>
+    <data name="Vis.RestockTT" xml:space="preserve"><value>补货战利品表</value></data>
+    <data name="Vis.ShopInfo" xml:space="preserve"><value>商店信息</value></data>
+    <data name="Vis.TriggerDetails" xml:space="preserve"><value>触发详情</value></data>
+    <data name="Vis.EncounterRef" xml:space="preserve"><value>遭遇战</value></data>
+    <data name="Vis.HexTypesRef" xml:space="preserve"><value>地形类型</value></data>
+    <data name="Vis.TriggerLabel" xml:space="preserve"><value>触发条件</value></data>
+    <data name="Vis.BarterHex" xml:space="preserve"><value>交易格</value></data>
+    <data name="Vis.Unique" xml:space="preserve"><value>唯一</value></data>
+    <data name="Vis.AIPassable" xml:space="preserve"><value>AI可触发</value></data>
+    <data name="Vis.Area" xml:space="preserve"><value>区域</value></data>
+    <data name="Vis.DateRange" xml:space="preserve"><value>时间范围</value></data>
+    <data name="Vis.LocType" xml:space="preserve"><value>位置</value></data>
+    <data name="Vis.DateType" xml:space="preserve"><value>日期</value></data>
+    <data name="Vis.HexType" xml:space="preserve"><value>地形</value></data>
+    <data name="Vis.UniqueType" xml:space="preserve"><value>唯一</value></data>
+    <data name="Vis.AIType" xml:space="preserve"><value>AI</value></data>
+    <data name="Vis.Buys" xml:space="preserve"><value>可购物</value></data>
+    <data name="Vis.Empty" xml:space="preserve"><value>空</value></data>
+    <data name="Vis.NestedTT" xml:space="preserve"><value>嵌套战利品表</value></data>
+    <data name="Vis.ItemTypeLabel" xml:space="preserve"><value>物品类型</value></data>
+    <data name="Vis.MovementCost" xml:space="preserve"><value>移动消耗</value></data>
+    <data name="Vis.VisibilityLabel" xml:space="preserve"><value>能见度</value></data>
+    <data name="Vis.EncounterRange" xml:space="preserve"><value>遭遇范围</value></data>
+    <data name="Vis.CampItemsLabel" xml:space="preserve"><value>营地物品</value></data>
+    <data name="Vis.ScavengeLoot" xml:space="preserve"><value>搜刮战利品</value></data>
+    <data name="Vis.InitialScavenge" xml:space="preserve"><value>初始搜刮</value></data>
+    <data name="Vis.HourlyScavenge" xml:space="preserve"><value>每小时搜刮</value></data>
+    <data name="Vis.OnEnterConditions" xml:space="preserve"><value>进入时条件</value></data>
+    <data name="Vis.DefaultCamp" xml:space="preserve"><value>默认营地</value></data>
+    <data name="Vis.TerrainMovement" xml:space="preserve"><value>地形与移动</value></data>
+    <data name="Vis.LightLevels" xml:space="preserve"><value>光照等级</value></data>
+    <data name="Vis.ConsumptionRates" xml:space="preserve"><value>消耗速率</value></data>
+    <data name="Vis.ItemLabel" xml:space="preserve"><value>物品</value></data>
+    <data name="Vis.Location" xml:space="preserve"><value>位置</value></data>
+    <data name="Vis.DMCPlace" xml:space="preserve"><value>DMC地点</value></data>
+    <data name="Vis.Encounter" xml:space="preserve"><value>遭遇战</value></data>
+    <data name="Vis.LightLevel" xml:space="preserve"><value>光照等级</value></data>
+    <data name="Vis.Shopping" xml:space="preserve"><value>可购物</value></data>
+    <data name="Vis.CampItemNone" xml:space="preserve"><value>无</value></data>
+    <data name="Vis.CampItemSparse" xml:space="preserve"><value>稀少</value></data>
+    <data name="Vis.CampItemModerate" xml:space="preserve"><value>中等</value></data>
+    <data name="Vis.CampItemAbundant" xml:space="preserve"><value>丰富</value></data>
+    <data name="Vis.CampItemRich" xml:space="preserve"><value>很多</value></data>
+    <data name="Vis.CampItemDefault" xml:space="preserve"><value>默认</value></data>
+    <data name="Vis.NestedTreasures" xml:space="preserve"><value>嵌套战利品表</value></data>
+    <data name="Vis.Nested" xml:space="preserve"><value>嵌套</value></data>
+    <data name="Vis.Suppress" xml:space="preserve"><value>抑制</value></data>
+    <data name="Vis.Identify" xml:space="preserve"><value>鉴定</value></data>
+    <data name="Vis.Manual" xml:space="preserve"><value>手动</value></data>
+    <data name="Vis.YesOnce" xml:space="preserve"><value>是（仅一次）</value></data>
+    <data name="Vis.NoRepeat" xml:space="preserve"><value>否（可重复）</value></data>
+    <data name="Vis.Yes" xml:space="preserve"><value>是</value></data>
+    <data name="Vis.No" xml:space="preserve"><value>否</value></data>
+    <data name="Vis.Passable" xml:space="preserve"><value>可通行</value></data>
+    <data name="Vis.Blocked" xml:space="preserve"><value>不可通行</value></data>
+    <data name="Vis.NoReferences" xml:space="preserve"><value>无引用</value></data>
+    <data name="Vis.Icon" xml:space="preserve"><value>图标</value></data>
+    <data name="Vis.Property" xml:space="preserve"><value>属性</value></data>
+    <data name="Vis.RawValue" xml:space="preserve"><value>原始值</value></data>
+    <data name="Vis.Page" xml:space="preserve"><value>页</value></data>
+    <data name="Vis.Hours" xml:space="preserve"><value>小时</value></data>
+    <data name="Vis.Reverse" xml:space="preserve"><value>可逆向</value></data>
+    <data name="Vis.Hidden" xml:space="preserve"><value>隐藏配方</value></data>
+    <data name="Vis.Tools" xml:space="preserve"><value>工具</value></data>
+    <data name="Vis.Consumed" xml:space="preserve"><value>消耗品</value></data>
+    <data name="Vis.Secret" xml:space="preserve"><value>秘密</value></data>
+    <data name="Vis.Scrap" xml:space="preserve"><value>拆解</value></data>
+    <data name="Vis.DegradeOutput" xml:space="preserve"><value>降级产出</value></data>
+    <data name="Vis.TransferComponents" xml:space="preserve"><value>继承组件</value></data>
+    <data name="Vis.Color" xml:space="preserve"><value>颜色</value></data>
+    <data name="Vis.Modifiers" xml:space="preserve"><value>修改器</value></data>
+    <data name="Vis.ItemProperties" xml:space="preserve"><value>物品属性</value></data>
+    <data name="Vis.Activities" xml:space="preserve"><value>活动</value></data>
+    <data name="Vis.MovesPerTurn" xml:space="preserve"><value>每回合移动</value></data>
+    <data name="Vis.Faction" xml:space="preserve"><value>阵营</value></data>
+    <data name="Vis.EncConditions" xml:space="preserve"><value>遭遇条件</value></data>
+    <data name="Vis.CorpseLoot" xml:space="preserve"><value>尸体战利品</value></data>
+    <data name="Vis.Attacks" xml:space="preserve"><value>攻击</value></data>
+    <data name="Vis.BaseConditions" xml:space="preserve"><value>基础条件</value></data>
+    <data name="Vis.Ingredients" xml:space="preserve"><value>配方材料</value></data>
+    <data name="Vis.Fatal" xml:space="preserve"><value>致命</value></data>
+    <data name="Vis.Permanent" xml:space="preserve"><value>永久</value></data>
+    <data name="Vis.Stackable" xml:space="preserve"><value>可堆叠</value></data>
+    <data name="Vis.DisplayOther" xml:space="preserve"><value>他人可见</value></data>
+    <data name="Vis.ResetTimer" xml:space="preserve"><value>重置计时</value></data>
+    <data name="Vis.RemoveAll" xml:space="preserve"><value>全部移除</value></data>
+    <data name="Vis.RemovePostCombat" xml:space="preserve"><value>战后移除</value></data>
+    <data name="Vis.DisplayGameOver" xml:space="preserve"><value>终局可见</value></data>
+    <data name="Vis.Thresholds" xml:space="preserve"><value>阈值</value></data>
+    <data name="Vis.Effects" xml:space="preserve"><value>效果</value></data>
+    <data name="Vis.ConditionChain" xml:space="preserve"><value>状态链 →</value></data>
+    <data name="Vis.PerHourGrowth" xml:space="preserve"><value>每小时增长</value></data>
+    <data name="Vis.PerHourEquippedDrain" xml:space="preserve"><value>装备时每小时消耗</value></data>
+    <data name="Vis.OverlayChain" xml:space="preserve"><value>叠加链</value></data>
+    <data name="Vis.StoryText" xml:space="preserve"><value>剧情文本</value></data>
+    <data name="Vis.Option" xml:space="preserve"><value>选项</value></data>
+    <data name="Vis.Options" xml:space="preserve"><value>选项</value></data>
+    <data name="Vis.NoResponses" xml:space="preserve"><value>（无回应）</value></data>
+    <data name="Vis.StoryBranch" xml:space="preserve"><value>剧情分支</value></data>
+    <data name="Vis.NoBranches" xml:space="preserve"><value>（无分支）</value></data>
+    <data name="Vis.RemoveSubmit" xml:space="preserve"><value>移除（上交/摧毁）</value></data>
+    <data name="Vis.Conditions" xml:space="preserve"><value>获得状态</value></data>
+    <data name="Vis.PreConditions" xml:space="preserve"><value>前置条件</value></data>
+    <data name="Vis.CurrentEncounter" xml:space="preserve"><value>📍 当前场景</value></data>
+    <data name="Vis.MermaidDiagram" xml:space="preserve"><value>Mermaid图</value></data>
+    <data name="Vis.MermaidSource" xml:space="preserve"><value>Mermaid源码</value></data>
+    <data name="Vis.PrevEncounter" xml:space="preserve"><value>上一场景</value></data>
+    <data name="Vis.RootEncounter" xml:space="preserve"><value>根事件（起始）</value></data>
+    <data name="Vis.EncounterChain" xml:space="preserve"><value>场景链</value></data>
+    <data name="Vis.SpawnCreature" xml:space="preserve"><value>刷新生物</value></data>
+    <data name="Vis.Accidents" xml:space="preserve"><value>意外事件</value></data>
+    <data name="Vis.TriggeredBy" xml:space="preserve"><value>触发自</value></data>
+    <data name="Vis.Price" xml:space="preserve"><value>价格</value></data>
+    <data name="Vis.LootChance" xml:space="preserve"><value>战利品几率</value></data>
+    <data name="Vis.Accident" xml:space="preserve"><value>意外</value></data>
+    <data name="Vis.CreatureRef" xml:space="preserve"><value>生物</value></data>
+    <data name="Vis.Teleport" xml:space="preserve"><value>传送</value></data>
+    <data name="Vis.Responses" xml:space="preserve"><value>下个场景</value></data>
+    <data name="Vis.Contents" xml:space="preserve"><value>内容物</value></data>
+    <data name="Vis.CreatureStatus" xml:space="preserve"><value>生物状态</value></data>
 </root>

@@ -93,15 +93,15 @@ public partial class ValueEditorPanel : UserControl
                 ? mn : $"mod_{entity.ModId}";
             var mergedId = GenericDataGridHelper.EntityMergedIds.TryGetValue(entity.EntityId, out var mid)
                 ? mid : -1;
-            var pkProp = entity.GetType().GetProperty("Id") ?? entity.GetType().GetProperty("nID");
+            var pkProp = EntityHelper.ResolveKeyProperty(entity.GetType());
             var pkVal = pkProp?.GetValue(entity) is int pk ? pk : -1;
             EditorTitle.Text = $"{Loc["RightPanelEditor"]} - {entity.Subject ?? entityType.Name}  [mod={entity.ModId}:{modName} mid={mergedId} pk={pkVal} eid={entity.EntityId[..8]}]";
 
-            var overview = visualizer.BuildOverview(entity);
+            // Always use BuildDetail for all entity types
+            var overview = visualizer.BuildDetail(entity);
 
             // Wrap with mod badge header so ALL entity types show ModId:ModName
-            var wrapper = new StackPanel();
-            wrapper.Children.Add(new Border
+            var headerBorder = new Border
             {
                 CornerRadius = new CornerRadius(3),
                 Background = Brush.Parse("#0D000000"),
@@ -170,17 +170,37 @@ public partial class ValueEditorPanel : UserControl
                         }
                     }
                 }
-            });
-            wrapper.Children.Add(overview);
+            };
 
-            // Only wrap in ScrollViewer if the visualizer didn't already
-            EditorHost.Content = overview is ScrollViewer ? wrapper :
-                new ScrollViewer
+            // Insert the header inside the visualizer's ScrollViewer so scrolling works
+            if (overview is ScrollViewer sv)
+            {
+                if (sv.Content is StackPanel innerSp)
+                {
+                    innerSp.Children.Insert(0, headerBorder);
+                }
+                else
+                {
+                    var wrapper = new StackPanel();
+                    wrapper.Children.Add(headerBorder);
+                    if (sv.Content is Control ctrl)
+                        wrapper.Children.Add(ctrl);
+                    sv.Content = wrapper;
+                }
+                EditorHost.Content = sv;
+            }
+            else
+            {
+                var wrapper = new StackPanel();
+                wrapper.Children.Add(headerBorder);
+                wrapper.Children.Add(overview);
+                EditorHost.Content = new ScrollViewer
                 {
                     Content = wrapper,
                     HorizontalScrollBarVisibility = Avalonia.Controls.Primitives.ScrollBarVisibility.Auto,
                     VerticalScrollBarVisibility = Avalonia.Controls.Primitives.ScrollBarVisibility.Auto
                 };
+            }
             return;
         }
 
@@ -200,7 +220,7 @@ public partial class ValueEditorPanel : UserControl
                 ? mn2 : $"mod_{entity.ModId}";
             var mergedId2 = GenericDataGridHelper.EntityMergedIds.TryGetValue(entity.EntityId, out var mid2)
                 ? mid2 : -1;
-            var pkProp2 = entity.GetType().GetProperty("Id") ?? entity.GetType().GetProperty("nID");
+            var pkProp2 = EntityHelper.ResolveKeyProperty(entity.GetType());
             var pkVal2 = pkProp2?.GetValue(entity) is int pk2 ? pk2 : -1;
             EditorTitle.Text = $"{editor.EditorName}  [mod={entity.ModId}:{modName2} mid={mergedId2} pk={pkVal2} eid={entity.EntityId[..8]}]";
         }

@@ -1,4 +1,4 @@
-﻿<UserControl
+<UserControl
     x:Class="NeoEditor.Views.UserControls.SearchableDataGrid"
     xmlns="https://github.com/avaloniaui"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -17,6 +17,7 @@
             CanUserReorderColumns="True"
             CanUserResizeColumns="True"
             CanUserSortColumns="True"
+            ClipboardCopyMode="IncludeHeader"
             BeginningEdit="OnBeginningEdit"
             CellEditEnding="OnCellEditEnding"
             IsReadOnly="{Binding ReadOnly, ElementName=Root}"

@@ -47,12 +47,12 @@
                         <ListBox.ItemTemplate>
                             <DataTemplate x:DataType="mainContent:BrowserEntityRow">
                                 <StackPanel Margin="6,4">
+                                    <TextBlock
+                                        FontSize="12"
+                                        FontWeight="SemiBold"
+                                        Text="{Binding DisplayName}"
+                                        TextTrimming="CharacterEllipsis" />
                                     <StackPanel Orientation="Horizontal" Spacing="6">
-                                        <TextBlock
-                                            FontSize="12"
-                                            FontWeight="SemiBold"
-                                            Text="{Binding DisplayName}"
-                                            TextTrimming="CharacterEllipsis" />
                                         <Border
                                             Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}"
                                             CornerRadius="3"
@@ -62,12 +62,16 @@
                                                 Foreground="{DynamicResource SystemControlForegroundChromeDisabledLowBrush}"
                                                 Text="{Binding ModBadge}" />
                                         </Border>
+                                        <Border
+                                            Background="#37474F"
+                                            CornerRadius="3"
+                                            Padding="4,1">
+                                            <TextBlock
+                                                FontSize="9"
+                                                Foreground="White"
+                                                Text="{Binding ShortEntityId}" />
+                                        </Border>
                                     </StackPanel>
-                                    <TextBlock
-                                        FontSize="10"
-                                        Foreground="{DynamicResource SystemControlForegroundChromeDisabledLowBrush}"
-                                        Text="{Binding EntityId}"
-                                        TextTrimming="CharacterEllipsis" />
                                 </StackPanel>
                             </DataTemplate>
                         </ListBox.ItemTemplate>
@@ -86,8 +90,8 @@
             Grid.Column="2"
             EnableManagedWindowLayer="True"
             Factory="{Binding DataContext.DockFactory, ElementName=Root}"
-            InitializeFactory="True"
-            InitializeLayout="True">
+            InitializeFactory="False"
+            InitializeLayout="False">
             <DockControl.DataTemplates>
                 <DataTemplate x:DataType="mainContent:EntityViewerDocument">
                     <userControls:EntityViewerView DataContext="{Binding}" />

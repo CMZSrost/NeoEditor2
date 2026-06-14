@@ -345,12 +345,12 @@ public class StoryTreeEditor : ICustomTableEditor
             return new ScrollViewer { Content = new TextBlock { Text = "No data." } };
 
         var e = _enc;
-        var canvas = new Canvas { Background = Brushes.Transparent, Width = 800, Height = 200 };
+        var canvas = new Canvas { Background = Brushes.Transparent, Width = 200, Height = 800 };
         var visited = new HashSet<int>();
         _maxX = 0; _maxY = 0;
         LayoutFlowNode(e, 20, 20, visited, 0, canvas);
-        canvas.Height = Math.Max(canvas.Height, _maxY + 40);
         canvas.Width = Math.Max(canvas.Width, _maxX + 200);
+        canvas.Height = Math.Max(canvas.Height, _maxY + 40);
 
         var tree = new TreeView();
         var root = EditorHelper.NewNode(
@@ -410,7 +410,7 @@ public class StoryTreeEditor : ICustomTableEditor
             HorizontalScrollBarVisibility = Avalonia.Controls.Primitives.ScrollBarVisibility.Auto };
     }
 
-    // ==================== Flowchart layout ====================
+    // ==================== Flowchart layout (left-to-right) ====================
     private (double X, double W) LayoutFlowNode(Encounter enc, double x, double y, HashSet<int> vis, int depth, Canvas c)
     {
         if (depth > 6 || !vis.Add(enc.Id)) return (x, 0);
@@ -434,29 +434,29 @@ public class StoryTreeEditor : ICustomTableEditor
         Canvas.SetLeft(border, x); Canvas.SetTop(border, y); c.Children.Add(border);
         _maxX = Math.Max(_maxX, x + nw); _maxY = Math.Max(_maxY, y + nh);
 
-        double totalW = nw;
+        double totalH = nh;
         if (children.Count > 0)
         {
-            var cx = x;
-            var childY = y + nh + vs;
-            var pcx = x + nw / 2; var pby = y + nh;
+            var cy = y;
+            var childX = x + nw + hs;
+            var pcx = x + nw; var pcy = y + nh / 2;
             foreach (var (cid, _) in children)
             {
                 if (!_allEnc!.TryGetValue(cid, out var ce)) continue;
-                var csx = cx;
-                var r = LayoutFlowNode(ce, cx, childY, vis, depth + 1, c);
-                cx = r.X + Math.Max(r.W, nw) + hs;
+                var csy = cy;
+                var r = LayoutFlowNode(ce, childX, cy, vis, depth + 1, c);
+                cy = r.X + Math.Max(r.W, nh) + vs;
 
                 c.Children.Add(new Line
                 {
-                    StartPoint = new Point(pcx, pby),
-                    EndPoint = new Point(csx + nw / 2, childY),
+                    StartPoint = new Point(pcx, pcy),
+                    EndPoint = new Point(childX, csy + nh / 2),
                     Stroke = Brush.Parse("#999"), StrokeThickness = 1
                 });
             }
-            totalW = Math.Max(totalW, cx - x);
+            totalH = Math.Max(totalH, cy - y);
         }
-        return (x, totalW);
+        return (y, totalH);
     }
 
     // ==================== Helpers ====================

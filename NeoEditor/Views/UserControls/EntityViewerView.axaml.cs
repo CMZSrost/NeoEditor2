@@ -25,7 +25,7 @@ public partial class EntityViewerView : UserControl
 
     private async System.Threading.Tasks.Task BuildContentAsync(EntityViewerDocument doc)
     {
-        await EntityBrowserDocument.EnsureIndexBuiltAsync();
+        await Services.BrowserIndexService.EnsureBuiltAsync();
 
         var visualizers = App.ServiceProvider!.GetRequiredService<EntityVisualizerRegistry>();
         var visualizer = visualizers.Get(doc.Entity.GetType());
@@ -33,12 +33,22 @@ public partial class EntityViewerView : UserControl
                       ?? Editors.EditorHelper.BuildOverviewTab(doc.Entity);
         await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
         {
-            Content = new ScrollViewer
+            // Reuse existing ScrollViewer if BuildDetail already returned one (avoid double-nesting)
+            if (content is ScrollViewer sv)
             {
-                Content = content,
-                HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
-                VerticalScrollBarVisibility = ScrollBarVisibility.Auto
-            };
+                sv.HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled;
+                sv.VerticalScrollBarVisibility = ScrollBarVisibility.Auto;
+                Content = sv;
+            }
+            else
+            {
+                Content = new ScrollViewer
+                {
+                    Content = content,
+                    HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
+                    VerticalScrollBarVisibility = ScrollBarVisibility.Auto
+                };
+            }
         });
     }
 }

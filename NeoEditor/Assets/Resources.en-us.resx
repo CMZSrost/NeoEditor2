@@ -1,4 +1,4 @@
-﻿<root>
+<root>
     <resheader name="resmimetype">
         <value>text/microsoft-resx</value>
     </resheader>
@@ -1987,4 +1987,31 @@ Double-click to navigate directly.</value></data>
   <data name="Launch" xml:space="preserve"><value>Launch</value></data>
   <data name="DiffJumpToCursor" xml:space="preserve"><value>Jump to next diff from cursor</value></data>
   <data name="DiffJumpToIndex" xml:space="preserve"><value>Go to diff #</value></data>
+
+  <data name="Vis.StoryText" xml:space="preserve"><value>Story Text</value></data>
+  <data name="Vis.Option" xml:space="preserve"><value>option</value></data>
+  <data name="Vis.Options" xml:space="preserve"><value>options</value></data>
+  <data name="Vis.NoResponses" xml:space="preserve"><value>(No responses)</value></data>
+  <data name="Vis.StoryBranch" xml:space="preserve"><value>Story Branch</value></data>
+  <data name="Vis.NoBranches" xml:space="preserve"><value>(No branches)</value></data>
+  <data name="Vis.RemoveSubmit" xml:space="preserve"><value>Remove (submit/destroy)</value></data>
+  <data name="Vis.Conditions" xml:space="preserve"><value>Conditions</value></data>
+  <data name="Vis.PreConditions" xml:space="preserve"><value>Pre-Conditions</value></data>
+  <data name="Vis.CurrentEncounter" xml:space="preserve"><value>📍 Current</value></data>
+  <data name="Vis.MermaidDiagram" xml:space="preserve"><value>Mermaid Diagram</value></data>
+  <data name="Vis.MermaidSource" xml:space="preserve"><value>Mermaid Source</value></data>
+  <data name="Vis.PrevEncounter" xml:space="preserve"><value>Prev Encounter</value></data>
+  <data name="Vis.RootEncounter" xml:space="preserve"><value>Root Event (origin)</value></data>
+  <data name="Vis.EncounterChain" xml:space="preserve"><value>Encounter Chain</value></data>
+  <data name="Vis.SpawnCreature" xml:space="preserve"><value>Spawn Creature</value></data>
+  <data name="Vis.Accidents" xml:space="preserve"><value>Accidents</value></data>
+  <data name="Vis.TriggeredBy" xml:space="preserve"><value>Triggered By</value></data>
+  <data name="Vis.Price" xml:space="preserve"><value>Price</value></data>
+  <data name="Vis.LootChance" xml:space="preserve"><value>Loot Chance</value></data>
+  <data name="Vis.Accident" xml:space="preserve"><value>Accident</value></data>
+  <data name="Vis.CreatureRef" xml:space="preserve"><value>Creature</value></data>
+  <data name="Vis.Teleport" xml:space="preserve"><value>Teleport</value></data>
+  <data name="Vis.Responses" xml:space="preserve"><value>Responses</value></data>
+  <data name="Vis.Contents" xml:space="preserve"><value>Contents</value></data>
+  <data name="Vis.CreatureStatus" xml:space="preserve"><value>Creature Status</value></data>
 </root>

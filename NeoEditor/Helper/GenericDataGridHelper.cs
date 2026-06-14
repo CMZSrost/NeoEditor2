@@ -94,27 +94,39 @@ namespace NeoEditor.Helper
         public static Dictionary<int, T> GetEntities<T>() where T : IEntity
         {
             if (!ReferenceLookups.TryGetValue(typeof(T), out var list) || list is null) return [];
-            var keyProp = typeof(T).GetProperty("Id") ?? typeof(T).GetProperty("nID");
+            var keyProp = EntityHelper.ResolveKeyProperty(typeof(T));
             if (keyProp is null) return [];
             return list.OfType<T>()
                 .GroupBy(e => keyProp.GetValue(e) is int id ? id : 0)
                 .ToDictionary(g => g.Key, g => g.OrderByDescending(e => e.ModId).First());
         }
 
-        /// <summary>Build a deduped dictionary keyed by a composite string selector. Highest ModId wins for dupes.</summary>
-        public static Dictionary<string, T> GetCompositeEntities<T>(Func<T, string> keySelector) where T : IEntity
+        /// <summary>Build a deduped dictionary keyed by a composite string selector.
+        /// When sourceModId is provided, same-mod entities take priority over higher ModId ones.
+        /// Otherwise highest ModId wins for dupes.</summary>
+        public static Dictionary<string, T> GetCompositeEntities<T>(Func<T, string> keySelector,
+            int sourceModId = int.MaxValue) where T : IEntity
         {
             if (!ReferenceLookups.TryGetValue(typeof(T), out var list) || list is null) return [];
             return list.OfType<T>()
                 .GroupBy(keySelector)
-                .ToDictionary(g => g.Key, g => g.OrderByDescending(e => e.ModId).First());
+                .ToDictionary(g => g.Key, g =>
+                {
+                    var ordered = g.OrderByDescending(e => e.ModId).ToList();
+                    if (sourceModId < int.MaxValue)
+                    {
+                        var sameMod = ordered.FirstOrDefault(e => e.ModId == sourceModId);
+                        if (sameMod is not null) return sameMod;
+                    }
+                    return ordered[0];
+                });
         }
 
         /// <summary>Get all entities of a type deduped by int key. Highest ModId wins for dupes.</summary>
         public static List<T> GetDedupedEntities<T>() where T : IEntity
         {
             if (!ReferenceLookups.TryGetValue(typeof(T), out var list) || list is null) return [];
-            var keyProp = typeof(T).GetProperty("Id") ?? typeof(T).GetProperty("nID");
+            var keyProp = EntityHelper.ResolveKeyProperty(typeof(T));
             return list.OfType<T>()
                 .GroupBy(e => keyProp?.GetValue(e)?.ToString() ?? e.EntityId)
                 .Select(g => g.OrderByDescending(e => e.ModId).First())
@@ -274,107 +286,27 @@ namespace NeoEditor.Helper
                 // Index miss — fall through to O(n) scan below (don't return null early)
             }
 
-            // O(n) scan (fallback when index is null, or index miss)
-            // New model: namespace prefix → lookup by (type, ns, primary key);
-            //            no prefix → lookup by MergedId
-            string? nsPrefix = null;
-            var colonIdx = rawId.IndexOf(':');
-            var idOnly = rawId;
-            if (colonIdx > 0)
+            // Index miss — fall through to shared O(n) fallback in ReferenceResolver
+            var sourceNs = !string.IsNullOrWhiteSpace(sourceEntityId) && EntityNamespaces.TryGetValue(sourceEntityId, out var sn)
+                ? sn : null;
+            // Compute sourceModId for same-mod priority + ModId cap
+            var sourceModId = int.MaxValue;
+            if (!string.IsNullOrWhiteSpace(sourceEntityId))
             {
-                nsPrefix = rawId[..colonIdx];
-                idOnly = rawId[(colonIdx + 1)..];
-            }
-
-            Serilog.Log.Logger.Debug(
-                "[GDH:FindBest] O(n) fallback type={Type} rawId={RawId} ns={Ns} idOnly={IdOnly}",
-                entityType.Name, rawId, nsPrefix ?? "(none)", idOnly);
-
-            if (!ReferenceLookups.TryGetValue(entityType, out var list))
-                return null;
-
-            if (nsPrefix is not null)
-            {
-                // Namespace-prefixed: match by primary key within namespace
-                var keyInfo = ReferenceParser.ParseTargetKey(targetKey);
-                var keyValues = ReferenceParser.DecomposeId(idOnly, keyInfo);
-
-                IEntity? nsMatch = null;
-                var nsMatchModId = int.MinValue;
-
-                foreach (var obj in list)
+                foreach (var (_, entities) in ReferenceLookups)
                 {
-                    if (obj is not IEntity entity) continue;
-                    if (!EntityNamespaces.TryGetValue(entity.EntityId, out var ens) || ens != nsPrefix)
-                        continue;
-
-                    var match = true;
-                    foreach (var kv in keyValues)
+                    foreach (var obj in entities)
                     {
-                        var prop = entityType.GetProperty(kv.Key,
-                            System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public);
-                        var propValue = prop?.GetValue(entity);
-                        if (propValue != null && !Equals(Convert.ToInt64(propValue), Convert.ToInt64(kv.Value)))
+                        if (obj is IEntity e && e.EntityId == sourceEntityId)
                         {
-                            match = false;
+                            sourceModId = e.ModId;
                             break;
                         }
                     }
-                    if (match && entity.ModId > nsMatchModId)
-                    {
-                        nsMatch = entity;
-                        nsMatchModId = entity.ModId;
-                    }
+                    if (sourceModId < int.MaxValue) break;
                 }
-
-                Serilog.Log.Logger.Debug(
-                    "[GDH:FindBest] NS result type={Type} ns={Ns} pk={Pk} → {Result}",
-                    entityType.Name, nsPrefix, idOnly, nsMatch?.EntityId ?? "(null)");
-                return nsMatch;
             }
-            else
-            {
-                // No namespace prefix: lookup by MergedId
-                if (!int.TryParse(idOnly, out var mergedId))
-                {
-                    Serilog.Log.Logger.Debug(
-                        "[GDH:FindBest] non-prefixed idOnly='{IdOnly}' not an int → null", idOnly);
-                    return null;
-                }
-
-                IEntity? best = null;
-                var bestModId = int.MinValue;
-
-                foreach (var obj in list)
-                {
-                    if (obj is not IEntity entity) continue;
-                    if (EntityMergedIds.TryGetValue(entity.EntityId, out var mid) && mid == mergedId
-                        && entity.ModId > bestModId)
-                    {
-                        best = entity;
-                        bestModId = entity.ModId;
-                    }
-                }
-
-                // Diagnostic: also find what primary-key-based match would return for comparison
-                var keyProp = entityType.GetProperty("Id") ?? entityType.GetProperty("nID");
-                var pkMatchCandidates = new List<string>();
-                if (keyProp is not null)
-                {
-                    foreach (var obj in list)
-                    {
-                        if (obj is not IEntity entity) continue;
-                        if (keyProp.GetValue(entity) is int pk && pk == mergedId)
-                            pkMatchCandidates.Add($"{entity.EntityId}(mod={entity.ModId})");
-                    }
-                }
-
-                Serilog.Log.Logger.Debug(
-                    "[GDH:FindBest] MergedId result type={Type} mid={Mid} → {Result} modId={ModId} (pkMatch={PkMatch})",
-                    entityType.Name, mergedId, best?.EntityId ?? "(null)", best?.ModId ?? -999,
-                    string.Join(", ", pkMatchCandidates));
-                return best;
-            }
+            return ReferenceResolver.Instance.FallbackLookup(entityType, rawId, sourceNs, sourceModId);
         }
 
         public static void NavigateTo(Type entityType, int id)
@@ -706,12 +638,13 @@ namespace NeoEditor.Helper
                                                 var point = pp.GetCurrentPoint(segBorder);
                                                 if (point.Properties.IsRightButtonPressed)
                                                 {
-                                                    var target = FindBestMatch(targetType, clickedRawId, refAttr.TargetKey)
+                                                    var srcEid = (item as IEntity)?.EntityId ?? "";
+                                                    var target = FindBestMatch(targetType, clickedRawId, refAttr.TargetKey, srcEid, e.PropertyName)
                                                         ?? (refAttr.SecondaryTargetEntityType is not null
-                                                            ? FindBestMatch(refAttr.SecondaryTargetEntityType, clickedRawId, refAttr.SecondaryTargetKey)
+                                                            ? FindBestMatch(refAttr.SecondaryTargetEntityType, clickedRawId, refAttr.SecondaryTargetKey, srcEid, e.PropertyName)
                                                             : null)
                                                         ?? (int.TryParse(clickedRawId, out var intId) && intId >= 0
-                                                            ? FindBestMatch(targetType, intId.ToString(), null)
+                                                            ? FindBestMatch(targetType, intId.ToString(), null, srcEid, e.PropertyName)
                                                             : null);
                                                     try
                                                     {
@@ -811,12 +744,13 @@ namespace NeoEditor.Helper
                                         var point = pp.GetCurrentPoint(grid);
                                         if (point.Properties.IsRightButtonPressed)
                                         {
-                                            var target = FindBestMatch(targetType, rawId, refAttr.TargetKey)
+                                            var srcEid = (item as IEntity)?.EntityId ?? "";
+                                            var target = FindBestMatch(targetType, rawId, refAttr.TargetKey, srcEid, e.PropertyName)
                                                 ?? (refAttr.SecondaryTargetEntityType is not null
-                                                    ? FindBestMatch(refAttr.SecondaryTargetEntityType, rawId, refAttr.SecondaryTargetKey)
+                                                    ? FindBestMatch(refAttr.SecondaryTargetEntityType, rawId, refAttr.SecondaryTargetKey, srcEid, e.PropertyName)
                                                     : null)
                                                 ?? (int.TryParse(rawId, out var intId) && intId >= 0
-                                                    ? FindBestMatch(targetType, intId.ToString(), null)
+                                                    ? FindBestMatch(targetType, intId.ToString(), null, srcEid, e.PropertyName)
                                                     : null);
                                             try
                                             {

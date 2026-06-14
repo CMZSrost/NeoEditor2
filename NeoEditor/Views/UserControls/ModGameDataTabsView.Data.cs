@@ -98,6 +98,39 @@ public partial class ModGameDataTabsView
         _logger.LogInformation("[ReloadTabs] loaded {TabCount} tabs for mod '{ModName}'",
             Tabs.Count, modInfo.Name);
 
+        // Compute EntityMergedIds for single-mod reference index.
+        // In single-mod view, game data (ns="0") is not loaded, so all entities are insert space.
+        // MergedId is assigned sequentially per type, same as BrowserIndexService.
+        foreach (var tab in Tabs)
+        {
+            var eType = tab.EntityType;
+            var entities = tab.SourceCollection.OfType<IEntity>().ToList();
+            if (entities.Count == 0) continue;
+
+            var keyProp = ResolveEntityKeyProperty(eType);
+            bool IsMergeSpace(IEntity e) =>
+                MergeStore.EntityNamespaces.TryGetValue(e.EntityId, out var ns) && ns == "0";
+
+            var maxMergeKey = entities
+                .Where(IsMergeSpace)
+                .Select(e => keyProp?.GetValue(e))
+                .OfType<int>()
+                .DefaultIfEmpty(0)
+                .Max();
+            var nextInsertId = maxMergeKey + 1;
+
+            foreach (var entity in entities)
+            {
+                int mergedId;
+                if (IsMergeSpace(entity))
+                    mergedId = keyProp?.GetValue(entity) is int k ? k : 0;
+                else
+                    mergedId = nextInsertId++;
+                MergeStore.EntityMergedIds[entity.EntityId] = mergedId;
+                GenericDataGridHelper.EntityMergedIds[entity.EntityId] = mergedId;
+            }
+        }
+
         // Build reference index for O(1) navigation lookups
         await MergeStore.Index.BuildAsync();
 

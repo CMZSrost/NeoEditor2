@@ -1,4 +1,5 @@
 using System;
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Layout;
@@ -12,15 +13,19 @@ namespace NeoEditor.Helper;
 /// </summary>
 public static class EditorUIFactory
 {
-    /// <summary>Create a TreeViewItem with text wrapping and consistent styling.</summary>
+    /// <summary>Create a TreeViewItem with text wrapping, text selection, and consistent styling.</summary>
     public static TreeViewItem NewNode(string text, IBrush? fg = null, bool bold = false)
     {
-        var tb = new TextBlock
+        var tb = new TextBox
         {
             Text = text,
             Foreground = fg ?? Brushes.Black,
             TextWrapping = TextWrapping.Wrap,
-            MaxWidth = 2000
+            IsReadOnly = true,
+            BorderThickness = new Thickness(0),
+            Background = Brushes.Transparent,
+            Padding = new Thickness(0),
+            Cursor = new Cursor(StandardCursorType.Ibeam)
         };
         if (bold) tb.FontWeight = FontWeight.Bold;
         return new TreeViewItem { IsExpanded = true, Header = tb };
@@ -44,4 +49,30 @@ public static class EditorUIFactory
             HorizontalAlignment = HorizontalAlignment.Stretch,
             HorizontalContentAlignment = HorizontalAlignment.Stretch
         };
+
+    /// <summary>
+    /// Create a selectable, read-only TextBox that looks like a TextBlock.
+    /// Use for detail view text that users should be able to copy (Ctrl+C).
+    /// </summary>
+    public static TextBox SelectableText(string text, double fontSize = 12,
+        FontWeight? fontWeight = null, IBrush? foreground = null,
+        TextAlignment textAlignment = TextAlignment.Left,
+        TextWrapping textWrapping = TextWrapping.Wrap)
+    {
+        return new TextBox
+        {
+            Text = text,
+            FontSize = fontSize,
+            FontWeight = fontWeight ?? FontWeight.Normal,
+            Foreground = foreground ?? Brushes.Black,
+            TextAlignment = textAlignment,
+            TextWrapping = textWrapping,
+            IsReadOnly = true,
+            BorderThickness = new Thickness(0),
+            Background = Brushes.Transparent,
+            Padding = new Thickness(0),
+            Cursor = new Cursor(StandardCursorType.Ibeam),
+            AcceptsReturn = true
+        };
+    }
 }

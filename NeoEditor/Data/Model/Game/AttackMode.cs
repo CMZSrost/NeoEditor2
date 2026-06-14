@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
 using NeoEditor.Helper;
@@ -61,9 +61,7 @@ public class AttackMode : IEntity
 
     [Column("strSnd", TypeName = "varchar(1000)")]
     [StringLength(1000)]
-    [Comment("武器分类声音：近战/Punch、爪子/Claws、棍棒类/Club、利刃/Blade、" +
-             "长枪/Rifle、短枪/Pistol、激光/Laser、弓箭类/Bow、投掷/Throw、" +
-             "勒死/Choke、抓住/Grasp、撕咬/Bite")]
+    [Comment("武器分类声音/动画: cuePunch=近战/拳头, cueClaws=爪子, cueClub=棍棒类(挥舞), cueBlade=利刃, cueRifle=长枪, cuePistol=短枪, cueLaser=激光, cueBow=弓箭, cueThrow=投掷, cueChoke=勒死(仅头套), cueGrasp=抓住(仅怨灵), cueBite=撕咬(仅野狗)")]
     [Display(Name = "Sound")]
     public string Sound { get; set; } = "";
 

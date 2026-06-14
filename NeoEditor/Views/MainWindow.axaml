@@ -56,7 +56,7 @@
                     Width="40" Height="36" Padding="4"
                     Command="{Binding SideBar.TogglePaneCommand}" CommandParameter="Profiles"
                     ToolTip.Tip="{Binding Loc[ProfileDatabase]}">
-                    <avalonia:SymbolIcon FontSize="18" Symbol="People" />
+                    <avalonia:SymbolIcon FontSize="18" Symbol="PuzzlePiece" />
                 </Button>
 
                 <Separator Margin="4,6" />

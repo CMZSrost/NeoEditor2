@@ -269,7 +269,7 @@ public partial class App : Application
         // Build the global browser reference index eagerly on startup.
         // This index persists as a static singleton (GDH.BrowserStore) for the entire session.
         // It is only rebuilt when profile changes or mod is saved (via InvalidateIndex).
-        Helper.AsyncHelper.FireAndForget(ViewModels.MainContent.EntityBrowserDocument.EnsureIndexBuiltAsync());
+        Helper.AsyncHelper.FireAndForget(Services.BrowserIndexService.EnsureBuiltAsync());
 
         // Initialize field descriptions from .docx
         InitializeFieldDescriptions();

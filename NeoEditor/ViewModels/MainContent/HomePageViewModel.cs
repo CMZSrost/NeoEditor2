@@ -15,6 +15,7 @@ using NeoEditor.Data.Context;
 using NeoEditor.Data.Messages;
 using NeoEditor.Data.Model;
 using NeoEditor.Services;
+using NeoEditor.ViewModels;
 
 namespace NeoEditor.ViewModels.MainContent;
 
@@ -127,11 +128,10 @@ public partial class HomePageViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    private async Task BrowseGameData()
+    private void BrowseGameData()
     {
-        var gameMod = await EnsureGameModAsync();
-        if (gameMod is not null)
-            Messenger.Send(new OpenModGameDataDocumentMessage(gameMod, ReadOnly: true));
+        // Toggle the DataBrowser sidebar panel
+        try { App.ServiceProvider?.GetService<MainWindowSideBarViewModel>()?.TogglePaneCommand.Execute("DataBrowser"); } catch { }
     }
 
     [RelayCommand]

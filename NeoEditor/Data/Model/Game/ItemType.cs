@@ -125,7 +125,7 @@ public class ItemType : IEntity
     public string UseSlots { get; set; } = "";
 
     [Column("bSocketLocked", TypeName = "tinyint(1)")]
-    [Comment("锁定属性，带此属性的物品无法被玩家移动")]
+    [Comment("锁定属性：1=无法被玩家移动/移除。不仅用于装备，残废图标、对话选项栏等UI元素也是带锁定属性的物品。")]
     [Display(Name = "SocketLocked")]
     public bool SocketLocked { get; set; } = false;
 
@@ -192,7 +192,7 @@ public class ItemType : IEntity
 
     [Column("aSwitchIDs", TypeName = "varchar(1000)")]
     [StringLength(1000)]
-    [Comment("转变的ID，用于电子产品开关机状态切换")]
+    [Comment("转变的ID，用于电子产品开关机状态切换。原理是旧物品消失、新物品出现，视觉上像是同一个物品切换状态(例:关机未破解→开机未破解→关机已破解→开机已破解)")]
     [Display(Name = "SwitchIds")]
     [ReferenceField(typeof(ItemType), Separator = ",", TargetKey = "{GroupId}.{SubgroupId}")]
     public string SwitchIds { get; set; } = "";

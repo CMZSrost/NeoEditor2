@@ -2021,6 +2021,8 @@ Double-click to navigate directly.</value></data>
   <data name="DiffJumpToCursor" xml:space="preserve"><value>Jump to next diff from cursor</value></data>
   <data name="DiffJumpToIndex" xml:space="preserve"><value>Go to diff #</value></data>
   <data name="DataBrowserTitle" xml:space="preserve"><value>Data Browser</value></data>
+  <data name="BrowserIndexBuilding" xml:space="preserve"><value>Index is being built, please wait...</value></data>
+  <data name="BrowserIndexBuildingTitle" xml:space="preserve"><value>Index Building</value></data>
   <data name="DataBrowserProperties" xml:space="preserve"><value>Properties</value></data>
   <data name="DomainCoreItems" xml:space="preserve"><value>Core Items</value></data>
   <data name="DomainCombat" xml:space="preserve"><value>Combat</value></data>
@@ -2142,6 +2144,134 @@ Double-click to navigate directly.</value></data>
   <data name="Vis.References" xml:space="preserve"><value>References</value></data>
   <data name="Vis.TreasureTable" xml:space="preserve"><value>Treasure Table</value></data>
   <data name="Vis.RequiredCondition" xml:space="preserve"><value>Required Condition</value></data>
+  <data name="Vis.Required" xml:space="preserve"><value>Required</value></data>
+  <data name="Vis.Relations" xml:space="preserve"><value>Relations</value></data>
   <data name="Vis.Component" xml:space="preserve"><value>Component</value></data>
   <data name="Vis.Toggleable" xml:space="preserve"><value>Toggleable</value></data>
+  <data name="Vis.SpaceAttrs" xml:space="preserve"><value>Space Attributes</value></data>
+  <data name="Vis.Name" xml:space="preserve"><value>Name</value></data>
+  <data name="Vis.Forbidden" xml:space="preserve"><value>Forbidden</value></data>
+  <data name="Vis.ForbiddenHex" xml:space="preserve"><value>Forbidden Hex</value></data>
+  <data name="Vis.ShopBuys" xml:space="preserve"><value>Buys Items</value></data>
+  <data name="Vis.ShopSells" xml:space="preserve"><value>Sells Only</value></data>
+  <data name="Vis.ShopBuysLabel" xml:space="preserve"><value>Shop (Buys)</value></data>
+  <data name="Vis.ShopSellsLabel" xml:space="preserve"><value>Shop (Sells Only)</value></data>
+  <data name="Vis.RestockTT" xml:space="preserve"><value>Restock Treasure Table</value></data>
+  <data name="Vis.ShopInfo" xml:space="preserve"><value>Shop Info</value></data>
+  <data name="Vis.TriggerDetails" xml:space="preserve"><value>Trigger Details</value></data>
+  <data name="Vis.EncounterRef" xml:space="preserve"><value>Encounter</value></data>
+  <data name="Vis.HexTypesRef" xml:space="preserve"><value>Hex Types</value></data>
+  <data name="Vis.TriggerLabel" xml:space="preserve"><value>Trigger</value></data>
+  <data name="Vis.BarterHex" xml:space="preserve"><value>Barter Hex</value></data>
+  <data name="Vis.Unique" xml:space="preserve"><value>Unique</value></data>
+  <data name="Vis.AIPassable" xml:space="preserve"><value>AI Passable</value></data>
+  <data name="Vis.Area" xml:space="preserve"><value>Area</value></data>
+  <data name="Vis.DateRange" xml:space="preserve"><value>Date Range</value></data>
+  <data name="Vis.LocType" xml:space="preserve"><value>Location</value></data>
+  <data name="Vis.DateType" xml:space="preserve"><value>Date</value></data>
+  <data name="Vis.HexType" xml:space="preserve"><value>Hex</value></data>
+  <data name="Vis.UniqueType" xml:space="preserve"><value>Unique</value></data>
+  <data name="Vis.AIType" xml:space="preserve"><value>AI</value></data>
+  <data name="Vis.Buys" xml:space="preserve"><value>Buys</value></data>
+  <data name="Vis.Empty" xml:space="preserve"><value>Empty</value></data>
+  <data name="Vis.NestedTT" xml:space="preserve"><value>Nested TT</value></data>
+  <data name="Vis.ItemTypeLabel" xml:space="preserve"><value>ItemType</value></data>
+  <data name="Vis.MovementCost" xml:space="preserve"><value>Movement Cost</value></data>
+  <data name="Vis.VisibilityLabel" xml:space="preserve"><value>Visibility</value></data>
+  <data name="Vis.EncounterRange" xml:space="preserve"><value>Encounter Range</value></data>
+  <data name="Vis.CampItemsLabel" xml:space="preserve"><value>Camp Items</value></data>
+  <data name="Vis.ScavengeLoot" xml:space="preserve"><value>Scavenge Loot</value></data>
+  <data name="Vis.InitialScavenge" xml:space="preserve"><value>Initial Scavenge</value></data>
+  <data name="Vis.HourlyScavenge" xml:space="preserve"><value>Hourly Scavenge</value></data>
+  <data name="Vis.OnEnterConditions" xml:space="preserve"><value>On-Enter Conditions</value></data>
+  <data name="Vis.DefaultCamp" xml:space="preserve"><value>Default Camp</value></data>
+  <data name="Vis.TerrainMovement" xml:space="preserve"><value>Terrain &amp; Movement</value></data>
+  <data name="Vis.LightLevels" xml:space="preserve"><value>Light Levels</value></data>
+  <data name="Vis.ConsumptionRates" xml:space="preserve"><value>Consumption Rates</value></data>
+  <data name="Vis.ItemLabel" xml:space="preserve"><value>Item</value></data>
+  <data name="Vis.Location" xml:space="preserve"><value>Location</value></data>
+  <data name="Vis.DMCPlace" xml:space="preserve"><value>DMC Place</value></data>
+  <data name="Vis.Encounter" xml:space="preserve"><value>Encounter</value></data>
+  <data name="Vis.LightLevel" xml:space="preserve"><value>Light Level</value></data>
+  <data name="Vis.Shopping" xml:space="preserve"><value>Shopping</value></data>
+  <data name="Vis.CampItemNone" xml:space="preserve"><value>None</value></data>
+  <data name="Vis.CampItemSparse" xml:space="preserve"><value>Sparse</value></data>
+  <data name="Vis.CampItemModerate" xml:space="preserve"><value>Moderate</value></data>
+  <data name="Vis.CampItemAbundant" xml:space="preserve"><value>Abundant</value></data>
+  <data name="Vis.CampItemRich" xml:space="preserve"><value>Rich</value></data>
+  <data name="Vis.CampItemDefault" xml:space="preserve"><value>Default</value></data>
+  <data name="Vis.NestedTreasures" xml:space="preserve"><value>Nested Treasure Tables</value></data>
+  <data name="Vis.Nested" xml:space="preserve"><value>Nested</value></data>
+  <data name="Vis.Suppress" xml:space="preserve"><value>Suppress</value></data>
+  <data name="Vis.Identify" xml:space="preserve"><value>Identify</value></data>
+  <data name="Vis.Manual" xml:space="preserve"><value>Manual</value></data>
+  <data name="Vis.YesOnce" xml:space="preserve"><value>Yes (once)</value></data>
+  <data name="Vis.NoRepeat" xml:space="preserve"><value>No (repeatable)</value></data>
+  <data name="Vis.Yes" xml:space="preserve"><value>Yes</value></data>
+  <data name="Vis.No" xml:space="preserve"><value>No</value></data>
+  <data name="Vis.Passable" xml:space="preserve"><value>Passable</value></data>
+  <data name="Vis.Blocked" xml:space="preserve"><value>Blocked</value></data>
+  <data name="Vis.NoReferences" xml:space="preserve"><value>No references</value></data>
+  <data name="Vis.Icon" xml:space="preserve"><value>Icon</value></data>
+  <data name="Vis.Property" xml:space="preserve"><value>Property</value></data>
+  <data name="Vis.RawValue" xml:space="preserve"><value>Raw Value</value></data>
+  <data name="Vis.Page" xml:space="preserve"><value>Page</value></data>
+  <data name="Vis.Hours" xml:space="preserve"><value>Hours</value></data>
+  <data name="Vis.Reverse" xml:space="preserve"><value>Reverse</value></data>
+  <data name="Vis.Hidden" xml:space="preserve"><value>Hidden</value></data>
+  <data name="Vis.Tools" xml:space="preserve"><value>Tools</value></data>
+  <data name="Vis.Consumed" xml:space="preserve"><value>Consumed</value></data>
+  <data name="Vis.Secret" xml:space="preserve"><value>Secret</value></data>
+  <data name="Vis.Scrap" xml:space="preserve"><value>Scrap</value></data>
+  <data name="Vis.DegradeOutput" xml:space="preserve"><value>Degrade Output</value></data>
+  <data name="Vis.TransferComponents" xml:space="preserve"><value>Transfer Components</value></data>
+  <data name="Vis.Color" xml:space="preserve"><value>Color</value></data>
+  <data name="Vis.Modifiers" xml:space="preserve"><value>Modifiers</value></data>
+  <data name="Vis.ItemProperties" xml:space="preserve"><value>Item Properties</value></data>
+  <data name="Vis.Activities" xml:space="preserve"><value>Activities</value></data>
+  <data name="Vis.MovesPerTurn" xml:space="preserve"><value>Moves / Turn</value></data>
+  <data name="Vis.Faction" xml:space="preserve"><value>Faction</value></data>
+  <data name="Vis.EncConditions" xml:space="preserve"><value>Encounter Conditions</value></data>
+  <data name="Vis.CorpseLoot" xml:space="preserve"><value>Corpse Loot</value></data>
+  <data name="Vis.Attacks" xml:space="preserve"><value>Attacks</value></data>
+  <data name="Vis.BaseConditions" xml:space="preserve"><value>Base Conditions</value></data>
+  <data name="Vis.Ingredients" xml:space="preserve"><value>Ingredients</value></data>
+  <data name="Vis.Fatal" xml:space="preserve"><value>Fatal</value></data>
+  <data name="Vis.Permanent" xml:space="preserve"><value>Permanent</value></data>
+  <data name="Vis.Stackable" xml:space="preserve"><value>Stackable</value></data>
+  <data name="Vis.DisplayOther" xml:space="preserve"><value>Display Other</value></data>
+  <data name="Vis.ResetTimer" xml:space="preserve"><value>Reset Timer</value></data>
+  <data name="Vis.RemoveAll" xml:space="preserve"><value>Remove All</value></data>
+  <data name="Vis.RemovePostCombat" xml:space="preserve"><value>Remove Post Combat</value></data>
+  <data name="Vis.DisplayGameOver" xml:space="preserve"><value>Display Game Over</value></data>
+  <data name="Vis.Thresholds" xml:space="preserve"><value>Thresholds</value></data>
+  <data name="Vis.Effects" xml:space="preserve"><value>Effects</value></data>
+  <data name="Vis.ConditionChain" xml:space="preserve"><value>Condition Chain →</value></data>
+  <data name="Vis.PerHourGrowth" xml:space="preserve"><value>Growth Per Hour</value></data>
+  <data name="Vis.PerHourEquippedDrain" xml:space="preserve"><value>Drain Per Hr Equipped</value></data>
+  <data name="Vis.OverlayChain" xml:space="preserve"><value>Overlay Chain</value></data>
+  <data name="Vis.StoryText" xml:space="preserve"><value>Story Text</value></data>
+  <data name="Vis.Option" xml:space="preserve"><value>option</value></data>
+  <data name="Vis.Options" xml:space="preserve"><value>options</value></data>
+  <data name="Vis.NoResponses" xml:space="preserve"><value>(No responses)</value></data>
+  <data name="Vis.StoryBranch" xml:space="preserve"><value>Story Branch</value></data>
+  <data name="Vis.NoBranches" xml:space="preserve"><value>(No branches)</value></data>
+  <data name="Vis.RemoveSubmit" xml:space="preserve"><value>Remove (submit/destroy)</value></data>
+  <data name="Vis.Conditions" xml:space="preserve"><value>Conditions</value></data>
+  <data name="Vis.PreConditions" xml:space="preserve"><value>Pre-Conditions</value></data>
+  <data name="Vis.CurrentEncounter" xml:space="preserve"><value>📍 Current</value></data>
+  <data name="Vis.MermaidDiagram" xml:space="preserve"><value>Mermaid Diagram</value></data>
+  <data name="Vis.MermaidSource" xml:space="preserve"><value>Mermaid Source</value></data>
+  <data name="Vis.PrevEncounter" xml:space="preserve"><value>Prev Encounter</value></data>
+  <data name="Vis.RootEncounter" xml:space="preserve"><value>Root Event (origin)</value></data>
+  <data name="Vis.EncounterChain" xml:space="preserve"><value>Encounter Chain</value></data>
+  <data name="Vis.SpawnCreature" xml:space="preserve"><value>Spawn Creature</value></data>
+  <data name="Vis.Accidents" xml:space="preserve"><value>Accidents</value></data>
+  <data name="Vis.TriggeredBy" xml:space="preserve"><value>Triggered By</value></data>
+  <data name="Vis.Price" xml:space="preserve"><value>Price</value></data>
+  <data name="Vis.LootChance" xml:space="preserve"><value>Loot Chance</value></data>
+  <data name="Vis.Accident" xml:space="preserve"><value>Accident</value></data>
+  <data name="Vis.CreatureRef" xml:space="preserve"><value>Creature</value></data>
+  <data name="Vis.Teleport" xml:space="preserve"><value>Teleport</value></data>
+  <data name="Vis.Responses" xml:space="preserve"><value>Responses</value></data>
 </root>

@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
 using NeoEditor.Helper;
@@ -65,7 +65,7 @@ public class Encounter : IEntity
     public double Price { get; set; } = 0;
 
     [Column("aResponses", TypeName = "longtext")]
-    [Comment("玩家在经历该剧情时的回应选项，格式如'=15x0.083x0x0x0,=16x0.083x0x0x0'")]
+    [Comment("玩家回应选项，格式：'物品IDx数量=剧情IDx参数'，逗号分隔。空物品ID(=开头)=无需物品的选项。例：'90.3x1=20x1x0x0x0,=7x1x0x0x0'")]
     [Display(Name = "Responses")]
     public string Responses { get; set; } = "";
 

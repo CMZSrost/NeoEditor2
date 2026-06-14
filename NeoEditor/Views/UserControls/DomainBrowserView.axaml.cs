@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using Avalonia;
 using Avalonia.Controls;
@@ -22,6 +23,7 @@ public partial class DomainBrowserView : UserControl
 {
     private EntityBrowserDocument? _doc;
     private IDocumentDock? _viewerDocDock;
+    private bool _layoutInitialized;
 
     public DomainBrowserView()
     {
@@ -30,6 +32,136 @@ public partial class DomainBrowserView : UserControl
             RoutingStrategies.Bubble, true);
         SearchBox.AddHandler(TextBox.TextChangedEvent, OnSearchTextChanged,
             RoutingStrategies.Bubble, true);
+        // Handle DockControl re-load on tab-switch reattach
+        ViewerDockControl.Loaded += (_, _) =>
+        {
+            if (_doc is not null)
+            {
+                Console.WriteLine("[DB] DockControl.Loaded triggered — scheduling layout restore");
+                // Use Background priority to ensure DockControl's XAML layout is fully parsed
+                Dispatcher.UIThread.Post(() => TryRestoreLayout(0), DispatcherPriority.Background);
+            }
+        };
+    }
+
+    protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        base.OnDetachedFromVisualTree(e);
+        // Clear stale dock reference — will be re-found on next attach
+        _viewerDocDock = null;
+        // Mark layout as needing re-init on reattach
+        _layoutInitialized = false;
+    }
+
+    protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        base.OnAttachedToVisualTree(e);
+        if (_doc is not null)
+        {
+            // Use Background priority with retry — same as Loaded handler
+            Dispatcher.UIThread.Post(() => TryRestoreLayout(0), DispatcherPriority.Background);
+        }
+    }
+
+    private void RestoreDockLayout(bool forceReinit = false)
+    {
+        if (_doc is null) return;
+        
+        // Re-find DocumentDock after tab-switch detach/reattach
+        _viewerDocDock = null;
+        
+        // Force reinitialize layout if needed
+        if (forceReinit || !_layoutInitialized)
+        {
+            if (ViewerDockControl.Layout is not null)
+            {
+                _doc.DockFactory.InitLayout(ViewerDockControl.Layout);
+                _layoutInitialized = true;
+                Console.WriteLine("[DB] Layout forcefully reinitialized");
+            }
+        }
+        
+        FindDocumentDock();
+
+        // If still not found but layout exists, try init then find again
+        if (_viewerDocDock is null && ViewerDockControl.Layout is not null)
+        {
+            _doc.DockFactory.InitLayout(ViewerDockControl.Layout);
+            _layoutInitialized = true;
+            FindDocumentDock();
+        }
+
+        if (_viewerDocDock is IDockable dd)
+            dd.Proportion = double.NaN;
+
+        // Re-sync: if VisibleDockables is empty but we have ViewerTabs, recreate all
+        var visibleCount = _viewerDocDock?.VisibleDockables?.Count ?? 0;
+        if (_viewerDocDock is not null && _doc.ViewerTabs.Count > 0 && visibleCount == 0)
+        {
+            Console.WriteLine($"[DB] VisibleDockables empty after reattach, recreating all {_doc.ViewerTabs.Count} tabs");
+            foreach (var tab in _doc.ViewerTabs)
+                CreateDockDocument(tab);
+        }
+        else if (_viewerDocDock is not null && _doc.ViewerTabs.Count > 0)
+        {
+            var existingIds = _viewerDocDock.VisibleDockables?
+                .Where(d => d.Context is EntityViewerDocument)
+                .Select(d => ((EntityViewerDocument)d.Context!).Entity.EntityId)
+                .ToHashSet() ?? new HashSet<string>();
+
+            foreach (var tab in _doc.ViewerTabs)
+            {
+                if (existingIds.Contains(tab.Entity.EntityId)) continue;
+                Console.WriteLine($"[DB] Re-syncing tab: {tab.Entity.EntityId}");
+                CreateDockDocument(tab);
+            }
+
+            // Activate the currently selected tab
+            if (_doc.SelectedViewerTab is { } selected)
+            {
+                var activeDock = _viewerDocDock.VisibleDockables?
+                    .FirstOrDefault(d => d.Context == selected);
+                if (activeDock is not null)
+                {
+                    _doc.DockFactory.SetActiveDockable(activeDock);
+                    _doc.DockFactory.SetFocusedDockable(_viewerDocDock, activeDock);
+                }
+            }
+        }
+
+        ForceApplyTemplates(ViewerDockControl);
+        ViewerDockControl.InvalidateMeasure();
+        ViewerDockControl.InvalidateArrange();
+        ViewerDockControl.UpdateLayout();
+    }
+
+    /// <summary>Retry-based layout restore — waits until DockControl.Layout is ready.</summary>
+    private void TryRestoreLayout(int attempt)
+    {
+        if (_doc is null) return;
+        // Already restored — skip
+        if (_viewerDocDock is not null && _viewerDocDock.VisibleDockables?.Count > 0)
+        {
+            Console.WriteLine($"[DB] TryRestoreLayout: already restored, skipping");
+            return;
+        }
+
+        if (ViewerDockControl.Layout is null)
+        {
+            if (attempt < 6)
+            {
+                Console.WriteLine($"[DB] TryRestoreLayout: layout null, retry {attempt + 1}/6");
+                Dispatcher.UIThread.Post(() => TryRestoreLayout(attempt + 1), DispatcherPriority.Background);
+            }
+            else
+            {
+                Console.WriteLine("[DB] TryRestoreLayout: gave up after 6 attempts — layout still null");
+            }
+            return;
+        }
+
+        Console.WriteLine($"[DB] TryRestoreLayout: layout ready at attempt={attempt}, restoring");
+        RestoreDockLayout(forceReinit: true);
     }
 
     private void OnSearchTextChanged(object? sender, TextChangedEventArgs e)
@@ -47,6 +179,12 @@ public partial class DomainBrowserView : UserControl
 
         if (_doc is not null)
         {
+            // Manually initialize factory + layout once (InitializeFactory=False, InitializeLayout=False in XAML)
+            if (!_layoutInitialized && ViewerDockControl.Layout is not null)
+            {
+                _doc.DockFactory.InitLayout(ViewerDockControl.Layout);
+                _layoutInitialized = true;
+            }
             // Find the DocumentDock from XAML-declared layout
             Dispatcher.UIThread.Post(FindDocumentDock, DispatcherPriority.Loaded);
         }
@@ -107,23 +245,34 @@ public partial class DomainBrowserView : UserControl
         if (!e.GetCurrentPoint(this).Properties.IsLeftButtonPressed) return;
         if (EntityListBox.SelectedItem is not BrowserEntityRow row) return;
 
+        // If Dock layout was lost (tab-switch), try to restore it first
+        if (_viewerDocDock is null || _viewerDocDock.VisibleDockables?.Count == 0)
+        {
+            Console.WriteLine("[DB] OnEntityClicked: dock missing, attempting restore");
+            TryRestoreLayout(0);
+            // If still not ready, just return — layout will be restored async
+            if (_viewerDocDock is null) return;
+        }
+
         var existing = _doc.ViewerTabs.FirstOrDefault(d => d.Entity.EntityId == row.Entity.EntityId);
         if (existing is not null)
         {
             _doc.SelectedViewerTab = existing;
             Console.WriteLine($"[DB] Activate existing tab: {existing.Entity.EntityId}");
 
-            if (_viewerDocDock?.VisibleDockables is not null)
+            // Try to find the dock document in current DocumentDock
+            var dockDoc = _viewerDocDock?.VisibleDockables?
+                .FirstOrDefault(d => d.Context == existing);
+            if (dockDoc is not null)
             {
-                var dockDoc = _viewerDocDock.VisibleDockables
-                    .FirstOrDefault(d => d.Context == existing);
-                if (dockDoc is not null)
-                {
-                    _doc.DockFactory.SetActiveDockable(dockDoc);
-                    _doc.DockFactory.SetFocusedDockable(_viewerDocDock, dockDoc);
-                }
+                _doc.DockFactory.SetActiveDockable(dockDoc);
+                _doc.DockFactory.SetFocusedDockable(_viewerDocDock, dockDoc);
+                return;
             }
 
+            // dockDoc not found — tab-switch cleared visuals, re-create dock document
+            Console.WriteLine($"[DB] existing tab lost visual dock, re-creating: {existing.Entity.EntityId}");
+            CreateDockDocument(existing);
             return;
         }
 
@@ -131,50 +280,45 @@ public partial class DomainBrowserView : UserControl
         _doc.ViewerTabs.Add(newTab);
         _doc.SelectedViewerTab = newTab;
         Console.WriteLine($"[DB] Tab added: count={_doc.ViewerTabs.Count}, id={newTab.Entity.EntityId}");
-
-        if (_viewerDocDock is not null)
-        {
-            // Create Document with Content that renders the Context
-            var dockDoc = new Dock.Model.Avalonia.Controls.Document
-            {
-                Id = $"viewer-{_doc.ViewerTabs.Count}",
-                Title = newTab.Title,
-                Context = newTab,
-                CanClose = true,
-                // CRITICAL: Set Content to a ContentControl that binds to Context
-                Content = new ContentControl
-                {
-                    [!ContentControl.ContentProperty] = new Binding("Context"),
-                    HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Stretch,
-                    VerticalAlignment = Avalonia.Layout.VerticalAlignment.Stretch
-                }
-            };
-
-            _doc.DockFactory.AddDockable(_viewerDocDock, dockDoc);
-            _doc.DockFactory.SetActiveDockable(dockDoc);
-            _doc.DockFactory.SetFocusedDockable(_viewerDocDock, dockDoc);
-
-            // Ensure DocumentDock.Proportion stays NaN so PSP re-assigns proportions
-            if (_viewerDocDock is IDockable dd)
-                dd.Proportion = double.NaN;
-
-            Console.WriteLine($"[DB] Dock document added: VisibleDockables={_viewerDocDock.VisibleDockables?.Count}");
-
-            // Force template application on all TemplatedControls and layout update
-            // This is needed because the Dock library's ProportionalDockControl creates
-            // containers with TemplatedControls (DocumentDockControl etc.) whose theme
-            // templates may not be applied during the initial layout pass, causing
-            // DesiredWidth=0 which propagates through ProportionalStackPanel.
-            Dispatcher.UIThread.Post(() =>
-            {
-                ForceApplyTemplates(ViewerDockControl);
-                ViewerDockControl.UpdateLayout();
-                Console.WriteLine($"[DB] Post-add layout forced");
-            }, DispatcherPriority.Render);
-        }
+        CreateDockDocument(newTab);
 
         Dispatcher.UIThread.Post(LogVisualTree, DispatcherPriority.Render);
         Dispatcher.UIThread.Post(LogVisualTree, DispatcherPriority.Loaded);
+    }
+
+    private void CreateDockDocument(EntityViewerDocument tab)
+    {
+        if (_viewerDocDock is null) return;
+
+        var dockDoc = new Dock.Model.Avalonia.Controls.Document
+        {
+            Id = $"viewer-{Guid.NewGuid():N}",
+            Title = tab.Title,
+            Context = tab,
+            CanClose = true,
+            Content = new ContentControl
+            {
+                [!ContentControl.ContentProperty] = new Binding("Context"),
+                HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Stretch,
+                VerticalAlignment = Avalonia.Layout.VerticalAlignment.Stretch
+            }
+        };
+
+        _doc.DockFactory.AddDockable(_viewerDocDock, dockDoc);
+        _doc.DockFactory.SetActiveDockable(dockDoc);
+        _doc.DockFactory.SetFocusedDockable(_viewerDocDock, dockDoc);
+
+        if (_viewerDocDock is IDockable dd)
+            dd.Proportion = double.NaN;
+
+        Console.WriteLine($"[DB] Dock doc created: VisibleDockables={_viewerDocDock.VisibleDockables?.Count}");
+
+        Dispatcher.UIThread.Post(() =>
+        {
+            ForceApplyTemplates(ViewerDockControl);
+            ViewerDockControl.UpdateLayout();
+            Console.WriteLine($"[DB] Post-add layout forced");
+        }, DispatcherPriority.Render);
     }
 
     private static void ForceApplyTemplates(Control? root)

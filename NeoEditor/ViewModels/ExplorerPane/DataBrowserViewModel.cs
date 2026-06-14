@@ -42,7 +42,7 @@ public partial class DataBrowserViewModel : ViewModelBase
 
     private static void InvalidateIndex()
     {
-        EntityBrowserDocument.InvalidateIndex();
+        Services.BrowserIndexService.Invalidate();
     }
 
     private async Task LoadDomainsAsync()
@@ -82,6 +82,14 @@ public partial class DataBrowserViewModel : ViewModelBase
     private void OpenEntityType(EntityTypeGroup? typeGroup)
     {
         if (typeGroup is null) return;
+
+        if (Services.BrowserIndexService.IsBuilding)
+        {
+            StatusText = Loc["BrowserIndexBuilding"];
+            App.Notification.ShowWarning(Loc["BrowserIndexBuilding"], Loc["BrowserIndexBuildingTitle"]);
+            return;
+        }
+
         var docVm = DocumentWorkspaceViewModel.Instance;
         if (docVm is null) return;
 
@@ -98,8 +106,8 @@ public partial class DataBrowserViewModel : ViewModelBase
     private async Task RebuildIndexAsync()
     {
         StatusText = "Rebuilding index...";
-        MainContent.EntityBrowserDocument.InvalidateIndex();
-        await MainContent.EntityBrowserDocument.EnsureIndexBuiltAsync();
+        Services.BrowserIndexService.Invalidate();
+        await Services.BrowserIndexService.EnsureBuiltAsync();
         StatusText = "Index rebuilt.";
     }
 }
