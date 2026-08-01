@@ -1,0 +1,123 @@
+<UserControl
+    x:Class="NeoEditor.Plugins.EntityEditor.Views.KeyValueEditorView"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:sys="clr-namespace:System;assembly=System.Runtime"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:vm="clr-namespace:NeoEditor.Plugins.EntityEditor.ViewModels"
+    xmlns:views="clr-namespace:NeoEditor.Plugins.EntityEditor.Views"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    x:DataType="vm:KeyValueEditorViewModel"
+    mc:Ignorable="d">
+    <Design.DataContext>
+        <vm:KeyValueEditorViewModel />
+    </Design.DataContext>
+    <UserControl.Resources>
+        <vm:BoolStringConverter x:Key="BoolStringConverter" />
+        <vm:ControlTypeVisibilityConverter x:Key="CtrlTypeVis" />
+    </UserControl.Resources>
+    <UserControl.Styles>
+        <Style Selector="TextBox.Dirty">
+            <Setter Property="BorderBrush" Value="Orange" />
+            <Setter Property="BorderThickness" Value="1.5" />
+        </Style>
+        <Style Selector="TextBox.Applied">
+            <Setter Property="BorderBrush" Value="#4CAF50" />
+            <Setter Property="BorderThickness" Value="2" />
+        </Style>
+    </UserControl.Styles>
+
+    <DockPanel>
+        <!-- R09: WAL unsaved changes banner -->
+        <Border DockPanel.Dock="Top"
+                Background="#FFF3CD"
+                BorderBrush="#FFC107"
+                BorderThickness="0,0,0,1"
+                Padding="8,4"
+                IsVisible="{Binding IsCurrentEntityDirty}">
+            <StackPanel>
+                <TextBlock Text="{Binding IsCurrentEntityDirty, StringFormat='IsCurrentEntityDirty={0}'}"
+                           FontSize="9"
+                           Foreground="#856404" />
+                <TextBlock Text="{Binding CurrentEntity.EntityId, StringFormat='EntityId={0}'}"
+                           FontSize="9"
+                           Foreground="#856404" />
+                <TextBlock Text="⚠ This entity has unsaved changes. Press Ctrl+S to save."
+                           FontSize="11"
+                           Foreground="#856404" />
+            </StackPanel>
+        </Border>
+        <ScrollViewer HorizontalScrollBarVisibility="Disabled">
+            <ItemsControl ItemsSource="{Binding Sections}" Name="FieldSectionsControl">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <VirtualizingStackPanel />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate DataType="vm:FieldSection">
+                        <StackPanel>
+                            <Border Padding="6,2"
+                                    Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}">
+                                <TextBlock Text="{Binding Header}"
+                                           FontSize="10" FontWeight="SemiBold" />
+                            </Border>
+                            <ItemsControl ItemsSource="{Binding Fields}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate DataType="vm:FieldRow">
+                                        <Border Padding="4,2"
+                                                BorderBrush="{DynamicResource SystemControlForegroundChromeDisabledLowBrush}"
+                                                BorderThickness="0,0,0,1">
+                                            <Grid ColumnDefinitions="100,*" Margin="0,2">
+                                                <TextBlock Grid.Column="0"
+                                                           Text="{Binding DisplayName}"
+                                                           VerticalAlignment="Center"
+                                                           FontSize="10"
+                                                           TextWrapping="NoWrap" />
+                                                <!-- ReadOnly: TextBlock -->
+                                                <TextBlock Grid.Column="1"
+                                                           Text="{Binding CurrentValue}"
+                                                           IsVisible="{Binding IsKey}"
+                                                           VerticalAlignment="Center"
+                                                           FontSize="10" />
+                                                <!-- CheckBox for bool -->
+                                                <CheckBox Grid.Column="1"
+                                                           IsChecked="{Binding CurrentValue, Converter={StaticResource BoolStringConverter}, Mode=TwoWay}"
+                                                           IsVisible="{Binding ControlType, Converter={StaticResource CtrlTypeVis}, ConverterParameter=toggle}"
+                                                           VerticalAlignment="Center"
+                                                           LostFocus="OnValueBoxLostFocus" />
+                                                <!-- ComboBox for enums -->
+                                                <ComboBox Grid.Column="1"
+                                                          SelectedItem="{Binding CurrentValue, Mode=TwoWay}"
+                                                          ItemsSource="{Binding EnumValues}"
+                                                          IsVisible="{Binding ControlType, Converter={StaticResource CtrlTypeVis}, ConverterParameter=combo}"
+                                                          FontSize="10"
+                                                          LostFocus="OnValueBoxLostFocus" />
+                                                <!-- Default TextBox (string, numeric) -->
+                                                <TextBox Grid.Column="1"
+                                                         Text="{Binding CurrentValue, Mode=TwoWay}"
+                                                         IsVisible="{Binding ControlType, Converter={StaticResource CtrlTypeVis}, ConverterParameter=textbox}"
+                                                         IsReadOnly="{Binding IsKey}"
+                                                         FontSize="10"
+                                                         Padding="4,2"
+                                                         Classes.Dirty="{Binding IsDirty}"
+                                                         Classes.Applied="{Binding IsJustApplied}"
+                                                         Name="ValueBox"
+                                                         LostFocus="OnValueBoxLostFocus"
+                                                         KeyDown="OnValueBoxKeyDown" />
+                                                <!-- Reference picker control -->
+                                                <views:ReferenceFieldEditor Grid.Column="1"
+                                                         IsVisible="{Binding ControlType, Converter={StaticResource CtrlTypeVis}, ConverterParameter=refpicker}"
+                                                         VerticalAlignment="Center" />
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
+    </DockPanel>
+</UserControl>

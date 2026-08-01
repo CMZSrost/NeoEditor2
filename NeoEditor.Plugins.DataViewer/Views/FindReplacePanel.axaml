@@ -1,0 +1,110 @@
+
+<UserControl
+    x:Class="NeoEditor.Plugins.DataViewer.Views.FindReplacePanel"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:avalonia="clr-namespace:FluentIcons.Avalonia;assembly=FluentIcons.Avalonia"
+    x:Name="Root"
+    Focusable="True"
+    IsVisible="False"
+    KeyDown="OnPanelKeyDown">
+    <DockPanel>
+        <Border
+            x:Name="ResizeGrip"
+            Width="4"
+            Background="Transparent"
+            Cursor="SizeWestEast"
+            DockPanel.Dock="Left"
+            PointerMoved="OnResizeMove"
+            PointerPressed="OnResizeStart"
+            PointerReleased="OnResizeEnd" />
+        <Border
+            Padding="6,2"
+            Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}"
+            BorderBrush="{DynamicResource SystemControlForegroundChromeDisabledLowBrush}"
+            BorderThickness="1"
+            CornerRadius="4">
+            <StackPanel
+                x:Name="ContentStack"
+                Width="560"
+                Spacing="2">
+                <DockPanel>
+                    <StackPanel
+                        DockPanel.Dock="Right"
+                        Orientation="Horizontal"
+                        Spacing="2">
+                        <Button
+                            Padding="2,0"
+                            Click="OnPrevClick"
+                            ToolTip.Tip="{Binding Loc[FindPrevious], ElementName=Root}">
+                            <avalonia:SymbolIcon FontSize="14" Symbol="ArrowUp" />
+                        </Button>
+                        <Button
+                            Padding="2,0"
+                            Click="OnNextClick"
+                            ToolTip.Tip="{Binding Loc[FindNext], ElementName=Root}">
+                            <avalonia:SymbolIcon FontSize="14" Symbol="ArrowDown" />
+                        </Button>
+                        <ToggleButton
+                            x:Name="CaseBtn"
+                            Padding="3,0"
+                            FontSize="11"
+                            ToolTip.Tip="{Binding Loc[FindMatchCase], ElementName=Root}">
+                            Aa
+                        </ToggleButton>
+                        <ToggleButton
+                            x:Name="WordBtn"
+                            Padding="3,0"
+                            FontSize="11"
+                            ToolTip.Tip="{Binding Loc[FindWholeWord], ElementName=Root}">
+                            ab
+                        </ToggleButton>
+                        <ToggleButton
+                            x:Name="RegexBtn"
+                            Padding="3,0"
+                            FontSize="11"
+                            ToolTip.Tip="{Binding Loc[FindRegex], ElementName=Root}">
+                            .*
+                        </ToggleButton>
+                        <Button
+                            Padding="3,0"
+                            Click="OnCloseClick"
+                            ToolTip.Tip="{Binding Loc[FindClose], ElementName=Root}">
+                            <avalonia:SymbolIcon FontSize="14" Symbol="Dismiss" />
+                        </Button>
+                    </StackPanel>
+                    <TextBox
+                        x:Name="SearchBox"
+                        KeyDown="OnSearchKeyDown"
+                        Watermark="{Binding Loc[FindWatermark], ElementName=Root}" />
+                </DockPanel>
+                <DockPanel x:Name="BottomRow">
+                    <TextBlock
+                        x:Name="MatchCount"
+                        VerticalAlignment="Center"
+                        FontSize="11"
+                        Foreground="{DynamicResource SystemControlForegroundChromeDisabledLowBrush}" />
+                    <StackPanel
+                        x:Name="ReplaceRow"
+                        DockPanel.Dock="Right"
+                        IsVisible="False"
+                        Orientation="Horizontal"
+                        Spacing="4">
+                        <TextBox
+                            x:Name="ReplaceBox"
+                            Width="200"
+                            Watermark="{Binding Loc[ReplaceWatermark], ElementName=Root}" />
+                        <Button
+                            Padding="4,0"
+                            Click="OnReplaceClick"
+                            Content="{Binding Loc[ReplaceButton], ElementName=Root}" />
+                        <Button
+                            Padding="4,0"
+                            Click="OnReplaceAllClick"
+                            Content="{Binding Loc[ReplaceAllButton], ElementName=Root}" />
+                    </StackPanel>
+                </DockPanel>
+            </StackPanel>
+        </Border>
+    </DockPanel>
+</UserControl>

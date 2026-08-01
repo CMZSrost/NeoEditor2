@@ -1,0 +1,35 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <LangVersion>preview</LangVersion>
+        <RootNamespace>NeoEditor.Plugins.EntityEditor</RootNamespace>
+        <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+        <NoWarn>CS8618;CS9264</NoWarn>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\NeoEditor.Core\NeoEditor.Core.csproj" />
+        <ProjectReference Include="..\NeoEditor.Infra\NeoEditor.Infra.csproj" />
+        <ProjectReference Include="..\NeoEditor.UI.Common\NeoEditor.UI.Common.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <Using Include="NeoEditor.Helper" />
+        <Using Include="NeoEditor.Helper.Converter" />
+        <Using Include="NeoEditor.Helper.AttachedProperties" />
+        <Using Include="NeoEditor.Infra.Services" />
+        <Using Include="NeoEditor.UI.Common.Services" />
+        <Using Include="NeoEditor.UI.Common.Visualizers" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Avalonia" Version="12.1.1" />
+        <PackageReference Include="Avalonia.AvaloniaEdit" Version="12.0.0" />
+        <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
+        <PackageReference Include="DiffPlex" Version="1.9.0" />
+        <PackageReference Include="FluentIcons.Avalonia" Version="2.1.333" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.3" />
+        <PackageReference Include="XMLDiffPatch" Version="1.0.8.28" />
+    </ItemGroup>
+</Project>

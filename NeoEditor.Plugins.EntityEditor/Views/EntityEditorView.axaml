@@ -1,0 +1,43 @@
+<UserControl
+    x:Class="NeoEditor.Plugins.EntityEditor.Views.EntityEditorView"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:avaloniaEdit="https://github.com/avaloniaui/avaloniaedit"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:vm="clr-namespace:NeoEditor.Plugins.EntityEditor.ViewModels"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    x:Name="Root"
+    x:DataType="vm:EntityEditorDocument"
+    mc:Ignorable="d">
+    <Design.DataContext>
+        <vm:EntityEditorDocument />
+    </Design.DataContext>
+
+    <DockPanel>
+        <TabControl Name="EditorTabs" DockPanel.Dock="Top" Margin="0">
+            <TabControl.Items>
+                <TabItem Name="VisualTabItem">
+                    <TabItem.Header>
+                        <TextBlock Text="{Binding Loc[EV.Visualization]}" FontSize="11" />
+                    </TabItem.Header>
+                    <ScrollViewer HorizontalScrollBarVisibility="Disabled">
+                        <ContentControl Name="VisualizationHost" />
+                    </ScrollViewer>
+                </TabItem>
+                <TabItem Name="XmlTabItem"
+                         IsEnabled="{Binding IsReadOnly, Converter={x:Static BoolConverters.Not}}">
+                    <TabItem.Header>
+                        <TextBlock Text="{Binding Loc[EV.XmlEdit]}" FontSize="11" />
+                    </TabItem.Header>
+                    <avaloniaEdit:TextEditor
+                        Name="XmlEditor"
+                        Document="{Binding XmlContent, Mode=TwoWay}"
+                        IsReadOnly="{Binding IsReadOnly}"
+                        ShowLineNumbers="True"
+                        SyntaxHighlighting="XML"
+                        />
+                </TabItem>
+            </TabControl.Items>
+        </TabControl>
+    </DockPanel>
+</UserControl>

@@ -1,0 +1,285 @@
+<UserControl
+    x:Class="NeoEditor.Views.UserControls.ModGameDataTabsView"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:avalonia="clr-namespace:FluentIcons.Avalonia;assembly=FluentIcons.Avalonia"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:conv="clr-namespace:NeoEditor.Helper.Converter;assembly=NeoEditor"
+    xmlns:dv="clr-namespace:NeoEditor.Plugins.DataViewer.ViewModels;assembly=NeoEditor.Plugins.DataViewer"
+    xmlns:dg="clr-namespace:Avalonia.Controls;assembly=Avalonia.Controls.DataGrid"
+    xmlns:dvViews="clr-namespace:NeoEditor.Plugins.DataViewer.Views;assembly=NeoEditor.Plugins.DataViewer"
+    xmlns:mainContent="clr-namespace:NeoEditor.ViewModels.MainContent"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:userControls="clr-namespace:NeoEditor.Views.UserControls"
+    x:Name="Root"
+    d:DesignHeight="600"
+    d:DesignWidth="1000"
+    mc:Ignorable="d">
+    <UserControl.Resources>
+        <conv:ColumnHeaderTextConverter x:Key="ColumnHeaderTextConverter" />
+    </UserControl.Resources>
+    <DockPanel>
+        <Border
+            Margin="0,0,0,6"
+            Padding="6,4"
+            Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}"
+            CornerRadius="4"
+            DockPanel.Dock="Top">
+            <StackPanel
+                VerticalAlignment="Center"
+                Orientation="Horizontal"
+                Spacing="2">
+                <!--  Navigation  -->
+                <Button
+                    Click="OnUndoClick"
+                    IsEnabled="{Binding CanUndo, ElementName=Root}"
+                    IsVisible="{Binding !ReadOnly, ElementName=Root}"
+                    ToolTip.Tip="{Binding Loc[UndoTooltip], ElementName=Root}">
+                    <avalonia:SymbolIcon FontSize="14" Symbol="ArrowUndo" />
+                </Button>
+                <Button
+                    Click="OnRedoClick"
+                    IsEnabled="{Binding CanRedo, ElementName=Root}"
+                    IsVisible="{Binding !ReadOnly, ElementName=Root}"
+                    ToolTip.Tip="{Binding Loc[RedoTooltip], ElementName=Root}">
+                    <avalonia:SymbolIcon FontSize="14" Symbol="ArrowRedo" />
+                </Button>
+                <Button
+                    Click="OnBackNavigationClick"
+                    IsEnabled="{Binding CanNavigateBack, ElementName=Root}"
+                    ToolTip.Tip="{Binding Loc[NavigateBack], ElementName=Root}">
+                    <avalonia:SymbolIcon FontSize="14" Symbol="ArrowLeft" />
+                </Button>
+                <Button Click="OnLocateClick" ToolTip.Tip="{Binding Loc[LocateRowTooltip], ElementName=Root}">
+                    <avalonia:SymbolIcon FontSize="14" Symbol="Target" />
+                </Button>
+                <Separator
+                    Width="1"
+                    Margin="4,2"
+                    VerticalAlignment="Stretch" />
+                <!--  Row operations  -->
+                <Button
+                    Click="OnAddRowButtonClick"
+                    IsEnabled="{Binding CanAddRow, ElementName=Root}"
+                    IsVisible="{Binding !ReadOnly, ElementName=Root}"
+                    ToolTip.Tip="{Binding Loc[AddRow], ElementName=Root}">
+                    <avalonia:SymbolIcon FontSize="14" Symbol="Add" />
+                </Button>
+                <!--  D02 §5.0: entity ops live here as [Add] [Copy] [Delete]  -->
+                <Button
+                    Click="OnCopyRowButtonClick"
+                    IsEnabled="{Binding CanAddRow, ElementName=Root}"
+                    IsVisible="{Binding !ReadOnly, ElementName=Root}"
+                    ToolTip.Tip="Copy Row">
+                    <avalonia:SymbolIcon FontSize="14" Symbol="Copy" />
+                </Button>
+                <Button
+                    Click="OnDeleteRowButtonClick"
+                    IsEnabled="{Binding CanDeleteRow, ElementName=Root}"
+                    IsVisible="{Binding !ReadOnly, ElementName=Root}"
+                    ToolTip.Tip="{Binding Loc[DeleteRow], ElementName=Root}">
+                    <avalonia:SymbolIcon FontSize="14" Symbol="Subtract" />
+                </Button>
+                <dg:DataGridColumnChooser
+                    x:Name="ColumnChooser"
+                    Margin="0,0,4,0">
+                    <dg:DataGridColumnChooser.Header>
+                        <StackPanel Orientation="Horizontal" Spacing="4">
+                            <avalonia:SymbolIcon FontSize="14" Symbol="Options" />
+                            <TextBlock
+                                VerticalAlignment="Center"
+                                FontSize="11"
+                                Text="{Binding Loc[ColumnManagerTooltip], ElementName=Root}" />
+                        </StackPanel>
+                    </dg:DataGridColumnChooser.Header>
+                    <dg:DataGridColumnChooser.ItemTemplate>
+                        <DataTemplate x:DataType="dg:DataGridColumnChooserItem">
+                            <CheckBox
+                                Content="{Binding Header, Converter={StaticResource ColumnHeaderTextConverter}}"
+                                IsChecked="{Binding IsVisible, Mode=TwoWay}"
+                                IsEnabled="{Binding CanUserHide}" />
+                        </DataTemplate>
+                    </dg:DataGridColumnChooser.ItemTemplate>
+                </dg:DataGridColumnChooser>
+                <Separator Width="1" Margin="4,2" />
+                <!--  Merge-view controls  -->
+                <ComboBox
+                    x:Name="ModFilterCombo"
+                    Width="110"
+                    FontSize="11"
+                    IsVisible="{Binding IsMergeView, ElementName=Root}"
+                    SelectionChanged="OnModFilterChanged" />
+                <ToggleButton
+                    x:Name="ShowAllToggle"
+                    Padding="4,2"
+                    Click="OnToggleShowAllClick"
+                    Content="{Binding Loc[ShowAll], ElementName=Root}"
+                    FontSize="11"
+                    IsVisible="{Binding IsMergeView, ElementName=Root}" />
+                <!--  Search filter  -->
+                <TextBox
+                    Width="100"
+                    MinWidth="60"
+                    Padding="4,2"
+                    FontSize="11"
+                    Text="{Binding FilterText, ElementName=Root}"
+                    Watermark="{Binding Loc[SearchHelpTooltip], ElementName=Root}" />
+                <Button
+                    Padding="4,2"
+                    Click="OnClearColumnFilterClick"
+                    FontSize="11"
+                    ToolTip.Tip="Clear column filters">
+                    ✕
+                </Button>
+                <!--  Spacer  -->
+                <StackPanel HorizontalAlignment="Stretch" />
+                <!--  Save actions (hidden when read-only)  -->
+                <TextBlock
+                    VerticalAlignment="Center"
+                    FontSize="11"
+                    IsVisible="{Binding IsPreparingSavePreview, ElementName=Root}"
+                    Text="Saving…" />
+                <Button
+                    Padding="4,2"
+                    Click="OnCreateModFromBrowseClick"
+                    Content="{Binding Loc[CreateModToEdit], ElementName=Root}"
+                    FontSize="11"
+                    IsVisible="{Binding IsBrowseMode, ElementName=Root}" />
+                <Button
+                    Padding="4,2"
+                    Click="OnQuickSaveClick"
+                    Content="{Binding Loc[QuickSave], ElementName=Root}"
+                    FontSize="11"
+                    FontWeight="SemiBold"
+                    IsEnabled="{Binding CanStartSavePreview, ElementName=Root}"
+                    IsVisible="{Binding !ReadOnly, ElementName=Root}" />
+                <Button
+                    Padding="4,2"
+                    Click="OnSaveAndExportClick"
+                    Content="{Binding Loc[SaveAndExport], ElementName=Root}"
+                    FontSize="11"
+                    IsEnabled="{Binding CanStartSavePreview, ElementName=Root}"
+                    IsVisible="{Binding !ReadOnly, ElementName=Root}" />
+                <Button
+                    Padding="4,2"
+                    Click="OnSaveAndLaunchClick"
+                    FontSize="11"
+                    IsEnabled="{Binding CanStartSavePreview, ElementName=Root}"
+                    IsVisible="{Binding !ReadOnly, ElementName=Root}">
+                    <StackPanel Orientation="Horizontal" Spacing="2">
+                        <avalonia:SymbolIcon FontSize="12" Symbol="Play" />
+                        <TextBlock Text="{Binding Loc[Launch], ElementName=Root}" />
+                    </StackPanel>
+                </Button>
+            </StackPanel>
+        </Border>
+
+        <!--  Empty mod guidance overlay  -->
+        <Border
+            x:Name="EmptyModBanner"
+            Margin="16,8"
+            Padding="24"
+            HorizontalAlignment="Center"
+            VerticalAlignment="Center"
+            Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}"
+            CornerRadius="8"
+            IsVisible="{Binding IsEmptyMod, ElementName=Root}">
+            <StackPanel HorizontalAlignment="Center" Spacing="12">
+                <TextBlock
+                    HorizontalAlignment="Center"
+                    FontSize="16"
+                    FontWeight="SemiBold"
+                    Text="{Binding Loc[EmptyModMessage], ElementName=Root}" />
+                <TextBlock
+                    HorizontalAlignment="Center"
+                    FontSize="12"
+                    Foreground="{DynamicResource SystemControlForegroundChromeDisabledLowBrush}"
+                    Text="{Binding Loc[EmptyModHint], ElementName=Root}" />
+                <Button
+                    Padding="16,8"
+                    HorizontalAlignment="Center"
+                    Click="OnAddRowButtonClick"
+                    FontSize="14"
+                    FontWeight="SemiBold">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <TextBlock FontSize="18" Text="+" />
+                        <TextBlock VerticalAlignment="Center" Text="{Binding Loc[AddFirstEntity], ElementName=Root}" />
+                    </StackPanel>
+                </Button>
+            </StackPanel>
+        </Border>
+
+        <Grid x:Name="ContentGrid">
+            <Grid ColumnDefinitions="Auto,*">
+                <!--  Tab strip: compact vertical tab selector using ListBox.
+                      ListBox natively provides ScrollViewer, avoiding the WrapPanel overflow
+                      issues that plagued TabControl+TabStrip in Avalonia 12 Fluent theme.  -->
+                <ListBox
+                    x:Name="TabListBox"
+                    Grid.Column="0"
+                    ItemsSource="{Binding Tabs, ElementName=Root}">
+                    <ListBox.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <StackPanel Orientation="Vertical" />
+                        </ItemsPanelTemplate>
+                    </ListBox.ItemsPanel>
+                    <ListBox.Styles>
+                        <Style Selector="ListBoxItem">
+                            <Setter Property="FontSize" Value="11" />
+                            <Setter Property="Padding" Value="4,1" />
+                            <Setter Property="Margin" Value="0" />
+                            <Setter Property="MinHeight" Value="0" />
+                            <Setter Property="Height" Value="22" />
+                        </Style>
+                        <Style Selector="ListBox:focus /template/ Border#FocusVisual">
+                            <Setter Property="IsVisible" Value="False" />
+                        </Style>
+                    </ListBox.Styles>
+                    <ListBox.ItemTemplate>
+                        <DataTemplate DataType="dv:GameDataTypeTabItem">
+                            <TextBlock
+                                VerticalAlignment="Center"
+                                FontSize="11"
+                                Text="{Binding Header}"
+                                TextTrimming="CharacterEllipsis"
+                                TextWrapping="NoWrap" />
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+                <!--  Single DataGrid — survives tab switches. ItemsSource is swapped in code-behind.  -->
+                <Grid Grid.Column="1">
+                    <dvViews:SearchableDataGrid
+                        x:Name="SharedDataGrid"
+                        ReadOnly="{Binding ReadOnly, ElementName=Root}"
+                        ShowRowDetails="{Binding IsMergeView, ElementName=Root}" />
+                    <!--  Find/Replace overlay  -->
+                    <dvViews:FindReplacePanel
+                        x:Name="FindPanel"
+                        Margin="0,4,8,0"
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Top" />
+                    <!--  Loading overlay  -->
+                    <Border
+                        HorizontalAlignment="Stretch"
+                        VerticalAlignment="Stretch"
+                        Background="#80000000"
+                        IsVisible="{Binding IsLoading, ElementName=Root}">
+                        <StackPanel
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            Spacing="8">
+                            <ProgressBar
+                                Width="200"
+                                Height="6"
+                                IsIndeterminate="True" />
+                            <TextBlock
+                                FontSize="14"
+                                Foreground="White"
+                                Text="{Binding Loc[Loading], ElementName=Root}" />
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </Grid>
+        </Grid>
+    </DockPanel>
+</UserControl>

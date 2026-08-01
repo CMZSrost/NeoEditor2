@@ -1,0 +1,135 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <OutputType>WinExe</OutputType>
+        <TargetFramework>net10.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <LangVersion>preview</LangVersion>
+        <ApplicationManifest>app.manifest</ApplicationManifest>
+        <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+        <AssemblyName>NeoEditor</AssemblyName>
+        <NoWarn>NU1605;NU1701</NoWarn>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <Using Include="NeoEditor.Infra.Services" />
+        <Using Include="NeoEditor.Core.Model" />
+        <Using Include="NeoEditor.Plugins.DataViewer.ViewModels" />
+        <Using Include="NeoEditor.Plugins.DataViewer.Services" />
+        <Using Include="NeoEditor.UI.Common.Services" />
+        <Using Include="NeoEditor.UI.Common.Visualizers" />
+        <Using Include="NeoEditor.Plugins.EntityEditor" />
+        <Using Include="NeoEditor.Plugins.EntityEditor.ViewModels" />
+        <Using Include="NeoEditor.Plugins.EntityEditor.Views" />
+        <Using Include="NeoEditor.Plugins.EntityEditor.Helper" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\NeoEditor.Core\NeoEditor.Core.csproj" />
+        <ProjectReference Include="..\NeoEditor.Infra\NeoEditor.Infra.csproj" />
+        <ProjectReference Include="..\NeoEditor.Messaging\NeoEditor.Messaging.csproj" />
+        <ProjectReference Include="..\NeoEditor.UI.Common\NeoEditor.UI.Common.csproj" />
+        <ProjectReference Include="..\NeoEditor.Plugins.DataViewer\NeoEditor.Plugins.DataViewer.csproj" />
+        <ProjectReference Include="..\NeoEditor.Plugins.EntityEditor\NeoEditor.Plugins.EntityEditor.csproj" />
+        <ProjectReference Include="..\NeoEditor.Plugins.ImageTools\NeoEditor.Plugins.ImageTools.csproj" />
+        <ProjectReference Include="..\NeoEditor.Plugins.Mcp\NeoEditor.Plugins.Mcp.csproj" />
+        <ProjectReference Include="..\NeoEditor.Plugins.Cli\NeoEditor.Plugins.Cli.csproj" />
+        <ProjectReference Include="..\NeoEditor.Plugins.AiChat\NeoEditor.Plugins.AiChat.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <Folder Include="Data\Command\" />
+        <AvaloniaResource Include="Assets\**" />
+        <AvaloniaResource Include="Help\**\*.md" />
+        <AvaloniaResource Include="Help\**\*.svg" />
+        <AvaloniaResource Include="Help\**\*.png" />
+        <AvaloniaResource Include="Help\**\*.jpg" />
+        <AvaloniaResource Include="Help\**\*.gif" />
+        <Content Include="Help\**\*" CopyToOutputDirectory="PreserveNewest" />
+        <Folder Include="Docs\testround\" />
+        <Folder Include="Docs\third-party\" />
+        <Folder Include="Templates\" />
+        <Folder Include="Views\MainContent\" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="AutoMapper" Version="16.2.0" />
+        <PackageReference Include="Avalonia" Version="12.1.1" />
+        <PackageReference Include="ProDataGrid" Version="12.0.4" />
+        <PackageReference Include="Avalonia.Desktop" Version="12.1.1" />
+        <PackageReference Include="Avalonia.Themes.Fluent" Version="12.1.1" />
+        <PackageReference Include="Avalonia.Fonts.Inter" Version="12.1.1" />
+        <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
+        <PackageReference Include="Dock.Avalonia" Version="12.1.0" />
+        <PackageReference Include="Dock.Avalonia.Themes.Fluent" Version="12.1.0" />
+        <PackageReference Include="Dock.Model.Avalonia" Version="12.1.0" />
+        <PackageReference Include="Dock.Serializer.Newtonsoft" Version="12.1.0" />
+        <PackageReference Include="EFCore.BulkExtensions.Sqlite" Version="10.0.1" />
+        <PackageReference Include="FluentIcons.Avalonia" Version="2.1.333" />
+        <PackageReference Include="LiveMarkdown.Avalonia" Version="2.2.2" />
+        <PackageReference Include="MessageBox.Avalonia" Version="12.0.0" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.3" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.3" />
+        <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.3" />
+        <PackageReference Include="Microsoft.Extensions.Localization" Version="10.0.3" />
+        <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
+        <PackageReference Include="Avalonia.AvaloniaEdit" Version="12.0.0" />
+        <PackageReference Include="Serilog" Version="4.3.1" />
+        <PackageReference Include="Serilog.Extensions.Hosting" Version="10.0.0" />
+        <PackageReference Include="Serilog.Extensions.Logging.File" Version="3.0.0" />
+        <PackageReference Include="Serilog.Settings.Configuration" Version="10.0.0" />
+        <PackageReference Include="Serilog.Sinks.Console" Version="6.1.1" />
+        <PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
+        <PackageReference Include="Serilog.Sinks.RollingFile" Version="3.3.0" />
+        <PackageReference Include="System.Configuration.ConfigurationManager" Version="10.0.3" />
+        <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="10.0.3" />
+        <PackageReference Include="Xaml.Behaviors.Avalonia" Version="12.0.5" />
+        <PackageReference Include="Xaml.Behaviors.Interactions.DragAndDrop.DataGrid" Version="12.0.5" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Include="appsettings.json">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+            <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+        </None>
+        <None Include="appsettings.Development.json">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+            <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+        </None>
+        <Content Include="Help\**\*">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+            <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+        </Content>
+    </ItemGroup>
+
+    <ItemGroup>
+        <Compile Update="Assets\Resources.Designer.cs">
+            <DesignTime>True</DesignTime>
+            <AutoGen>True</AutoGen>
+            <DependentUpon>Resources.resx</DependentUpon>
+        </Compile>
+        <EmbeddedResource Update="Assets\Resources.resx">
+            <Generator>PublicResXFileCodeGenerator</Generator>
+            <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+        </EmbeddedResource>
+        <Compile Update="Views\MainWindow.axaml.cs">
+            <DependentUpon>MainWindow.axaml</DependentUpon>
+        </Compile>
+        <Compile Update="Views\Dialog\CreateModDialog.axaml.cs">
+            <DependentUpon>CreateModDialog.axaml</DependentUpon>
+            <SubType>Code</SubType>
+        </Compile>
+    </ItemGroup>
+
+    <!--    <ItemGroup>-->
+    <!--        <Content Update="appsettings.json">-->
+    <!--            <ExcludeFromSingleFile>true</ExcludeFromSingleFile>-->
+    <!--            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>-->
+    <!--            <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>-->
+    <!--        </Content>-->
+    <!--        <Content Update="appsettings.Development.json">-->
+    <!--            <ExcludeFromSingleFile>true</ExcludeFromSingleFile>-->
+    <!--            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>-->
+    <!--            <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>-->
+    <!--        </Content>-->
+    <!--    </ItemGroup>-->
+</Project>

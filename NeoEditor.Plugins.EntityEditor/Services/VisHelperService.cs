@@ -1,0 +1,781 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Reflection;
+using System.Threading.Tasks;
+using Avalonia;
+using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
+using Avalonia.Input;
+using Avalonia.Layout;
+using Avalonia.Media;
+using Avalonia.Media.Imaging;
+using Avalonia.Threading;
+using CommunityToolkit.Mvvm.Messaging;
+using FluentIcons.Avalonia;
+using FluentIcons.Common;
+using NeoEditor.Data.Messages;
+using NeoEditor.Data.Model;
+using NeoEditor.Data.Model.Game;
+using NeoEditor.Helper;
+using NeoEditor.Infra.Services;
+using NeoEditor.Plugins.EntityEditor.Views;
+
+namespace NeoEditor.Plugins.EntityEditor.Services;
+
+/// <summary>
+/// DI singleton — shared visualization helpers for entity detail views.
+/// M10: migrated from static VisHelper in App. Constructor-injected services replace
+/// SetServices() + DataTableService.Instance + ViewServices.Loc static access.
+/// </summary>
+public class VisHelperService
+{
+    private readonly Func<string, string?> _findImage;
+    private readonly IReferenceResolver _resolver;
+    private readonly INavigationRouter _router;
+    private readonly IEntityLookupService _dataTable;
+    private readonly ILocalizationService _loc;
+
+    public VisHelperService(
+        Func<string, string?> findImage,
+        IReferenceResolver resolver,
+        INavigationRouter router,
+        IEntityLookupService dataTable,
+        ILocalizationService localization)
+    {
+        _findImage = findImage;
+        _resolver = resolver;
+        _router = router;
+        _dataTable = dataTable;
+        _loc = localization;
+    }
+
+    public Func<string, string?> FindImageFunc => _findImage;
+    public IReferenceResolver Resolver => _resolver;
+    public INavigationRouter Router => _router;
+
+    /// <summary>Localization shortcut.</summary>
+    public string Loc(string key) => _loc[key];
+
+    public TreeViewItem Section(string text, IBrush? fg = null)
+    {
+        var tb = new TextBlock { Text = text, FontWeight = FontWeight.Bold, Foreground = fg ?? Brushes.DodgerBlue };
+        return new TreeViewItem { IsExpanded = true, Header = tb };
+    }
+
+    public TreeViewItem Leaf(string text, IBrush? fg = null)
+    {
+        var tb = new TextBlock { Text = text, Foreground = fg ?? Brushes.Black, TextWrapping = TextWrapping.Wrap };
+        return new TreeViewItem { IsExpanded = true, Header = tb };
+    }
+
+    public TreeViewItem NavLeaf(string text, Action nav, IBrush? fg = null,
+        Type? peekType = null, string? peekEid = null)
+    {
+        var item = Leaf(text, fg);
+        item.Cursor = new Cursor(StandardCursorType.Hand);
+        item.PointerPressed += (_, e) =>
+        {
+            if ((e.KeyModifiers & KeyModifiers.Control) == 0) return;
+            e.Handled = true;
+            if (e.GetCurrentPoint(null).Properties.IsRightButtonPressed)
+            {
+                if (peekType != null && peekEid != null)
+                    WeakReferenceMessenger.Default.Send(new PeekEntityMessage(peekType, peekEid, null));
+                return;
+            }
+            nav();
+        };
+        return item;
+    }
+
+    public TreeViewItem NavLeafWithPeek(string text, Type targetType, string targetEntityId, IBrush? fg = null)
+    {
+        var item = Leaf(text, fg);
+        item.Cursor = new Cursor(StandardCursorType.Hand);
+        item.PointerPressed += (_, e) =>
+        {
+            if ((e.KeyModifiers & KeyModifiers.Control) == 0) return;
+            e.Handled = true;
+            if (e.GetCurrentPoint(null).Properties.IsRightButtonPressed)
+                WeakReferenceMessenger.Default.Send(new PeekEntityMessage(targetType, targetEntityId, null));
+            else
+                _router.NavigateToEntity(targetType, targetEntityId);
+        };
+        return item;
+    }
+
+    public TreeViewItem RefNode<T>(string raw, string? separator, string? pattern, string? targetKey,
+        string label, IBrush fg) where T : IEntity
+    {
+        var node = Section(label, fg);
+        if (string.IsNullOrWhiteSpace(raw))
+        {
+            node.Items.Add(Leaf("(None)", Brushes.Gray));
+            return node;
+        }
+
+        if (!(_dataTable.ReferenceLookups.TryGetValue(typeof(T), out var list) || list is null))
+        {
+            node.Items.Add(Leaf(raw, Brushes.Gray));
+            return node;
+        }
+
+        var parts = separator is not null ? raw.Split(separator) : [raw];
+        foreach (var seg in parts)
+        {
+            var s = seg.Trim();
+            if (string.IsNullOrEmpty(s)) continue;
+            var idStr = ReferenceParser.ExtractRawId(s, pattern);
+            var match = _dataTable.FindBestMatch(typeof(T), idStr, targetKey);
+            var display = match?.Subject ?? idStr;
+            var extra = ReferencePattern.FromName(pattern).FormatExtraInfo(s);
+            if (!string.IsNullOrEmpty(extra)) display += $" ({extra})";
+            var leaf = match is not null
+                ? NavLeaf(display, () => _router.NavigateToEntity(typeof(T), match.EntityId, match), fg,
+                    typeof(T), match.EntityId)
+                : Leaf(display, Brushes.Gray);
+            node.Items.Add(leaf);
+        }
+
+        return node;
+    }
+
+    public Bitmap? LoadImage(string? imageName)
+    {
+        if (string.IsNullOrWhiteSpace(imageName)) return null;
+        var name = StripNs(imageName.Trim());
+        var candidates = name.Contains('.') ? new[] { name } : new[] { name + ".png", name };
+        string? path = null;
+        foreach (var c in candidates)
+        {
+            path = _findImage(c);
+            if (path is not null) break;
+        }
+
+        if (path is null) return null;
+        try { return new Bitmap(path); }
+        catch { return null; }
+    }
+
+    public static string StripNs(string name)
+    {
+        var c = name.IndexOf(':');
+        return c > 0 ? name[(c + 1)..] : name;
+    }
+
+    public StackPanel OverviewHeader(IEntity entity, Bitmap? thumb = null, string? subtitle = null)
+    {
+        var sp = new StackPanel { Spacing = 4, Margin = new Thickness(8) };
+        var header = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8 };
+
+        if (thumb is not null)
+            header.Children.Add(new Image { Source = thumb, MaxWidth = 48, MaxHeight = 48, Stretch = Stretch.Uniform });
+
+        var textCol = new StackPanel { Spacing = 2 };
+        var titleRow = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 6 };
+        titleRow.Children.Add(new TextBlock
+        {
+            Text = entity.Subject ?? $"[{entity.GetType().Name}]", FontSize = 14, FontWeight = FontWeight.Bold,
+            TextWrapping = TextWrapping.Wrap
+        });
+        textCol.Children.Add(titleRow);
+
+        var idRow = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 4 };
+        var modName = _dataTable.EntityModNames.TryGetValue(entity.EntityId, out var mn)
+            ? mn : $"mod_{entity.ModId}";
+        idRow.Children.Add(new Border
+        {
+            CornerRadius = new CornerRadius(3),
+            Background = Brush.Parse("#20000000"),
+            Padding = new Thickness(5, 1),
+            Child = new TextBlock { Text = $"{entity.ModId}:{modName}", FontSize = 9, Foreground = Brush.Parse("#888") }
+        });
+        var mergedId = _dataTable.EntityMergedIds.TryGetValue(entity.EntityId, out var mid) ? mid : 0;
+        idRow.Children.Add(new Border
+        {
+            CornerRadius = new CornerRadius(3), Background = Brush.Parse("#E65100"), Padding = new Thickness(4, 1),
+            Child = new TextBlock { Text = $"mid={mergedId}", FontSize = 8, Foreground = Brushes.White }
+        });
+        var pkProp = EntityHelper.ResolveKeyProperty(entity.GetType());
+        var pkVal = pkProp?.GetValue(entity) is int pk ? pk : -1;
+        idRow.Children.Add(new Border
+        {
+            CornerRadius = new CornerRadius(3), Background = Brush.Parse("#6A1B9A"), Padding = new Thickness(4, 1),
+            Child = new TextBlock { Text = $"pk={pkVal}", FontSize = 8, Foreground = Brushes.White }
+        });
+        var eidShort = entity.EntityId.Length > 10 ? entity.EntityId[..10] + "…" : entity.EntityId;
+        idRow.Children.Add(new Border
+        {
+            CornerRadius = new CornerRadius(3), Background = Brush.Parse("#37474F"), Padding = new Thickness(4, 1),
+            Child = new TextBlock { Text = eidShort, FontSize = 8, Foreground = Brushes.White }
+        });
+        textCol.Children.Add(idRow);
+        if (subtitle is not null)
+            textCol.Children.Add(new TextBlock
+                { Text = subtitle, FontSize = 10, Foreground = Brushes.Gray, TextWrapping = TextWrapping.Wrap });
+        header.Children.Add(textCol);
+        sp.Children.Add(header);
+        return sp;
+    }
+
+    public TextBox Kv(string key, string value, int keyWidth = 90)
+    {
+        var tb = EditorUIFactory.SelectableText($"{key}: {value}", fontSize: 11);
+        tb.Margin = new Thickness(0, 1);
+        return tb;
+    }
+
+    public ScrollViewer Wrap(Control content)
+        => new() { Content = content, HorizontalScrollBarVisibility = ScrollBarVisibility.Auto };
+
+    public Border Card(Control content, string? title = null)
+    {
+        var child = content;
+        if (title is not null)
+        {
+            var sp = new StackPanel { Spacing = 4 };
+            sp.Children.Add(new TextBlock
+            {
+                Text = title, FontSize = 11, FontWeight = FontWeight.SemiBold,
+                Foreground = Brush.Parse("#888888"), Margin = new Thickness(0, 0, 0, 6)
+            });
+            sp.Children.Add(content);
+            child = sp;
+        }
+        return new Border
+        {
+            CornerRadius = new CornerRadius(8),
+            Background = Brush.Parse("#08000000"),
+            BorderBrush = Brush.Parse("#18000000"),
+            BorderThickness = new Thickness(1),
+            Padding = new Thickness(14),
+            Child = child
+        };
+    }
+
+    public TextBlock SectionLabel(string text) => new()
+    {
+        Text = text, FontSize = 11, FontWeight = FontWeight.SemiBold,
+        Foreground = Brush.Parse("#888888"), Margin = new Thickness(0, 0, 0, 8)
+    };
+
+    public Border Separator() => new()
+    {
+        Height = 1, Background = Brush.Parse("#18000000"), Margin = new Thickness(4, 2)
+    };
+
+    public Border MiniBadge(string text, string bg, string fg, Action? onClick = null)
+    {
+        var tb = new TextBlock
+            { Text = text, FontSize = 10, Foreground = Brush.Parse(fg), Padding = new Thickness(7, 2) };
+        var badge = new Border { CornerRadius = new CornerRadius(9), Background = Brush.Parse(bg), Child = tb };
+        if (onClick is not null)
+        {
+            badge.Cursor = new Cursor(StandardCursorType.Hand);
+            badge.PointerPressed += (_, e) =>
+            {
+                if ((e.KeyModifiers & KeyModifiers.Control) != 0) onClick();
+            };
+        }
+        return badge;
+    }
+
+    public Control BuildRawDataTable(IEntity entity)
+    {
+        var entityType = entity.GetType();
+        var props = entityType.GetProperties(BindingFlags.Public | BindingFlags.Instance)
+            .Where(p => p.GetCustomAttribute<System.ComponentModel.DataAnnotations.Schema.ColumnAttribute>() != null
+                        && p.DeclaringType != typeof(IEntity))
+            .OrderBy(p => p.MetadataToken)
+            .ToList();
+
+        var grid = new Grid
+        {
+            ColumnDefinitions =
+            {
+                new(130, GridUnitType.Pixel),
+                new(1, GridUnitType.Star)
+            }
+        };
+
+        int row = 0;
+        foreach (var p in props)
+        {
+            grid.RowDefinitions.Add(new(GridLength.Auto));
+
+            var val = p.GetValue(entity);
+            var colName = p.GetCustomAttribute<System.ComponentModel.DataAnnotations.Schema.ColumnAttribute>()?.Name ?? p.Name;
+            var refAttr = p.GetCustomAttribute<ReferenceFieldAttribute>();
+            var strVal = val is bool b ? (b ? "1" : "0") : val?.ToString() ?? "";
+
+            var isRef = refAttr is not null && !string.IsNullOrWhiteSpace(strVal);
+            var display = strVal.Length > 100 ? strVal[..100] + "..." : strVal;
+            if (string.IsNullOrWhiteSpace(strVal)) display = "(empty)";
+
+            var keyTb = EditorUIFactory.SelectableText(colName, fontSize: 10, foreground: Brush.Parse("#888888"));
+            keyTb.Margin = new Thickness(4, 2, 8, 2);
+            keyTb.VerticalAlignment = VerticalAlignment.Top;
+            Grid.SetRow(keyTb, row);
+            Grid.SetColumn(keyTb, 0);
+            grid.Children.Add(keyTb);
+
+            var valTb = EditorUIFactory.SelectableText(display, fontSize: 10,
+                foreground: isRef ? Brush.Parse("#00796B") :
+                    string.IsNullOrWhiteSpace(strVal) ? Brush.Parse("#CCC") : Brush.Parse("#333"),
+                fontWeight: isRef ? FontWeight.Medium : FontWeight.Normal);
+            valTb.Margin = new Thickness(0, 2, 4, 2);
+            valTb.VerticalAlignment = VerticalAlignment.Top;
+            Grid.SetRow(valTb, row);
+            Grid.SetColumn(valTb, 1);
+            grid.Children.Add(valTb);
+
+            row++;
+        }
+
+        return grid;
+    }
+
+    public Control StatBar(string label, string valueText, double fillRatio, string colorHex)
+    {
+        fillRatio = Math.Clamp(fillRatio, 0.05, 1.0);
+        var grid = new Grid { MinHeight = 26 };
+        grid.ColumnDefinitions.Add(new(80, GridUnitType.Pixel));
+        grid.ColumnDefinitions.Add(new(2, GridUnitType.Star));
+        grid.ColumnDefinitions.Add(new(3, GridUnitType.Star));
+
+        var labelTb = new TextBlock
+        {
+            Text = label, FontSize = 11, Foreground = Brush.Parse("#999"),
+            VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(4, 0, 8, 0),
+            HorizontalAlignment = HorizontalAlignment.Right
+        };
+        Grid.SetColumn(labelTb, 0);
+        grid.Children.Add(labelTb);
+
+        var fillStar = Math.Max((int)(fillRatio * 100), 6);
+        var emptyStar = Math.Max(100 - fillStar, 0);
+        grid.ColumnDefinitions[1] = new(fillStar, GridUnitType.Star);
+        grid.ColumnDefinitions[2] = new(emptyStar, GridUnitType.Star);
+
+        var fill = new Border
+        {
+            CornerRadius = new CornerRadius(5),
+            Background = Brush.Parse(colorHex),
+            Margin = new Thickness(0, 1)
+        };
+        Grid.SetColumn(fill, 1);
+        grid.Children.Add(fill);
+
+        var textOverlay = new TextBlock
+        {
+            Text = valueText, FontSize = 10, Foreground = Brushes.White,
+            VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(8, 0),
+            Background = Brushes.Transparent
+        };
+        Grid.SetColumn(textOverlay, 1);
+        Grid.SetColumnSpan(textOverlay, 2);
+        grid.Children.Add(textOverlay);
+        return grid;
+    }
+
+    public Control CenteredStatBar(string label, string valueText, double value, double maxAbs,
+        string? posColor = null, string? negColor = null)
+    {
+        posColor ??= "#2E7D32";
+        negColor ??= "#C62828";
+        var absRatio = Math.Clamp(Math.Abs(value) / Math.Max(maxAbs, 0.01), 0.08, 1.0);
+        var isNeg = value < 0;
+
+        var grid = new Grid { Height = 26 };
+        grid.ColumnDefinitions.Add(new(80, GridUnitType.Pixel));
+        grid.ColumnDefinitions.Add(new(56, GridUnitType.Pixel));
+        grid.ColumnDefinitions.Add(new(1, GridUnitType.Star));
+        grid.ColumnDefinitions.Add(new(3, GridUnitType.Pixel));
+        grid.ColumnDefinitions.Add(new(1, GridUnitType.Star));
+
+        var labelTb = new TextBlock
+        {
+            Text = label, FontSize = 11, Foreground = Brush.Parse("#999"),
+            VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(4, 0, 4, 0),
+            HorizontalAlignment = HorizontalAlignment.Right
+        };
+        Grid.SetColumn(labelTb, 0);
+        grid.Children.Add(labelTb);
+
+        var valTb = new TextBlock
+        {
+            Text = valueText, FontSize = 10, FontWeight = FontWeight.Medium,
+            Foreground = Brush.Parse(isNeg ? negColor : value > 0 ? posColor : "#999"),
+            VerticalAlignment = VerticalAlignment.Center,
+            HorizontalAlignment = HorizontalAlignment.Right, Margin = new Thickness(0, 0, 4, 0)
+        };
+        Grid.SetColumn(valTb, 1);
+        grid.Children.Add(valTb);
+
+        var center = new Border { Background = Brush.Parse("#20000000"), Margin = new Thickness(0, 4) };
+        Grid.SetColumn(center, 3);
+        grid.Children.Add(center);
+
+        if (isNeg)
+        {
+            var fill = new Border
+            {
+                CornerRadius = new CornerRadius(4, 0, 0, 4),
+                Background = Brush.Parse(negColor),
+                Margin = new Thickness(0, 1, 0, 1),
+                HorizontalAlignment = HorizontalAlignment.Right,
+                Width = absRatio * 160, MaxWidth = 160
+            };
+            Grid.SetColumn(fill, 2);
+            grid.Children.Add(fill);
+        }
+        else if (value > 0)
+        {
+            var fill = new Border
+            {
+                CornerRadius = new CornerRadius(0, 4, 4, 0),
+                Background = Brush.Parse(posColor),
+                Margin = new Thickness(0, 1, 0, 1),
+                HorizontalAlignment = HorizontalAlignment.Left,
+                Width = absRatio * 160, MaxWidth = 160
+            };
+            Grid.SetColumn(fill, 4);
+            grid.Children.Add(fill);
+        }
+
+        return grid;
+    }
+
+    public Control CreatureStatGrid(List<(string label, string value, string? color)> cells, int cols = 2)
+    {
+        var grid = new Grid { Margin = new Thickness(4, 0) };
+        for (int c = 0; c < cols; c++) grid.ColumnDefinitions.Add(new(1, GridUnitType.Star));
+        int rows = (cells.Count + cols - 1) / cols;
+        for (int r = 0; r < rows; r++) grid.RowDefinitions.Add(new(GridLength.Auto));
+        for (int i = 0; i < cells.Count; i++)
+        {
+            int r = i / cols, c = i % cols;
+            var (label, value, color) = cells[i];
+            var cell = new StackPanel { Margin = new Thickness(4, 3) };
+            cell.Children.Add(new TextBlock { Text = label, FontSize = 9, Foreground = Brush.Parse("#999") });
+            cell.Children.Add(new TextBlock
+            {
+                Text = value, FontSize = 13, FontWeight = FontWeight.SemiBold,
+                Foreground = color is not null ? Brush.Parse(color) : Brush.Parse("#333")
+            });
+            Grid.SetRow(cell, r);
+            Grid.SetColumn(cell, c);
+            grid.Children.Add(cell);
+        }
+        return Card(grid);
+    }
+
+    public Control BuildReverseRefsPanel(string entityId)
+    {
+        var store = _dataTable.BrowserStore ?? _dataTable.ActiveMergeStore;
+        if (store == null) return new StackPanel();
+        var rawRefs = store.IndexService?.ReverseLookup(entityId) ?? [];
+        if (rawRefs.Count == 0) return new StackPanel();
+
+        var sp = new StackPanel();
+        var loadingTb = SectionLabel($"{Loc("Vis.ReferencedBy")} … ({rawRefs.Count} refs)");
+        sp.Children.Add(loadingTb);
+
+        var eidMap = new Dictionary<string, (Type SrcType, string SrcSubject)>();
+        foreach (var (t, entities) in store.ReferenceLookups)
+            foreach (var e in entities)
+                if (e is IEntity ie)
+                    eidMap[ie.EntityId] = (t, ie.Subject ?? "");
+
+        var capturedRawRefs = rawRefs;
+        Task.Run(() =>
+        {
+            var resolved = new List<(Type SrcType, string SrcSubject, string SrcEid, string PropName)>();
+            foreach (var (srcEid, propName, _) in capturedRawRefs)
+                if (eidMap.TryGetValue(srcEid, out var info))
+                    resolved.Add((info.SrcType, info.SrcSubject, srcEid, propName));
+
+            if (resolved.Count == 0) return;
+            var byType = resolved.GroupBy(r => r.SrcType).OrderByDescending(g => g.Count()).ToList();
+
+            Dispatcher.UIThread.Post(() =>
+            {
+                sp.Children.Clear();
+                var typeLabels = byType.Select(g => $"{g.Count()} {g.Key.Name}").ToList();
+                sp.Children.Add(SectionLabel($"{Loc("Vis.ReferencedBy")} ({string.Join(", ", typeLabels)})"));
+
+                var tabControl = new TabControl { Margin = new Thickness(0, 4, 0, 0) };
+                foreach (var g in byType)
+                {
+                    var tabItem = new TabItem
+                    {
+                        Header = $"{g.Key.Name} ({g.Count()})",
+                        Content = BuildRefList(g.ToList())
+                    };
+                    tabControl.Items.Add(tabItem);
+                }
+                if (tabControl.Items.Count > 0)
+                    tabControl.SelectedIndex = 0;
+                sp.Children.Add(tabControl);
+            });
+        });
+
+        return sp;
+    }
+
+    private Control BuildRefList(IReadOnlyList<(Type SrcType, string SrcSubject, string SrcEid, string PropName)> items)
+    {
+        const int pageSize = 15;
+        int totalPages = (items.Count + pageSize - 1) / pageSize;
+        int currentPage = 0;
+
+        var container = new StackPanel();
+        var list = new StackPanel { Spacing = 3 };
+
+        void RefreshPage()
+        {
+            list.Children.Clear();
+            var page = items.Skip(currentPage * pageSize).Take(pageSize).ToList();
+            foreach (var (srcType, srcSubject, srcEid, propName) in page)
+            {
+                var tc = srcType == typeof(Creature) ? ("#E8EAF6", "#283593")
+                    : srcType == typeof(ItemType) ? ("#E3F2FD", "#1565C0")
+                    : srcType == typeof(Recipe) ? ("#F3E5F5", "#6A1B9A")
+                    : srcType == typeof(Condition) ? ("#FCE4EC", "#C62828")
+                    : ("#F5F5F5", "#666");
+                var row = new Border
+                {
+                    CornerRadius = new CornerRadius(4),
+                    Background = Brush.Parse("#0D000000"),
+                    Padding = new Thickness(8, 3),
+                    Cursor = new Cursor(StandardCursorType.Hand),
+                    Child = new StackPanel
+                    {
+                        Orientation = Orientation.Horizontal, Spacing = 6,
+                        Children =
+                        {
+                            new Border
+                            {
+                                CornerRadius = new CornerRadius(3), Background = Brush.Parse(tc.Item1),
+                                Padding = new Thickness(5, 1),
+                                Child = new TextBlock { Text = srcType.Name, FontSize = 9, Foreground = Brush.Parse(tc.Item2) }
+                            },
+                            new TextBlock { Text = srcSubject, FontSize = 11, Foreground = Brush.Parse("#333"), VerticalAlignment = VerticalAlignment.Center },
+                            new TextBlock { Text = $"({propName})", FontSize = 9, Foreground = Brush.Parse("#999"), VerticalAlignment = VerticalAlignment.Center }
+                        }
+                    }
+                };
+                var ct = srcType;
+                var ci = srcEid;
+                row.PointerPressed += (_, e) =>
+                {
+                    if ((e.KeyModifiers & KeyModifiers.Control) == 0) return;
+                    if (e.GetCurrentPoint(null).Properties.IsRightButtonPressed)
+                        _router.RequestPeek(ct, ci, null);
+                    else
+                        _router.NavigateToEntity(ct, ci);
+                };
+                list.Children.Add(row);
+            }
+        }
+
+        RefreshPage();
+        container.Children.Add(Card(list));
+
+        if (totalPages > 1)
+        {
+            var pager = new StackPanel
+            {
+                Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Center,
+                Spacing = 8, Margin = new Thickness(0, 8, 0, 0)
+            };
+            var prevBtn = new Button
+            {
+                Content = "←", FontSize = 12, Padding = new Thickness(8, 4),
+                Background = Brush.Parse("#0D000000"), BorderThickness = new Thickness(1),
+                BorderBrush = Brush.Parse("#18000000"), Cursor = new Cursor(StandardCursorType.Hand)
+            };
+            var pageLabel = new TextBlock
+            {
+                Text = $"{Loc("Vis.Page")} 1 / {totalPages}", FontSize = 11,
+                Foreground = Brush.Parse("#666"), VerticalAlignment = VerticalAlignment.Center
+            };
+            var nextBtn = new Button
+            {
+                Content = "→", FontSize = 12, Padding = new Thickness(8, 4),
+                Background = Brush.Parse("#0D000000"), BorderThickness = new Thickness(1),
+                BorderBrush = Brush.Parse("#18000000"), Cursor = new Cursor(StandardCursorType.Hand)
+            };
+            prevBtn.IsEnabled = false;
+            prevBtn.Click += (_, _) =>
+            {
+                if (currentPage > 0)
+                {
+                    currentPage--;
+                    RefreshPage();
+                    pageLabel.Text = $"{Loc("Vis.Page")} {currentPage + 1} / {totalPages}";
+                    prevBtn.IsEnabled = currentPage > 0;
+                    nextBtn.IsEnabled = true;
+                }
+            };
+            nextBtn.Click += (_, _) =>
+            {
+                if (currentPage < totalPages - 1)
+                {
+                    currentPage++;
+                    RefreshPage();
+                    pageLabel.Text = $"{Loc("Vis.Page")} {currentPage + 1} / {totalPages}";
+                    nextBtn.IsEnabled = currentPage < totalPages - 1;
+                    prevBtn.IsEnabled = true;
+                }
+            };
+            pager.Children.Add(prevBtn);
+            pager.Children.Add(pageLabel);
+            pager.Children.Add(nextBtn);
+            container.Children.Add(pager);
+        }
+
+        return container;
+    }
+
+    public Control BuildExpander(string label, Border body)
+    {
+        var arrow = new TextBlock
+        {
+            Text = "▶", FontSize = 10, Foreground = Brush.Parse("#999"), VerticalAlignment = VerticalAlignment.Center
+        };
+        var labelTb = new TextBlock
+        {
+            Text = label, FontSize = 12, FontWeight = FontWeight.SemiBold, Foreground = Brush.Parse("#888"),
+            VerticalAlignment = VerticalAlignment.Center
+        };
+        var expanded = false;
+        var header = new Border
+        {
+            CornerRadius = new CornerRadius(6),
+            Background = Brush.Parse("#06000000"),
+            Padding = new Thickness(12, 6),
+            Cursor = new Cursor(StandardCursorType.Hand),
+            Child = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8, Children = { arrow, labelTb } }
+        };
+        header.PointerPressed += (_, _) =>
+        {
+            expanded = !expanded;
+            arrow.Text = expanded ? "▼" : "▶";
+            body.IsVisible = expanded;
+        };
+        return header;
+    }
+
+    public void OpenZoomableImage(Bitmap? bitmap, string? title = null)
+    {
+        if (bitmap is null) return;
+        var zoomView = new ZoomableImageView { Source = bitmap, Width = 600, Height = 480 };
+        var headerBorder = new Border
+        {
+            Background = Brush.Parse("#06000000"),
+            Padding = new Thickness(16, 10),
+            Child = new StackPanel
+            {
+                Orientation = Orientation.Horizontal, Spacing = 8, Children =
+                {
+                    new TextBlock { Text = title ?? "Image Preview", FontSize = 13, FontWeight = FontWeight.SemiBold, Foreground = Brush.Parse("#555"), VerticalAlignment = VerticalAlignment.Center },
+                    new Button { Content = "✕", FontSize = 14, Padding = new Thickness(8, 2), Background = Brushes.Transparent, BorderThickness = new Thickness(0), Foreground = Brush.Parse("#999"), HorizontalAlignment = HorizontalAlignment.Right, Cursor = new Cursor(StandardCursorType.Hand) }
+                }
+            }
+        };
+        DockPanel.SetDock(headerBorder, Avalonia.Controls.Dock.Top);
+        var closeBtn = (Button)((StackPanel)headerBorder.Child).Children[1];
+        var popup = new Popup
+        {
+            PlacementTarget = null,
+            Placement = PlacementMode.Center,
+            Child = new Border
+            {
+                Width = 640, Height = 520, CornerRadius = new CornerRadius(12),
+                Background = Brush.Parse("#F8F8F8"), BorderBrush = Brush.Parse("#20000000"),
+                BorderThickness = new Thickness(1), ClipToBounds = true,
+                Child = new DockPanel
+                {
+                    Children = { headerBorder, new Border { Child = zoomView, Margin = new Thickness(8, 0, 8, 8) } }
+                }
+            },
+            IsOpen = true
+        };
+        closeBtn.Click += (_, _) => popup.IsOpen = false;
+    }
+
+    public TextBlock OvSectionLabel(string text) => new()
+    {
+        Text = text, FontSize = 10, FontWeight = FontWeight.SemiBold,
+        Foreground = Brush.Parse("#888888"), Margin = new Thickness(0, 0, 0, 4)
+    };
+
+    public void AddModBadge(IEntity entity, StackPanel row)
+    {
+        var modName = _dataTable.EntityModNames.TryGetValue(entity.EntityId, out var mn) ? mn : $"mod_{entity.ModId}";
+        row.Children.Add(new Border
+        {
+            CornerRadius = new CornerRadius(3),
+            Background = Brush.Parse(entity.ModId >= 10000 ? "#1B5E20" : "#1565C0"),
+            Padding = new Thickness(6, 2),
+            Child = new TextBlock { Text = $"{entity.ModId}:{modName}", FontSize = 10, Foreground = Brushes.White }
+        });
+        var mergedId = _dataTable.EntityMergedIds.TryGetValue(entity.EntityId, out var mid) ? mid : 0;
+        row.Children.Add(new Border
+        {
+            CornerRadius = new CornerRadius(3),
+            Background = Brush.Parse("#E65100"),
+            Padding = new Thickness(5, 2),
+            Child = new TextBlock { Text = $"mid={mergedId}", FontSize = 10, Foreground = Brushes.White }
+        });
+        var pkProp = EntityHelper.ResolveKeyProperty(entity.GetType());
+        var pkVal = pkProp?.GetValue(entity) is int pk ? pk : -1;
+        row.Children.Add(new Border
+        {
+            CornerRadius = new CornerRadius(3),
+            Background = Brush.Parse("#6A1B9A"),
+            Padding = new Thickness(5, 2),
+            Child = new TextBlock { Text = $"pk={pkVal}", FontSize = 10, Foreground = Brushes.White }
+        });
+        row.Children.Add(new Border
+        {
+            CornerRadius = new CornerRadius(3),
+            Background = Brush.Parse("#37474F"),
+            Padding = new Thickness(5, 2),
+            Child = new TextBlock { Text = entity.EntityId.Length > 10 ? entity.EntityId[..10] : entity.EntityId, FontSize = 9, Foreground = Brushes.White }
+        });
+    }
+
+    public Control BuildStatCard(List<(string label, string value, string? color)> rows)
+    {
+        var grid = new Grid
+        {
+            ColumnDefinitions = { new(90, GridUnitType.Pixel), new(1, GridUnitType.Star) },
+            Margin = new Thickness(4, 0)
+        };
+        for (int i = 0; i < rows.Count; i++)
+        {
+            grid.RowDefinitions.Add(new(GridLength.Auto));
+            var (label, value, color) = rows[i];
+            var lbl = new TextBlock
+            {
+                Text = label, FontSize = 10, Foreground = Brush.Parse("#999"),
+                VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 1, 8, 1)
+            };
+            var val = new TextBlock
+            {
+                Text = value, FontSize = 10, FontWeight = FontWeight.Medium,
+                Foreground = color is not null ? Brush.Parse(color) : Brush.Parse("#333"),
+                VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 1)
+            };
+            Grid.SetRow(lbl, i); Grid.SetColumn(lbl, 0);
+            Grid.SetRow(val, i); Grid.SetColumn(val, 1);
+            grid.Children.Add(lbl);
+            grid.Children.Add(val);
+        }
+        return Card(grid);
+    }
+}

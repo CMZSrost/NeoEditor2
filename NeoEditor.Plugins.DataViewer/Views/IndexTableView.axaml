@@ -1,0 +1,68 @@
+<UserControl
+    x:Class="NeoEditor.Plugins.DataViewer.Views.IndexTableView"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:dv="clr-namespace:NeoEditor.Plugins.DataViewer.ViewModels"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    x:DataType="dv:IndexTableViewModel"
+    mc:Ignorable="d">
+    <Design.DataContext>
+        <dv:IndexTableViewModel />
+    </Design.DataContext>
+    <DockPanel>
+        <Border DockPanel.Dock="Top" Padding="4,2" x:Name="HeaderBorder"
+                Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}">
+            <Grid ColumnDefinitions="*,Auto,Auto">
+                <TextBlock Grid.Column="0" Text="{Binding Label}" FontSize="11" FontWeight="SemiBold"
+                           VerticalAlignment="Center" />
+                <!-- R10: expired warning badge -->
+                <Border Grid.Column="1" Margin="6,0,4,0" Padding="4,1" CornerRadius="3"
+                        Background="#FFF3CD" IsVisible="{Binding IsExpired}">
+                    <TextBlock FontSize="9" Foreground="#856404" Text="expired" />
+                </Border>
+                <Button Grid.Column="2" Padding="6,2" FontSize="10"
+                        Content="Refresh"
+                        Command="{Binding RefreshCommand}" />
+            </Grid>
+        </Border>
+        <!-- Forward index: 6 columns (reference_index) -->
+        <DataGrid Name="ForwardGrid"
+                  ItemsSource="{Binding Rows}" AutoGenerateColumns="False"
+                  SelectionMode="Single" IsReadOnly="True"
+                  CanUserResizeColumns="True" GridLinesVisibility="Horizontal" FontSize="9"
+                  IsVisible="{Binding IsForward}">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="entity_type" Binding="{Binding EntityType}"
+                                    Width="100" CanUserResize="True" FontSize="9" />
+                <DataGridTextColumn Header="namespace" Binding="{Binding Namespace}"
+                                    Width="60" CanUserResize="True" FontSize="9" />
+                <DataGridTextColumn Header="pk" Binding="{Binding Pk}"
+                                    Width="60" CanUserResize="True" FontSize="9" />
+                <DataGridTextColumn Header="entity_id" Binding="{Binding EntityId}"
+                                    Width="150" CanUserResize="True" FontSize="9" />
+                <DataGridTextColumn Header="group_id" Binding="{Binding GroupId}"
+                                    Width="60" CanUserResize="True" FontSize="9" />
+                <DataGridTextColumn Header="subgroup_id" Binding="{Binding SubgroupId}"
+                                    Width="70" CanUserResize="True" FontSize="9" />
+            </DataGrid.Columns>
+        </DataGrid>
+        <!-- Reverse index: 4 columns (reference_reverse) -->
+        <DataGrid Name="ReverseGrid"
+                  ItemsSource="{Binding Rows}" AutoGenerateColumns="False"
+                  SelectionMode="Single" IsReadOnly="True"
+                  CanUserResizeColumns="True" GridLinesVisibility="Horizontal" FontSize="9"
+                  IsVisible="{Binding IsForward, Converter={x:Static BoolConverters.Not}}">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="target_entity_id" Binding="{Binding TargetEntityId}"
+                                    Width="150" CanUserResize="True" FontSize="9" />
+                <DataGridTextColumn Header="source_entity_id" Binding="{Binding SourceEntityId}"
+                                    Width="150" CanUserResize="True" FontSize="9" />
+                <DataGridTextColumn Header="property_name" Binding="{Binding PropertyName}"
+                                    Width="120" CanUserResize="True" FontSize="9" />
+                <DataGridTextColumn Header="raw_id" Binding="{Binding RawId}"
+                                    Width="100" CanUserResize="True" FontSize="9" />
+            </DataGrid.Columns>
+        </DataGrid>
+    </DockPanel>
+</UserControl>

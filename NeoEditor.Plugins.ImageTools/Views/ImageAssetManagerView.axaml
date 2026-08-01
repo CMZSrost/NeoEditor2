@@ -1,0 +1,125 @@
+<UserControl
+    x:Class="NeoEditor.Plugins.ImageTools.Views.ImageAssetManagerView"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:vm="clr-namespace:NeoEditor.Plugins.ImageTools.ViewModels"
+    x:DataType="vm:ImageAssetManagerViewModel">
+    <Border Padding="4">
+        <Grid ColumnDefinitions="*,4,Auto" RowDefinitions="Auto,*,Auto">
+            <!--  Toolbar row  -->
+            <StackPanel
+                Grid.Row="0"
+                Grid.ColumnSpan="3"
+                Margin="0,0,0,4"
+                Orientation="Horizontal"
+                Spacing="6">
+                <TextBlock
+                    VerticalAlignment="Center"
+                    FontSize="11"
+                    FontWeight="SemiBold"
+                    Text="Image Browser" />
+                <TextBox
+                    Grid.Column="1"
+                    Width="120"
+                    FontSize="10"
+                    PlaceholderText="Search..."
+                    Text="{Binding SearchText}" />
+                <Button
+                    Padding="4,2"
+                    Command="{Binding RefreshCommand}"
+                    Content="&#x21BB;"
+                    FontSize="12"
+                    ToolTip.Tip="Refresh image list" />
+            </StackPanel>
+
+            <!--  Tree view (left pane)  -->
+            <TreeView
+                x:Name="ImageTree"
+                Grid.Row="1"
+                Grid.Column="0"
+                ItemsSource="{Binding ModNodes}"
+                SelectedItem="{Binding SelectedNode}">
+                <TreeView.ItemTemplate>
+                    <TreeDataTemplate ItemsSource="{Binding Children}">
+                        <StackPanel Orientation="Horizontal" Spacing="4">
+                            <TextBlock
+                                FontSize="11"
+                                IsVisible="{Binding IsMod}"
+                                Text="&#x1F4C1;" />
+                            <TextBlock
+                                FontSize="11"
+                                IsVisible="{Binding IsImage}"
+                                Text="&#x1F5BC;" />
+                            <TextBlock
+                                VerticalAlignment="Center"
+                                FontSize="10"
+                                Text="{Binding Name}" />
+                        </StackPanel>
+                    </TreeDataTemplate>
+                </TreeView.ItemTemplate>
+            </TreeView>
+
+            <!--  Grid splitter  -->
+            <GridSplitter
+                Grid.Row="1"
+                Grid.Column="1"
+                Width="4"
+                Background="{DynamicResource SystemControlForegroundChromeDisabledLowBrush}" />
+
+            <!--  Preview pane (right)  -->
+            <Border
+                Grid.Row="1"
+                Grid.Column="2"
+                MinWidth="160"
+                Padding="6"
+                IsVisible="{Binding SelectedImage, Converter={x:Static ObjectConverters.IsNotNull}}">
+                <StackPanel Spacing="6">
+                    <TextBlock
+                        FontSize="11"
+                        FontWeight="SemiBold"
+                        Text="Preview" />
+                    <Image
+                        MaxWidth="128"
+                        MaxHeight="128"
+                        Source="{Binding SelectedImage.Thumbnail}"
+                        Stretch="Uniform" />
+                    <TextBlock
+                        FontSize="10"
+                        Text="{Binding SelectedImage.FileName}"
+                        TextWrapping="Wrap" />
+                    <TextBlock
+                        FontSize="9"
+                        Foreground="{DynamicResource SystemControlForegroundChromeDisabledLowBrush}"
+                        Text="{Binding SelectedImage.Dimensions}" />
+                    <Separator />
+                    <TextBlock
+                        FontSize="9"
+                        Foreground="{DynamicResource SystemControlForegroundChromeDisabledLowBrush}"
+                        Text="{Binding SelectedImage.ModName, StringFormat='Mod: {0}'}"
+                        TextWrapping="Wrap" />
+                    <TextBlock
+                        FontSize="9"
+                        Foreground="{DynamicResource SystemControlForegroundChromeDisabledLowBrush}"
+                        IsVisible="{Binding SelectedImage.X2Path, Converter={x:Static ObjectConverters.IsNotNull}}"
+                        Text="{Binding SelectedImage.X2Path, StringFormat='x2: {0}'}"
+                        TextWrapping="Wrap" />
+                    <Button
+                        Padding="8,3"
+                        Command="{Binding OpenImageCommand}"
+                        Content="Open"
+                        FontSize="10" />
+                </StackPanel>
+            </Border>
+
+            <!--  Footer row  -->
+            <TextBlock
+                Grid.Row="2"
+                Grid.Column="0"
+                Grid.ColumnSpan="3"
+                Margin="0,4,0,0"
+                FontSize="9"
+                Foreground="{DynamicResource SystemControlForegroundChromeDisabledLowBrush}"
+                Text="File-system view (R27). Declared order/pairing lives in Image Orchestration." />
+        </Grid>
+    </Border>
+</UserControl>

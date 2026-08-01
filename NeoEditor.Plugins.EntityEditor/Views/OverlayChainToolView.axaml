@@ -1,0 +1,77 @@
+<UserControl
+    x:Class="NeoEditor.Plugins.EntityEditor.Views.OverlayChainToolView"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:vm="clr-namespace:NeoEditor.Plugins.EntityEditor.ViewModels"
+    x:DataType="vm:OverlayChainToolContent">
+    <Border Padding="6,4">
+        <Grid RowDefinitions="Auto,*">
+            <!-- Header -->
+            <StackPanel Grid.Row="0" Spacing="2" Margin="0,0,0,6">
+                <TextBlock FontSize="12" FontWeight="SemiBold"
+                           Foreground="{DynamicResource SystemControlForegroundChromeDisabledLowBrush}"
+                           Text="{Binding Loc[OverlayChainTitle]}" />
+                <TextBlock FontSize="13" FontWeight="Bold"
+                           Text="{Binding EntitySubject}" TextWrapping="Wrap" />
+                <TextBlock FontSize="10"
+                           Foreground="{DynamicResource SystemControlForegroundChromeDisabledLowBrush}"
+                           Text="{Binding EntityType}" />
+            </StackPanel>
+
+            <ScrollViewer Grid.Row="1">
+                <StackPanel Spacing="6">
+                    <!-- Overridden entries (lower priority) -->
+                    <ItemsControl ItemsSource="{Binding Losers}"
+                                  IsVisible="{Binding HasLosers}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate DataType="vm:ChainEntryViewModel">
+                                <Border Padding="6,3" Margin="0,1" CornerRadius="3"
+                                        Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}">
+                                    <Grid ColumnDefinitions="Auto,*,Auto">
+                                        <TextBlock Grid.Column="0" FontSize="11" FontWeight="SemiBold"
+                                                   Text="{Binding ModName}" />
+                                        <TextBlock Grid.Column="1" Margin="6,0" FontSize="10"
+                                                   Foreground="{DynamicResource SystemControlForegroundChromeDisabledLowBrush}"
+                                                   Text="{Binding Subject}" />
+                                        <TextBlock Grid.Column="2" FontSize="9"
+                                                   Foreground="{DynamicResource SystemControlForegroundChromeDisabledLowBrush}"
+                                                   Text="{Binding Id, StringFormat='id={0}'}" />
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                    <!-- Winner (highest priority / current) -->
+                    <Border Padding="8,6" CornerRadius="4"
+                            Background="#1A4CAF50" BorderBrush="#4CAF50" BorderThickness="1"
+                            IsVisible="{Binding HasWinners}">
+                        <ItemsControl ItemsSource="{Binding Winners}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate DataType="vm:ChainEntryViewModel">
+                                    <Grid ColumnDefinitions="Auto,*,Auto">
+                                        <TextBlock Grid.Column="0" FontSize="12" FontWeight="Bold"
+                                                   Foreground="#4CAF50"
+                                                   Text="{Binding ModName}" />
+                                        <TextBlock Grid.Column="1" Margin="6,0" FontSize="11"
+                                                   Foreground="{DynamicResource SystemControlForegroundChromeDisabledLowBrush}"
+                                                   Text="{Binding Subject}" />
+                                        <TextBlock Grid.Column="2" FontSize="9"
+                                                   Foreground="{DynamicResource SystemControlForegroundChromeDisabledLowBrush}"
+                                                   Text="{Binding Id, StringFormat='id={0}'}" />
+                                    </Grid>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </Border>
+
+                    <!-- Empty state -->
+                    <TextBlock FontSize="11"
+                               Foreground="{DynamicResource SystemControlForegroundChromeDisabledLowBrush}"
+                               Text="{Binding Loc[OverlayChainEmpty]}" TextWrapping="Wrap"
+                               IsVisible="{Binding HasNoEntity}" />
+                </StackPanel>
+            </ScrollViewer>
+        </Grid>
+    </Border>
+</UserControl>

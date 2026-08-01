@@ -1,0 +1,115 @@
+<Window
+    x:Class="NeoEditor.Views.MainWindow"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:avalonia="clr-namespace:FluentIcons.Avalonia;assembly=FluentIcons.Avalonia"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:userControls="clr-namespace:NeoEditor.Views.UserControls"
+    xmlns:vm="using:NeoEditor.ViewModels"
+    x:Name="MainWindowApp"
+    Title="{Binding Loc[AppTitle]}"
+    d:DesignHeight="500"
+    d:DesignWidth="800"
+    x:DataType="vm:MainWindowViewModel"
+    ClosingBehavior="OwnerAndChildWindows"
+    Icon="/Assets/avalonia-logo.ico"
+    mc:Ignorable="d">
+    <Design.DataContext>
+        <vm:MainWindowViewModel />
+    </Design.DataContext>
+    <DockPanel>
+        <userControls:MainMenuBar DockPanel.Dock="Top" />
+        <userControls:MainStatusBar DockPanel.Dock="Bottom" />
+
+        <!-- Sidebar: navigation hub (5 buttons) -->
+        <Border
+            Padding="4,6"
+            Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}"
+            DockPanel.Dock="Left"
+            Width="48">
+            <StackPanel Spacing="2">
+                <!-- Group 1: Home -->
+                <Button
+                    Width="40" Height="36" Padding="4"
+                    Command="{Binding ElementName=MainWindowApp, Path=DataContext.DocumentWorkspace.CloseAllDocumentsCommand}"
+                    ToolTip.Tip="{Binding Loc[Home]}">
+                    <avalonia:SymbolIcon FontSize="18" Symbol="Home" />
+                </Button>
+
+                <Separator Margin="4,6" />
+
+                <!-- Group 2: Explorer + Workspace history (toggle SplitView) -->
+                <Button
+                    Width="40" Height="36" Padding="4"
+                    Command="{Binding SideBar.TogglePaneCommand}" CommandParameter="Explorer"
+                    ToolTip.Tip="{Binding Loc[FileExplorer]}">
+                    <avalonia:SymbolIcon FontSize="18" Symbol="Folder" />
+                </Button>
+                <Button
+                    Width="40" Height="36" Padding="4"
+                    Command="{Binding SideBar.TogglePaneCommand}" CommandParameter="Workspace"
+                    ToolTip.Tip="{Binding Loc[WorkspaceHistory]}">
+                    <avalonia:SymbolIcon FontSize="18" Symbol="History" />
+                </Button>
+                <Separator Margin="4,6" />
+
+                <!-- Group 3: Settings -->
+                <Button
+                    Width="40" Height="36" Padding="4"
+                    Command="{Binding ElementName=MainWindowApp, Path=DataContext.NavigateToSettingsCommand}"
+                    ToolTip.Tip="{Binding Loc[Settings]}">
+                    <avalonia:SymbolIcon FontSize="18" Symbol="Settings" />
+                </Button>
+            </StackPanel>
+        </Border>
+
+        <!-- Main content area -->
+        <Grid RowDefinitions="Auto,*">
+            <!-- Top toolbar bar (workspace page only) -->
+            <Border
+                Grid.Row="0"
+                Padding="8,4"
+                Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}"
+                BorderBrush="{DynamicResource SystemControlForegroundChromeDisabledLowBrush}"
+                BorderThickness="0,0,0,1"
+                IsVisible="{Binding ElementName=MainWindowApp, Path=DataContext.IsWorkspacePageVisible}">
+                <StackPanel Orientation="Horizontal" Spacing="4">
+                    <!-- D02 §5.0: top bar keeps only Save.
+                         New/Import Mod → Profile Tool (left dock).
+                         +Entity/Copy/-Entity → DataTable toolbar (Add/Copy/Delete). -->
+                    <Button Padding="8,4" FontSize="12" FontWeight="SemiBold"
+                            Content="💾 Save"
+                            Command="{Binding ElementName=MainWindowApp, Path=DataContext.DocumentWorkspace.SaveSessionCommand}" />
+                </StackPanel>
+            </Border>
+
+            <!-- Content with SplitView (workspace) + HomePage + SettingsPage -->
+            <SplitView
+                Grid.Row="1"
+                DisplayMode="Inline"
+                IsPaneOpen="{Binding SideBar.SideBarExpanded}"
+                OpenPaneLength="380">
+                <SplitView.Pane>
+                    <userControls:Pane DataContext="{Binding SideBar.CurrentPaneContent}" />
+                </SplitView.Pane>
+                <SplitView.Content>
+                    <Grid>
+                        <userControls:HomePage
+                            DataContext="{Binding ElementName=MainWindowApp, Path=DataContext.DocumentWorkspace.HomePage}"
+                            IsVisible="{Binding ElementName=MainWindowApp, Path=DataContext.IsHomePageVisible}" />
+                        <userControls:DocumentWorkspaceView
+                            IsVisible="{Binding ElementName=MainWindowApp, Path=DataContext.IsWorkspacePageVisible}"
+                            DataContext="{Binding ElementName=MainWindowApp, Path=DataContext.DocumentWorkspace}" />
+                        <userControls:SettingsPageView
+                            IsVisible="{Binding ElementName=MainWindowApp, Path=DataContext.IsSettingsPageVisible}"
+                            DataContext="{Binding ElementName=MainWindowApp, Path=DataContext.SettingsPage}" />
+                        <WindowNotificationManager
+                            Name="NotificationManager"
+                            Position="TopRight" />
+                    </Grid>
+                </SplitView.Content>
+            </SplitView>
+        </Grid>
+    </DockPanel>
+</Window>

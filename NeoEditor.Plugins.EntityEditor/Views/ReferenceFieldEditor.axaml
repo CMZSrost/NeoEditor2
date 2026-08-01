@@ -1,0 +1,61 @@
+<UserControl
+    x:Class="NeoEditor.Plugins.EntityEditor.Views.ReferenceFieldEditor"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
+    <UserControl.Styles>
+        <Style Selector="Border.RefBadge">
+            <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundChromeMediumBrush}" />
+            <Setter Property="CornerRadius" Value="4" />
+            <Setter Property="Padding" Value="6,2" />
+            <Setter Property="Margin" Value="0,0,4,2" />
+        </Style>
+        <Style Selector="TextBlock.RefBadgeSubject">
+            <Setter Property="FontSize" Value="10" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+        <Style Selector="TextBlock.RefBadgeId">
+            <Setter Property="FontSize" Value="8" />
+            <Setter Property="Foreground" Value="{DynamicResource SystemControlForegroundChromeDisabledLowBrush}" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Margin" Value="4,0,0,0" />
+        </Style>
+    </UserControl.Styles>
+
+    <Grid ColumnDefinitions="*,Auto,Auto" MinHeight="24">
+        <!-- Badge display -->
+        <WrapPanel Grid.Column="0" Name="BadgePanel" VerticalAlignment="Center">
+            <TextBlock Name="EmptyPlaceholder"
+                       Text="(empty)"
+                       FontSize="10"
+                       FontStyle="Italic"
+                       Foreground="{DynamicResource SystemControlForegroundChromeDisabledLowBrush}"
+                       IsVisible="True" />
+        </WrapPanel>
+
+        <!-- Edit button -->
+        <Button Grid.Column="1"
+                Name="EditButton"
+                Click="OnEditClick"
+                Padding="4" Margin="4,0,0,0"
+                ToolTip.Tip="Edit reference">
+            <Button.Content>
+                <TextBlock Text="✏️" FontSize="11" />
+            </Button.Content>
+        </Button>
+
+        <!-- Peek button -->
+        <Button Grid.Column="2"
+                Name="PeekButton"
+                Click="OnPeekClick"
+                Padding="4"
+                ToolTip.Tip="Peek at reference target">
+            <Button.Content>
+                <TextBlock Text="🔍" FontSize="11" />
+            </Button.Content>
+        </Button>
+    </Grid>
+</UserControl>

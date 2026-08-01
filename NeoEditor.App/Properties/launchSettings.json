@@ -1,0 +1,13 @@
+{
+  "profiles": {
+    "NeoEditor (watch)": {
+      "commandName": "Project",
+      "dotnetRunMessages": true,
+      "hotReloadEnabled": false,
+      "commandLineArgs": "",
+      "environmentVariables": {
+        "DOTNET_WATCH_RESTART_ON_RUDE_EDIT": "true"
+      }
+    }
+  }
+}

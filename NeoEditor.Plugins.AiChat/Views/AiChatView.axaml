@@ -1,0 +1,150 @@
+<UserControl
+    x:Class="NeoEditor.Plugins.AiChat.Views.AiChatView"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:vm="clr-namespace:NeoEditor.Plugins.AiChat.ViewModels;assembly=NeoEditor.Plugins.AiChat"
+    x:DataType="vm:AiChatViewModel">
+    <DockPanel Margin="8">
+        <!--  Header  -->
+        <StackPanel
+            Margin="0,0,0,8"
+            DockPanel.Dock="Top"
+            Orientation="Horizontal"
+            Spacing="8">
+            <TextBlock
+                VerticalAlignment="Center"
+                FontSize="16"
+                FontWeight="Bold"
+                Text="AI Chat" />
+            <Button
+                Command="{Binding ClearMessagesCommand}"
+                Content="Clear"
+                IsEnabled="{Binding IsBusy, Converter={x:Static BoolConverters.Not}}" />
+            <Button
+                Command="{Binding ToggleSystemPromptCommand}"
+                Content="System Prompt"
+                IsEnabled="{Binding IsBusy, Converter={x:Static BoolConverters.Not}}" />
+            <!--  RAG controls  -->
+            <Button
+                Command="{Binding BuildIndexCommand}"
+                Content="Build Index"
+                IsEnabled="{Binding CanBuildIndex}"
+                ToolTip.Tip="Build search index from all game entities for smarter AI responses" />
+            <TextBlock
+                VerticalAlignment="Center"
+                FontSize="11"
+                Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"
+                Text="{Binding RagStatus}" />
+        </StackPanel>
+
+        <!--  Not-configured notice (visible when no API key)  -->
+        <Border
+            Margin="0,0,0,8"
+            Padding="8"
+            BorderBrush="Orange"
+            BorderThickness="1"
+            CornerRadius="4"
+            DockPanel.Dock="Top"
+            IsVisible="{Binding IsAvailable, Converter={x:Static BoolConverters.Not}}">
+            <TextBlock
+                FontSize="11"
+                Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"
+                TextWrapping="Wrap"
+                Text="⚠️ AI Chat is not configured. Set an API Key in Settings → AI &amp; MCP, then restart the app." />
+        </Border>
+
+        <!--  System Prompt Panel (collapsible)  -->
+        <Border
+            Margin="0,0,0,8"
+            Padding="8"
+            BorderBrush="{DynamicResource SystemControlForegroundBaseMediumBrush}"
+            BorderThickness="1"
+            CornerRadius="4"
+            DockPanel.Dock="Top"
+            IsVisible="{Binding IsSystemPromptExpanded}">
+            <StackPanel Spacing="8">
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <TextBlock
+                        VerticalAlignment="Center"
+                        FontWeight="Bold"
+                        Text="System Prompt" />
+                    <Button
+                        Command="{Binding ApplySystemPromptCommand}"
+                        Content="Apply"
+                        IsEnabled="{Binding IsBusy, Converter={x:Static BoolConverters.Not}}" />
+                    <Button
+                        Command="{Binding ResetSystemPromptCommand}"
+                        Content="Reset to Default"
+                        IsEnabled="{Binding IsBusy, Converter={x:Static BoolConverters.Not}}" />
+                </StackPanel>
+                <TextBox
+                    MinHeight="100"
+                    MaxHeight="300"
+                    AcceptsReturn="True"
+                    FontFamily="Cascadia Code, Consolas, monospace"
+                    FontSize="11"
+                    IsEnabled="{Binding IsBusy, Converter={x:Static BoolConverters.Not}}"
+                    Text="{Binding SystemPrompt}"
+                    TextWrapping="Wrap" />
+            </StackPanel>
+        </Border>
+
+        <!--  Messages  -->
+        <ScrollViewer x:Name="MessageScroller" Margin="0,0,0,8">
+            <ItemsControl ItemsSource="{Binding Messages}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="vm:ChatMessageItem">
+                        <Border
+                            Margin="0,4"
+                            Padding="8"
+                            Background="{Binding IsUser, Converter={x:Static BoolConverters.Not}}"
+                            CornerRadius="6">
+                            <StackPanel>
+                                <StackPanel Orientation="Horizontal" Spacing="4">
+                                    <TextBlock
+                                        FontSize="11"
+                                        FontWeight="Bold"
+                                        Foreground="{Binding IsUser, Converter={x:Static BoolConverters.Not}}"
+                                        Text="{Binding Role}" />
+                                    <TextBlock
+                                        FontSize="11"
+                                        Foreground="Gray"
+                                        IsVisible="{Binding IsThinking}"
+                                        Text="..." />
+                                </StackPanel>
+                                <SelectableTextBlock
+                                    Margin="0,4,0,0"
+                                    Text="{Binding Content}"
+                                    TextWrapping="Wrap" />
+                            </StackPanel>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
+
+        <!--  Input  -->
+        <Border
+            Padding="4"
+            BorderBrush="{DynamicResource SystemControlForegroundBaseMediumBrush}"
+            BorderThickness="1"
+            CornerRadius="4"
+            DockPanel.Dock="Bottom">
+            <Grid ColumnDefinitions="*,Auto">
+                <TextBox
+                    Grid.Column="0"
+                    AcceptsReturn="False"
+                    IsEnabled="{Binding CanSend}"
+                    Text="{Binding InputText}"
+                    Watermark="Type a message..." />
+                <Button
+                    Grid.Column="1"
+                    Margin="8,0,0,0"
+                    Padding="16,4"
+                    Command="{Binding SendMessageCommand}"
+                    Content="Send"
+                    IsEnabled="{Binding CanSend}" />
+            </Grid>
+        </Border>
+    </DockPanel>
+</UserControl>

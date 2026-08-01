@@ -1,0 +1,70 @@
+<UserControl
+    x:Class="NeoEditor.Views.UserControls.ProfileToolView"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:vm="clr-namespace:NeoEditor.ViewModels.MainContent"
+    xmlns:userControls="clr-namespace:NeoEditor.Views.UserControls"
+    d:DesignHeight="420"
+    d:DesignWidth="280"
+    x:DataType="vm:ProfileToolViewModel"
+    mc:Ignorable="d">
+    <Design.DataContext>
+        <vm:ProfileToolViewModel />
+    </Design.DataContext>
+
+    <ScrollViewer>
+        <StackPanel Margin="10" Spacing="6">
+            <!--  Mod management  -->
+            <TextBlock
+                Margin="2,6,2,2"
+                FontSize="12"
+                FontWeight="Bold"
+                Text="Mod Management" />
+            <Button
+                Padding="8,4"
+                HorizontalAlignment="Stretch"
+                HorizontalContentAlignment="Left"
+                Command="{Binding NewModCommand}"
+                Content="New Mod" />
+            <Button
+                Padding="8,4"
+                HorizontalAlignment="Stretch"
+                HorizontalContentAlignment="Left"
+                Command="{Binding ImportModCommand}"
+                Content="Import Mod" />
+
+            <Separator Margin="0,8" />
+
+            <!--  Profile orchestration  -->
+            <TextBlock
+                Margin="2,6,2,2"
+                FontSize="12"
+                FontWeight="Bold"
+                Text="Profiles" />
+            <ComboBox
+                HorizontalAlignment="Stretch"
+                ItemsSource="{Binding Profiles}"
+                SelectedItem="{Binding SelectedProfile}">
+                <ComboBox.ItemTemplate>
+                    <DataTemplate>
+                        <TextBlock Text="{Binding Name}" />
+                    </DataTemplate>
+                </ComboBox.ItemTemplate>
+            </ComboBox>
+            <Button
+                Padding="8,4"
+                HorizontalAlignment="Stretch"
+                HorizontalContentAlignment="Left"
+                Command="{Binding EditProfileCommand}"
+                Content="Edit Profile" />
+            <Button
+                Padding="8,4"
+                HorizontalAlignment="Stretch"
+                HorizontalContentAlignment="Left"
+                Command="{Binding ReloadMergeViewCommand}"
+                Content="Reload Merge View" />
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <LangVersion>preview</LangVersion>
+        <RootNamespace>NeoEditor.Infra</RootNamespace>
+        <NoWarn>CS8618;CS9264</NoWarn>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\NeoEditor.Core\NeoEditor.Core.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
+        <PackageReference Include="EFCore.BulkExtensions.Sqlite" Version="10.0.1" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.3" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.3" />
+        <!--
+            NU1903 fix: Microsoft.Data.Sqlite (up to 10.0.10) pins SQLitePCLRaw.bundle_e_sqlite3 2.1.11,
+            which bundles SQLite < 3.50.2 (CVE-2025-6965 / GHSA-2m69-gcr7-jv3q, CVSS 9.8).
+            No 2.x patched build exists, so pin the 3.x fix line explicitly to override the transitive pin.
+        -->
+        <PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" Version="3.0.5" />
+        <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
+        <PackageReference Include="Serilog" Version="4.3.1" />
+    </ItemGroup>
+</Project>

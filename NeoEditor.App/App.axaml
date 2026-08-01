@@ -1,0 +1,139 @@
+<Application
+    x:Class="NeoEditor.App"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:avalonia="clr-namespace:FluentIcons.Avalonia;assembly=FluentIcons.Avalonia"
+    xmlns:avaloniaEdit="https://github.com/avaloniaui/avaloniaedit"
+    xmlns:conv="clr-namespace:NeoEditor.Helper.Converter"
+    xmlns:dvconv="clr-namespace:NeoEditor.Plugins.DataViewer.Converters;assembly=NeoEditor.Plugins.DataViewer"
+    xmlns:io="clr-namespace:System.IO;assembly=System.Runtime"
+    xmlns:local="using:NeoEditor"
+    xmlns:model="clr-namespace:NeoEditor.Data.Model;assembly=NeoEditor.Core"
+    xmlns:uiconv="clr-namespace:NeoEditor.Helper.Converter;assembly=NeoEditor.UI.Common"
+    xmlns:services="clr-namespace:NeoEditor.Services"
+    xmlns:sys="clr-namespace:System;assembly=System.Runtime"
+    xmlns:viewModels="clr-namespace:NeoEditor.ViewModels"
+    xmlns:views="clr-namespace:NeoEditor.Views"
+    RequestedThemeVariant="Default">
+
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceInclude Source="avares://LiveMarkdown.Avalonia/Defaults.axaml"/>
+            </ResourceDictionary.MergedDictionaries>
+            <uiconv:ModBaseBackgroundConverter x:Key="ModBaseBackgroundConverter" />
+            <conv:ModLoadTypeIconConverter x:Key="ModLoadTypeIconConverter" />
+            <dvconv:OverlayPanelConverter x:Key="OverlayPanelConverter" />
+            <conv:FileTypeIconConverter x:Key="FileTypeIconConverter" />
+            <sys:Double x:Key="AppFontSize">12</sys:Double>
+        </ResourceDictionary>
+    </Application.Resources>
+
+    <Application.DataTemplates>
+        <DataTemplate DataType="model:ProfileInfo">
+            <StackPanel Margin="4">
+                <Expander HorizontalAlignment="Stretch">
+                    <Expander.Header>
+                        <StackPanel>
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <TextBlock Text="{Binding Name}" />
+                                <TextBlock FontSize="11" Foreground="DarkOrange"
+                                           IsVisible="{Binding HasUnsavedEdits}"
+                                           Text="⚠ unsaved" />
+                            </StackPanel>
+                            <TextBlock
+                                FontSize="11"
+                                Text="{Binding Path}"
+                                TextWrapping="Wrap" />
+                        </StackPanel>
+                    </Expander.Header>
+                    <StackPanel>
+                        <TextBlock
+                            FontSize="11"
+                            Text="{Binding Description}"
+                            TextWrapping="Wrap" />
+                        <ListBox ItemsSource="{Binding ModLoadInfos}" />
+                    </StackPanel>
+                </Expander>
+            </StackPanel>
+        </DataTemplate>
+        <DataTemplate DataType="io:FileInfo">
+            <StackPanel Orientation="Horizontal" Spacing="4">
+                <avalonia:SymbolIcon IconVariant="Regular" Symbol="{Binding Name, Converter={StaticResource FileTypeIconConverter}}" />
+                <TextBlock Text="{Binding Name}" />
+            </StackPanel>
+        </DataTemplate>
+        <DataTemplate DataType="io:DirectoryInfo">
+            <StackPanel Orientation="Horizontal" Spacing="4">
+                <avalonia:SymbolIcon IconVariant="Regular" Symbol="Folder" />
+                <TextBlock Text="{Binding Name}" />
+            </StackPanel>
+        </DataTemplate>
+        <DataTemplate DataType="model:ModInfo">
+            <StackPanel Margin="4">
+                <Expander HorizontalAlignment="Stretch">
+                    <Expander.Header>
+                        <Grid ColumnDefinitions="Auto,*,Auto" RowDefinitions="Auto,*">
+                            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="6">
+                                <TextBlock
+                                    Background="{Binding IsBase, Converter={StaticResource ModBaseBackgroundConverter}}"
+                                    FontWeight="Bold"
+                                    Text="{Binding Name}" />
+                                <TextBlock FontSize="11" Foreground="DarkOrange"
+                                           IsVisible="{Binding HasUnsavedEdits}"
+                                           Text="⚠ unsaved" />
+                            </StackPanel>
+                            <TextBlock
+                                Grid.Row="1"
+                                Grid.Column="0"
+                                FontSize="11"
+                                Text="{Binding Path}"
+                                TextWrapping="Wrap" />
+                            <StackPanel
+                                Grid.Row="0"
+                                Grid.Column="2"
+                                HorizontalAlignment="Center"
+                                Orientation="Horizontal"
+                                Spacing="8"
+                                ToolTip.Tip="{Binding ((viewModels:MainWindowViewModel)DataContext).Loc[LastModified], RelativeSource={RelativeSource AncestorType=views:MainWindow}}">
+                                <TextBlock Text="{Binding LastModified}" />
+                            </StackPanel>
+                            <StackPanel
+                                Grid.Row="1"
+                                Grid.Column="2"
+                                HorizontalAlignment="Center"
+                                Orientation="Horizontal"
+                                Spacing="8"
+                                ToolTip.Tip="{Binding ((viewModels:MainWindowViewModel)DataContext).Loc[LastImport], RelativeSource={RelativeSource AncestorType=views:MainWindow}}">
+                                <TextBlock Text="{Binding LastImport}" />
+                            </StackPanel>
+                        </Grid>
+                    </Expander.Header>
+                    <ListBox ItemsSource="{Binding XmlFilePaths}" />
+                </Expander>
+            </StackPanel>
+        </DataTemplate>
+        <DataTemplate DataType="model:ModLoadInfo">
+            <DockPanel VerticalAlignment="Center">
+                <avalonia:SymbolIcon DockPanel.Dock="Left" Symbol="{Binding Type, Converter={StaticResource ModLoadTypeIconConverter}}" />
+                <ContentControl Content="{Binding Info}" />
+            </DockPanel>
+        </DataTemplate>
+
+
+        <!--  默认选项，根据ViewModel查找View，位置放最后，以免覆盖其他特定的模板  -->
+        <local:ViewLocator />
+    </Application.DataTemplates>
+
+    <Application.Styles>
+        <FluentTheme />
+        <DockFluentTheme />
+        <StyleInclude Source="avares://Avalonia.Controls.DataGrid/Themes/Fluent.v2.xaml" />
+        <StyleInclude Source="avares://LiveMarkdown.Avalonia/Styles.axaml"/>
+        <StyleInclude Source="avares://AvaloniaEdit/Themes/Fluent/AvaloniaEdit.xaml" />
+        <StyleInclude Source="avares://Xaml.Behaviors.Interactions.DragAndDrop.DataGrid/Styles.axaml" />
+        <Style Selector="Window">
+            <Setter Property="FontSize" Value="{DynamicResource AppFontSize}" />
+        </Style>
+    </Application.Styles>
+</Application>

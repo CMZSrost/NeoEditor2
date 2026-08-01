@@ -1,0 +1,205 @@
+<UserControl
+    x:Class="NeoEditor.Views.UserControls.DocumentWorkspaceView"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:avaloniaEdit="https://github.com/avaloniaui/avaloniaedit"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:dv="clr-namespace:NeoEditor.Plugins.DataViewer.ViewModels;assembly=NeoEditor.Plugins.DataViewer"
+    xmlns:dvViews="clr-namespace:NeoEditor.Plugins.DataViewer.Views;assembly=NeoEditor.Plugins.DataViewer"
+    xmlns:eeViews="clr-namespace:NeoEditor.Plugins.EntityEditor.Views;assembly=NeoEditor.Plugins.EntityEditor"
+    xmlns:eeVm="clr-namespace:NeoEditor.Plugins.EntityEditor.ViewModels;assembly=NeoEditor.Plugins.EntityEditor"
+    xmlns:aiViews="clr-namespace:NeoEditor.Plugins.AiChat.Views;assembly=NeoEditor.Plugins.AiChat"
+    xmlns:itViews="clr-namespace:NeoEditor.Plugins.ImageTools.Views;assembly=NeoEditor.Plugins.ImageTools"
+    xmlns:itVm="clr-namespace:NeoEditor.Plugins.ImageTools.ViewModels;assembly=NeoEditor.Plugins.ImageTools"
+    xmlns:lm="clr-namespace:LiveMarkdown.Avalonia;assembly=LiveMarkdown.Avalonia"
+    xmlns:mainContent="clr-namespace:NeoEditor.ViewModels.MainContent"
+    xmlns:mainContentVm="clr-namespace:NeoEditor.ViewModels.MainContent"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:userControls="clr-namespace:NeoEditor.Views.UserControls"
+    xmlns:vm="using:NeoEditor.ViewModels"
+    x:Name="Root"
+    d:DesignHeight="450"
+    d:DesignWidth="800"
+    x:DataType="mainContentVm:DocumentWorkspaceViewModel"
+    mc:Ignorable="d">
+    <Design.DataContext>
+        <mainContentVm:DocumentWorkspaceViewModel />
+    </Design.DataContext>
+
+    <DockControl
+        EnableManagedWindowLayer="True"
+        Factory="{Binding DataContext.DockFactory, ElementName=Root}"
+        InitializeFactory="True"
+        InitializeLayout="True"
+        IsDockingEnabled="{Binding DataContext.IsDockingEnabled, ElementName=Root, Mode=OneWay}"
+        IsVisible="True">
+        <DockControl.DataTemplates>
+            <!--  Document DataTemplates  -->
+            <DataTemplate x:DataType="mainContent:XmlDiffDocument">
+                <eeViews:XmlDiffView
+                    DocSyntax="XML"
+                    NewXml="{Binding NewXml}"
+                    OldXml="{Binding OldXml}"
+                    ReadOnly="False" />
+            </DataTemplate>
+            <DataTemplate DataType="vm:EditProfileViewModel">
+                <userControls:EditProfileView />
+            </DataTemplate>
+            <DataTemplate DataType="mainContent:MergeEditorDocument">
+                <userControls:ModGameDataTabsView ProfileInfo="{Binding ProfileInfo}" />
+            </DataTemplate>
+            <DataTemplate x:DataType="itVm:ModImagesDocument">
+                <itViews:ModImagesDocumentView DataContext="{Binding}" />
+            </DataTemplate>
+            <DataTemplate x:DataType="itVm:ImageEditorDocument">
+                <itViews:ImageEditorDocumentView DataContext="{Binding}" />
+            </DataTemplate>
+            <DataTemplate DataType="mainContent:PlainTextDocument">
+                <StackPanel>
+                    <TextBlock Text="{Binding Title}" />
+                    <TextBlock Text="{Binding Content}" />
+                </StackPanel>
+            </DataTemplate>
+            <DataTemplate x:DataType="mainContent:XmlDocument">
+                <avaloniaEdit:TextEditor
+                    Document="{Binding Xml, Mode=TwoWay}"
+                    IsReadOnly="True"
+                    ShowLineNumbers="True"
+                    SyntaxHighlighting="XML" />
+            </DataTemplate>
+            <DataTemplate x:DataType="mainContent:MarkdownDocument">
+                <ScrollViewer>
+                    <lm:MarkdownRenderer
+                        ImageBasePath="{Binding BaseDirectory}"
+                        LinkCommand="{Binding LinkCommand}"
+                        MarkdownBuilder="{Binding MarkdownBuilder}" />
+                </ScrollViewer>
+            </DataTemplate>
+            <DataTemplate x:DataType="mainContent:ImageDocument">
+                <userControls:ZoomableImageView Source="{Binding ImageSource}" />
+            </DataTemplate>
+            <DataTemplate x:DataType="mainContent:EntityBrowserDocument">
+                <userControls:DomainBrowserView DataContext="{Binding}" />
+            </DataTemplate>
+            <DataTemplate x:DataType="mainContent:EntityViewerDocument">
+                <userControls:EntityViewerView DataContext="{Binding}" />
+            </DataTemplate>
+            <DataTemplate x:DataType="eeVm:EntityEditorDocument">
+                <eeViews:EntityEditorView DataContext="{Binding}" />
+            </DataTemplate>
+            <DataTemplate x:DataType="mainContent:SessionWelcomeDocument">
+                <StackPanel
+                    MaxWidth="500"
+                    Margin="32"
+                    Spacing="12">
+                    <TextBlock
+                        FontSize="18"
+                        FontWeight="Bold"
+                        Text="NeoEditor Session" />
+                    <TextBlock FontSize="13" Text="{Binding StatusText}" />
+                    <Border
+                        Padding="4"
+                        Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}"
+                        IsVisible="{Binding IsLoading}">
+                        <TextBlock FontSize="11" Text="Loading entity data from database…" />
+                    </Border>
+                    <Border
+                        Padding="8"
+                        Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}"
+                        CornerRadius="4"
+                        IsVisible="{Binding IsLoading, Converter={x:Static BoolConverters.Not}}">
+                        <TextBlock
+                            FontSize="12"
+                            FontWeight="SemiBold"
+                            Text="{Binding StatsText}" />
+                    </Border>
+                    <Border
+                        Padding="8"
+                        Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}"
+                        CornerRadius="4">
+                        <StackPanel Spacing="4">
+                            <TextBlock
+                                FontSize="12"
+                                FontWeight="SemiBold"
+                                Text="Usage" />
+                            <TextBlock
+                                FontSize="10"
+                                Foreground="{DynamicResource SystemControlForegroundChromeDisabledLowBrush}"
+                                Text="{Binding UsageTips}"
+                                TextWrapping="Wrap" />
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </DataTemplate>
+            <DataTemplate x:DataType="dv:DataTablePlaceholder">
+                <TextBlock
+                    Margin="12"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    FontSize="11"
+                    Foreground="{DynamicResource SystemControlForegroundChromeDisabledLowBrush}"
+                    Text="Open a mod or merge profile to view data." />
+            </DataTemplate>
+            <DataTemplate x:DataType="dv:ModDataToolViewModel">
+                <userControls:ModGameDataTabsView ProfileInfo="{Binding ProfileInfo}" ReadOnly="True" />
+            </DataTemplate>
+
+        </DockControl.DataTemplates>
+        <RootDock Id="Root" PinnedDockDisplayMode="Inline">
+            <ProportionalDock EnableGlobalDocking="True" Orientation="Vertical">
+
+                <!--  Main area: left + center docs + right panels (proportion 5: bottom gets 2, total 7)  -->
+                <ProportionalDock
+                    EnableGlobalDocking="True"
+                    Orientation="Horizontal"
+                    Proportion="5">
+
+                    <!--  Left: dynamically built from IToolPlugin (D02)  -->
+                    <ToolDock
+                        Id="LeftToolPane"
+                        Proportion="1"
+                        ItemsSource="{Binding DataContext.LeftToolItems, ElementName=Root}" />
+
+                    <ProportionalDockSplitter />
+
+                    <!--  Center: Document Dock  -->
+                    <DocumentDock
+                        CanUpdateItemsSourceOnUnregister="True"
+                        EnableWindowDrag="False"
+                        Id="DocumentsPane"
+                        ItemsSource="{Binding DataContext.Documents, ElementName=Root}"
+                        Proportion="4">
+                        <DocumentDock.DocumentTemplate>
+                            <DocumentTemplate>
+                                <Grid Margin="10" x:DataType="Document">
+                                    <ContentControl
+                                        HorizontalAlignment="Stretch"
+                                        VerticalAlignment="Stretch"
+                                        Content="{Binding Context}" />
+                                </Grid>
+                            </DocumentTemplate>
+                        </DocumentDock.DocumentTemplate>
+                    </DocumentDock>
+
+                    <ProportionalDockSplitter />
+
+                    <!--  Right: dynamically built from IToolPlugin (D02)  -->
+                    <ToolDock
+                        Id="RightToolPane"
+                        Proportion="2"
+                        ItemsSource="{Binding DataContext.RightToolItems, ElementName=Root}" />
+
+                </ProportionalDock>
+
+                <ProportionalDockSplitter />
+
+                <!--  Bottom: dynamically built from IToolPlugin (D02)  -->
+                <ToolDock
+                    Id="BottomToolPane"
+                    Proportion="2"
+                    ItemsSource="{Binding DataContext.BottomToolItems, ElementName=Root}" />
+
+            </ProportionalDock>
+        </RootDock>
+    </DockControl>
+</UserControl>

@@ -1,0 +1,2065 @@
+<root>
+    <resheader name="resmimetype">
+        <value>text/microsoft-resx</value>
+    </resheader>
+    <resheader name="version">
+        <value>1.3</value>
+    </resheader>
+    <resheader name="reader">
+        <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=2.0.0.0, Culture=neutral,
+            PublicKeyToken=b77a5c561934e089
+        </value>
+    </resheader>
+    <resheader name="writer">
+        <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral,
+            PublicKeyToken=b77a5c561934e089
+        </value>
+    </resheader>
+    <data name="Header" xml:space="preserve">
+        <value>Header</value>
+    </data>
+
+    <data name="Range" xml:space="preserve">
+        <value>Range</value>
+    </data>
+    <data name="DamageCut" xml:space="preserve">
+        <value>DamageCut</value>
+    </data>
+    <data name="DamageBlunt" xml:space="preserve">
+        <value>DamageBlunt</value>
+    </data>
+
+    <data name="Penetration" xml:space="preserve">
+        <value>Penetration</value>
+    </data>
+
+    <data name="Sound" xml:space="preserve">
+        <value>Sound</value>
+    </data>
+    <data name="Transfer" xml:space="preserve">
+        <value>Transfer</value>
+    </data>
+    <data name="AttackerConditions" xml:space="preserve">
+        <value>AttackerConditions</value>
+    </data>
+
+    <data name="Morale" xml:space="preserve">
+        <value>Morale</value>
+    </data>
+    <data name="WieldPhrase" xml:space="preserve">
+        <value>WieldPhrase</value>
+    </data>
+    <data name="AttackPhrases" xml:space="preserve">
+        <value>AttackPhrases</value>
+    </data>
+
+
+    <data name="Buys" xml:space="preserve">
+        <value>Buys</value>
+    </data>
+    <data name="RestockTreasureId" xml:space="preserve">
+        <value>RestockTreasureId</value>
+    </data>
+
+
+    <data name="StrId" xml:space="preserve">
+        <value>StrId</value>
+    </data>
+
+
+    <data name="Success" xml:space="preserve">
+        <value>Success</value>
+    </data>
+    <data name="Fail" xml:space="preserve">
+        <value>Fail</value>
+    </data>
+    <data name="PopUp" xml:space="preserve">
+        <value>PopUp</value>
+    </data>
+    <data name="ChanceType" xml:space="preserve">
+        <value>ChanceType</value>
+    </data>
+    <data name="UsConditions" xml:space="preserve">
+        <value>UsConditions</value>
+    </data>
+    <data name="ThemConditions" xml:space="preserve">
+        <value>ThemConditions</value>
+    </data>
+    <data name="PairConditions" xml:space="preserve">
+        <value>PairConditions</value>
+    </data>
+    <data name="UsFailConditions" xml:space="preserve">
+        <value>UsFailConditions</value>
+    </data>
+    <data name="ThemFailConditions" xml:space="preserve">
+        <value>ThemFailConditions</value>
+    </data>
+    <data name="PairFailConditions" xml:space="preserve">
+        <value>PairFailConditions</value>
+    </data>
+    <data name="UsPreConditions" xml:space="preserve">
+        <value>UsPreConditions</value>
+    </data>
+    <data name="ThemPreConditions" xml:space="preserve">
+        <value>ThemPreConditions</value>
+    </data>
+    <data name="SeeThem" xml:space="preserve">
+        <value>SeeThem</value>
+    </data>
+    <data name="SeeUs" xml:space="preserve">
+        <value>SeeUs</value>
+    </data>
+    <data name="AllOutOfRange" xml:space="preserve">
+        <value>AllOutOfRange</value>
+    </data>
+    <data name="InAttackRange" xml:space="preserve">
+        <value>InAttackRange</value>
+    </data>
+    <data name="MinCharges" xml:space="preserve">
+        <value>MinCharges</value>
+    </data>
+
+
+    <data name="AttackModeType" xml:space="preserve">
+        <value>AttackModeType</value>
+    </data>
+
+
+    <data name="Priority" xml:space="preserve">
+        <value>Priority</value>
+    </data>
+    <data name="Detect" xml:space="preserve">
+        <value>Detect</value>
+    </data>
+    <data name="Order" xml:space="preserve">
+        <value>Order</value>
+    </data>
+    <data name="Fatigue" xml:space="preserve">
+        <value>Fatigue</value>
+    </data>
+    <data name="Approach" xml:space="preserve">
+        <value>Approach</value>
+    </data>
+    <data name="Offense" xml:space="preserve">
+        <value>Offense</value>
+    </data>
+    <data name="FallBack" xml:space="preserve">
+        <value>FallBack</value>
+    </data>
+    <data name="Retreat" xml:space="preserve">
+        <value>Retreat</value>
+    </data>
+    <data name="Position" xml:space="preserve">
+        <value>Position</value>
+    </data>
+    <data name="Passive" xml:space="preserve">
+        <value>Passive</value>
+    </data>
+
+
+    <data name="ImageList" xml:space="preserve">
+        <value>ImageList</value>
+    </data>
+
+
+    <data name="Alertness" xml:space="preserve">
+        <value>Alertness</value>
+    </data>
+    <data name="Visibility" xml:space="preserve">
+        <value>Visibility</value>
+    </data>
+    <data name="WetTempAdjustMod" xml:space="preserve">
+        <value>WetTempAdjustMod</value>
+    </data>
+    <data name="HealPerHourMod" xml:space="preserve">
+        <value>HealPerHourMod</value>
+    </data>
+    <data name="SleepQuality" xml:space="preserve">
+        <value>SleepQuality</value>
+    </data>
+
+
+    <data name="ItemId" xml:space="preserve">
+        <value>ItemId</value>
+    </data>
+    <data name="PerUse" xml:space="preserve">
+        <value>PerUse</value>
+    </data>
+    <data name="PerHour" xml:space="preserve">
+        <value>PerHour</value>
+    </data>
+    <data name="PerHourEquipped" xml:space="preserve">
+        <value>PerHourEquipped</value>
+    </data>
+    <data name="PerHex" xml:space="preserve">
+        <value>PerHex</value>
+    </data>
+    <data name="Degrade" xml:space="preserve">
+        <value>Degrade</value>
+    </data>
+
+
+    <data name="FieldNames" xml:space="preserve">
+        <value>FieldNames</value>
+    </data>
+    <data name="Modifiers" xml:space="preserve">
+        <value>Modifiers</value>
+    </data>
+    <data name="Effects" xml:space="preserve">
+        <value>Effects</value>
+    </data>
+    <data name="Fatal" xml:space="preserve">
+        <value>Fatal</value>
+    </data>
+    <data name="IdNext" xml:space="preserve">
+        <value>IdNext</value>
+    </data>
+    <data name="Duration" xml:space="preserve">
+        <value>Duration</value>
+    </data>
+    <data name="Permanent" xml:space="preserve">
+        <value>Permanent</value>
+    </data>
+    <data name="ChanceNext" xml:space="preserve">
+        <value>ChanceNext</value>
+    </data>
+    <data name="Stackable" xml:space="preserve">
+        <value>Stackable</value>
+    </data>
+    <data name="Display" xml:space="preserve">
+        <value>Display</value>
+    </data>
+    <data name="DisplayOther" xml:space="preserve">
+        <value>DisplayOther</value>
+    </data>
+    <data name="DisplayGameOver" xml:space="preserve">
+        <value>DisplayGameOver</value>
+    </data>
+    <data name="Color" xml:space="preserve">
+        <value>Color</value>
+    </data>
+    <data name="ResetTimer" xml:space="preserve">
+        <value>ResetTimer</value>
+    </data>
+    <data name="RemoveAll" xml:space="preserve">
+        <value>RemoveAll</value>
+    </data>
+    <data name="RemovePostCombat" xml:space="preserve">
+        <value>RemovePostCombat</value>
+    </data>
+    <data name="TransferRange" xml:space="preserve">
+        <value>TransferRange</value>
+    </data>
+    <data name="Thresholds" xml:space="preserve">
+        <value>Thresholds</value>
+    </data>
+
+
+    <data name="NamePublic" xml:space="preserve">
+        <value>NamePublic</value>
+    </data>
+    <data name="Notes" xml:space="preserve">
+        <value>Notes</value>
+    </data>
+
+    <data name="EncounterIds" xml:space="preserve">
+        <value>EncounterIds</value>
+    </data>
+    <data name="MovesPerTurn" xml:space="preserve">
+        <value>MovesPerTurn</value>
+    </data>
+
+    <data name="Faction" xml:space="preserve">
+        <value>Faction</value>
+    </data>
+
+    <data name="BaseConditions" xml:space="preserve">
+        <value>BaseConditions</value>
+    </data>
+    <data name="CorpseId" xml:space="preserve">
+        <value>CorpseId</value>
+    </data>
+    <data name="Activities" xml:space="preserve">
+        <value>Activities</value>
+    </data>
+
+
+    <data name="Min" xml:space="preserve">
+        <value>Min</value>
+    </data>
+    <data name="Max" xml:space="preserve">
+        <value>Max</value>
+    </data>
+    <data name="Weight" xml:space="preserve">
+        <value>Weight</value>
+    </data>
+
+
+    <data name="Image" xml:space="preserve">
+        <value>Image</value>
+    </data>
+
+    <data name="RemoveTreasureId" xml:space="preserve">
+        <value>RemoveTreasureId</value>
+    </data>
+    <data name="Conditions" xml:space="preserve">
+        <value>Conditions</value>
+    </data>
+    <data name="PreConditions" xml:space="preserve">
+        <value>PreConditions</value>
+    </data>
+    <data name="Price" xml:space="preserve">
+        <value>Price</value>
+    </data>
+    <data name="Responses" xml:space="preserve">
+        <value>Responses</value>
+    </data>
+    <data name="MinimapHexes" xml:space="preserve">
+        <value>MinimapHexes</value>
+    </data>
+    <data name="RemoveCreatures" xml:space="preserve">
+        <value>RemoveCreatures</value>
+    </data>
+    <data name="RemoveUsed" xml:space="preserve">
+        <value>RemoveUsed</value>
+    </data>
+    <data name="ItemsId" xml:space="preserve">
+        <value>ItemsId</value>
+    </data>
+    <data name="CreatureId" xml:space="preserve">
+        <value>CreatureId</value>
+    </data>
+    <data name="CreatureHex" xml:space="preserve">
+        <value>CreatureHex</value>
+    </data>
+    <data name="Teleport" xml:space="preserve">
+        <value>Teleport</value>
+    </data>
+    <data name="Editor" xml:space="preserve">
+        <value>Editor</value>
+    </data>
+
+    <data name="LootChance" xml:space="preserve">
+        <value>LootChance</value>
+    </data>
+    <data name="AccidentChance" xml:space="preserve">
+        <value>AccidentChance</value>
+    </data>
+    <data name="CreatureChance" xml:space="preserve">
+        <value>CreatureChance</value>
+    </data>
+    <data name="Accidents" xml:space="preserve">
+        <value>Accidents</value>
+    </data>
+    <data name="Loot" xml:space="preserve">
+        <value>Loot</value>
+    </data>
+
+
+    <data name="EncounterId" xml:space="preserve">
+        <value>EncounterId</value>
+    </data>
+    <data name="Chance" xml:space="preserve">
+        <value>Chance</value>
+    </data>
+    <data name="LocBased" xml:space="preserve">
+        <value>LocBased</value>
+    </data>
+    <data name="DateBased" xml:space="preserve">
+        <value>DateBased</value>
+    </data>
+    <data name="HexBased" xml:space="preserve">
+        <value>HexBased</value>
+    </data>
+    <data name="Unique" xml:space="preserve">
+        <value>Unique</value>
+    </data>
+    <data name="AIPassable" xml:space="preserve">
+        <value>AIPassable</value>
+    </data>
+    <data name="Area" xml:space="preserve">
+        <value>Area</value>
+    </data>
+    <data name="DateMin" xml:space="preserve">
+        <value>DateMin</value>
+    </data>
+    <data name="DateMax" xml:space="preserve">
+        <value>DateMax</value>
+    </data>
+    <data name="HexTypes" xml:space="preserve">
+        <value>HexTypes</value>
+    </data>
+
+
+    <data name="DictFactions" xml:space="preserve">
+        <value>DictFactions</value>
+    </data>
+
+
+    <data name="X" xml:space="preserve">
+        <value>X</value>
+    </data>
+    <data name="Y" xml:space="preserve">
+        <value>Y</value>
+    </data>
+
+
+    <data name="Value" xml:space="preserve">
+        <value>Value</value>
+    </data>
+
+
+    <data name="HeadlineText" xml:space="preserve">
+        <value>HeadlineText</value>
+    </data>
+
+
+    <data name="Description" xml:space="preserve">
+        <value>Description</value>
+    </data>
+    <data name="TerrainCost" xml:space="preserve">
+        <value>TerrainCost</value>
+    </data>
+    <data name="VizLimiter" xml:space="preserve">
+        <value>VizLimiter</value>
+    </data>
+    <data name="VizIncrease" xml:space="preserve">
+        <value>VizIncrease</value>
+    </data>
+
+    <data name="Passable" xml:space="preserve">
+        <value>Passable</value>
+    </data>
+    <data name="ScavengeInitialId" xml:space="preserve">
+        <value>ScavengeInitialId</value>
+    </data>
+    <data name="ScavengeItemsIdPerHour" xml:space="preserve">
+        <value>ScavengeItemsIdPerHour</value>
+    </data>
+    <data name="CampItems" xml:space="preserve">
+        <value>CampItems</value>
+    </data>
+    <data name="LightLevels" xml:space="preserve">
+        <value>LightLevels</value>
+    </data>
+    <data name="DefaultCampId" xml:space="preserve">
+        <value>DefaultCampId</value>
+    </data>
+    <data name="MinRange" xml:space="preserve">
+        <value>MinRange</value>
+    </data>
+    <data name="MaxRange" xml:space="preserve">
+        <value>MaxRange</value>
+    </data>
+    <data name="ConditionIds" xml:space="preserve">
+        <value>ConditionIds</value>
+    </data>
+
+
+    <data name="RequiredProps" xml:space="preserve">
+        <value>RequiredProps</value>
+    </data>
+    <data name="ForbidProps" xml:space="preserve">
+        <value>ForbidProps</value>
+    </data>
+
+
+    <data name="PropertyName" xml:space="preserve">
+        <value>PropertyName</value>
+    </data>
+    <data name="EquipConditions" xml:space="preserve">
+        <value>EquipConditions</value>
+    </data>
+    <data name="PossessConditions" xml:space="preserve">
+        <value>PossessConditions</value>
+    </data>
+    <data name="UseConditions" xml:space="preserve">
+        <value>UseConditions</value>
+    </data>
+    <data name="Capacities" xml:space="preserve">
+        <value>Capacities</value>
+    </data>
+    <data name="EquipSlots" xml:space="preserve">
+        <value>EquipSlots</value>
+    </data>
+    <data name="UseSlots" xml:space="preserve">
+        <value>UseSlots</value>
+    </data>
+    <data name="SocketLocked" xml:space="preserve">
+        <value>SocketLocked</value>
+    </data>
+    <data name="Properties" xml:space="preserve">
+        <value>Properties</value>
+    </data>
+    <data name="ContentIds" xml:space="preserve">
+        <value>ContentIds</value>
+    </data>
+    <data name="FormatId" xml:space="preserve">
+        <value>FormatId</value>
+    </data>
+
+    <data name="ComponentId" xml:space="preserve">
+        <value>ComponentId</value>
+    </data>
+    <data name="Mirrored" xml:space="preserve">
+        <value>Mirrored</value>
+    </data>
+    <data name="SlotDepth" xml:space="preserve">
+        <value>SlotDepth</value>
+    </data>
+    <data name="ChargeProfiles" xml:space="preserve">
+        <value>ChargeProfiles</value>
+    </data>
+    <data name="AttackModes" xml:space="preserve">
+        <value>AttackModes</value>
+    </data>
+    <data name="BarterHexes" xml:space="preserve">
+        <value>BarterHexes</value>
+    </data>
+    <data name="CampTypes" xml:space="preserve">
+        <value>CampTypes</value>
+    </data>
+    <data name="ContainerTypes" xml:space="preserve">
+        <value>ContainerTypes</value>
+    </data>
+    <data name="Creatures" xml:space="preserve">
+        <value>Creatures</value>
+    </data>
+    <data name="CreatureSources" xml:space="preserve">
+        <value>CreatureSources</value>
+    </data>
+    <data name="DataFiles" xml:space="preserve">
+        <value>DataFiles</value>
+    </data>
+    <data name="DmcPlaces" xml:space="preserve">
+        <value>DmcPlaces</value>
+    </data>
+    <data name="EncounterTriggers" xml:space="preserve">
+        <value>EncounterTriggers</value>
+    </data>
+    <data name="Encounters" xml:space="preserve">
+        <value>Encounters</value>
+    </data>
+    <data name="Factions" xml:space="preserve">
+        <value>Factions</value>
+    </data>
+    <data name="ForbiddenHexes" xml:space="preserve">
+        <value>ForbiddenHexes</value>
+    </data>
+    <data name="GameVars" xml:space="preserve">
+        <value>GameVars</value>
+    </data>
+    <data name="Headlines" xml:space="preserve">
+        <value>Headlines</value>
+    </data>
+    <data name="Ingredients" xml:space="preserve">
+        <value>Ingredients</value>
+    </data>
+    <data name="ItemProps" xml:space="preserve">
+        <value>ItemProps</value>
+    </data>
+    <data name="ItemTypes" xml:space="preserve">
+        <value>ItemTypes</value>
+    </data>
+    <data name="Maps" xml:space="preserve">
+        <value>Maps</value>
+    </data>
+    <data name="Recipes" xml:space="preserve">
+        <value>Recipes</value>
+    </data>
+    <data name="TreasureTables" xml:space="preserve">
+        <value>TreasureTables</value>
+    </data>
+    <data name="StackLimit" xml:space="preserve">
+        <value>StackLimit</value>
+    </data>
+    <data name="SwitchIds" xml:space="preserve">
+        <value>SwitchIds</value>
+    </data>
+    <data name="Sounds" xml:space="preserve">
+        <value>Sounds</value>
+    </data>
+
+    <data name="Definition" xml:space="preserve">
+        <value>Definition</value>
+    </data>
+
+
+    <data name="SecretName" xml:space="preserve">
+        <value>SecretName</value>
+    </data>
+    <data name="Tools" xml:space="preserve">
+        <value>Tools</value>
+    </data>
+    <data name="Consumed" xml:space="preserve">
+        <value>Consumed</value>
+    </data>
+    <data name="Destroyed" xml:space="preserve">
+        <value>Destroyed</value>
+    </data>
+    <data name="TreasureId" xml:space="preserve">
+        <value>TreasureId</value>
+    </data>
+    <data name="Hours" xml:space="preserve">
+        <value>Hours</value>
+    </data>
+    <data name="Reverse" xml:space="preserve">
+        <value>Reverse</value>
+    </data>
+    <data name="HiddenId" xml:space="preserve">
+        <value>HiddenId</value>
+    </data>
+
+    <data name="TransferComponents" xml:space="preserve">
+        <value>TransferComponents</value>
+    </data>
+    <data name="AlsoTry" xml:space="preserve">
+        <value>AlsoTry</value>
+    </data>
+    <data name="TempTreasureId" xml:space="preserve">
+        <value>TempTreasureId</value>
+    </data>
+    <data name="DegradeOutput" xml:space="preserve">
+        <value>DegradeOutput</value>
+    </data>
+    <data name="Type" xml:space="preserve">
+        <value>Type</value>
+    </data>
+    <data name="Scrap" xml:space="preserve">
+        <value>Scrap</value>
+    </data>
+    <data name="ModId" xml:space="preserve">
+        <value>ModId</value>
+    </data>
+    <data name="Content" xml:space="preserve">
+        <value>Content</value>
+    </data>
+    <data name="Id" xml:space="preserve">
+        <value>Id</value>
+    </data>
+    <data name="Name" xml:space="preserve">
+        <value>Name</value>
+    </data>
+    <data name="Treasures" xml:space="preserve">
+        <value>Treasures</value>
+    </data>
+    <data name="Nested" xml:space="preserve">
+        <value>Nested</value>
+    </data>
+    <data name="Suppress" xml:space="preserve">
+        <value>Suppress</value>
+    </data>
+    <data name="Identify" xml:space="preserve">
+        <value>Identify</value>
+    </data>
+    <data name="OpenProject" xml:space="preserve">
+        <value>Open Project</value>
+    </data>
+    <data name="CreateProject" xml:space="preserve">
+        <value>Create Project</value>
+    </data>
+    <data name="ProjectName" xml:space="preserve">
+        <value>ProjectName</value>
+    </data>
+    <data name="SelectFolder" xml:space="preserve">
+        <value>Select Folder</value>
+        <comment>SelectFolder</comment>
+    </data>
+    <data name="GameRootDirectory" xml:space="preserve">
+        <value>Game Root Directory</value>
+        <comment>GameRootDirectory</comment>
+    </data>
+    <data name="Confirm" xml:space="preserve">
+        <value>Confirm</value>
+        <comment>Confirm</comment>
+    </data>
+    <data name="Cancel" xml:space="preserve">
+        <value>Cancel</value>
+        <comment>Cancel</comment>
+    </data>
+    <data name="FolderIsEmpty" xml:space="preserve">
+        <value>Folder Is Empty</value>
+        <comment>FolderIsEmpty</comment>
+    </data>
+    <data name="UpLevel" xml:space="preserve">
+        <value>UpLevel</value>
+        <comment>UpLevel</comment>
+    </data>
+    <data name="Help" xml:space="preserve">
+        <value>Help</value>
+    </data>
+    <data name="MenuProject" xml:space="preserve">
+        <value>Project</value>
+    </data>
+    <data name="MenuProjectCreate" xml:space="preserve">
+        <value>Create Project</value>
+    </data>
+    <data name="MenuProjectOpen" xml:space="preserve">
+        <value>Open Project</value>
+    </data>
+    <data name="MenuProjectClose" xml:space="preserve">
+        <value>Close Project</value>
+    </data>
+    <data name="AppTitle" xml:space="preserve">
+        <value>Neo Editor</value>
+    </data>
+    <data name="Home" xml:space="preserve">
+        <value>Home</value>
+    </data>
+    <data name="NewMod" xml:space="preserve">
+        <value>+ New Mod</value>
+    </data>
+    <data name="ImportMod" xml:space="preserve">
+        <value>Import Mod</value>
+    </data>
+    <data name="MainContent" xml:space="preserve">
+        <value>Main Content</value>
+    </data>
+    <data name="Settings" xml:space="preserve">
+        <value>Settings</value>
+    </data>
+    <data name="Language" xml:space="preserve">
+        <value>Language</value>
+    </data>
+    <data name="Theme" xml:space="preserve">
+        <value>Theme</value>
+    </data>
+    <data name="FontSize" xml:space="preserve">
+        <value>Font Size</value>
+    </data>
+    <data name="AutoSaveInterval" xml:space="preserve">
+        <value>Auto-save Interval (seconds, 0=off)</value>
+    </data>
+    <data name="DefaultExportFormat" xml:space="preserve">
+        <value>Default Export Format</value>
+    </data>
+    <data name="GridRowHeight" xml:space="preserve">
+        <value>Grid Row Height (0=default)</value>
+    </data>
+    <!-- Phase 9D: AI & MCP settings (R28 + provider list) -->
+    <data name="Settings.AiMcp" xml:space="preserve">
+        <value>AI &amp; MCP</value>
+    </data>
+    <data name="Settings.Providers" xml:space="preserve">
+        <value>API Providers</value>
+    </data>
+    <data name="Settings.AddProvider" xml:space="preserve">
+        <value>Add Provider</value>
+    </data>
+    <data name="Settings.RemoveProvider" xml:space="preserve">
+        <value>Remove this provider</value>
+    </data>
+    <data name="Settings.ProviderAuto" xml:space="preserve">
+        <value>Auto (first provider)</value>
+    </data>
+    <data name="Settings.ChatProvider" xml:space="preserve">
+        <value>Provider for the chat model</value>
+    </data>
+    <data name="Settings.EmbeddingProvider" xml:space="preserve">
+        <value>Provider for the embedding model (RAG)</value>
+    </data>
+    <data name="Settings.ImageProvider" xml:space="preserve">
+        <value>Provider for the image generation model</value>
+    </data>
+    <data name="Settings.AiModel" xml:space="preserve">
+        <value>Chat Model</value>
+    </data>
+    <data name="Settings.AiEmbeddingModel" xml:space="preserve">
+        <value>Embedding Model (RAG)</value>
+    </data>
+    <data name="Settings.ImageModel" xml:space="preserve">
+        <value>Image Generation Model</value>
+    </data>
+    <data name="Settings.McpEnabled" xml:space="preserve">
+        <value>Start MCP Server in GUI</value>
+    </data>
+    <data name="Settings.McpPort" xml:space="preserve">
+        <value>MCP Port (0 = stdio)</value>
+    </data>
+    <data name="Settings.AiConfigNote" xml:space="preserve">
+        <value>Endpoint and API Key are grouped per provider; each model can use a different provider. Priority: config.json &gt; environment variables. Restart the app for changes to take effect. API Key is stored encrypted.</value>
+    </data>
+    <data name="Search" xml:space="preserve">
+        <value>Search</value>
+    </data>
+    <data name="ResourceManager" xml:space="preserve">
+        <value>Resource Manager</value>
+    </data>
+    <data name="KeywordInput" xml:space="preserve">
+        <value>Enter the keyword...</value>
+    </data>
+    <data name="ModFilterAll" xml:space="preserve">
+        <value>All Mods</value>
+    </data>
+    <data name="ShowAll" xml:space="preserve">
+        <value>Show All</value>
+    </data>
+    <data name="ExportXml" xml:space="preserve">
+        <value>Export XML</value>
+    </data>
+    <data name="ExportXmlTooltip" xml:space="preserve">
+        <value>Export DB changes to XML files</value>
+    </data>
+    <data name="Loading" xml:space="preserve">
+        <value>Loading...</value>
+    </data>
+    <data name="LocateRowTooltip" xml:space="preserve">
+        <value>Locate selected row</value>
+    </data>
+    <data name="SearchHelpTooltip" xml:space="preserve">
+        <value>Search: keyword (any column) or col:value (e.g. strName:Sword)</value>
+    </data>
+    <data name="SearchHelpButtonTooltip" xml:space="preserve">
+        <value>Show available column names</value>
+    </data>
+    <data name="SearchHelpAvailableColumns" xml:space="preserve">
+        <value>Available columns (click to insert):</value>
+    </data>
+    <data name="ColumnManagerTooltip" xml:space="preserve">
+        <value>Show/hide columns</value>
+    </data>
+    <data name="ColumnManagerHeader" xml:space="preserve">
+        <value>Columns:</value>
+    </data>
+
+    <!-- Auto-generated description entries from Game models -->
+    <data name="IdDesc" xml:space="preserve">
+        <value>ID Code</value>
+    </data>
+    <data name="NameDesc" xml:space="preserve">
+        <value>Name</value>
+    </data>
+    <data name="NotesDesc" xml:space="preserve">
+        <value>Item notes, usually left blank, does not affect gameplay</value>
+    </data>
+    <data name="RangeDesc" xml:space="preserve">
+        <value>Attack range, 1 for melee, varies for ranged weapons</value>
+    </data>
+    <data name="DamageCutDesc" xml:space="preserve">
+        <value>Cutting damage value</value>
+    </data>
+    <data name="DamageBluntDesc" xml:space="preserve">
+        <value>Blunt damage value</value>
+    </data>
+    <data name="ChargeProfilesDesc" xml:space="preserve">
+        <value>Content/ammo ID code, used with chargeprofiles data, may be comma-separated like '6,31'</value>
+    </data>
+    <data name="PenetrationDesc" xml:space="preserve">
+        <value>Penetration level</value>
+    </data>
+    <data name="TypeDesc" xml:space="preserve">
+        <value>Attack type: 0 Melee, 1 Ranged</value>
+    </data>
+    <data name="SoundDesc" xml:space="preserve">
+        <value>Weapon sound category: Melee/Punch, Claws, Club, Blade, Rifle, Pistol, Laser, Bow, Throw, Choke, Grasp, Bite</value>
+    </data>
+    <data name="TransferDesc" xml:space="preserve">
+        <value>Transfer property: Whether attack can be converted to item, e.g., bow arrows can be recovered. 0 no transfer, 1 transfer (arrows, slingshot ammo stays on enemy or drops)</value>
+    </data>
+    <data name="AttackerConditionsDesc" xml:space="preserve">
+        <value>Conditions during attack, used with conditions data, e.g., '211x1.0,NSE:42x1'</value>
+    </data>
+    <data name="ImageDesc" xml:space="preserve">
+        <value>Weapon icon filename in lower right corner</value>
+    </data>
+    <data name="MoraleDesc" xml:space="preserve">
+        <value>Default morale bonus from this weapon, formula: (1+morale)*(1+melee/ranged morale bonus)*weapon damage=actual damage</value>
+    </data>
+    <data name="WieldPhraseDesc" xml:space="preserve">
+        <value>Text description when entering combat with this weapon</value>
+    </data>
+    <data name="AttackPhrasesDesc" xml:space="preserve">
+        <value>Text description when attacking with this weapon, multiple descriptions separated by commas</value>
+    </data>
+    <data name="XDesc" xml:space="preserve">
+        <value>X-axis coordinate</value>
+    </data>
+    <data name="YDesc" xml:space="preserve">
+        <value>Y-axis coordinate</value>
+    </data>
+    <data name="BuysDesc" xml:space="preserve">
+        <value>Whether player items can be purchased: 0 no, 1 yes</value>
+    </data>
+    <data name="RestockTreasureIdDesc" xml:space="preserve">
+        <value>Referenced treasure data, used with treasuretable. Note: Detroit C shop is an exception, uses treasure pool 3</value>
+    </data>
+    <data name="StrIdDesc" xml:space="preserve">
+        <value>Item ID, e.g., '90.35'</value>
+    </data>
+    <data name="SuccessDesc" xml:space="preserve">
+        <value>Text displayed in game after action succeeds, &lt;us&gt; represents self, &lt;them&gt; represents target</value>
+    </data>
+    <data name="FailDesc" xml:space="preserve">
+        <value>Text displayed in game after action fails</value>
+    </data>
+    <data name="PopUpDesc" xml:space="preserve">
+        <value>Action description in game, shown in action selection screen</value>
+    </data>
+    <data name="ChanceTypeDesc" xml:space="preserve">
+        <value>Chance type (currently unclear)</value>
+    </data>
+    <data name="UsConditionsDesc" xml:space="preserve">
+        <value>Required conditions for our side, minus sign means NOT, i.e., not in that state</value>
+    </data>
+    <data name="ThemConditionsDesc" xml:space="preserve">
+        <value>Required conditions for opponent, minus sign means NOT, i.e., not in that state</value>
+    </data>
+    <data name="PairConditionsDesc" xml:space="preserve">
+        <value>Effect this action brings to self</value>
+    </data>
+    <data name="UsFailConditionsDesc" xml:space="preserve">
+        <value>Conditions brought to self when action fails</value>
+    </data>
+    <data name="ThemFailConditionsDesc" xml:space="preserve">
+        <value>Conditions brought to opponent when action fails (all official data is empty)</value>
+    </data>
+    <data name="PairFailConditionsDesc" xml:space="preserve">
+        <value>Effect brought to self when action fails</value>
+    </data>
+    <data name="UsPreConditionsDesc" xml:space="preserve">
+        <value>Prerequisites for executing this action, format like '137,151,-143' (negative means cannot have that condition)</value>
+    </data>
+    <data name="ThemPreConditionsDesc" xml:space="preserve">
+        <value>Prerequisites opponent must meet</value>
+    </data>
+    <data name="SeeThemDesc" xml:space="preserve">
+        <value>Exposure level opponent needs to be at</value>
+    </data>
+    <data name="SeeUsDesc" xml:space="preserve">
+        <value>Exposure level self needs to be at</value>
+    </data>
+    <data name="AllOutOfRangeDesc" xml:space="preserve">
+        <value>Distance from all targets on field</value>
+    </data>
+    <data name="InAttackRangeDesc" xml:space="preserve">
+        <value>Attack range, possibly used to determine splash or weapon length</value>
+    </data>
+    <data name="MinChargesDesc" xml:space="preserve">
+        <value>Number of attacks (uncertain)</value>
+    </data>
+    <data name="MinRangeDesc" xml:space="preserve">
+        <value>Minimum range requirement, -1 for full field coverage</value>
+    </data>
+    <data name="MaxRangeDesc" xml:space="preserve">
+        <value>Maximum range requirement, -1 for full field coverage</value>
+    </data>
+    <data name="AttackModeTypeDesc" xml:space="preserve">
+        <value>Attack mode type: -1 non-attack action, 0 melee attack, 1 ranged attack</value>
+    </data>
+    <data name="HexTypesDesc" xml:space="preserve">
+        <value>Map hex type (all official data is empty)</value>
+    </data>
+    <data name="ChanceDesc" xml:space="preserve">
+        <value>Chance to use this skill (percentage)</value>
+    </data>
+    <data name="PriorityDesc" xml:space="preserve">
+        <value>Priority, no effect on player, Bot only, which side's action triggers first in same turn</value>
+    </data>
+    <data name="DetectDesc" xml:space="preserve">
+        <value>Chance of being detected when executing this action, 0 means won't be detected</value>
+    </data>
+    <data name="OrderDesc" xml:space="preserve">
+        <value>Unknown parameter</value>
+    </data>
+    <data name="FatigueDesc" xml:space="preserve">
+        <value>Fatigue cost</value>
+    </data>
+    <data name="ApproachDesc" xml:space="preserve">
+        <value>Whether this action makes you approach opponent</value>
+    </data>
+    <data name="OffenseDesc" xml:space="preserve">
+        <value>Whether this is an offensive action</value>
+    </data>
+    <data name="FallBackDesc" xml:space="preserve">
+        <value>Whether this action is a retreat action</value>
+    </data>
+    <data name="RetreatDesc" xml:space="preserve">
+        <value>Whether this action is a retreat action</value>
+    </data>
+    <data name="PositionDesc" xml:space="preserve">
+        <value>Whether this action is a position action</value>
+    </data>
+    <data name="PassiveDesc" xml:space="preserve">
+        <value>Whether this action is passive</value>
+    </data>
+    <data name="DescriptionDesc" xml:space="preserve">
+        <value>Camp description, e.g., 'Dark area of the region'</value>
+    </data>
+    <data name="ImageListDesc" xml:space="preserve">
+        <value>Image filename used by camp</value>
+    </data>
+    <data name="CapacitiesDesc" xml:space="preserve">
+        <value>Camp size, format like '34x26'</value>
+    </data>
+    <data name="TreasureIdDesc" xml:space="preserve">
+        <value>Treasure pool ID for this camp</value>
+    </data>
+    <data name="AlertnessDesc" xml:space="preserve">
+        <value>Default alertness value of camp (percentage)</value>
+    </data>
+    <data name="VisibilityDesc" xml:space="preserve">
+        <value>Default visibility value of camp (percentage), -0.05 means -5%</value>
+    </data>
+    <data name="WetTempAdjustModDesc" xml:space="preserve">
+        <value>Default temperature adjustment of camp</value>
+    </data>
+    <data name="HealPerHourModDesc" xml:space="preserve">
+        <value>Default recovery effect per hour from camp (percentage)</value>
+    </data>
+    <data name="SleepQualityDesc" xml:space="preserve">
+        <value>Default sleep quality from camp (percentage), -0.26 means -26%</value>
+    </data>
+    <data name="ItemIdDesc" xml:space="preserve">
+        <value>Item ID, e.g., '10.3'</value>
+    </data>
+    <data name="PerUseDesc" xml:space="preserve">
+        <value>Amount consumed per use</value>
+    </data>
+    <data name="PerHourDesc" xml:space="preserve">
+        <value>Amount consumed per hour, mainly for electrical power consumption</value>
+    </data>
+    <data name="PerHourEquippedDesc" xml:space="preserve">
+        <value>Durability consumed per hour when equipped, only for XM54 filter chip</value>
+    </data>
+    <data name="PerHexDesc" xml:space="preserve">
+        <value>Amount consumed per hex moved</value>
+    </data>
+    <data name="DegradeDesc" xml:space="preserve">
+        <value>Whether it degrades</value>
+    </data>
+    <data name="FieldNamesDesc" xml:space="preserve">
+        <value>Effect field list brought by this condition, e.g., 'm_fHealPerHourMod,m_fImmuneRestoreRate'</value>
+    </data>
+    <data name="ModifiersDesc" xml:space="preserve">
+        <value>Specific effect values brought by this condition, corresponding to FieldNames</value>
+    </data>
+    <data name="EffectsDesc" xml:space="preserve">
+        <value>Effects brought by condition, e.g., SetImmunity, ArmorWound. Like 'ArmorWound=100,0.1,0.05'</value>
+    </data>
+    <data name="FatalDesc" xml:space="preserve">
+        <value>Whether it brings death effect to player (will getting this condition kill you)</value>
+    </data>
+    <data name="IdNextDesc" xml:space="preserve">
+        <value>Next stage condition ID this condition brings, may be multiple comma-separated</value>
+    </data>
+    <data name="DurationDesc" xml:space="preserve">
+        <value>Duration (hours)</value>
+    </data>
+    <data name="PermanentDesc" xml:space="preserve">
+        <value>Whether it brings long-term effects (like medicine, cuts, etc.), true means won't auto-remove after turn ends</value>
+    </data>
+    <data name="ChanceNextDesc" xml:space="preserve">
+        <value>Chance of this condition bringing new condition in next stage</value>
+    </data>
+    <data name="StackableDesc" xml:space="preserve">
+        <value>Whether this condition is stackable</value>
+    </data>
+    <data name="DisplayDesc" xml:space="preserve">
+        <value>Whether this condition is visible</value>
+    </data>
+    <data name="DisplayOtherDesc" xml:space="preserve">
+        <value>Whether this condition can be seen by others</value>
+    </data>
+    <data name="DisplayGameOverDesc" xml:space="preserve">
+        <value>Whether this condition appears in game over summary</value>
+    </data>
+    <data name="ColorDesc" xml:space="preserve">
+        <value>Condition color: 0 white, 1 red, 2 green, 3 yellow</value>
+    </data>
+    <data name="ResetTimerDesc" xml:space="preserve">
+        <value>Refresh time, one rest in game equals one hour</value>
+    </data>
+    <data name="RemoveAllDesc" xml:space="preserve">
+        <value>Unknown parameter</value>
+    </data>
+    <data name="RemovePostCombatDesc" xml:space="preserve">
+        <value>Unknown parameter</value>
+    </data>
+    <data name="TransferRangeDesc" xml:space="preserve">
+        <value>Infection distance, -1 for no spread</value>
+    </data>
+    <data name="ThresholdsDesc" xml:space="preserve">
+        <value>Trigger threshold, currently used for legendary skill triggers</value>
+    </data>
+    <data name="NamePublicDesc" xml:space="preserve">
+        <value>Name displayed before contact</value>
+    </data>
+    <data name="EncounterIdsDesc" xml:space="preserve">
+        <value>List of condition IDs triggered when encountering this creature, comma-separated</value>
+    </data>
+    <data name="MovesPerTurnDesc" xml:space="preserve">
+        <value>Action points per turn</value>
+    </data>
+    <data name="FactionDesc" xml:space="preserve">
+        <value>Faction ID</value>
+    </data>
+    <data name="AttackModesDesc" xml:space="preserve">
+        <value>Attack mode ID, used with attackmodes, may be single ID or comma-separated</value>
+    </data>
+    <data name="BaseConditionsDesc" xml:space="preserve">
+        <value>Base conditions when creature spawns, format like '38=1,50=0.5'</value>
+    </data>
+    <data name="CorpseIdDesc" xml:space="preserve">
+        <value>Corpse ID (treasure pool ID)</value>
+    </data>
+    <data name="ActivitiesDesc" xml:space="preserve">
+        <value>Description of creature's activity pattern, possibly for notes only</value>
+    </data>
+    <data name="CreatureIdDesc" xml:space="preserve">
+        <value>Spawned creature ID, used with creatures table</value>
+    </data>
+    <data name="MinDesc" xml:space="preserve">
+        <value>Minimum spawn count</value>
+    </data>
+    <data name="MaxDesc" xml:space="preserve">
+        <value>Maximum spawn count (too large value causes many creatures to spawn in same hex)</value>
+    </data>
+    <data name="WeightDesc" xml:space="preserve">
+        <value>Weight, specific meaning unknown</value>
+    </data>
+    <data name="ValueDesc" xml:space="preserve">
+        <value>Value of this data</value>
+    </data>
+    <data name="EncounterIdDesc" xml:space="preserve">
+        <value>Called encounter ID, used with encounters</value>
+    </data>
+    <data name="RemoveTreasureIdDesc" xml:space="preserve">
+        <value>Treasure pool ID removed at player's feet when encounter occurs</value>
+    </data>
+    <data name="ConditionsDesc" xml:space="preserve">
+        <value>List of attached condition IDs for this encounter, comma-separated</value>
+    </data>
+    <data name="PreConditionsDesc" xml:space="preserve">
+        <value>Required preconditions for this encounter, negative means cannot have that condition</value>
+    </data>
+    <data name="PriceDesc" xml:space="preserve">
+        <value>Whether this encounter changes your assets</value>
+    </data>
+    <data name="ResponsesDesc" xml:space="preserve">
+        <value>Player response options during encounter, format like '=15x0.083x0x0x0,=16x0.083x0x0x0'</value>
+    </data>
+    <data name="MinimapHexesDesc" xml:space="preserve">
+        <value>Coordinates displayed on minimap</value>
+    </data>
+    <data name="RemoveCreaturesDesc" xml:space="preserve">
+        <value>Whether creatures need to be removed when this encounter occurs</value>
+    </data>
+    <data name="RemoveUsedDesc" xml:space="preserve">
+        <value>Whether this encounter removes your items</value>
+    </data>
+    <data name="ItemsIdDesc" xml:space="preserve">
+        <value>Item ID generated when this encounter occurs</value>
+    </data>
+    <data name="CreatureHexDesc" xml:space="preserve">
+        <value>Creature spawn position coordinates, format like '0,0'</value>
+    </data>
+    <data name="TeleportDesc" xml:space="preserve">
+        <value>Position player is teleported to when this encounter occurs, '0,0' for no teleport</value>
+    </data>
+    <data name="EditorDesc" xml:space="preserve">
+        <value>Unknown parameter, editor related</value>
+    </data>
+    <data name="LootChanceDesc" xml:space="preserve">
+        <value>Chance of successfully scavenging items</value>
+    </data>
+    <data name="AccidentChanceDesc" xml:space="preserve">
+        <value>Chance of accident occurring (e.g., building collapse)</value>
+    </data>
+    <data name="CreatureChanceDesc" xml:space="preserve">
+        <value>Unknown parameter</value>
+    </data>
+    <data name="AccidentsDesc" xml:space="preserve">
+        <value>Event ID when accident occurs (calls encounters)</value>
+    </data>
+    <data name="LootDesc" xml:space="preserve">
+        <value>Treasure type ID when scavenging succeeds</value>
+    </data>
+    <data name="LocBasedDesc" xml:space="preserve">
+        <value>Whether this trigger is location-based</value>
+    </data>
+    <data name="DateBasedDesc" xml:space="preserve">
+        <value>Whether this trigger is time-based</value>
+    </data>
+    <data name="HexBasedDesc" xml:space="preserve">
+        <value>Whether this trigger is hex-based</value>
+    </data>
+    <data name="UniqueDesc" xml:space="preserve">
+        <value>Whether this event is unique</value>
+    </data>
+    <data name="AIPassableDesc" xml:space="preserve">
+        <value>Whether this event can be triggered by AI</value>
+    </data>
+    <data name="AreaDesc" xml:space="preserve">
+        <value>Position coordinates where this event triggers, format like '20,164,0'</value>
+    </data>
+    <data name="DateMinDesc" xml:space="preserve">
+        <value>Minimum trigger time, format 'year-month-day-hour'</value>
+    </data>
+    <data name="DateMaxDesc" xml:space="preserve">
+        <value>Maximum trigger time, format 'year-month-day-hour'</value>
+    </data>
+    <data name="DictFactionsDesc" xml:space="preserve">
+        <value>Reputation relationship with other factions, format like '0=-100,1=1,2=-100'</value>
+    </data>
+    <data name="HeadlineTextDesc" xml:space="preserve">
+        <value>Headline text content</value>
+    </data>
+    <data name="TerrainCostDesc" xml:space="preserve">
+        <value>Action points consumed on this hex</value>
+    </data>
+    <data name="VizLimiterDesc" xml:space="preserve">
+        <value>Visibility reduced on this hex</value>
+    </data>
+    <data name="VizIncreaseDesc" xml:space="preserve">
+        <value>Visibility increased on this hex</value>
+    </data>
+    <data name="PassableDesc" xml:space="preserve">
+        <value>Whether can move to this terrain: 0 impassable, 1 passable</value>
+    </data>
+    <data name="ScavengeInitialIdDesc" xml:space="preserve">
+        <value>Treasure pool ID used when first scavenging this terrain</value>
+    </data>
+    <data name="ScavengeItemsIdPerHourDesc" xml:space="preserve">
+        <value>Treasure pool ID used when scavenging this terrain repeatedly</value>
+    </data>
+    <data name="CampItemsDesc" xml:space="preserve">
+        <value>Camp type ID</value>
+    </data>
+    <data name="LightLevelsDesc" xml:space="preserve">
+        <value>Light levels, corresponding to: dawn, morning, noon, afternoon, dusk, midnight, 6 floats</value>
+    </data>
+    <data name="DefaultCampIdDesc" xml:space="preserve">
+        <value>Default camp ID code, used with treasuretable</value>
+    </data>
+    <data name="ConditionIdsDesc" xml:space="preserve">
+        <value>Condition IDs brought to player when entering this hex</value>
+    </data>
+    <data name="RequiredPropsDesc" xml:space="preserve">
+        <value>Required property IDs for this ingredient, '&amp;' can be used for AND relationship</value>
+    </data>
+    <data name="ForbidPropsDesc" xml:space="preserve">
+        <value>Property IDs this ingredient cannot have</value>
+    </data>
+    <data name="PropertyNameDesc" xml:space="preserve">
+        <value>Property name, e.g., 'easily ignitable'</value>
+    </data>
+    <data name="EquipConditionsDesc" xml:space="preserve">
+        <value>Conditions brought to you when this item is equipped</value>
+    </data>
+    <data name="PossessConditionsDesc" xml:space="preserve">
+        <value>Permanent conditions brought to you when holding this item</value>
+    </data>
+    <data name="UseConditionsDesc" xml:space="preserve">
+        <value>Conditions brought to you when using this item</value>
+    </data>
+    <data name="EquipSlotsDesc" xml:space="preserve">
+        <value>Equipment slots, positions item can be placed on body: 20 left hand, 21 right hand, 22 back</value>
+    </data>
+    <data name="UseSlotsDesc" xml:space="preserve">
+        <value>Use position, 211 for direct self-use (like taking medicine)</value>
+    </data>
+    <data name="SocketLockedDesc" xml:space="preserve">
+        <value>Lock property, items with this property cannot be moved by player</value>
+    </data>
+    <data name="PropertiesDesc" xml:space="preserve">
+        <value>List of property IDs for this item, used for crafting and checks</value>
+    </data>
+    <data name="ContentIdsDesc" xml:space="preserve">
+        <value>Space property of this item, defines what items can be stored as container</value>
+    </data>
+    <data name="FormatIdDesc" xml:space="preserve">
+        <value>Internal treasure pool ID of this item</value>
+    </data>
+    <data name="ComponentIdDesc" xml:space="preserve">
+        <value>Component ID, used with treasuretable, for reverse-craftable items, items obtained by disassembling if acquired by non-crafting means</value>
+    </data>
+    <data name="MirroredDesc" xml:space="preserve">
+        <value>Mirrored, specifically for shoes</value>
+    </data>
+    <data name="SlotDepthDesc" xml:space="preserve">
+        <value>Determines which clothing is on top when wearing multiple items</value>
+    </data>
+    <data name="StackLimitDesc" xml:space="preserve">
+        <value>Maximum stack quantity</value>
+    </data>
+    <data name="SwitchIdsDesc" xml:space="preserve">
+        <value>Switch ID, used for electronic device on/off state switching</value>
+    </data>
+    <data name="SoundsDesc" xml:space="preserve">
+        <value>Sound when picking up or putting down this item</value>
+    </data>
+    <data name="DefinitionDesc" xml:space="preserve">
+        <value>Map definition data, terrain data composed of large amounts of numbers and commas</value>
+    </data>
+    <data name="SecretNameDesc" xml:space="preserve">
+        <value>Recipe's hidden name, used to distinguish human meat from animal meat, water toxicity, etc.</value>
+    </data>
+    <data name="ToolsDesc" xml:space="preserve">
+        <value>Tools required for crafting, format like '1x1'</value>
+    </data>
+    <data name="ConsumedDesc" xml:space="preserve">
+        <value>Items that will be consumed/degraded in crafting, format like '1x2+1x3'</value>
+    </data>
+    <data name="DestroyedDesc" xml:space="preserve">
+        <value>Destroyed items, used for extinguishing torches, etc.</value>
+    </data>
+    <data name="HoursDesc" xml:space="preserve">
+        <value>Action points consumed for crafting</value>
+    </data>
+    <data name="ReverseDesc" xml:space="preserve">
+        <value>Whether reverse engineering is possible: 0 irreversible, 1 reversible, 2, etc.</value>
+    </data>
+    <data name="HiddenIdDesc" xml:space="preserve">
+        <value>Whether it's a hidden recipe, needs to pick up paper to unlock</value>
+    </data>
+    <data name="IdentifyDesc" xml:space="preserve">
+        <value>Whether it can be identified, used with hidden name</value>
+    </data>
+    <data name="TransferComponentsDesc" xml:space="preserve">
+        <value>Unknown parameter</value>
+    </data>
+    <data name="AlsoTryDesc" xml:space="preserve">
+        <value>Other recipe IDs with different recipes but same result</value>
+    </data>
+    <data name="TempTreasureIdDesc" xml:space="preserve">
+        <value>Crafting result ID shown as ghost in result slot during crafting</value>
+    </data>
+    <data name="DegradeOutputDesc" xml:space="preserve">
+        <value>Whether crafted item durability is related to material durability: 1 related, 0 unrelated</value>
+    </data>
+    <data name="ScrapDesc" xml:space="preserve">
+        <value>Whether it can be disassembled</value>
+    </data>
+    <data name="TreasuresDesc" xml:space="preserve">
+        <value>Treasure pool content, format 'item IDxquantityxchance', pipe | means OR, comma , means AND</value>
+    </data>
+    <data name="NestedDesc" xml:space="preserve">
+        <value>Whether generated items will be placed in simultaneously generated containers</value>
+    </data>
+    <data name="SuppressDesc" xml:space="preserve">
+        <value>Suppress content generation from items: when 1, water bottles won't have water, guns won't have bullets</value>
+    </data>
+    <data name="SetFolder" xml:space="preserve">
+        <value>Set Folder</value>
+    </data>
+    <data name="OpenGameFolder" xml:space="preserve">
+        <value>Open Game Folder</value>
+    </data>
+    <data name="OpenModsFolder" xml:space="preserve">
+        <value>Open Mods Folder</value>
+    </data>
+    <data name="SetGameFolder" xml:space="preserve">
+        <value>Set Game Folder</value>
+    </data>
+    <data name="GameRootDirNotSet" xml:space="preserve">
+        <value>Game Root Dir Not Set
+Exit if No</value>
+    </data>
+    <data name="GameRootDir" xml:space="preserve">
+        <value>Game Root Dir</value>
+    </data>
+    <data name="ModDatabase" xml:space="preserve">
+        <value>Mod Database</value>
+    </data>
+    <data name="ImportMod" xml:space="preserve">
+        <value>Import Mod</value>
+    </data>
+    <data name="SelectGameRootDir" xml:space="preserve">
+        <value>Select Game Root Dir</value>
+    </data>
+    <data name="SelectModFolder" xml:space="preserve">
+        <value>Select Mod Folder</value>
+    </data>
+    <data name="IsBase" xml:space="preserve">
+        <value>IsBase</value>
+    </data>
+    <data name="LastModified" xml:space="preserve">
+        <value>LastModified</value>
+    </data>
+    <data name="LastImport" xml:space="preserve">
+        <value>LastImport</value>
+    </data>
+    <data name="Path" xml:space="preserve">
+        <value>Path</value>
+    </data>
+    <data name="Add" xml:space="preserve">
+        <value>Add</value>
+    </data>
+    <data name="Delete" xml:space="preserve">
+        <value>Delete</value>
+    </data>
+    <data name="DeleteImagePairTooltip" xml:space="preserve">
+        <value>Remove the selected item from this image list only. The image files on disk will not be deleted.</value>
+    </data>
+    <data name="Save" xml:space="preserve">
+        <value>Save</value>
+    </data>
+    <data name="ModGameDataSavePreviewTitle" xml:space="preserve">
+        <value>Save Preview</value>
+    </data>
+    <data name="ModGameDataSavePreviewTitleFormat" xml:space="preserve">
+        <value>Save Preview - {0}</value>
+    </data>
+    <data name="ModGameDataSavePreviewNote" xml:space="preserve">
+        <value>Review the XML diff below. Confirm will only close this preview and show a success notification for now; it will not write any files yet.</value>
+    </data>
+    <data name="ModGameDataSaveSuccessMessage" xml:space="preserve">
+        <value>Save successful.</value>
+    </data>
+    <data name="ModGameDataSavePreviewFailedMessage" xml:space="preserve">
+        <value>Unable to generate the save preview: {0}</value>
+    </data>
+    <data name="ModGameDataSaveMissingModMessage" xml:space="preserve">
+        <value>No mod data is currently loaded.</value>
+    </data>
+    <data name="DiffOldLabel" xml:space="preserve">
+        <value>Original (Disk)</value>
+    </data>
+    <data name="DiffNewLabel" xml:space="preserve">
+        <value>Pending (Edits)</value>
+    </data>
+    <data name="AddRow" xml:space="preserve">
+        <value>Add Row</value>
+    </data>
+    <data name="DeleteRow" xml:space="preserve">
+        <value>Delete Row</value>
+    </data>
+    <data name="ImportTutorial" xml:space="preserve">
+        <value>Import Tutorial...</value>
+    </data>
+    <data name="NavigateBack" xml:space="preserve">
+        <value>Navigate back</value>
+    </data>
+    <data name="GoToReference" xml:space="preserve">
+        <value>Go to {0}</value>
+    </data>
+    <data name="NavigateSameEntity" xml:space="preserve">
+        <value>Already at this entity.</value>
+    </data>
+    <data name="NoRowSelectedMessage" xml:space="preserve">
+        <value>No row selected.</value>
+    </data>
+    <data name="RefTargetNotLoaded" xml:space="preserve">
+        <value>Cannot navigate: {0} table is not loaded in the current mod.</value>
+    </data>
+    <data name="RefTargetNotFound" xml:space="preserve">
+        <value>Referenced {0} id={1} not found in the current mod. It may be defined in another mod.</value>
+    </data>
+    <data name="OpenMergeEditor" xml:space="preserve">
+        <value>Open Merged View</value>
+    </data>
+    <data name="MergeEditorTitleFormat" xml:space="preserve">
+        <value>Merge View: {0}</value>
+    </data>
+    <data name="MoveUp" xml:space="preserve">
+        <value>Move Up</value>
+    </data>
+    <data name="MoveDown" xml:space="preserve">
+        <value>Move Down</value>
+    </data>
+    <data name="EditProfileWindowTitle" xml:space="preserve">
+        <value>Edit Profile</value>
+    </data>
+    <data name="ProfileDescription" xml:space="preserve">
+        <value>Description</value>
+    </data>
+    <data name="AddProfile" xml:space="preserve">
+        <value>Add Profile</value>
+    </data>
+    <data name="AddTab" xml:space="preserve">
+        <value>Add Tab</value>
+    </data>
+    <data name="ClearAllMod" xml:space="preserve">
+        <value>Clear All Mods</value>
+    </data>
+    <data name="ClearAllProfile" xml:space="preserve">
+        <value>Clear All Profiles</value>
+    </data>
+    <data name="ClearMod" xml:space="preserve">
+        <value>Clear Mod</value>
+    </data>
+    <data name="ClearProfile" xml:space="preserve">
+        <value>Clear Profile</value>
+    </data>
+    <data name="ClearSelectedMod" xml:space="preserve">
+        <value>Clear Selected Mod</value>
+    </data>
+    <data name="CloseProfile" xml:space="preserve">
+        <value>Close Profile</value>
+    </data>
+    <data name="CloseProfileConfirmation" xml:space="preserve">
+        <value>Save changes before closing this profile?</value>
+    </data>
+    <data name="CloseModImages" xml:space="preserve">
+        <value>Close Images</value>
+    </data>
+    <data name="CloseModImagesConfirmation" xml:space="preserve">
+        <value>Save the current image order before closing?</value>
+    </data>
+    <data name="CreateMod" xml:space="preserve">
+        <value>Create Mod</value>
+    </data>
+    <data name="CurrentDocumentCountLabel" xml:space="preserve">
+        <value>Open Documents:</value>
+    </data>
+    <data name="DeleteAllMods" xml:space="preserve">
+        <value>Delete All Mods</value>
+    </data>
+    <data name="DeleteSelectedMod" xml:space="preserve">
+        <value>Delete Selected Mod</value>
+    </data>
+    <data name="DiffNavigationEmptyText" xml:space="preserve">
+        <value>Diff 0/0</value>
+    </data>
+    <data name="DiffNavigationFormat" xml:space="preserve">
+        <value>Diff {0}/{1}</value>
+    </data>
+    <data name="EditProfile" xml:space="preserve">
+        <value>Edit Profile</value>
+    </data>
+    <data name="CompareProfiles" xml:space="preserve">
+        <value>Compare with...</value>
+    </data>
+    <data name="SetActiveProfile" xml:space="preserve">
+        <value>Set as Active</value>
+    </data>
+    <data name="AddModToProfile" xml:space="preserve">
+        <value>Add Mod...</value>
+    </data>
+    <data name="Games" xml:space="preserve">
+        <value>Game</value>
+    </data>
+    <data name="ImportProfile" xml:space="preserve">
+        <value>Import Profile</value>
+    </data>
+    <data name="LoadAll" xml:space="preserve">
+        <value>Load All</value>
+    </data>
+    <data name="LoadMod" xml:space="preserve">
+        <value>Load Mod</value>
+    </data>
+    <data name="ModGameDataTitleFormat" xml:space="preserve">
+        <value>Data: {0}</value>
+    </data>
+    <data name="Mods" xml:space="preserve">
+        <value>Mods</value>
+    </data>
+    <data name="NewDocumentContentFormat" xml:space="preserve">
+        <value>Content of document {0}</value>
+    </data>
+    <data name="NewDocumentTitleFormat" xml:space="preserve">
+        <value>Document {0}</value>
+    </data>
+    <data name="OpenModPath" xml:space="preserve">
+        <value>Open Mod Path</value>
+    </data>
+    <data name="ProfileDatabase" xml:space="preserve">
+        <value>Profile Database</value>
+    </data>
+    <data name="WorkspaceHistory" xml:space="preserve">
+        <value>Workspace History</value>
+    </data>
+    <data name="RefreshMods" xml:space="preserve">
+        <value>Refresh Mods</value>
+    </data>
+    <data name="RefreshProfile" xml:space="preserve">
+        <value>Refresh Profiles</value>
+    </data>
+    <data name="ReloadGameFolder" xml:space="preserve">
+        <value>Reload Game Folder</value>
+    </data>
+    <data name="ShowData" xml:space="preserve">
+        <value>Show Data</value>
+    </data>
+    <data name="ShowImage" xml:space="preserve">
+        <value>Show Images</value>
+    </data>
+    <data name="NoImagesFound" xml:space="preserve">
+        <value>No images were found in getimages.php.</value>
+    </data>
+    <data name="ModImagesTitleFormat" xml:space="preserve">
+        <value>Images: {0}</value>
+    </data>
+    <data name="GetImagesFileNotFound" xml:space="preserve">
+        <value>getimages.php Not Found</value>
+    </data>
+    <data name="GetImagesFileNotFoundMessage" xml:space="preserve">
+        <value>Could not find getimages.php in the selected mod directory.</value>
+    </data>
+    <data name="OpenModImagesFailed" xml:space="preserve">
+        <value>Open Mod Images Failed</value>
+    </data>
+    <data name="OpenModImagesFailedMessage" xml:space="preserve">
+        <value>Failed to open mod images</value>
+    </data>
+    <data name="ToggleSyncScroll" xml:space="preserve">
+        <value>Toggle synchronized scrolling</value>
+    </data>
+    <data name="Untitled" xml:space="preserve">
+        <value>Untitled</value>
+    </data>
+    <data name="Welcome" xml:space="preserve">
+        <value>Welcome</value>
+    </data>
+    <data name="WelcomeDocumentContent" xml:space="preserve">
+        <value>This is the NeoEditor, a modding tool for Neople games.
+
+Use the sidebar to explore resources, manage mods, and edit profiles.
+
+Click 'Set Game Folder' in the Project menu to get started.</value>
+    </data>
+    <data name="BaseModCannotBeDeleted" xml:space="preserve">
+        <value>Base Mod Cannot Be Deleted</value>
+    </data>
+    <data name="BaseModCannotBeDeletedMessage" xml:space="preserve">
+        <value>Base mods are protected and can't be deleted.</value>
+    </data>
+    <data name="Cancelled" xml:space="preserve">
+        <value>Cancelled</value>
+    </data>
+    <data name="CreateModSuccess" xml:space="preserve">
+        <value>Mod created successfully.</value>
+    </data>
+    <data name="DeleteAllModsConfirmMessage" xml:space="preserve">
+        <value>Delete all mods?</value>
+    </data>
+    <data name="DeleteAllModsConfirmMessageDetail" xml:space="preserve">
+        <value>This action will permanently remove all imported mods.</value>
+    </data>
+    <data name="DeleteModsConfirmMessage" xml:space="preserve">
+        <value>Delete selected mod?</value>
+    </data>
+    <data name="DeleteModsConfirmMessageDetail" xml:space="preserve">
+        <value>This action will permanently remove the selected mod.</value>
+    </data>
+    <data name="Error" xml:space="preserve">
+        <value>Error</value>
+    </data>
+    <data name="ModCreationCancelled" xml:space="preserve">
+        <value>Mod creation was cancelled.</value>
+    </data>
+    <data name="ModDirectoryNotFound" xml:space="preserve">
+        <value>Mod Directory Not Found</value>
+    </data>
+    <data name="ModDirectoryNotFoundMessage" xml:space="preserve">
+        <value>The mod directory could not be found.</value>
+    </data>
+    <data name="ModNameRequired" xml:space="preserve">
+        <value>Mod name is required.</value>
+    </data>
+    <data name="ReloadModsSuccess" xml:space="preserve">
+        <value>Mods Reloaded</value>
+    </data>
+    <data name="ReloadModsSuccessMessage" xml:space="preserve">
+        <value>Mod list has been refreshed successfully.</value>
+    </data>
+    <data name="SaveModImagesSuccess" xml:space="preserve">
+        <value>Images Saved</value>
+    </data>
+    <data name="SaveModImagesSuccessMessage" xml:space="preserve">
+        <value>Saved image order to {0}</value>
+    </data>
+    <data name="SaveModImagesFailed" xml:space="preserve">
+        <value>Save Images Failed</value>
+    </data>
+    <data name="SaveModImagesFailedMessage" xml:space="preserve">
+        <value>Failed to save image order: {0}</value>
+    </data>
+    <data name="ImportImagesSuccess" xml:space="preserve">
+        <value>Images Imported</value>
+    </data>
+    <data name="ImportImagesSuccessMessage" xml:space="preserve">
+        <value>Imported {0} image pair(s) into {1}</value>
+    </data>
+    <data name="ImportImagesSkipped" xml:space="preserve">
+        <value>Images Skipped</value>
+    </data>
+    <data name="ImportImagesSkippedMessage" xml:space="preserve">
+        <value>Skipped import: {0}</value>
+    </data>
+    <data name="ImportImagesOverwrite" xml:space="preserve">
+        <value>Images Overwritten</value>
+    </data>
+    <data name="ImportImagesOverwriteMessage" xml:space="preserve">
+        <value>Overwrote existing files: {0}</value>
+    </data>
+    <data name="ImportImagesTooltip" xml:space="preserve">
+        <value>Import image pairs into the current mod's img folder.</value>
+    </data>
+    <data name="SaveModImagesTooltip" xml:space="preserve">
+        <value>Save the current image list order to getimages.php.</value>
+    </data>
+    <data name="RenameImagePair" xml:space="preserve">
+        <value>Rename Image Pair</value>
+    </data>
+    <data name="RenameImagePairTooltip" xml:space="preserve">
+        <value>Rename the selected image pair and its x2 file together.</value>
+    </data>
+    <data name="RenameImagePairDialogTitle" xml:space="preserve">
+        <value>Rename Image Pair</value>
+    </data>
+    <data name="RenameImagePairCurrentNormal" xml:space="preserve">
+        <value>Current Image</value>
+    </data>
+    <data name="RenameImagePairCurrentX2" xml:space="preserve">
+        <value>Current X2 Image</value>
+    </data>
+    <data name="RenameImagePairPreviewNormal" xml:space="preserve">
+        <value>Renamed Image</value>
+    </data>
+    <data name="RenameImagePairPreviewX2" xml:space="preserve">
+        <value>Renamed X2 Image</value>
+    </data>
+    <data name="RenameImagePairNameRequired" xml:space="preserve">
+        <value>Name is required.</value>
+    </data>
+    <data name="RenameImagePairInvalidName" xml:space="preserve">
+        <value>Name contains invalid file name characters.</value>
+    </data>
+    <data name="RenameImagePairFileExists" xml:space="preserve">
+        <value>A file with the target name already exists.</value>
+    </data>
+    <data name="RenameImagePairNormalFileExists" xml:space="preserve">
+        <value>Image file already exists: {0}</value>
+    </data>
+    <data name="RenameImagePairX2FileExists" xml:space="preserve">
+        <value>X2 image file already exists: {0}</value>
+    </data>
+    <data name="RenameImagePairBothFilesExist" xml:space="preserve">
+        <value>Image files already exist: {0}, {1}</value>
+    </data>
+    <data name="RenameImagePairMissingFiles" xml:space="preserve">
+        <value>Rename Image Pair Failed</value>
+    </data>
+    <data name="RenameImagePairMissingFilesMessage" xml:space="preserve">
+        <value>The selected image pair could not be found on disk.</value>
+    </data>
+    <data name="RenameImagePairSuccess" xml:space="preserve">
+        <value>Image Pair Renamed</value>
+    </data>
+    <data name="RenameImagePairSuccessMessage" xml:space="preserve">
+        <value>Renamed image pair to {0}</value>
+    </data>
+    <data name="RenameImagePairFailed" xml:space="preserve">
+        <value>Rename Failed</value>
+    </data>
+    <data name="RenameImagePairFailedMessage" xml:space="preserve">
+        <value>Failed to rename image pair: {0}</value>
+    </data>
+    <data name="MoveUpImagePairTooltip" xml:space="preserve">
+        <value>Move the selected image pair up in the list.</value>
+    </data>
+    <data name="MoveDownImagePairTooltip" xml:space="preserve">
+        <value>Move the selected image pair down in the list.</value>
+    </data>
+    <data name="AddImage" xml:space="preserve">
+        <value>Add Image</value>
+    </data>
+    <data name="SelectImage" xml:space="preserve">
+        <value>Select Image</value>
+    </data>
+    <data name="ImageFiles" xml:space="preserve">
+        <value>Image Files</value>
+    </data>
+    <data name="ImageDimensions" xml:space="preserve">
+        <value>Dimensions</value>
+    </data>
+    <data name="FileSize" xml:space="preserve">
+        <value>File Size</value>
+    </data>
+    <data name="NoImageSelected" xml:space="preserve">
+        <value>No image selected.</value>
+    </data>
+    <data name="Width" xml:space="preserve">
+        <value>Width</value>
+    </data>
+    <data name="Height" xml:space="preserve">
+        <value>Height</value>
+    </data>
+    <data name="Pixelate" xml:space="preserve">
+        <value>Pixelate</value>
+    </data>
+    <data name="ProcessedPreview" xml:space="preserve">
+        <value>Processed Preview</value>
+    </data>
+    <data name="NoProcessedImage" xml:space="preserve">
+        <value>No processed image yet.</value>
+    </data>
+    <data name="SaveProcessedImage" xml:space="preserve">
+        <value>Save Processed Image</value>
+    </data>
+    <data name="LockAspectRatio" xml:space="preserve">
+        <value>Lock Aspect Ratio</value>
+    </data>
+    <data name="X2Preview" xml:space="preserve">
+        <value>X2 Preview</value>
+    </data>
+    <data name="NormalOutput" xml:space="preserve">
+        <value>Normal Output</value>
+    </data>
+    <data name="X2Output" xml:space="preserve">
+        <value>X2 Output</value>
+    </data>
+    <data name="ImageEditorGridConstraintHint" xml:space="preserve">
+        <value>Normal output is snapped to 10px steps, the x2 preview is generated automatically at 20px steps, and both files are always saved as PNG to preserve full transparency.</value>
+    </data>
+    <data name="SaveImagePair" xml:space="preserve">
+        <value>Save PNG Image Pair</value>
+    </data>
+    <data name="ModGameDataPreparingSavePreviewButton" xml:space="preserve">
+        <value>Preparing Preview...</value>
+    </data>
+    <data name="ModGameDataPreparingSavePreviewScanning" xml:space="preserve">
+        <value>Loading local mod XML...</value>
+    </data>
+    <data name="ModGameDataPreparingSavePreviewExporting" xml:space="preserve">
+        <value>Exporting current editor data...</value>
+    </data>
+    <data name="ModGameDataPreparingSavePreviewDiffing" xml:space="preserve">
+        <value>Comparing XML and preparing preview...</value>
+    </data>
+    <data name="ModGameDataPreparingSavePreviewValidating" xml:space="preserve">
+        <value>Validating data...</value>
+    </data>
+    <data name="UndoTooltip" xml:space="preserve">
+        <value>Undo (Ctrl+Z)</value>
+    </data>
+    <data name="RedoTooltip" xml:space="preserve">
+        <value>Redo (Ctrl+Y)</value>
+    </data>
+    <data name="FactionId" xml:space="preserve">
+        <value>Faction</value>
+    </data>
+    <data name="FactionIdDesc" xml:space="preserve">
+        <value>Faction ID</value>
+    </data>
+    <data name="CloneRow" xml:space="preserve">
+        <value>Clone Row</value>
+    </data>
+    <data name="FindReferences" xml:space="preserve">
+        <value>Find references to this...</value>
+    </data>
+    <data name="ExportCsv" xml:space="preserve">
+        <value>CSV</value>
+    </data>
+    <data name="ImportCsv" xml:space="preserve">
+        <value>Import</value>
+    </data>
+    <data name="ExportCsvTooltip" xml:space="preserve">
+        <value>Export current table as CSV</value>
+    </data>
+    <data name="ImportCsvTooltip" xml:space="preserve">
+        <value>Import CSV into current table</value>
+    </data>
+    <data name="ExportModZip" xml:space="preserve">
+        <value>Export as .zip</value>
+    </data>
+    <data name="ImportModZip" xml:space="preserve">
+        <value>Import .zip Mod</value>
+    </data>
+    <data name="ExportCraftingCsv" xml:space="preserve">
+        <value>Export Crafting Table (CSV)</value>
+    </data>
+    <data name="ExportItemEncyclopediaMd" xml:space="preserve">
+        <value>Export Item Encyclopedia (Markdown)</value>
+    </data>
+    <data name="ExportLootTableJson" xml:space="preserve">
+        <value>Export Loot Tables (JSON)</value>
+    </data>
+    <data name="DataExportTooltip" xml:space="preserve">
+        <value>Data Export</value>
+    </data>
+    <data name="CsvImportDiffHeader" xml:space="preserve">
+        <value>Review the changes before importing</value>
+    </data>
+    <data name="CsvImportConfirm" xml:space="preserve">
+        <value>Confirm Import</value>
+    </data>
+    <data name="CsvImportCancel" xml:space="preserve">
+        <value>Cancel</value>
+    </data>
+    <data name="ValueEditorToggle" xml:space="preserve">
+        <value>Toggle Value Editor (Recipe / Encounter / TreasureTable)</value>
+    </data>
+    <data name="FieldNamesModifiers" xml:space="preserve">
+        <value>FieldNames → Modifiers</value>
+    </data>
+    <data name="ExportAllXlsx" xml:space="preserve">
+        <value>Export All to Excel (XLSX)</value>
+    </data>
+    <data name="FindPrevious" xml:space="preserve"><value>Previous</value></data>
+    <data name="FindNext" xml:space="preserve"><value>Next</value></data>
+    <data name="FindMatchCase" xml:space="preserve"><value>Match case</value></data>
+    <data name="FindWholeWord" xml:space="preserve"><value>Whole word</value></data>
+    <data name="FindRegex" xml:space="preserve"><value>Regex</value></data>
+    <data name="FindClose" xml:space="preserve"><value>Close</value></data>
+    <data name="FindWatermark" xml:space="preserve"><value>Find</value></data>
+    <data name="ReplaceWatermark" xml:space="preserve"><value>Replace</value></data>
+    <data name="ReplaceButton" xml:space="preserve"><value>Replace</value></data>
+    <data name="ReplaceAllButton" xml:space="preserve"><value>All</value></data>
+    <data name="FindInvalid" xml:space="preserve">
+        <value>invalid</value>
+    </data>
+    <data name="FindNoMatches" xml:space="preserve"><value>No matches</value></data>
+    <data name="FindMatchCount" xml:space="preserve"><value>{0} matches</value></data>
+    <data name="FindReplaceSuccess" xml:space="preserve"><value>Replaced {0} occurrence(s).</value></data>
+    <data name="FindReplaceTitle" xml:space="preserve"><value>Replace</value></data>
+
+  <data name="RefInspect" xml:space="preserve"><value>Ref Inspect</value></data>
+  <data name="RefInspectPinned" xml:space="preserve"><value>🔒 PINNED</value></data>
+  <data name="RefInspectHelp" xml:space="preserve"><value>Ctrl+Left Click a teal reference to peek here (jump + preview).
+Ctrl+Right Click to peek without jumping.
+Double-click to navigate directly.</value></data>
+  <data name="RefInspectBack" xml:space="preserve"><value>Back in peek history (navigate previous peeked entity)</value></data>
+  <data name="RefInspectForward" xml:space="preserve"><value>Forward in peek history</value></data>
+  <data name="RefInspectPin" xml:space="preserve"><value>Pin</value></data>
+  <data name="RefInspectUnpin" xml:space="preserve"><value>Unpin</value></data>
+  <data name="RefInspectPinHelp" xml:space="preserve"><value>Pin: freeze current entity view. New peeks will not replace it until unpinned.</value></data>
+  <data name="RefInspectOpenFull" xml:space="preserve"><value>Open Full</value></data>
+  <data name="RefInspectOpenFullHelp" xml:space="preserve"><value>Open the full entity document and navigate to this entity</value></data>
+  <data name="RefInspectEmptyHint" xml:space="preserve"><value>Ctrl+Click a teal reference to inspect it here.</value></data>
+  <data name="SearchTab" xml:space="preserve"><value>Search</value></data>
+  <data name="ConflictsTab" xml:space="preserve"><value>Conflicts</value></data>
+  <data name="ValidationTab" xml:space="preserve"><value>Validation</value></data>
+  <data name="BottomSearchWatermark" xml:space="preserve"><value>Search all game data... (use col:value syntax)</value></data>
+  <data name="BottomSearchClear" xml:space="preserve"><value>Clear search</value></data>
+  <data name="RunValidation" xml:space="preserve"><value>Run</value></data>
+  <data name="ModGuide" xml:space="preserve"><value>Mod Guide</value></data>
+
+  <data name="HomePageBannerWarning" xml:space="preserve"><value>⚠  Game directory not set</value></data>
+  <data name="HomePageBannerHelp" xml:space="preserve"><value>Click ⚙ Settings in the left sidebar, then set your Neo Scavenger installation path.</value></data>
+  <data name="HomePageOpenSettings" xml:space="preserve"><value>Open Settings</value></data>
+  <data name="HomePageTitle" xml:space="preserve"><value>NeoEditor</value></data>
+  <data name="HomePageSubtitle" xml:space="preserve"><value>Neo Scavenger Mod Editor</value></data>
+  <data name="HomePageBrowseTitle" xml:space="preserve"><value>Browse Game Data</value></data>
+  <data name="HomePageBrowseDesc" xml:space="preserve"><value>Explore all items, recipes, creatures (read-only)</value></data>
+  <data name="HomePageNewModTitle" xml:space="preserve"><value>New Mod</value></data>
+  <data name="HomePageNewModDesc" xml:space="preserve"><value>Create your own mod from scratch</value></data>
+  <data name="HomePageImportTitle" xml:space="preserve"><value>Import Mod</value></data>
+  <data name="HomePageImportDesc" xml:space="preserve"><value>Open an existing mod folder or XML file</value></data>
+  <data name="HomePageRecentMods" xml:space="preserve"><value>Recent Mods</value></data>
+  <data name="HomePageEntitiesFormat" xml:space="preserve"><value>{0} entities</value></data>
+  <data name="HomePageMergeView" xml:space="preserve"><value>Merge View</value></data>
+  <data name="HomePageMergeViewDesc" xml:space="preserve"><value>Open a mod loadout to see how mods combine and override each other.</value></data>
+  <data name="HomePageModsFormat" xml:space="preserve"><value>{0} mods</value></data>
+  <data name="HomePageProfilesHint" xml:space="preserve"><value>Manage profiles in the sidebar 👥 panel</value></data>
+  <data name="HomePageDropHint" xml:space="preserve"><value>Or drop a mod folder / XML file anywhere on the window</value></data>
+  <data name="HomePageUnsavedModsHint" xml:space="preserve"><value>These mods have unsaved edits in the WAL. Click to open and continue editing — your changes are safe.</value></data>
+  <data name="HomePageDirtyProfileHint" xml:space="preserve"><value>These profiles contain mods with unsaved edits. Click to open the merge editor — your edits are safe.</value></data>
+  <data name="RmOpen" xml:space="preserve"><value>Open</value></data>
+  <data name="RmOpenInExplorer" xml:space="preserve"><value>Open in Explorer</value></data>
+  <data name="RmCopyFullPath" xml:space="preserve"><value>Copy Full Path</value></data>
+  <data name="RmRename" xml:space="preserve"><value>Rename...</value></data>
+  <data name="RmDelete" xml:space="preserve"><value>Delete</value></data>
+  <data name="RightPanelEditor" xml:space="preserve"><value>Overview</value></data>
+  <data name="RightPanelImages" xml:space="preserve"><value>Images</value></data>
+  <data name="OverlayChainTitle" xml:space="preserve"><value>Overlay Chain</value></data>
+  <data name="OverlayChainWinner" xml:space="preserve"><value>WINNER</value></data>
+  <data name="OverlayChainOverridden" xml:space="preserve"><value>OVERRIDDEN</value></data>
+  <data name="OverlayChainEmpty" xml:space="preserve"><value>Select a row to see its overlay chain.</value></data>
+  <data name="ValueEditorTitle" xml:space="preserve"><value>Visual Overview</value></data>
+  <data name="ValueEditorEmpty" xml:space="preserve"><value>Select an entity row to see a visualization.</value></data>
+  <data name="ImagePreviewFooter" xml:space="preserve"><value>✓ found  ✗ missing. Double‑click found items to open image.</value></data>
+  <data name="DepsTooltip" xml:space="preserve"><value>Check cross-mod reference integrity</value></data>
+  <data name="ConflictsFormat" xml:space="preserve"><value>{0} conflicts</value></data>
+  <data name="CreateModToEdit" xml:space="preserve"><value>Create Mod to Edit</value></data>
+  <data name="EmptyModHeader" xml:space="preserve"><value>This mod has no entities yet.</value></data>
+  <data name="EmptyModDesc" xml:space="preserve"><value>Click the + button below to add items, recipes, or creatures.</value></data>
+  <data name="EmptyModButton" xml:space="preserve"><value>Add Your First Entity</value></data>
+  <data name="ToggleLeftPanel" xml:space="preserve"><value>Toggle left panel</value></data>
+  <data name="ToggleRightPanel" xml:space="preserve"><value>Toggle right panel</value></data>
+  <data name="ToggleBottomPanel" xml:space="preserve"><value>Toggle bottom panel</value></data>
+  <data name="DocsFormat" xml:space="preserve"><value>Docs: {0}</value></data>
+  <data name="DialogRename" xml:space="preserve"><value>Rename</value></data>
+  <data name="DialogOK" xml:space="preserve"><value>OK</value></data>
+  <data name="DialogAdd" xml:space="preserve"><value>Add</value></data>
+  <data name="DialogClose" xml:space="preserve"><value>Close</value></data>
+  <data name="DialogExportCsv" xml:space="preserve"><value>Export CSV</value></data>
+  <data name="DialogCancel" xml:space="preserve"><value>Cancel</value></data>
+  <data name="DialogCreate" xml:space="preserve"><value>Create</value></data>
+  <data name="DialogAuthor" xml:space="preserve"><value>Author</value></data>
+  <data name="DialogAuthorWatermark" xml:space="preserve"><value>Your name or team</value></data>
+  <data name="DialogModName" xml:space="preserve"><value>Mod Name</value></data>
+  <data name="DialogModNameWatermark" xml:space="preserve"><value>e.g. MyAwesomeMod</value></data>
+  <data name="DialogNamespace" xml:space="preserve"><value>Namespace</value></data>
+  <data name="DialogNamespaceWatermark" xml:space="preserve"><value>e.g. MAM</value></data>
+  <data name="DialogNamespaceHint" xml:space="preserve"><value>Short prefix to identify your mod items. Used to avoid ID conflicts with other mods.</value></data>
+  <data name="DialogCreateProfile" xml:space="preserve"><value>Create a mod loadout profile automatically</value></data>
+  <data name="AddRowTitle" xml:space="preserve"><value>Add New Row</value></data>
+  <data name="AddRowTargetMod" xml:space="preserve"><value>Target Mod</value></data>
+  <data name="AddRowTargetXml" xml:space="preserve"><value>Target XML *</value></data>
+  <data name="AddRowCopyFrom" xml:space="preserve"><value>Copy From</value></data>
+  <data name="CsvImportTitle" xml:space="preserve"><value>CSV Import Preview</value></data>
+  <data name="DependencyCheckTitle" xml:space="preserve"><value>Dependency Check</value></data>
+  <data name="DependencySource" xml:space="preserve"><value>Source</value></data>
+  <data name="DependencyMod" xml:space="preserve"><value>Mod</value></data>
+  <data name="DependencyField" xml:space="preserve"><value>Field</value></data>
+  <data name="DependencyTarget" xml:space="preserve"><value>Target</value></data>
+  <data name="DependencyIssue" xml:space="preserve"><value>Issue</value></data>
+  <data name="ConflictTitle" xml:space="preserve"><value>Field Conflicts</value></data>
+  <data name="ConflictEntityType" xml:space="preserve"><value>Entity Type</value></data>
+  <data name="ConflictEntity" xml:space="preserve"><value>Entity</value></data>
+  <data name="ConflictField" xml:space="preserve"><value>Field</value></data>
+  <data name="ConflictMods" xml:space="preserve"><value>Conflicting Mods</value></data>
+  <data name="MergeExportTitle" xml:space="preserve"><value>XML Export Preview</value></data>
+  <data name="MergeExportFiles" xml:space="preserve"><value>Files</value></data>
+  <data name="MergeExportInfo" xml:space="preserve"><value>Review changes for each file. Click a file on the left to see its diff.</value></data>
+  <data name="MergeExportAll" xml:space="preserve"><value>Export All</value></data>
+  <data name="ProfileDiffTitle" xml:space="preserve"><value>Profile Comparison</value></data>
+  <data name="ProfileDiffA" xml:space="preserve"><value>Profile A:</value></data>
+  <data name="ProfileDiffB" xml:space="preserve"><value>Profile B:</value></data>
+  <data name="ProfileDiffModName" xml:space="preserve"><value>Mod Name</value></data>
+  <data name="ProfileDiffPath" xml:space="preserve"><value>Path</value></data>
+  <data name="ImageViewerTitle" xml:space="preserve"><value>Image Viewer</value></data>
+  <data name="ValidationReportTitle" xml:space="preserve"><value>Validation Report</value></data>
+  <data name="ValidationCancelSave" xml:space="preserve"><value>Cancel Save</value></data>
+  <data name="ValidationSaveAnyway" xml:space="preserve"><value>Save Anyway</value></data>
+  <data name="ModGameDataTitleFormat" xml:space="preserve"><value>{0} - Mod Game Data</value></data>
+  <data name="ModImagesTitleFormat" xml:space="preserve"><value>{0} - Images</value></data>
+  <data name="MergeEditorTitleFormat" xml:space="preserve"><value>{0} - Merge Editor</value></data>
+  <data name="NewDocumentTitleFormat" xml:space="preserve"><value>Document {0}</value></data>
+
+  <data name="EmptyModMessage" xml:space="preserve"><value>This mod has no entities yet.</value></data>
+  <data name="EmptyModHint" xml:space="preserve"><value>Click the + button below to add items, recipes, or creatures.</value></data>
+  <data name="AddFirstEntity" xml:space="preserve"><value>Add Your First Entity</value></data>
+  <data name="ConflictsLabel" xml:space="preserve"><value>conflicts</value></data>
+  <data name="QuickSave" xml:space="preserve"><value>Quick Save</value></data>
+  <data name="GameDataReadOnly" xml:space="preserve"><value>Game Data</value></data>
+  <data name="GameDataReadOnlyMessage" xml:space="preserve"><value>Game base data cannot be edited directly. To modify game data, add a Merge-mode mod (strModName=0) to the profile, or create one via "New Mod" with namespace 0.</value></data>
+  <data name="QuickSaveTooltip" xml:space="preserve"><value>Save to database only (Ctrl+S)</value></data>
+  <data name="SaveAndExport" xml:space="preserve"><value>Export</value></data>
+  <data name="SaveAndExportTooltip" xml:space="preserve"><value>Save and export to XML files with diff preview</value></data>
+  <data name="Saving" xml:space="preserve"><value>Saving...</value></data>
+  <data name="SaveTooltip" xml:space="preserve"><value>Save (Ctrl+S)</value></data>
+  <data name="SaveAndLaunchTooltip" xml:space="preserve"><value>Save &amp; Launch Game (Ctrl+Shift+S)</value></data>
+  <data name="Launch" xml:space="preserve"><value>Launch</value></data>
+  <data name="DiffJumpToCursor" xml:space="preserve"><value>Jump to next diff from cursor</value></data>
+  <data name="DiffJumpToIndex" xml:space="preserve"><value>Go to diff #</value></data>
+
+  <data name="Vis.StoryText" xml:space="preserve"><value>Story Text</value></data>
+  <data name="Vis.Option" xml:space="preserve"><value>option</value></data>
+  <data name="Vis.Options" xml:space="preserve"><value>options</value></data>
+  <data name="Vis.NoResponses" xml:space="preserve"><value>(No responses)</value></data>
+  <data name="Vis.StoryBranch" xml:space="preserve"><value>Story Branch</value></data>
+  <data name="Vis.NoBranches" xml:space="preserve"><value>(No branches)</value></data>
+  <data name="Vis.RemoveSubmit" xml:space="preserve"><value>Remove (submit/destroy)</value></data>
+  <data name="Vis.Conditions" xml:space="preserve"><value>Conditions</value></data>
+  <data name="Vis.PreConditions" xml:space="preserve"><value>Pre-Conditions</value></data>
+  <data name="Vis.CurrentEncounter" xml:space="preserve"><value>📍 Current</value></data>
+  <data name="Vis.MermaidDiagram" xml:space="preserve"><value>Mermaid Diagram</value></data>
+  <data name="Vis.MermaidSource" xml:space="preserve"><value>Mermaid Source</value></data>
+  <data name="Vis.PrevEncounter" xml:space="preserve"><value>Prev Encounter</value></data>
+  <data name="Vis.RootEncounter" xml:space="preserve"><value>Root Event (origin)</value></data>
+  <data name="Vis.EncounterChain" xml:space="preserve"><value>Encounter Chain</value></data>
+  <data name="Vis.SpawnCreature" xml:space="preserve"><value>Spawn Creature</value></data>
+  <data name="Vis.Accidents" xml:space="preserve"><value>Accidents</value></data>
+  <data name="Vis.TriggeredBy" xml:space="preserve"><value>Triggered By</value></data>
+  <data name="Vis.Price" xml:space="preserve"><value>Price</value></data>
+  <data name="Vis.LootChance" xml:space="preserve"><value>Loot Chance</value></data>
+  <data name="Vis.Accident" xml:space="preserve"><value>Accident</value></data>
+  <data name="Vis.CreatureRef" xml:space="preserve"><value>Creature</value></data>
+  <data name="Vis.Teleport" xml:space="preserve"><value>Teleport</value></data>
+  <data name="Vis.Responses" xml:space="preserve"><value>Responses</value></data>
+  <data name="Vis.Contents" xml:space="preserve"><value>Contents</value></data>
+  <data name="Vis.CreatureStatus" xml:space="preserve"><value>Creature Status</value></data>
+</root>
