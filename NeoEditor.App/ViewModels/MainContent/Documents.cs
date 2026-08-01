@@ -604,7 +604,13 @@ public class PluginTool : Tool
     {
         Id = plugin.GetType().Name;
         Title = plugin.Title;
-        Context = plugin.CreateToolView();
+        // Content is what Dock.Avalonia actually renders for a Tool (Tool.ContentProperty).
+        // Context alone (IDockable metadata) left the tool pane with an empty body — every
+        // tool appeared blank and the DataTable tool never swapped to ModGameDataTabsView.
+        // Keep Context in sync for template/title lookup and set Content to the view.
+        var view = plugin.CreateToolView();
+        Context = view;
+        Content = view;
         CanClose = false;
         Proportion = 1.0;
     }

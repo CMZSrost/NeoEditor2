@@ -24,6 +24,17 @@ public partial class DocumentWorkspaceView : UserControl
         AddHandler(DragDrop.DragOverEvent, OnDragOver, Avalonia.Interactivity.RoutingStrategies.Bubble, handledEventsToo: true);
     }
 
+    /// <summary>
+    /// Dock.Avalonia 12.1.0 doesn't sync ToolDock.ItemsSource into the layout, so the dynamically
+    /// built tools (DocumentWorkspaceViewModel.LeftToolItems/RightToolItems/BottomToolItems) are added
+    /// to the dock panes once the DockControl has loaded. See SyncToolDockIntoLayout (D02 §六).
+    /// </summary>
+    private void OnMainDockControlLoaded(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        if (DataContext is ViewModels.MainContent.DocumentWorkspaceViewModel vm)
+            vm.SyncToolDockIntoLayout(MainDockControl);
+    }
+
     private void OnDragOver(object? sender, DragEventArgs e)
     {
         // Avalonia 12: DataTransfer replaces Data, Contains is an extension method

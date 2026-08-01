@@ -441,7 +441,10 @@ public partial class ModGameDataTabsView : UserControl, Helper.INavigationTarget
         // entity's commands won't be replayed (and re-mark it dirty) on restart.
         _messenger.Register<EntityDbSavedMessage>(this, (_, m) =>
         {
-            if (m.ModId <= 0) return;
+            // Only game base data (ModId=-1) is excluded — its WAL lives under ("game", 0).
+            // ModId=0 is a valid mod id; skipping it would leave its WAL snapshot stale and its
+            // commands would replay (and re-dirty) on restart.
+            if (m.ModId < 0) return;
             _logger.LogInformation("[EntityDbSaved] updating snapshot for mod:{ModId} seq={Seq}",
                 m.ModId, _persistSequence);
             AsyncHelper.FireAndForget(

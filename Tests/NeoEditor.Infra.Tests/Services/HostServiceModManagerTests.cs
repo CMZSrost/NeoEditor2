@@ -92,6 +92,30 @@ public class HostServiceModManagerTests : IDisposable
     }
 
     [Fact]
+    public async Task ImportModAsync_SamePath_Reuses_Existing_ModInfo()
+    {
+        // Regression for "UNIQUE constraint failed: mod_info.Path" (ModId=0 mods re-imported on
+        // every merge-view open). Re-importing an already-registered path must reuse the existing
+        // ModInfo row instead of inserting a duplicate.
+        var modDir = Path.Combine(_gameRoot, "Mods", "TestMod");
+        Directory.CreateDirectory(modDir);
+        await File.WriteAllTextAsync(Path.Combine(modDir, "neogame.xml"),
+            "<pma_xml_export><database name=\"neogame\"><table id=\"abc\"></table></database></pma_xml_export>");
+
+        var first = await _host.ImportModAsync(modDir);
+        Assert.NotNull(first);
+
+        var second = await _host.ImportModAsync(modDir);
+        Assert.NotNull(second);
+        Assert.Equal(first.Id, second.Id);
+        Assert.Equal(first.ModId, second.ModId);
+
+        await using var edb = await _editorFactory.CreateDbContextAsync();
+        var rowCount = await edb.ModInfos.CountAsync(m => m.Path == first.Path);
+        Assert.Equal(1, rowCount);
+    }
+
+    [Fact]
     public async Task DeleteMod_Removes_Dir_And_Db_Entry()
     {
         await _host.CreateModAsync("MyMod", "Author");

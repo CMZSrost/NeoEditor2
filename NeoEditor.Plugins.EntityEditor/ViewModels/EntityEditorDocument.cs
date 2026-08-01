@@ -130,7 +130,9 @@ public partial class EntityEditorDocument : PluginDocumentBase
             _dataTable.EditedCells.RemoveWhere(c => c.EntityId == entityId);
 
             WeakReferenceMessenger.Default.Send(new SaveCompletedMessage());
-            if (entity.ModId > 0)
+            // Exclude only game base (ModId=-1); ModId=0 is a valid mod id and its WAL snapshot
+            // must advance too, or its commands replay (and re-dirty) on restart.
+            if (entity.ModId >= 0)
                 WeakReferenceMessenger.Default.Send(new EntityDbSavedMessage(entity.ModId));
 
             _notification.ShowInfo(

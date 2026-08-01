@@ -4,7 +4,6 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:avaloniaEdit="https://github.com/avaloniaui/avaloniaedit"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-    xmlns:dv="clr-namespace:NeoEditor.Plugins.DataViewer.ViewModels;assembly=NeoEditor.Plugins.DataViewer"
     xmlns:dvViews="clr-namespace:NeoEditor.Plugins.DataViewer.Views;assembly=NeoEditor.Plugins.DataViewer"
     xmlns:eeViews="clr-namespace:NeoEditor.Plugins.EntityEditor.Views;assembly=NeoEditor.Plugins.EntityEditor"
     xmlns:eeVm="clr-namespace:NeoEditor.Plugins.EntityEditor.ViewModels;assembly=NeoEditor.Plugins.EntityEditor"
@@ -27,12 +26,14 @@
     </Design.DataContext>
 
     <DockControl
+        x:Name="MainDockControl"
         EnableManagedWindowLayer="True"
         Factory="{Binding DataContext.DockFactory, ElementName=Root}"
         InitializeFactory="True"
         InitializeLayout="True"
         IsDockingEnabled="{Binding DataContext.IsDockingEnabled, ElementName=Root, Mode=OneWay}"
-        IsVisible="True">
+        IsVisible="True"
+        Loaded="OnMainDockControlLoaded">
         <DockControl.DataTemplates>
             <!--  Document DataTemplates  -->
             <DataTemplate x:DataType="mainContent:XmlDiffDocument">
@@ -131,18 +132,6 @@
                     </Border>
                 </StackPanel>
             </DataTemplate>
-            <DataTemplate x:DataType="dv:DataTablePlaceholder">
-                <TextBlock
-                    Margin="12"
-                    HorizontalAlignment="Center"
-                    VerticalAlignment="Center"
-                    FontSize="11"
-                    Foreground="{DynamicResource SystemControlForegroundChromeDisabledLowBrush}"
-                    Text="Open a mod or merge profile to view data." />
-            </DataTemplate>
-            <DataTemplate x:DataType="dv:ModDataToolViewModel">
-                <userControls:ModGameDataTabsView ProfileInfo="{Binding ProfileInfo}" ReadOnly="True" />
-            </DataTemplate>
 
         </DockControl.DataTemplates>
         <RootDock Id="Root" PinnedDockDisplayMode="Inline">
@@ -154,11 +143,10 @@
                     Orientation="Horizontal"
                     Proportion="5">
 
-                    <!--  Left: dynamically built from IToolPlugin (D02)  -->
-                    <ToolDock
-                        Id="LeftToolPane"
-                        Proportion="1"
-                        ItemsSource="{Binding DataContext.LeftToolItems, ElementName=Root}" />
+                    <!--  Left: dynamically built from IToolPlugin (D02); tools are added by
+                          DocumentWorkspaceViewModel.SyncToolDockIntoLayout (Dock 12.1.0 doesn't
+                          sync ToolDock.ItemsSource into the layout)  -->
+                    <ToolDock Id="LeftToolPane" Proportion="1" />
 
                     <ProportionalDockSplitter />
 
@@ -183,21 +171,15 @@
 
                     <ProportionalDockSplitter />
 
-                    <!--  Right: dynamically built from IToolPlugin (D02)  -->
-                    <ToolDock
-                        Id="RightToolPane"
-                        Proportion="2"
-                        ItemsSource="{Binding DataContext.RightToolItems, ElementName=Root}" />
+                    <!--  Right: dynamically built from IToolPlugin (D02); tools added by VM  -->
+                    <ToolDock Id="RightToolPane" Proportion="2" />
 
                 </ProportionalDock>
 
                 <ProportionalDockSplitter />
 
-                <!--  Bottom: dynamically built from IToolPlugin (D02)  -->
-                <ToolDock
-                    Id="BottomToolPane"
-                    Proportion="2"
-                    ItemsSource="{Binding DataContext.BottomToolItems, ElementName=Root}" />
+                <!--  Bottom: dynamically built from IToolPlugin (D02); tools added by VM  -->
+                <ToolDock Id="BottomToolPane" Proportion="2" />
 
             </ProportionalDock>
         </RootDock>

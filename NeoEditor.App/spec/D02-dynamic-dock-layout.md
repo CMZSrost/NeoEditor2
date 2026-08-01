@@ -154,7 +154,8 @@ var plugins = _serviceProvider.GetRequiredService<IEnumerable<IToolPlugin>>();
 foreach (var plugin in plugins.OrderBy(p => p.Order))
 {
     var tool = new PluginTool(plugin);          // Tool 子类：Id = plugin 类型名，Title = plugin.Title
-    tool.Context = plugin.CreateToolView();
+    tool.Content = plugin.CreateToolView();     // Dock 渲染 Tool.Content，Context 不驱动内容
+    tool.Context  = plugin.CreateToolView();    // Context 同步保留（IDockable 元数据）
     tool.ToolbarItems = plugin.CreateToolbarItems();
     switch (plugin.DefaultDock)
     {
@@ -167,6 +168,8 @@ foreach (var plugin in plugins.OrderBy(p => p.Order))
 
 - `PluginTool` 的 `Id` = `plugin.GetType().Name`（稳定，供 Dock.Avalonia 布局持久化）
 - **App Shell 只保留 Dock 容器结构**（ToolDock / DocumentDock / ProportionalDock / Splitter），Tool 组件全部由 Plugin 贡献
+
+> **⚠️ 2026-08-02 订正（真机验证）**：Dock.Avalonia 12.1.0 的 **`ToolDock.ItemsSource` 不会把工具同步进布局 `VisibleDockables`**（DocumentDock.ItemsSource 正常），所以 XAML 里 ToolDock 不绑 ItemsSource；工具改由 `DocumentWorkspaceViewModel.SyncToolDockIntoLayout(DockControl)` 在 `DockControl.Loaded` 时用 `DockFactory.AddDockable(td, tool)` 按 `ToolDock.Id`（LeftToolPane/RightToolPane/BottomToolPane）注入，DataTable 工具置为 Bottom 激活 tab。另外 **`Tool.Content` 必须是可直接构建的视图**，纯 ViewModel 作 Content 会崩（`Tool.Build` 抛 `Unexpected content`）；DataTable 工具 Content = 直接构造的 `ModGameDataTabsView`（绑共享 `ModDataToolViewModel`）。
 
 ---
 

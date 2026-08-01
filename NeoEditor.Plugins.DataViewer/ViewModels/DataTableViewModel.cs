@@ -227,7 +227,7 @@ public partial class DataTableViewModel : ObservableObject
         if (targetId < 0)
         {
             var cmdModId = ExtractModIdFromCommand(cmd);
-            if (cmdModId > 0)
+            if (cmdModId >= 0)
             {
                 targetType = "mod";
                 targetId = cmdModId;
@@ -276,7 +276,7 @@ public partial class DataTableViewModel : ObservableObject
         _logger.LogInformation("[Snapshot] taking snapshot for {TargetType}:{TargetId}", targetType, targetId);
         _ = Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(async () =>
         {
-            var entities = CaptureAllEntities?.Invoke()?.Where(e => e.ModId > 0).ToList();
+            var entities = CaptureAllEntities?.Invoke()?.Where(e => e.ModId >= 0).ToList();
             if (entities is null || entities.Count == 0) return;
             await _workspacePersistence.TakeSnapshotAsync(targetType, targetId, entities, _persistSequence);
             _logger.LogInformation("[Snapshot] done: {TargetType}:{TargetId} {Count} entities seq={Seq}",

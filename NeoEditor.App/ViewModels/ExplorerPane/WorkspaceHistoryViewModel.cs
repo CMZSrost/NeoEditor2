@@ -72,7 +72,10 @@ public partial class WorkspaceHistoryViewModel : ViewModelBase
                     var dirtyCount = 0;
                     foreach (var mli in loadInfos)
                     {
-                        if (mli.Info is { ModId: > 0 or -1 } &&
+                        // Only persisted mods (Id>0, the autoincrement PK) carry WAL commands. The old
+                        // ModId:>0 or -1 pattern excluded ModId=0, which is a valid business id for mods
+                        // imported first (e.g. NSEaid), so their unsaved edits were never flagged dirty.
+                        if (mli.Info is { Id: > 0 } &&
                             await _persistenceSvc.HasUnsavedCommandsAsync("mod", mli.Info.ModId))
                             dirtyCount++;
                     }
@@ -102,13 +105,17 @@ public partial class WorkspaceHistoryViewModel : ViewModelBase
     private void OpenMergeEditor(ProfileEntry? entry)
     {
         if (entry is null) return;
-        Task.Run(async () =>
-        {
-            await using var db = await _editorDbFactory.CreateDbContextAsync();
-            var profile = await db.ProfileInfos.FindAsync(entry.ProfileId);
-            if (profile is not null)
-                await Dispatcher.UIThread.InvokeAsync(() =>
-                    Messenger.Send(new OpenMergeEditorMessage(profile)));
-        });
+        // Fire-and-forget with error logging: the old raw Task.Run silently swallowed DB failures,
+        // so a double-click could appear to "do nothing".
+        AsyncHelper.FireAndForget(OpenMergeEditorCoreAsync(entry));
+    }
+
+    private async Task OpenMergeEditorCoreAsync(ProfileEntry entry)
+    {
+        await using var db = await _editorDbFactory.CreateDbContextAsync();
+        var profile = await db.ProfileInfos.FindAsync(entry.ProfileId);
+        if (profile is not null)
+            await Dispatcher.UIThread.InvokeAsync(() =>
+                Messenger.Send(new OpenMergeEditorMessage(profile)));
     }
 }

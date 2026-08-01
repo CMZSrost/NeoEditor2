@@ -84,14 +84,26 @@ public partial class ModGameDataTabsView
     {
         base.OnPropertyChanged(change);
 
-        if (change.Property == ProfileInfoProperty && ProfileInfo is not null)
+        if (change.Property == ProfileInfoProperty)
         {
+            if (ProfileInfo is null)
+            {
+                // Session cleared — the shared ModDataToolViewModel was cleared; drop stale tabs
+                // (the tool's Content stays bound to the VM, so there is no placeholder swap).
+                IsLoading = false;
+                Tabs.Clear();
+                _commandHistory.Clear();
+                CanUndo = false;
+                CanRedo = false;
+                return;
+            }
+
             // Skip reload if we already have tabs for this same profile
             if (change.OldValue is ProfileInfo oldProfile && oldProfile.ProfileId == ProfileInfo.ProfileId && Tabs.Count > 0)
                 return;
             _loadPending = true;
             if (this.IsAttachedToVisualTree())
-                AsyncHelper.FireAndForget(ReloadMergeTabsAsync(ProfileInfo));
+                AsyncHelper.FireAndForget(ReloadTabsSafelyAsync(ProfileInfo));
         }
         else if (change.Property == ReadOnlyProperty)
         {
@@ -104,6 +116,23 @@ public partial class ModGameDataTabsView
         else if (change.Property == FilterTextProperty && !IsLoading)
         {
             DebounceFilter();
+        }
+    }
+
+    /// <summary>Reload the merge tabs, always clearing the loading flag.
+    /// ReloadMergeTabsAsync sets IsLoading=true and normally clears it on completion; if it throws
+    /// (e.g. a DB error during ComputeMergeAsync) IsLoading would stay true forever and the bottom
+    /// tool would spin indefinitely. The OnAttachedToVisualTree path already guards with try/catch.</summary>
+    private async Task ReloadTabsSafelyAsync(ProfileInfo profile)
+    {
+        try
+        {
+            await ReloadMergeTabsAsync(profile);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "[ReloadMergeTabs] reload failed");
+            IsLoading = false;
         }
     }
 

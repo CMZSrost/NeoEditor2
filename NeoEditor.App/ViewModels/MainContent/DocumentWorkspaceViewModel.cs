@@ -35,6 +35,7 @@ using NeoEditor.Plugins.ImageTools.Services;
 using NeoEditor.Plugins.ImageTools.ViewModels;
 using NeoEditor.Services;
 using NeoEditor.Core.Abstractions;
+using NeoEditor.Views.UserControls;
 
 namespace NeoEditor.ViewModels.MainContent;
 
@@ -336,6 +337,73 @@ public partial class DocumentWorkspaceViewModel : ViewModelBase,
     }
 
     /// <summary>
+    /// Add the dynamically built tools into the layout's ToolDocks. Called by
+    /// <c>DocumentWorkspaceView</c> once the DockControl has loaded (its
+    /// <see cref="Dock.Avalonia.Controls.DockControl.Layout"/> is populated then). Retries briefly
+    /// because the layout can still be null on the very first <c>Loaded</c> callback.
+    /// </summary>
+    /// <remarks>
+    /// Dock.Avalonia 12.1.0 does NOT sync <c>ToolDock.ItemsSource</c> into the layout's
+    /// <c>VisibleDockables</c> — tools stay in the bound collection but never appear in the dock
+    /// (document docks sync fine; tool docks do not). The working pattern (same as
+    /// <c>DomainBrowserView</c>) is to add each tool to its ToolDock via
+    /// <see cref="Factory.AddDockable"/> once the DockControl layout has been initialized.
+    /// </remarks>
+    public void SyncToolDockIntoLayout(Dock.Avalonia.Controls.DockControl dockControl)
+    {
+        Helper.AsyncHelper.FireAndForget(SyncToolDockIntoLayoutCoreAsync(dockControl));
+    }
+
+    private async Task SyncToolDockIntoLayoutCoreAsync(Dock.Avalonia.Controls.DockControl dockControl)
+    {
+        var map = new Dictionary<string, IEnumerable<object>>
+        {
+            ["LeftToolPane"] = LeftToolItems,
+            ["RightToolPane"] = RightToolItems,
+            ["BottomToolPane"] = BottomToolItems,
+        };
+
+        for (var attempt = 0; attempt < 20; attempt++)
+        {
+            if (dockControl.Layout is Dock.Model.Core.IDockable rootDock)
+            {
+                AddToolsToDock(rootDock, map);
+                return;
+            }
+            await Task.Delay(100);
+        }
+        _logger.LogWarning("[Dock] Tool dock layout sync timed out — tools may be missing.");
+    }
+
+    private void AddToolsToDock(Dock.Model.Core.IDockable? dockable,
+        IReadOnlyDictionary<string, IEnumerable<object>> byId)
+    {
+        if (dockable is null) return;
+        if (dockable is Dock.Model.Avalonia.Controls.ToolDock td
+            && byId.TryGetValue(td.Id, out var tools))
+        {
+            foreach (var t in tools)
+            {
+                if (t is Dock.Model.Core.IDockable d
+                    && td.VisibleDockables is { } visible
+                    && !visible.Contains(d))
+                    DockFactory.AddDockable(td, d);
+            }
+
+            // The DataTable tool is the primary bottom tool — make it the active tab so its
+            // ModGameDataTabsView content attaches and the merge view is visible by default.
+            if (td.Id == "BottomToolPane" && DataTableTool is not null)
+            {
+                DockFactory.SetActiveDockable(DataTableTool);
+                DockFactory.SetFocusedDockable(td, DataTableTool);
+            }
+        }
+        if (dockable is Dock.Model.Core.IDock dock && dock.VisibleDockables is { } list)
+            foreach (var d in list)
+                AddToolsToDock(d, byId);
+    }
+
+    /// <summary>
     /// D02: enumerate all <see cref="IToolPlugin"/> and dynamically build the
     /// Left/Right/Bottom dock panes. Each plugin contributes exactly one Tool
     /// (a <see cref="PluginTool"/> wrapper; Id = plugin type name, stable for
@@ -351,10 +419,24 @@ public partial class DocumentWorkspaceViewModel : ViewModelBase,
         {
             var tool = new PluginTool(plugin);
 
-            // The DataTable tool's Context is swapped at runtime (placeholder ↔
-            // ModDataToolViewModel) when a profile opens / the session clears.
             if (plugin is DataTablePlugin)
+            {
                 DataTableTool = tool;
+                // The DataTable tool's Content is the merge grid itself, bound to the shared
+                // ModDataToolViewModel. (A bare VM is NOT valid Tool.Content — Dock.Avalonia's
+                // Tool.Build expects a buildable view/template content.) The grid is driven by
+                // ModDataToolVm.SetProfile/Clear through the ProfileInfo binding, so no runtime
+                // Content swap is needed.
+                var grid = new ModGameDataTabsView
+                {
+                    ReadOnly = true,
+                    DataContext = ModDataToolVm,
+                };
+                grid.Bind(ModGameDataTabsView.ProfileInfoProperty,
+                    new Avalonia.Data.Binding("ProfileInfo"));
+                DataTableTool.Content = grid;
+                DataTableTool.Context = grid;
+            }
 
             switch (plugin.DefaultDock)
             {
@@ -363,6 +445,10 @@ public partial class DocumentWorkspaceViewModel : ViewModelBase,
                 case ToolDock.Bottom: BottomToolItems.Add(tool); break;
             }
         }
+
+        // Note: Dock.Avalonia 12.1.0 does NOT sync ToolDock.ItemsSource into the layout, so the
+        // tools are added to the dock panes manually once the DockControl has loaded — the view's
+        // code-behind calls SyncToolDockIntoLayout(MainDockControl) (see DocumentWorkspaceView).
     }
 
     // ── Entity selection coordination ──
@@ -553,8 +639,9 @@ public partial class DocumentWorkspaceViewModel : ViewModelBase,
 
         await LoadModDataAsync(modInfo);
         var profile = await EnsureSingleModProfileAsync(modInfo);
+        // The DataTable tool's Content is already bound to ModDataToolViewModel (BuildToolDock);
+        // SetProfile drives the reload through the ProfileInfo binding.
         ModDataToolVm.SetProfile(profile);
-        DataTableTool!.Context = ModDataToolVm;
         Messenger.Send(new SessionStateChangedMessage(true));
         ShowWelcomeDocument();
     }
@@ -707,7 +794,13 @@ public partial class DocumentWorkspaceViewModel : ViewModelBase,
 
                 if (mli.Info is null) continue;
 
-                if (mli.Info.ModId <= 0)
+                // "Needs import" = not yet persisted in the editor DB (Id is the autoincrement PK,
+                // so a synthetic ModInfo from ProfileManager.LoadMods has Id=0). Do NOT key this on
+                // ModId: ModId=0 is a valid business id (convention: -1=Game, >=0=Mod), and mods that
+                // were imported first (e.g. NSEaid) legitimately hold ModId=0. Keying on ModId<=0 forced
+                // a re-import of those mods on every merge-view open, which hit the UNIQUE constraint
+                // on mod_info.Path and aborted the load.
+                if (mli.Info.Id <= 0)
                 {
                     var modPath = System.IO.Path.Combine(gameRoot, mli.Info.Path ?? "");
                     _logger.LogInformation("[PreLoad] attempting import: '{Path}' exists={Exists}",
@@ -757,9 +850,13 @@ public partial class DocumentWorkspaceViewModel : ViewModelBase,
         // Close peer documents
         foreach (var d in Documents.OfType<EntityBrowserDocument>().ToList()) Documents.Remove(d);
 
-        // Put the merge DataGrid into the bottom DataTable Tool
+        // Put the merge DataGrid into the bottom DataTable Tool. The tool's Content is bound to the
+        // shared ModDataToolViewModel at creation (BuildToolDock); SetProfile drives the reload
+        // through the ProfileInfo binding.
         ModDataToolVm.SetProfile(message.ProfileInfo);
-        DataTableTool!.Context = ModDataToolVm;
+        // Focus the DataTable tool so the merge grid (its Content) is the active bottom tab.
+        if (DataTableTool is not null)
+            DockFactory.SetActiveDockable(DataTableTool);
         Messenger.Send(new SessionStateChangedMessage(true));
         ShowWelcomeDocument();
     }
@@ -1066,8 +1163,9 @@ public partial class DocumentWorkspaceViewModel : ViewModelBase,
     {
         _logger.LogInformation("[VM] CloseAllDocuments: clearing session");
         _activeEntity = null;
+        // The DataTable tool's Content stays bound to ModDataToolViewModel; Clear() sets
+        // ProfileInfo=null and ModGameDataTabsView drops its tabs (no placeholder swap needed).
         ModDataToolVm.Clear();
-        DataTableTool!.Context = new DataTablePlaceholder();
         ForwardIndex.Clear();
         ReverseIndex.Clear();
         Messenger.Send(new SessionStateChangedMessage(false));

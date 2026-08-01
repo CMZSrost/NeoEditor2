@@ -50,18 +50,20 @@ public partial class ModGameDataTabsView
         try
         {
             var allEntities = CaptureCurrentTabEntities();
+            // Saveable = any mod (ModId >= 0); only the game base (ModId=-1) is read-only.
+            // ModId=0 is a valid mod id — the old ModId>0 filter silently dropped its edits.
             var entitiesToSave = allEntities
-                .Where(e => e.ModId > 0)
+                .Where(e => e.ModId >= 0)
                 .ToList();
             var modIds = allEntities.Select(e => e.ModId).Distinct().OrderBy(x => x).ToList();
             _logger.LogInformation(
-                "[MergeSave] total={Total} modId>0={Saveable} modIds=[{ModIds}] tabCount={TabCount}",
+                "[MergeSave] total={Total} modId>=0={Saveable} modIds=[{ModIds}] tabCount={TabCount}",
                 allEntities.Count, entitiesToSave.Count, string.Join(",", modIds), Tabs.Count);
 
             if (entitiesToSave.Count == 0)
             {
                 ViewServices.Notification.ShowInfo(
-                    $"No mod entities to save. Found {allEntities.Count} entities across {modIds.Count} modIds (saveable: requires ModId > 0).",
+                    $"No mod entities to save. Found {allEntities.Count} entities across {modIds.Count} modIds (saveable: requires ModId >= 0).",
                     "Merge View");
                 return;
             }
@@ -358,7 +360,11 @@ public partial class ModGameDataTabsView
         {
             _logger.LogInformation("[AutoLoad] mod namespace={Ns} info={HasInfo} modId={ModId}",
                 modLoad.Namespace, modLoad.Info is not null, modLoad.Info?.ModId ?? -999);
-            if (modLoad.Info is not null && modLoad.Info.ModId <= 0)
+            // "Needs import" = not yet persisted in the editor DB (Id is the autoincrement PK).
+            // Never key this on ModId — ModId=0 is a valid business id (mods imported first hold it),
+            // and keying on ModId<=0 re-imported them on every merge-view open, violating the UNIQUE
+            // constraint on mod_info.Path and skipping their LoadModAsync (ModId 0 is not > 0).
+            if (modLoad.Info is not null && modLoad.Info.Id <= 0)
             {
                 // Skip game base data — already imported at startup with ModId=-1
                 if (modLoad.Info.ModId == -1) continue;
@@ -377,7 +383,9 @@ public partial class ModGameDataTabsView
                 }
             }
 
-            if (modLoad.Info is not null && modLoad.Info.ModId > 0)
+            // Load data for any persisted mod (Id>0), including ModId=0 mods. The old ModId>0 gate
+            // skipped them, so a ModId=0 mod (e.g. NSEaid) never had its data ensured via LoadModAsync.
+            if (modLoad.Info is not null && modLoad.Info.Id > 0)
             {
                 try
                 {
@@ -406,7 +414,7 @@ public partial class ModGameDataTabsView
             // Fallback: load ALL non-game entities from DB regardless of profile
             await using var fallbackDb = await _gameDbContextFactory.CreateDbContextAsync();
             var allModIdsFromDb = await fallbackDb.AttackModes
-                .Where(e => e.ModId > 0)
+                .Where(e => e.ModId >= 0)
                 .Select(e => e.ModId)
                 .Distinct()
                 .ToListAsync();

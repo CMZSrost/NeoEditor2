@@ -95,13 +95,31 @@ public class ModManager : IModManager
     {
         try
         {
+            var normalizedPath = modFullPath.Replace(Config.GameRootDir ?? "", "")
+                .Replace("\\", "/").TrimStart('/');
+
             await using var dbContext = await _editorDbFactory.CreateDbContextAsync();
+
+            // Defensive guard for the ModId=0 case: mod_info.Path is UNIQUE, so importing a path
+            // that is already registered (e.g. a mod that was imported first and got ModId=0) must
+            // reuse the existing row instead of inserting a duplicate, which would throw
+            // "UNIQUE constraint failed: mod_info.Path". Callers should avoid re-importing persisted
+            // mods (they gate on Id<=0), but this keeps the DB write safe regardless.
+            if (await dbContext.ModInfos.FirstOrDefaultAsync(m => m.Path == normalizedPath) is { } existing)
+            {
+                Serilog.Log.Logger.Information(
+                    "[ImportMod] path already registered, reusing ModInfo Id={Id} ModId={ModId}",
+                    existing.Id, existing.ModId);
+                await LoadModAsync(existing);
+                return existing;
+            }
+
             var assignedModId = modId ?? await GetNextModIdAsync(dbContext);
             var modInfo = new ModInfo
             {
                 ModId = assignedModId,
                 Name = Path.GetFileNameWithoutExtension(modFullPath),
-                Path = modFullPath.Replace(Config.GameRootDir ?? "", "").Replace("\\", "/").TrimStart('/'),
+                Path = normalizedPath,
                 IsBase = modId == -1,
                 LastImport = DateTime.Now
             };
