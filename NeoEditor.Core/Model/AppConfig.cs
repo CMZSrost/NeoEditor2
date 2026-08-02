@@ -65,6 +65,10 @@ public partial class AppConfig : ObservableRecipient
     [ObservableProperty]
     public partial string ImageModel { get; set; } = "dall-e-3";
 
+    /// <summary>Default AI candidate count for the create-image gallery (1-8).</summary>
+    [ObservableProperty]
+    public partial int AiCandidateCount { get; set; } = 4;
+
     /// <summary>Start MCP TCP server inside the GUI (reserved; stdio via --mcp flag).</summary>
     [ObservableProperty]
     public partial bool McpEnabled { get; set; }

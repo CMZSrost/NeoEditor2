@@ -176,14 +176,14 @@ public partial class ImageAssetManagerViewModel : ImageToolObservableObject
     private bool CanAddImage() => SelectedNode is { IsMod: true, IsGame: false };
 
     /// <summary>
-    /// Context-menu "Add Image" on a mod directory: pick image files, copy them into the
-    /// mod's <c>img/</c> directory, refresh the tree, then open an editor tab per added
-    /// image. Base game is read-only — never copy into game install files.
+    /// Context-menu "Add Image" on a mod directory: pick image files (multi-select) and
+    /// queue them into the create-image document's pending list — nothing is copied or
+    /// registered yet; the user saves from the image editor. Base game is read-only.
     /// </summary>
     [RelayCommand(CanExecute = nameof(CanAddImage))]
     private async Task AddImageAsync()
     {
-        if (SelectedNode is not { IsMod: true, IsGame: false } || SelectedNode.ModPath is not { } modPath)
+        if (SelectedNode is not { IsMod: true, IsGame: false })
             return;
 
         var storageProvider = GetStorageProvider();
@@ -215,38 +215,9 @@ public partial class ImageAssetManagerViewModel : ImageToolObservableObject
         if (paths.Count == 0)
             return;
 
-        var imgDir = Path.Combine(modPath, "img");
-        Directory.CreateDirectory(imgDir);
-
-        var added = new List<string>();
-        foreach (var path in paths)
-        {
-            var fileName = Path.GetFileName(path);
-            if (string.IsNullOrWhiteSpace(fileName))
-                continue;
-
-            var target = Path.Combine(imgDir, fileName);
-            try
-            {
-                if (!File.Exists(target) && !PathsEqual(path, target))
-                    File.Copy(path, target);
-                added.Add(target);
-            }
-            catch
-            {
-                // Copy is best-effort; a failed copy is surfaced by the tree refresh below.
-            }
-        }
-
-        if (added.Count == 0)
-            return;
-
-        // Refresh so the newly copied files appear in the tree.
-        await RefreshAsync();
-
-        // Open the image editor tab for each added image (dedup by path in the shell).
-        foreach (var addedPath in added)
-            _messenger.Send(new OpenImageDocumentMessage(Path.GetFileName(addedPath), addedPath));
+        // No copying here — the create-image document queues the files and the user
+        // saves from the image editor (see OpenCreateImageDocumentMessage).
+        _messenger.Send(new OpenCreateImageDocumentMessage(paths));
     }
 
     /// <summary>Localized context-menu header for the AI generate action.</summary>
@@ -275,11 +246,6 @@ public partial class ImageAssetManagerViewModel : ImageToolObservableObject
         }
 
         return TopLevel.GetTopLevel(mainWindow)?.StorageProvider;
-    }
-
-    private static bool PathsEqual(string a, string b)
-    {
-        return string.Equals(Path.GetFullPath(a), Path.GetFullPath(b), StringComparison.OrdinalIgnoreCase);
     }
 
     private void ApplyFilter()

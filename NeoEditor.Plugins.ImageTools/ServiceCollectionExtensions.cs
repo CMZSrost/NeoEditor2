@@ -20,6 +20,8 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IToolPlugin, ImageOrchestrationPlugin>();
         services.AddSingleton<IProfileModSourceProvider, ProfileModSourceProvider>();
         services.AddSingleton<IModImagesDocumentFactory, ModImagesDocumentFactory>();
+        services.AddSingleton<IImageEditorDocumentFactory, ImageEditorDocumentFactory>();
+        services.AddSingleton<IImageFileService, ImageFileService>();
         services.AddSingleton<PixelArtConversionService>();
         services.AddSingleton<ImageEditorProcessingService>();
         services.AddSingleton<IImageEditorProcessingService>(sp =>
@@ -27,6 +29,8 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IImageSearchService, ImageSearchService>();
         services.AddSingleton<EntityToPromptConverter>();
         services.AddSingleton<IImageGenerationService, ImageGenerationService>();
+        services.AddSingleton<ViewModels.AiGenerationPanelViewModel>();
+        services.AddSingleton<ViewModels.ImageCreateDocument>();
         services.AddSingleton<ViewModels.ImagePreviewContent>();
         services.AddSingleton<ViewModels.ImageAssetManagerViewModel>();
         services.AddSingleton<ViewModels.ImageOrchestrationViewModel>();

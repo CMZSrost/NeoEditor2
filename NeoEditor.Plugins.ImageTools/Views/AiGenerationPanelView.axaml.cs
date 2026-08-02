@@ -2,9 +2,9 @@ using Avalonia.Controls;
 
 namespace NeoEditor.Plugins.ImageTools.Views;
 
-public partial class ImageEditorDocumentView : UserControl
+public partial class AiGenerationPanelView : UserControl
 {
-    public ImageEditorDocumentView()
+    public AiGenerationPanelView()
     {
         InitializeComponent();
     }

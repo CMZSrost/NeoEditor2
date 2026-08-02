@@ -96,15 +96,16 @@ public sealed class ImageEditorProcessingService : IImageEditorProcessingService
 
     private static bool TryValidateRequest(ImageEditorProcessingRequest request)
     {
-        return !string.IsNullOrWhiteSpace(request.SourcePath)
-               && File.Exists(request.SourcePath)
-               && request.NormalWidth > 0
-               && request.NormalHeight > 0;
+        return request.NormalWidth > 0
+               && request.NormalHeight > 0
+               && request.Source is { } source
+               && (source.Bytes is not null
+                   || (source.FilePath is { Length: > 0 } path && File.Exists(path)));
     }
 
     private static Image<Rgba32> CreatePixelatedBaseImage(ImageEditorProcessingRequest request)
     {
-        using var source = Image.Load<Rgba32>(request.SourcePath);
+        using var source = LoadSource(request.Source);
 
         using var working = request.CropRect is { Width: > 0, Height: > 0 } cropRect
             ? source.Clone(context => context.Crop(new Rectangle(cropRect.X, cropRect.Y, cropRect.Width, cropRect.Height)))
@@ -116,6 +117,19 @@ public sealed class ImageEditorProcessingService : IImageEditorProcessingService
             Mode = ResizeMode.Stretch,
             Sampler = KnownResamplers.NearestNeighbor,
         }));
+    }
+
+    /// <summary>Decode the source image — from bytes (in-memory, e.g. AI candidates) or
+    /// from the file path. The caller owns the returned image.</summary>
+    private static Image<Rgba32> LoadSource(ImageSource source)
+    {
+        if (source.Bytes is { } bytes)
+        {
+            using var stream = new MemoryStream(bytes);
+            return Image.Load<Rgba32>(stream);
+        }
+
+        return Image.Load<Rgba32>(source.FilePath!);
     }
 
     private static Image<Rgba32> CreateX2Image(Image<Rgba32> normalImage)

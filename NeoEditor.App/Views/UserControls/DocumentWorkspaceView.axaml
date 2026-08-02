@@ -55,6 +55,9 @@
             <DataTemplate x:DataType="itVm:ImageEditorDocument">
                 <itViews:ImageEditorDocumentView DataContext="{Binding}" />
             </DataTemplate>
+            <DataTemplate x:DataType="itVm:ImageCreateDocument">
+                <itViews:ImageCreateDocumentView DataContext="{Binding}" />
+            </DataTemplate>
             <DataTemplate DataType="mainContent:PlainTextDocument">
                 <StackPanel>
                     <TextBlock Text="{Binding Title}" />

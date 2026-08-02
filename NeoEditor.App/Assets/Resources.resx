@@ -2381,4 +2381,18 @@ Double-click to navigate directly.</value></data>
   <data name="AiPixelatedImage" xml:space="preserve"><value>AI Pixel Art</value></data>
   <data name="SaveImage" xml:space="preserve"><value>Save Image</value></data>
   <data name="PixelateAi" xml:space="preserve"><value>Pixelate AI</value></data>
+  <data name="StaleResultHint" xml:space="preserve"><value>Parameters changed - result is stale</value></data>
+  <data name="Apply" xml:space="preserve"><value>Apply</value></data>
+  <data name="CreateImage" xml:space="preserve"><value>Create Image</value></data>
+  <data name="ImportImages" xml:space="preserve"><value>Import Images</value></data>
+  <data name="OpenPending" xml:space="preserve"><value>Open in Editor</value></data>
+  <data name="NoPendingItems" xml:space="preserve"><value>No pending images - import or generate some.</value></data>
+  <data name="AiGalleryTitle" xml:space="preserve"><value>AI Generate</value></data>
+  <data name="CandidateCount" xml:space="preserve"><value>Count</value></data>
+  <data name="AiGenerationFailedHint" xml:space="preserve"><value>All candidates failed - check the API configuration.</value></data>
+  <data name="SelectCandidatesHint" xml:space="preserve"><value>Click a candidate to preview; check to add to the pending list.</value></data>
+  <data name="Preview" xml:space="preserve"><value>Preview</value></data>
+  <data name="NoPreview" xml:space="preserve"><value>Select a pending item or candidate to preview.</value></data>
+  <data name="AiGenerating" xml:space="preserve"><value>Generating...</value></data>
+  <data name="AiGalleryEmpty" xml:space="preserve"><value>Generate candidates to preview them here.</value></data>
 </root>

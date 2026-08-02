@@ -1,0 +1,170 @@
+<UserControl
+    x:Class="NeoEditor.Plugins.ImageTools.Views.ImageSlotView"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mainContent="clr-namespace:NeoEditor.Plugins.ImageTools.ViewModels"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    d:DesignHeight="300"
+    d:DesignWidth="400"
+    x:DataType="mainContent:ImageSlotViewModel"
+    mc:Ignorable="d">
+    <Grid
+        MinHeight="0"
+        RowDefinitions="Auto,*,Auto">
+
+        <TextBlock
+            Grid.Row="0"
+            FontSize="11"
+            FontWeight="SemiBold"
+            Text="{Binding Title}" />
+
+        <Grid Grid.Row="1" MinHeight="0">
+            <Image
+                x:Name="ImageViewer"
+                MinHeight="0"
+                Source="{Binding Image}"
+                Stretch="Uniform" />
+
+            <!--  Crop overlay: only rendered for the crop-enabled (source) slot.  -->
+            <Canvas
+                x:Name="SelectionOverlayCanvas"
+                ClipToBounds="True"
+                IsVisible="{Binding IsCropEnabled}">
+                <Border
+                    x:Name="SelectionMaskTop"
+                    Background="#80000000"
+                    IsHitTestVisible="False" />
+                <Border
+                    x:Name="SelectionMaskLeft"
+                    Background="#80000000"
+                    IsHitTestVisible="False" />
+                <Border
+                    x:Name="SelectionMaskRight"
+                    Background="#80000000"
+                    IsHitTestVisible="False" />
+                <Border
+                    x:Name="SelectionMaskBottom"
+                    Background="#80000000"
+                    IsHitTestVisible="False" />
+                <Border
+                    x:Name="SelectionBorder"
+                    Background="#22009DFF"
+                    BorderBrush="#FF42A5F5"
+                    BorderThickness="2"
+                    Cursor="SizeAll"
+                    PointerMoved="OnHandlePointerMoved"
+                    PointerPressed="OnHandlePointerPressed"
+                    PointerReleased="OnHandlePointerReleased"
+                    Tag="Move" />
+                <Border
+                    x:Name="LeftHandle"
+                    Background="Transparent"
+                    Cursor="SizeWestEast"
+                    PointerMoved="OnHandlePointerMoved"
+                    PointerPressed="OnHandlePointerPressed"
+                    PointerReleased="OnHandlePointerReleased"
+                    Tag="Left" />
+                <Border
+                    x:Name="RightHandle"
+                    Background="Transparent"
+                    Cursor="SizeWestEast"
+                    PointerMoved="OnHandlePointerMoved"
+                    PointerPressed="OnHandlePointerPressed"
+                    PointerReleased="OnHandlePointerReleased"
+                    Tag="Right" />
+                <Border
+                    x:Name="TopHandle"
+                    Background="Transparent"
+                    Cursor="SizeNorthSouth"
+                    PointerMoved="OnHandlePointerMoved"
+                    PointerPressed="OnHandlePointerPressed"
+                    PointerReleased="OnHandlePointerReleased"
+                    Tag="Top" />
+                <Border
+                    x:Name="BottomHandle"
+                    Background="Transparent"
+                    Cursor="SizeNorthSouth"
+                    PointerMoved="OnHandlePointerMoved"
+                    PointerPressed="OnHandlePointerPressed"
+                    PointerReleased="OnHandlePointerReleased"
+                    Tag="Bottom" />
+                <Border
+                    x:Name="TopLeftHandle"
+                    Background="Transparent"
+                    Cursor="TopLeftCorner"
+                    PointerMoved="OnHandlePointerMoved"
+                    PointerPressed="OnHandlePointerPressed"
+                    PointerReleased="OnHandlePointerReleased"
+                    Tag="TopLeft" />
+                <Border
+                    x:Name="TopRightHandle"
+                    Background="Transparent"
+                    Cursor="TopRightCorner"
+                    PointerMoved="OnHandlePointerMoved"
+                    PointerPressed="OnHandlePointerPressed"
+                    PointerReleased="OnHandlePointerReleased"
+                    Tag="TopRight" />
+                <Border
+                    x:Name="BottomLeftHandle"
+                    Background="Transparent"
+                    Cursor="BottomLeftCorner"
+                    PointerMoved="OnHandlePointerMoved"
+                    PointerPressed="OnHandlePointerPressed"
+                    PointerReleased="OnHandlePointerReleased"
+                    Tag="BottomLeft" />
+                <Border
+                    x:Name="BottomRightHandle"
+                    Background="Transparent"
+                    Cursor="BottomRightCorner"
+                    PointerMoved="OnHandlePointerMoved"
+                    PointerPressed="OnHandlePointerPressed"
+                    PointerReleased="OnHandlePointerReleased"
+                    Tag="BottomRight" />
+            </Canvas>
+
+            <TextBlock
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                IsVisible="{Binding HasNoImage}"
+                Opacity="0.7"
+                Text="{Binding EmptyHint}" />
+
+            <!--  Overlay hint (e.g. stale-result marker on the result slot).  -->
+            <Border
+                Margin="0,4,0,0"
+                Padding="6,2"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Top"
+                Background="#CC000000"
+                CornerRadius="3"
+                IsVisible="{Binding HasOverlay}">
+                <TextBlock
+                    FontSize="10"
+                    Foreground="#FFE57373"
+                    Text="{Binding OverlayText}" />
+            </Border>
+        </Grid>
+
+        <StackPanel
+            Grid.Row="2"
+            Margin="0,2,0,0"
+            Orientation="Horizontal"
+            Spacing="6">
+            <TextBlock
+                MaxWidth="200"
+                VerticalAlignment="Center"
+                FontSize="9"
+                Opacity="0.7"
+                Text="{Binding ImageName}"
+                TextTrimming="CharacterEllipsis" />
+            <Button
+                Padding="8,2"
+                VerticalAlignment="Center"
+                Command="{Binding SaveCommand}"
+                Content="{Binding Loc[Save]}"
+                FontSize="10"
+                IsEnabled="{Binding CanSave}" />
+        </StackPanel>
+    </Grid>
+</UserControl>

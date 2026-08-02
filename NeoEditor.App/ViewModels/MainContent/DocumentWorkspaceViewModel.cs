@@ -47,6 +47,7 @@ public partial class DocumentWorkspaceViewModel : ViewModelBase,
     IRecipient<OpenHelpDocumentMessage>,
     IRecipient<OpenMergeEditorMessage>,
     IRecipient<OpenImageDocumentMessage>,
+    IRecipient<OpenCreateImageDocumentMessage>,
     IRecipient<OpenAiImageWorkbenchMessage>
 {
     private readonly IConfigService _config;
@@ -57,6 +58,8 @@ public partial class DocumentWorkspaceViewModel : ViewModelBase,
     private readonly Services.ISelectionService _selection;
     private readonly IEntityEditorDocumentFactory _entityEditorFactory;
     private readonly IModImagesDocumentFactory _modImagesDocumentFactory;
+    private readonly IImageEditorDocumentFactory _imageEditorFactory;
+    private readonly ImageCreateDocument _imageCreateDocument;
 
     public ObservableCollection<IDocumentBase> Documents { get; }
 
@@ -103,6 +106,8 @@ public partial class DocumentWorkspaceViewModel : ViewModelBase,
         _selection = serviceProvider.GetRequiredService<Services.ISelectionService>();
         _entityEditorFactory = serviceProvider.GetRequiredService<IEntityEditorDocumentFactory>();
         _modImagesDocumentFactory = serviceProvider.GetRequiredService<IModImagesDocumentFactory>();
+        _imageEditorFactory = serviceProvider.GetRequiredService<IImageEditorDocumentFactory>();
+        _imageCreateDocument = serviceProvider.GetRequiredService<ImageCreateDocument>();
         Notification = serviceProvider.GetRequiredService<INotificationService>();
         Loc = serviceProvider.GetRequiredService<ILocalizationService>();
 
@@ -551,17 +556,23 @@ public partial class DocumentWorkspaceViewModel : ViewModelBase,
         set => SetProperty(ref _isDockingEnabled, value);
     }
 
+    /// <summary>Open (or activate) the singleton create-image document — the entry for
+    /// both "add image" and "AI generate" flows. Editor documents are opened per material.</summary>
+    private void ActivateCreateImageDocument()
+    {
+        if (!Documents.Contains(_imageCreateDocument))
+        {
+            Documents.Add(_imageCreateDocument);
+        }
+
+        ActivateDocument(_imageCreateDocument);
+        UpdateDockingEnabled();
+    }
+
     [RelayCommand]
     private void AddImage()
     {
-        var document = new ImageEditorDocument(
-            _serviceProvider.GetRequiredService<IImageEditorProcessingService>(),
-            _serviceProvider.GetRequiredService<PixelArtConversionService>(),
-            _serviceProvider.GetRequiredService<IImageGenerationService>(),
-            _serviceProvider.GetRequiredService<ILocalizationService>());
-        Documents.Add(document);
-        ActivateDocument(document);
-        UpdateDockingEnabled();
+        ActivateCreateImageDocument();
     }
 
     [RelayCommand]
@@ -844,15 +855,17 @@ public partial class DocumentWorkspaceViewModel : ViewModelBase,
 
     public void Receive(OpenAiImageWorkbenchMessage message)
     {
-        // A blank Image Editor workbench with the AI generate panel (the user then
-        // types a prompt and generates, then saves or edits the result).
-        var doc = new ImageEditorDocument(
-            _serviceProvider.GetRequiredService<IImageEditorProcessingService>(),
-            _serviceProvider.GetRequiredService<PixelArtConversionService>(),
-            _serviceProvider.GetRequiredService<IImageGenerationService>(),
-            _serviceProvider.GetRequiredService<ILocalizationService>());
-        Documents.Add(doc);
-        ActivateDocument(doc);
+        // The AI-generate entry opens the create-image document (AI candidate gallery);
+        // selected candidates then open editor documents.
+        ActivateCreateImageDocument();
+    }
+
+    public void Receive(OpenCreateImageDocumentMessage message)
+    {
+        // Right-click "Add Image": queue the picked files into the create-image document's
+        // pending list and activate it — nothing is copied until the user saves.
+        _imageCreateDocument.AddPendingFiles(message.ImagePaths);
+        ActivateCreateImageDocument();
     }
 
     public void Receive(OpenImageDocumentMessage message)
@@ -868,12 +881,7 @@ public partial class DocumentWorkspaceViewModel : ViewModelBase,
 
         // Open the full editor (crop / pixel art / AI generate / save) with the image
         // loaded — the Image Browser's double-click/Open is the primary editing entry.
-        var doc = new ImageEditorDocument(
-            _serviceProvider.GetRequiredService<IImageEditorProcessingService>(),
-            _serviceProvider.GetRequiredService<PixelArtConversionService>(),
-            _serviceProvider.GetRequiredService<IImageGenerationService>(),
-            _serviceProvider.GetRequiredService<ILocalizationService>());
-        doc.LoadImage(normalizedPath);
+        var doc = (ImageEditorDocument)_imageEditorFactory.CreateDocument(normalizedPath);
         Documents.Add(doc);
         ActivateDocument(doc);
     }
@@ -881,7 +889,7 @@ public partial class DocumentWorkspaceViewModel : ViewModelBase,
     private ImageEditorDocument? FindOpenImageEditorDocument(string path)
     {
         return Documents.OfType<ImageEditorDocument>()
-            .FirstOrDefault(d => string.Equals(d.ImagePath, path, StringComparison.OrdinalIgnoreCase));
+            .FirstOrDefault(d => string.Equals(d.Source.FilePath, path, StringComparison.OrdinalIgnoreCase));
     }
 
     public void Receive(OpenHelpDocumentMessage message)
@@ -1004,6 +1012,12 @@ public partial class DocumentWorkspaceViewModel : ViewModelBase,
         }
 
         Documents.Remove(docContext);
+        // Release disposable document resources (e.g. editor bitmaps) on close.
+        if (docContext is IDisposable disposable)
+        {
+            disposable.Dispose();
+        }
+
         UpdateDockingEnabled();
     }
 
