@@ -319,7 +319,7 @@ public class AttackModeEntityVisualizer : IEntityVisualizer
             if (cond is not null)
             {
                 var extra = pattern.FormatExtraInfo(seg);
-                var display = string.IsNullOrEmpty(extra) ? cond.Subject : $"{cond.Subject} x{extra}";
+                var display = string.IsNullOrEmpty(extra) ? cond.Subject : $"{cond.Subject} {extra}";
                 wp.Children.Add(_refNode.BadgeForEntity<Condition>(am, cond, display, "#FCE4EC", "#C62828"));
             }
             else

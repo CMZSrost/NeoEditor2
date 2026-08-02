@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using NeoEditor.Core.Abstractions;
 using NeoEditor.Data.Model.Game;
+using NeoEditor.Helper;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -76,6 +77,9 @@ public class AddEntityCommand : ISerializableCommand
                 entityData[prop.Name] = JValue.CreateNull();
             else if (prop.PropertyType.IsEnum)
                 entityData[prop.Name] = Convert.ToInt32(val);
+            else if (prop.GetCustomAttribute<ReferenceFieldAttribute>() is { } refAttr)
+                // R30 (A2): reference values persist as raw text ("3,14") — see BatchEditCommand.
+                entityData[prop.Name] = JToken.FromObject(ReferenceText.GetRawString(val, refAttr));
             else
                 entityData[prop.Name] = JToken.FromObject(val);
         }

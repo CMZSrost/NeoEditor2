@@ -154,7 +154,7 @@ public class McpServerHostTests
         public IReadOnlyList<(string SourceEntityId, string PropertyName, string RawId)>
             ReverseLookup(EntityMergeStore store, string targetEntityId)
             => Array.Empty<(string, string, string)>();
-        public IEntity? LookupRefByRawId(IEntity sourceEntity, string rawId, Type targetType)
+        public IEntity? LookupRefByRawId(IEntity sourceEntity, string rawId, Type targetType, EntityMergeStore? storeOverride = null)
             => null;
         public Task BuildReverseIndexAsync(ReferenceIndexService indexService, EntityMergeStore store)
             => Task.CompletedTask;

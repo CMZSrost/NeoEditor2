@@ -86,7 +86,7 @@ public class CliCommandHandlerReferenceTests
         public IReadOnlyList<(string SourceEntityId, string PropertyName, string RawId)>
             ReverseLookup(EntityMergeStore store, string targetEntityId) => [];
 
-        public IEntity? LookupRefByRawId(IEntity sourceEntity, string rawId, Type targetType) => null;
+        public IEntity? LookupRefByRawId(IEntity sourceEntity, string rawId, Type targetType, EntityMergeStore? storeOverride = null) => null;
 
         public Task BuildReverseIndexAsync(ReferenceIndexService indexService, EntityMergeStore store)
             => Task.CompletedTask;

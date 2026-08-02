@@ -227,7 +227,8 @@ public class DataGridCellInteractionService : IDataGridCellInteractionService
     // ── Display formatting ───────────────────────────────────────────────
 
     public string FormatSegmentDisplay(string segment, Type targetType, string? pattern,
-        string sourceEntityId, string propertyName, string? targetKey)
+        string sourceEntityId, string propertyName, string? targetKey,
+        Type? secondaryTargetType = null)
     {
         if (string.IsNullOrWhiteSpace(segment)) return segment;
 
@@ -235,7 +236,13 @@ public class DataGridCellInteractionService : IDataGridCellInteractionService
         var rawId = pat.ExtractRawId(segment);
         var parsed = ReferenceParser.ParseWithPattern(segment, pattern);
 
-        var subject = LookupSubjectByRawId(targetType, rawId, sourceEntityId, propertyName, targetKey);
+        // R30: try the primary type first, then the secondary (aTreasures can point at
+        // ItemType composite keys OR nested TreasureTables) — matches Ctrl+Hover/navigation.
+        var subject = LookupSubjectByRawId(targetType, rawId, sourceEntityId, propertyName,
+            targetKey, secondaryTargetType);
+        if (string.IsNullOrEmpty(subject) && secondaryTargetType is not null)
+            subject = LookupSubjectByRawId(secondaryTargetType, rawId, sourceEntityId, propertyName,
+                null, null);
         if (string.IsNullOrEmpty(subject)) return segment;
 
         return pat.FormatDisplay(segment, subject, parsed.ModName);

@@ -13,6 +13,7 @@ using NeoEditor.Data.Model;
 using NeoEditor.Data.Model.Game;
 using NeoEditor.Data.Repository;
 using NeoEditor.Infra.Services;
+using Serilog;
 
 namespace NeoEditor.Services;
 
@@ -612,6 +613,12 @@ public class HostService : IHostService, IModManager
 
         if (entities.Count == 0)
         {
+            // R30 (追修 6): a dirty entity that never entered the working-set cache cannot be
+            // saved. This used to happen silently (edit commands carried no cache delta), so
+            // every save reported "No mod entities to save", the WAL was never cleared, and
+            // the same commands replayed (re-dirtying) on every restart.
+            Log.Warning("[Save] {Count} dirty entity/entities missing from entity cache — NOT saved: [{Ids}]",
+                entityIds.Count, string.Join(",", entityIds.Take(10)));
             _session.RemoveDirtyEntities(entityIds);
             return new SaveResult([], []);
         }

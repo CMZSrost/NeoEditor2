@@ -29,6 +29,22 @@ public class BatchEditCommand : ISerializableCommand
     public IReadOnlySet<string> GetAffectedEntityIds() =>
         new HashSet<string>(_edits.Select(e => e.Entity.EntityId));
 
+    /// <inheritdoc cref="IEditorCommand.GetCacheDelta"/>
+    /// <remarks>R30 (追修 6): edits mutate entities in place — upsert them into the
+    /// HostService working-set cache. An empty delta left edited entities outside the
+    /// cache, so SaveAllAsync silently dropped them ("No mod entities to save") and the
+    /// WAL was never cleared → replay on every restart (dirty-on-open regression).</remarks>
+    public IReadOnlyDictionary<string, IEntity?> GetCacheDelta()
+    {
+        var delta = new Dictionary<string, IEntity?>();
+        foreach (var edit in _edits)
+            delta[edit.Entity.EntityId] = edit.Entity;
+        return delta;
+    }
+
+    /// <inheritdoc cref="IEditorCommand.GetUndoCacheDelta"/>
+    public IReadOnlyDictionary<string, IEntity?> GetUndoCacheDelta() => GetCacheDelta();
+
     public BatchEditCommand(List<EditRecord> edits, Action onChanged)
     {
         _edits = edits;
@@ -60,14 +76,22 @@ public class BatchEditCommand : ISerializableCommand
         var arr = new JArray();
         foreach (var edit in _edits)
         {
+            // R30 (A2): reference values must persist as their raw text ("3,14") — JToken.FromObject
+            // on a ReferenceList serializes the entries array, which Newtonsoft cannot restore into
+            // the IReferenceEntry interface on replay (edits silently rolled back after restart).
+            var refAttr = edit.Property.GetCustomAttribute<ReferenceFieldAttribute>();
             arr.Add(new JObject
             {
                 ["entityId"] = edit.Entity.EntityId,
                 ["entityType"] = edit.Entity.GetType().Name,
                 ["propertyName"] = edit.Property.Name,
                 ["columnName"] = edit.ColumnName,
-                ["oldValue"] = edit.OldValue != null ? JToken.FromObject(edit.OldValue) : JValue.CreateNull(),
-                ["newValue"] = edit.NewValue != null ? JToken.FromObject(edit.NewValue) : JValue.CreateNull()
+                ["oldValue"] = edit.OldValue != null
+                    ? JToken.FromObject(ReferenceText.GetRawString(edit.OldValue, refAttr))
+                    : JValue.CreateNull(),
+                ["newValue"] = edit.NewValue != null
+                    ? JToken.FromObject(ReferenceText.GetRawString(edit.NewValue, refAttr))
+                    : JValue.CreateNull()
             });
         }
         var obj = new JObject { ["edits"] = arr };

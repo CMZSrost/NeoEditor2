@@ -429,14 +429,14 @@ public partial class ModGameDataTabsView : UserControl, Helper.INavigationTarget
         // entity's commands won't be replayed (and re-mark it dirty) on restart.
         _messenger.Register<EntityDbSavedMessage>(this, (_, m) =>
         {
-            // Only game base data (ModId=-1) is excluded — its WAL lives under ("game", 0).
             // ModId=0 is a valid mod id; skipping it would leave its WAL snapshot stale and its
-            // commands would replay (and re-dirty) on restart.
-            if (m.ModId < 0) return;
-            _logger.LogInformation("[EntityDbSaved] updating snapshot for mod:{ModId} seq={Seq}",
-                m.ModId, _persistSequence);
+            // commands would replay (and re-dirty) on restart. Game base data (ModId=-1) lives
+            // under ("game", 0) — its marker must advance too, or game-entity doc-saves replay.
+            var (targetType, targetId) = m.ModId < 0 ? ("game", 0) : ("mod", m.ModId);
+            _logger.LogInformation("[EntityDbSaved] updating snapshot for {TargetType}:{TargetId} seq={Seq}",
+                targetType, targetId, _persistSequence);
             AsyncHelper.FireAndForget(
-                _workspacePersistence.UpdateSnapshotMarkerAsync("mod", m.ModId, _persistSequence));
+                _workspacePersistence.UpdateSnapshotMarkerAsync(targetType, targetId, _persistSequence));
         });
 
         // ── Activate ViewModel (auto-save timer, message handlers) ──
@@ -1418,7 +1418,7 @@ public partial class ModGameDataTabsView : UserControl, Helper.INavigationTarget
         var modIds = ProfileInfo?.ModLoadInfos
             .Where(m => m.Info is not null)
             .Select(m => m.Info!.ModId)
-            .Where(id => id > 0)
+            .Where(id => id >= 0) // ModId=0 is a valid mod (e.g. NSEaid); only unimported is < 0
             .Distinct()
             .ToList() ?? [];
 
@@ -1546,7 +1546,7 @@ public partial class ModGameDataTabsView : UserControl, Helper.INavigationTarget
         var modIds = ProfileInfo?.ModLoadInfos
             .Where(m => m.Info is not null)
             .Select(m => m.Info!.ModId)
-            .Where(id => id > 0)
+            .Where(id => id >= 0) // ModId=0 is a valid mod (e.g. NSEaid); only unimported is < 0
             .Distinct()
             .ToList() ?? [];
 
@@ -1596,20 +1596,47 @@ public partial class ModGameDataTabsView : UserControl, Helper.INavigationTarget
 
     private async Task ClearWorkspaceAsync()
     {
+        // R30 (dirty-on-open regression): the merge editor (ProfileId=-1) persists WAL
+        // per-mod under ("mod", modId) and ("game", 0) — the ("", -1) target from
+        // GetPersistenceTarget() never matched, so the WAL was NEVER cleared after save.
+        // Every profile open replayed the same commands → entities re-marked dirty.
+        var targets = new List<(string, int)>();
         var (targetType, targetId) = GetPersistenceTarget();
-        if (targetId < 0) return;
-        try
+        if (targetId >= 0)
+            targets.Add((targetType, targetId));
+
+        if (ProfileInfo is { ProfileId: -1 })
         {
-            await _workspacePersistence.ClearWorkspaceAsync(targetType, targetId);
-            _persistSequence = 0;
-            _commandsSinceSnapshot = 0;
-            _logger.LogInformation("[ClearWorkspace] cleared for {TargetType}:{TargetId}", targetType, targetId);
-            UpdatePersistenceDebugInfo();
+            targets.Add(("game", 0));
+            if (ProfileInfo.ModLoadInfos is not null)
+            {
+                foreach (var modId in ProfileInfo.ModLoadInfos
+                            .Where(m => m.Info is not null)
+                            .Select(m => m.Info!.ModId)
+                            .Where(id => id >= 0) // ModId=0 is a valid mod (e.g. NSEaid)
+                            .Distinct())
+                {
+                    targets.Add(("mod", modId));
+                }
+            }
         }
-        catch (Exception ex)
+
+        foreach (var (t, id) in targets)
         {
-            _logger.LogError(ex, "[ClearWorkspace] failed for {TargetType}:{TargetId}", targetType, targetId);
+            try
+            {
+                await _workspacePersistence.ClearWorkspaceAsync(t, id);
+                _logger.LogInformation("[ClearWorkspace] cleared for {TargetType}:{TargetId}", t, id);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "[ClearWorkspace] failed for {TargetType}:{TargetId}", t, id);
+            }
         }
+
+        _persistSequence = 0;
+        _commandsSinceSnapshot = 0;
+        UpdatePersistenceDebugInfo();
     }
 
     #endregion

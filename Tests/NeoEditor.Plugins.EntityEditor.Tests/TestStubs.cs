@@ -14,7 +14,7 @@ namespace NeoEditor.Plugins.EntityEditor.Tests;
 
 internal class StubReferenceResolver : IReferenceResolver
 {
-    public IEntity? LookupRefByRawId(IEntity sourceEntity, string rawId, Type targetType) => null;
+    public IEntity? LookupRefByRawId(IEntity sourceEntity, string rawId, Type targetType, EntityMergeStore? storeOverride = null) => null;
     public string? LookupSubject(string sourceEntityId, string propertyName, Type targetType, string rawId,
         Type? secondaryTargetType = null) => null;
     public string? LookupEntityId(ReferenceIndexService indexService, string entityType, string rawId, string? sourceNs) => null;

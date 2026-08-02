@@ -32,6 +32,7 @@ public class EntityEditorDocumentFactory : IEntityEditorDocumentFactory
             _services.GetRequiredService<IDbContextFactory<GameDbContext>>(),
             _services.GetRequiredService<IEntityLookupService>(),
             _services.GetRequiredService<ILocalizationService>(),
-            _services.GetRequiredService<INotificationService>());
+            _services.GetRequiredService<INotificationService>(),
+            _services.GetRequiredService<IReferenceListSerializer>());
     }
 }

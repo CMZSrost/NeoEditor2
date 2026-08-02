@@ -73,16 +73,40 @@ public class ReferenceResolver : IReferenceResolver
 
         if (nsPrefix is not null)
         {
-            // Namespace-prefixed: match by primary key within namespace, highest ModId
+            // Namespace-prefixed: match by primary key within namespace, highest ModId.
+            // R30 (M3): also try the NamespaceToModName mapping (ns name → actual mod name).
             var keyProp = typeof(T).GetProperty("Id") ?? typeof(T).GetProperty("nID");
             if (!int.TryParse(cleanId, out var intKey))
             {
+                // R30 (M3): composite key under a namespace ("NSE:86.6") — match GroupId.SubgroupId.
+                var gidProp = typeof(T).GetProperty("GroupId",
+                    System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.IgnoreCase);
+                var sidProp = typeof(T).GetProperty("SubgroupId",
+                    System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.IgnoreCase);
+                var dotIdx = cleanId.IndexOf('.');
+                if (gidProp is not null && sidProp is not null && dotIdx > 0
+                    && int.TryParse(cleanId[..dotIdx], out var cg)
+                    && int.TryParse(cleanId[(dotIdx + 1)..], out var cs))
+                {
+                    T? nsCompBest = default;
+                    foreach (var obj in list)
+                    {
+                        if (obj is not T e) continue;
+                        if (!SameNsMapped(e, nsPrefix)) continue;
+                        if (gidProp.GetValue(e) is not int gi || gi != cg) continue;
+                        if (sidProp.GetValue(e) is not int si || si != cs) continue;
+                        if (nsCompBest is null || e.ModId > nsCompBest.ModId) nsCompBest = e;
+                    }
+
+                    if (nsCompBest is not null) return nsCompBest;
+                }
+
                 // Non-integer key: string match
                 T? strMatch = default;
                 foreach (var obj in list)
                 {
                     if (obj is not T e) continue;
-                    if (!SameNs(e, nsPrefix)) continue;
+                    if (!SameNsMapped(e, nsPrefix)) continue;
                     var v = keyProp?.GetValue(e)?.ToString();
                     if (v == cleanId && (strMatch is null || e.ModId > strMatch.ModId))
                         strMatch = e;
@@ -93,7 +117,7 @@ public class ReferenceResolver : IReferenceResolver
             foreach (var obj in list)
             {
                 if (obj is not T e) continue;
-                if (!SameNs(e, nsPrefix)) continue;
+                if (!SameNsMapped(e, nsPrefix)) continue;
                 if (keyProp?.GetValue(e) is not int k || k != intKey) continue;
                 if (nsBest is null || e.ModId > nsBest.ModId)
                     nsBest = e;
@@ -240,15 +264,30 @@ public class ReferenceResolver : IReferenceResolver
     private bool SameNs(IEntity entity, string nsName)
         => EntityNamespaces.TryGetValue(entity.EntityId, out var em) && em == nsName;
 
-    public IEntity? LookupRefByRawId(IEntity sourceEntity, string rawId, Type targetType)
+    /// <summary>R30 (M3): namespace match with NamespaceToModName mapping fallback.</summary>
+    private bool SameNsMapped(IEntity entity, string nsName)
+    {
+        if (SameNs(entity, nsName)) return true;
+        var mapping = ActiveStore?.NamespaceToModName;
+        return mapping is not null
+               && mapping.TryGetValue(nsName, out var mapped)
+               && SameNs(entity, mapped);
+    }
+
+    public IEntity? LookupRefByRawId(IEntity sourceEntity, string rawId, Type targetType,
+        EntityMergeStore? storeOverride = null)
     {
         if (string.IsNullOrWhiteSpace(rawId)) return null;
-        if (!ReferenceLookups.TryGetValue(targetType, out var list) || list is null)
+
+        // R30 (H1/H2): resolve against the EXPLICIT store (reverse-index building), not the
+        // session-global store — the caller's store may not be published to the session yet.
+        var store = storeOverride ?? ActiveStore;
+        if (store is null) return null;
+        if (!store.ReferenceLookups.TryGetValue(targetType, out var list) || list is null)
             return null;
 
         // Try ReferenceIndex first
-        var activeStore = ActiveStore;
-        if (activeStore?.Index is { } index)
+        if (store.Index is { } index)
         {
             var targetEid = index.LookupGlobal(targetType, rawId);
             if (targetEid is not null)
@@ -257,8 +296,23 @@ public class ReferenceResolver : IReferenceResolver
                         return e;
         }
 
-        // Fallback: iterate ReferenceLookups
-        return list.OfType<IEntity>().FirstOrDefault(e => e.EntityId == rawId);
+        // Fallback: match by business key (MergedId / primary key) — NOT EntityId, which is
+        // a Sha256 hash and never equals a raw reference id like "38".
+        var mergedIds = store.EntityMergedIds;
+        var keyProp = targetType.GetProperty("Id",
+                System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.IgnoreCase)
+            ?? targetType.GetProperty("nID",
+                System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.IgnoreCase);
+        foreach (var obj in list)
+        {
+            if (obj is not IEntity e) continue;
+            if (mergedIds.TryGetValue(e.EntityId, out var mid) && mid.ToString() == rawId)
+                return e;
+            if (keyProp?.GetValue(e)?.ToString() == rawId)
+                return e;
+        }
+
+        return null;
     }
 
     public async System.Threading.Tasks.Task BuildReverseIndexAsync(
@@ -270,7 +324,8 @@ public class ReferenceResolver : IReferenceResolver
             foreach (var obj in entities)
             {
                 if (obj is not IEntity entity) continue;
-                var ns = EntityNamespaces.TryGetValue(entity.EntityId, out var n) ? n : "0";
+                // R30: read namespaces from the explicit store, not the session-global one.
+                var ns = store.EntityNamespaces.TryGetValue(entity.EntityId, out var n) ? n : "0";
                 var keyProp = entityType.GetProperty("Id",
                     System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.IgnoreCase)
                     ?? entityType.GetProperty("nID",
@@ -299,7 +354,13 @@ public class ReferenceResolver : IReferenceResolver
                     var parsed = ReferenceParser.Parse(val, refAttr);
                     foreach (var seg in parsed.Segments)
                     {
-                        var targetEid = LookupRefByRawId(entity, seg.ExtractedId, refAttr.TargetEntityType)?.EntityId;
+                        // R30 (H1/H2): resolve through the explicit store's index — the
+                        // session store may be a different merge view or not published yet.
+                        var targetEid = LookupRefByRawId(entity, seg.ExtractedId,
+                            refAttr.TargetEntityType, store)?.EntityId;
+                        if (targetEid is null && refAttr.SecondaryTargetEntityType is not null)
+                            targetEid = LookupRefByRawId(entity, seg.ExtractedId,
+                                refAttr.SecondaryTargetEntityType, store)?.EntityId;
                         if (targetEid is not null)
                             await indexService.AddReverseAsync(targetEid, entity.EntityId, prop.Name, seg.RawText);
                     }
@@ -334,7 +395,10 @@ public class ReferenceResolver : IReferenceResolver
 
     public void ClearLookupCache()
     {
-        // Cache clearing is handled by store/index rebuild
+        // R30 (L3): drop the display-name cache so edits to a target entity's Subject
+        // are reflected immediately (the in-memory index itself is rebuilt on reload).
+        var activeStore = ActiveStore;
+        activeStore?.Index?.ClearDisplayCache();
     }
 
     public string? LookupEntityId(ReferenceIndexService indexService, string entityType,

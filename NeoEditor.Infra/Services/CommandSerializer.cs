@@ -6,7 +6,9 @@ using System.Reflection;
 using NeoEditor.Core.Abstractions;
 using NeoEditor.Data;
 using NeoEditor.Data.Command;
+using NeoEditor.Data.Model;
 using NeoEditor.Data.Model.Game;
+using NeoEditor.Helper;
 using Newtonsoft.Json.Linq;
 
 namespace NeoEditor.Services;
@@ -66,8 +68,8 @@ public static class CommandSerializer
         var property = entityType.GetProperty(propertyName)
             ?? throw new InvalidOperationException($"Property {propertyName} not found on {entityTypeName}");
 
-        var oldValue = DeserializeValue(obj["oldValue"]!, property.PropertyType);
-        var newValue = DeserializeValue(obj["newValue"]!, property.PropertyType);
+        var oldValue = DeserializeValue(obj["oldValue"]!, property.PropertyType, property);
+        var newValue = DeserializeValue(obj["newValue"]!, property.PropertyType, property);
 
         return new EditCellCommand(entity, property, columnName, oldValue, newValue, onChanged);
     }
@@ -141,8 +143,8 @@ public static class CommandSerializer
                     continue;
                 }
 
-                var oldValue = DeserializeValue(editObj["oldValue"]!, property.PropertyType);
-                var newValue = DeserializeValue(editObj["newValue"]!, property.PropertyType);
+                var oldValue = DeserializeValue(editObj["oldValue"]!, property.PropertyType, property);
+                var newValue = DeserializeValue(editObj["newValue"]!, property.PropertyType, property);
 
                 edits.Add(new EditRecord(entity, property, columnName, oldValue, newValue));
             }
@@ -165,7 +167,7 @@ public static class CommandSerializer
 
     #region Helpers
 
-    private static object? DeserializeValue(JToken token, Type targetType)
+    private static object? DeserializeValue(JToken token, Type targetType, PropertyInfo? property = null)
     {
         if (token.Type == JTokenType.Null) return null;
         if (targetType == typeof(string)) return token.Value<string>();
@@ -175,6 +177,12 @@ public static class CommandSerializer
         if (targetType == typeof(bool)) return token.Value<bool>();
         if (targetType == typeof(byte)) return token.Value<byte>();
         if (targetType.IsEnum) return Enum.ToObject(targetType, token.Value<int>());
+
+        // R30 (A2): reference values are persisted as raw text — restore through the serializer.
+        var refAttr = property?.GetCustomAttribute<ReferenceFieldAttribute>();
+        if (refAttr is not null && targetType == typeof(ReferenceList<IReferenceEntry>))
+            return new ReferenceListSerializer().Deserialize(token.Value<string>() ?? "", refAttr);
+
         return token.ToObject(targetType);
     }
 
@@ -187,7 +195,7 @@ public static class CommandSerializer
             if (colAttr == null) continue;
             var token = data[prop.Name];
             if (token == null || token.Type == JTokenType.Null) continue;
-            var val = DeserializeValue(token, prop.PropertyType);
+            var val = DeserializeValue(token, prop.PropertyType, prop);
             prop.SetValue(entity, val);
         }
         return entity;

@@ -140,6 +140,15 @@ public abstract class ReferencePattern
             var xIdx = segment.LastIndexOf('x');
             return xIdx > 0 ? $"{segment[..xIdx].Trim()}x" : "";
         }
+        public override string FormatDisplay(string segment, string? subject, string? modName)
+        {
+            if (string.IsNullOrEmpty(subject)) return segment;
+            var modPrefix = !string.IsNullOrEmpty(modName) && modName != "0" ? modName + ":" : "";
+            // R30: keep the multiplier visible: "2x15" → "Subject (2x15)".
+            var xIdx = segment.LastIndexOf('x');
+            var raw = xIdx > 0 ? $"{segment[..xIdx].Trim()}x{segment[(xIdx + 1)..].Trim()}" : segment;
+            return $"{modPrefix}{subject} ({raw})";
+        }
     }
 
     private sealed class IdXMultXQtyPattern : ReferencePattern
@@ -227,9 +236,16 @@ public abstract class ReferencePattern
         public override string ExtractRawId(string segment)
         {
             var trimmed = segment.Trim();
+            // R30: strip namespace prefix first ("NSE:[-137,0,0]" → "[-137,0,0]").
+            var colonIdx = trimmed.IndexOf(':');
+            if (colonIdx > 0 && colonIdx + 1 < trimmed.Length && trimmed[colonIdx + 1] == '[')
+                trimmed = trimmed[(colonIdx + 1)..].TrimStart();
             var start = trimmed.StartsWith('[') ? 1 : 0;
             var commaIdx = trimmed.IndexOf(',', start);
-            return commaIdx > start ? trimmed[start..commaIdx].Trim() : trimmed[start..].TrimEnd(']').Trim();
+            var raw = commaIdx > start ? trimmed[start..commaIdx].Trim() : trimmed[start..].TrimEnd(']').Trim();
+            // R30: negated conditions ("[-137,0,0]" = must NOT have 137) resolve by the
+            // positive id, same as the default Id pattern strips the '-' modifier.
+            return raw.StartsWith('-') ? raw[1..].Trim() : raw;
         }
         public override string FormatExtraInfo(string segment)
         {
@@ -239,6 +255,18 @@ public abstract class ReferencePattern
             if (commaIdx <= start) return "";
             var tail = trimmed[(commaIdx + 1)..].TrimEnd(']').Trim();
             return tail.Length > 0 ? $",{tail}" : "";
+        }
+        public override string FormatDisplay(string segment, string? subject, string? modName)
+        {
+            if (string.IsNullOrEmpty(subject)) return segment;
+            var modPrefix = !string.IsNullOrEmpty(modName) && modName != "0" ? modName + ":" : "";
+            var start = segment.IndexOf('[');
+            var body = start >= 0 ? segment[(start + 1)..].TrimEnd(']').Trim() : segment;
+            var isNeg = body.StartsWith('-');
+            // R30: keep P1/P2 params visible: "[155,0,0]" → "Subject (155, 0, 0)",
+            // "[-137,0,0]" → "~Subject (-137, 0, 0)".
+            var negPrefix = isNeg ? "~" : "";
+            return $"{negPrefix}{modPrefix}{subject} ({body})";
         }
     }
 }

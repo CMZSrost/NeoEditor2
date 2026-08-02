@@ -135,8 +135,12 @@ public partial class ReferenceFieldEditor : UserControl
             // or mod references resolve against the game namespace instead.
             var lookupKey = baseRef.ToRawString();
 
+            // R30: primary type first, then secondary (aTreasures → nested TreasureTable).
             resolved = lookup.FindBestMatch(
                 _refAttr.TargetEntityType, lookupKey, _refAttr.TargetKey);
+            if (resolved is null && _refAttr.SecondaryTargetEntityType is not null)
+                resolved = lookup.FindBestMatch(
+                    _refAttr.SecondaryTargetEntityType, lookupKey, _refAttr.SecondaryTargetKey);
             if (resolved is not null)
                 displayName = resolved.Subject ?? lookupKey;
         }
@@ -278,11 +282,20 @@ public partial class ReferenceFieldEditor : UserControl
             // Keep the namespace prefix (and composite key) — see CreateBadge.
             var lookupKey = baseRef.ToRawString();
 
+            // R30: primary type first, then secondary (aTreasures → nested TreasureTable).
             var target = lookup.FindBestMatch(_refAttr.TargetEntityType, lookupKey, _refAttr.TargetKey);
+            var targetType = _refAttr.TargetEntityType;
+            if (target is null && _refAttr.SecondaryTargetEntityType is not null)
+            {
+                target = lookup.FindBestMatch(_refAttr.SecondaryTargetEntityType, lookupKey,
+                    _refAttr.SecondaryTargetKey);
+                if (target is not null) targetType = _refAttr.SecondaryTargetEntityType;
+            }
+
             if (target is not null)
             {
                 WeakReferenceMessenger.Default.Send(
-                    new PeekEntityMessage(_refAttr.TargetEntityType, target.EntityId, target));
+                    new PeekEntityMessage(targetType, target.EntityId, target));
             }
         }
         catch (Exception ex)

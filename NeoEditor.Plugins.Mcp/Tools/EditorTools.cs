@@ -245,7 +245,8 @@ public sealed class EditorTools
         if (prop is null)
             return JsonConvert.SerializeObject(new { error = $"Property '{propertyName}' not found on {entityType}" });
 
-        var rawValue = prop.GetValue(entity)?.ToString() ?? "";
+        var rawValue = ReferenceText.GetRawString(prop.GetValue(entity),
+            prop.GetCustomAttribute<ReferenceFieldAttribute>());
         var refAttr = prop.GetCustomAttribute<ReferenceFieldAttribute>();
 
         var separator = refAttr?.Separator;

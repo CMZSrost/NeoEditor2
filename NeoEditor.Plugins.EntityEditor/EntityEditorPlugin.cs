@@ -44,6 +44,7 @@ public class EntityEditorPlugin : IDocumentPlugin
             services.GetRequiredService<IDbContextFactory<GameDbContext>>(),
             services.GetRequiredService<IEntityLookupService>(),
             services.GetRequiredService<ILocalizationService>(),
-            services.GetRequiredService<INotificationService>());
+            services.GetRequiredService<INotificationService>(),
+            services.GetRequiredService<IReferenceListSerializer>());
     }
 }

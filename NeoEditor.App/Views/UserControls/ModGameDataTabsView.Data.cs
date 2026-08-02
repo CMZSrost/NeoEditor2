@@ -535,12 +535,29 @@ public partial class ModGameDataTabsView
             "[ReloadMergeTabs] completed: {TabCount} tabs, {TotalOverridden} overridden entities across all types",
             Tabs.Count, _overriddenEntityIds.Count);
 
-        // Build SQLite reference index for O(1) namespace-prefixed lookups
-        await BuildMergeViewIndexAsync();
+        // R30 (追修 6): seed the HostService working-set cache with every loaded entity.
+        // SaveAllAsync persists ONLY entities present in that cache (dirty id → cache miss
+        // → silently dropped → "No mod entities to save" → WAL never cleared → replay on
+        // every restart = dirty-on-open). Edit commands now carry cache deltas too, but a
+        // never-edited entity (e.g. one restored from WAL replay) would still miss.
+        foreach (var tab in Tabs)
+        {
+            foreach (var item in tab.SourceCollection)
+            {
+                if (item is IEntity e)
+                    _hostService.AddEntityToCache(e);
+            }
+        }
 
         // P3 fix (Test Round 10): build in-memory ReferenceIndex so reference columns
         // in the DataGrid can resolve raw IDs to display names.
+        // R30 (H1): MUST run BEFORE BuildMergeViewIndexAsync — the SQLite reverse index
+        // resolves each segment through the in-memory index; building it first left
+        // reference_reverse empty on first load.
         await MergeStore.Index.BuildAsync();
+
+        // Build SQLite reference index for O(1) namespace-prefixed lookups
+        await BuildMergeViewIndexAsync();
 
         var cacheKey = $"profile_{profileInfo.ProfileId}";
         TabSnapshotCache[cacheKey] = (Tabs, MergeStore, EditStore);

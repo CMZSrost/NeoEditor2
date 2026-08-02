@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using NeoEditor.Data.Context;
+using NeoEditor.Helper;
 using NeoEditor.Infra.Services;
 using Xunit;
 
@@ -47,6 +48,8 @@ public class EntityEditorDocumentFactoryTests
                 return new StubLocalizationService();
             if (serviceType == typeof(INotificationService))
                 return new StubNotificationService();
+            if (serviceType == typeof(NeoEditor.Core.Abstractions.IReferenceListSerializer))
+                return new ReferenceListSerializer();
             throw new InvalidOperationException($"Unexpected service request: {serviceType}");
         }
     }

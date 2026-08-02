@@ -116,7 +116,7 @@ public class VisHelperService
             return node;
         }
 
-        if (!(_dataTable.ReferenceLookups.TryGetValue(typeof(T), out var list) || list is null))
+        if (!(_dataTable.ReferenceLookups.TryGetValue(typeof(T), out var list) && list is not null))
         {
             node.Items.Add(Leaf(raw, Brushes.Gray));
             return node;

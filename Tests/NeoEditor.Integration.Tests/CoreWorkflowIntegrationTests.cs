@@ -205,7 +205,7 @@ internal sealed class StubReferenceResolver : IReferenceResolver
     public void NavigateTo(Type entityType, string entityId) { }
     public void NavigateToByKey<T>(int key) where T : IEntity { }
     public void NavigateToByKeyFor<T>(int key, IEntity sourceEntity) where T : IEntity { }
-    public IEntity? LookupRefByRawId(IEntity sourceEntity, string rawId, Type targetType) => null;
+    public IEntity? LookupRefByRawId(IEntity sourceEntity, string rawId, Type targetType, EntityMergeStore? storeOverride = null) => null;
     public System.Threading.Tasks.Task BuildReverseIndexAsync(ReferenceIndexService indexService, EntityMergeStore store)
         => System.Threading.Tasks.Task.CompletedTask;
     public List<(Type SourceType, string SourceSubject, string SourceEntityId, string PropName)> ResolveReverseRefs(

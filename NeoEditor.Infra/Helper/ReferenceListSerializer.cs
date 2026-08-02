@@ -51,6 +51,9 @@ public class ReferenceListSerializer : IReferenceListSerializer
             result.Add(entry);
         }
 
+        // R30 (M1): Add() invalidates RawText — restore the source text so consumers
+        // (Split / implicit string conversion) read the authoritative raw value.
+        result.RawText = raw;
         return result;
     }
 
@@ -146,7 +149,8 @@ public class ReferenceListSerializer : IReferenceListSerializer
         double.TryParse(multStr, NumberStyles.Float, CultureInfo.InvariantCulture, out var mult);
 
         var entity = BuildEntityRef(idPart, keyInfo);
-        var fmt = new IdXMultFormat { Entity = entity, Multiplier = mult };
+        // R30 (M2): keep the original multiplier text ("1.0" vs "1") for lossless round-trip.
+        var fmt = new IdXMultFormat { Entity = entity, Multiplier = mult, RawMult = multStr };
 
         // If negated, wrap the whole IdXMultFormat in NegatedRefFormat
         return isNeg
@@ -201,10 +205,12 @@ public class ReferenceListSerializer : IReferenceListSerializer
         var idPart = xIdx > 0 ? trimmed[(xIdx + 1)..].Trim() : trimmed;
         double.TryParse(multStr, NumberStyles.Float, CultureInfo.InvariantCulture, out var mult);
 
+        // R30 (M2): keep the original multiplier text ("2.0" vs "2") for lossless round-trip.
         return new MultXIdFormat
         {
             Entity = BuildEntityRef(idPart, keyInfo),
-            Multiplier = mult
+            Multiplier = mult,
+            RawMult = multStr
         };
     }
 

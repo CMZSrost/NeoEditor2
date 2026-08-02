@@ -258,16 +258,22 @@ public class BrowserIndexService : IBrowserIndexService
                 Log.Logger.Information("[BrowserIndex] SQLite index built — {Count} entries", Index.Count);
 
                 store.IndexService = Index;
+                // R30 (P4/H2): build the in-memory ReferenceIndex first (reverse-index
+                // resolution and DataGrid display both go through it), then publish the
+                // browser store BEFORE building the reverse index.
+                await store.Index.BuildAsync();
+                _session.SetBrowserStore(store);
                 await _referenceResolver.BuildReverseIndexAsync(Index, store);
             }
             else
             {
                 store.IndexService = Index;
+                // R30 (P4): browser store display resolution needs the in-memory ReferenceIndex
+                // (LookupSubject has no SQLite fallback).
+                await store.Index.BuildAsync();
+                _session.SetBrowserStore(store);
                 Log.Logger.Information("[BrowserIndex] Restored from disk — {Count} entries", Index.Count);
             }
-
-            // Publish to session (new path).
-            _session.SetBrowserStore(store);
 
             _built = true;
             Log.Logger.Information("[BrowserIndex] {Action} complete", rebuildIndex ? "Rebuild" : "Restore");

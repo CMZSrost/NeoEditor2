@@ -122,7 +122,11 @@ public class DataGridNavigationService : IDataGridNavigationService
                            ?? BrowserStore?.IndexService;
         if (indexService is not null)
         {
-            var entityId = indexService.LookupByNs(entityType.Name, "", id.ToString());
+            // R30: game-base rows are stored with namespace "0", not "" — querying "" never
+            // matched and the fallback silently failed.
+            var entityId = indexService.LookupByNs(entityType.Name, "0", id.ToString());
+            if (entityId is null)
+                entityId = indexService.LookupByNs(entityType.Name, "", id.ToString());
             if (entityId is not null)
             {
                 _router.Navigate(entityType, entityId);

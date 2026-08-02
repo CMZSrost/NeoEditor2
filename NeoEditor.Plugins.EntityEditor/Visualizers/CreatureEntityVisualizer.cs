@@ -170,7 +170,7 @@ public class CreatureEntityVisualizer : IEntityVisualizer
                 if (cond is not null)
                 {
                     var extra = eqPattern.FormatExtraInfo(seg);
-                    var label = string.IsNullOrEmpty(extra) ? cond.Subject : $"{cond.Subject} ={extra}";
+                    var label = string.IsNullOrEmpty(extra) ? cond.Subject : $"{cond.Subject} {extra}";
                     wp.Children.Add(_refNode.BadgeForEntity(c, cond, label, "#FCE4EC", "#C62828"));
                     continue;
                 }

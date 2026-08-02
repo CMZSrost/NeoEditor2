@@ -192,7 +192,21 @@ public static class ReferenceParser
         var lastX = trimmed.LastIndexOf('x');
         if (lastX <= 0) return ParseSingle(trimmed);
         var idPart = trimmed[(lastX + 1)..].Trim();
-        return ParseSingle(idPart);
+        var multPart = trimmed[..lastX].Trim();
+        var (modName, id) = ParseReference(idPart);
+        // R30: keep the multiplier ("2x15" → mult=2, id=15) — was silently dropped as 1.0.
+        double.TryParse(multPart, NumberStyles.Float, CultureInfo.InvariantCulture, out var mult);
+        return new ParsedRef(modName, id, mult);
+    }
+
+    /// <summary>Parse a bracket segment "[155,0,0]" / "[-137,0,0]" / "NSE:[155,0,0]" — id + P1/P2 params.</summary>
+    private static ParsedRef ParseBracket(string raw)
+    {
+        var trimmed = raw.Trim();
+        // Extract the id (handles "NSE:[155,0,0]" → NSE:155).
+        var idPart = ReferencePattern.FromName("[{id}").ExtractRawId(trimmed);
+        var (modName, id) = ParseReference(idPart);
+        return new ParsedRef(modName, id);
     }
 
     private static ParsedRef ParseAssignment(string raw)
@@ -216,6 +230,7 @@ public static class ReferenceParser
             "{id}x{mult}" => ParseSingle(raw),
             "{mult}x{id}" => ParseMultiplierReversed(raw),
             "{id}={value}" => ParseAssignment(raw),
+            "[{id}" => ParseBracket(raw),
             _ => ParseSingle(raw)
         };
     }

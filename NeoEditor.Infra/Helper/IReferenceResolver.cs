@@ -36,8 +36,11 @@ public interface IReferenceResolver
     /// Unlike <see cref="LookupRef{T}"/>, this does NOT re-extract the raw ID via pattern
     /// matching — the caller has already done that. The source entity provides namespace context.
     /// Returns null if the reference cannot be resolved.
+    /// R30: <paramref name="storeOverride"/> pins the store (reverse-index building) instead of
+    /// the session-global store.
     /// </summary>
-    IEntity? LookupRefByRawId(IEntity sourceEntity, string rawId, System.Type targetType);
+    IEntity? LookupRefByRawId(IEntity sourceEntity, string rawId, System.Type targetType,
+        EntityMergeStore? storeOverride = null);
 
     /// <summary>
     /// Build reverse reference index by scanning all entities' [ReferenceField] properties.

@@ -41,5 +41,6 @@ public interface IDataGridCellInteractionService
     /// Format a single reference segment with Subject display name resolved via IReferenceResolver.
     /// </summary>
     string FormatSegmentDisplay(string segment, Type targetType, string? pattern,
-        string sourceEntityId, string propertyName, string? targetKey);
+        string sourceEntityId, string propertyName, string? targetKey,
+        Type? secondaryTargetType = null);
 }

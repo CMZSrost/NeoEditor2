@@ -51,6 +51,16 @@ public class ReferenceIndex
     // ── Display cache: (targetEntityId) → (Subject, ModName) ──
     private readonly Dictionary<string, (string? Subject, string? ModName)> _display = new();
 
+    // ── R30: segment-normalization support ──
+    //   _entityIdToType: EntityId → source entity type (built with the index)
+    //   _patternCache:   (sourceEntityId, propertyName) → [ReferenceField].Pattern
+    // Used by Lookup to extract the id part of a segment ("67x0.05" → "67") per the
+    // source field's parse pattern, so every caller — DataGrid, Value Editor badges,
+    // visualizer badges — feeds the SAME canonical backend regardless of whether it
+    // passes a full segment or an already-extracted id (ExtractRawId is idempotent).
+    private readonly Dictionary<string, Type> _entityIdToType = new();
+    private readonly Dictionary<(string SourceEntityId, string PropertyName), string?> _patternCache = new();
+
     public ReferenceIndex(EntityMergeStore store)
     {
         _store = store ?? throw new ArgumentNullException(nameof(store));
@@ -84,6 +94,10 @@ public class ReferenceIndex
                 {
                     if (obj is not IEntity entity) continue;
                     totalEnt++;
+
+                    // R30: EntityId → source type, so Lookup can resolve the source field's
+                    // parse pattern for segment normalization ("67x0.05" → "67").
+                    _entityIdToType[entity.EntityId] = entityType;
 
                     // Compute primary key — try Id first, then nID (same as MergeService.ResolveEntityKeyProperty)
                     var primaryKey = ComputeEntityKey(entity);
@@ -129,8 +143,10 @@ public class ReferenceIndex
                     _nsIndex[nsKey] = entity.EntityId;
                     nsIdxCount++;
 
-                    // Composite-key index (e.g. ItemType nGroupID.nSubgroupID) — mirrors nsIndex/mergedIdIndex semantics
-                    if (TryGetCompositeKey(entity, out var gid, out var sid))
+                    // Composite-key index (e.g. ItemType nGroupID.nSubgroupID) — mirrors nsIndex/mergedIdIndex semantics.
+                    // R30 (M5): skip the invalid (0,0) key — every ItemType has GroupId/SubgroupId
+                    // defaulting to 0, and "0.0" is not a referenceable id (mirrors the rawId=="0" skip).
+                    if (TryGetCompositeKey(entity, out var gid, out var sid) && !(gid == 0 && sid == 0))
                     {
                         _mergedCompositeIndex[(entityType, gid, sid)] = entity.EntityId;
                         _nsCompositeIndex[(entityType, ns, gid, sid)] = entity.EntityId;
@@ -213,6 +229,11 @@ public class ReferenceIndex
     /// <summary>
     /// Resolve a reference to an EntityId.
     ///
+    /// R30: the rawId may be a FULL segment ("67x0.05", "-115x1.0", "[155,0,0]",
+    /// "Hood Off=8.7") or an already-extracted id ("67") — the id part is extracted
+    /// internally using the source field's [ReferenceField] parse pattern (idempotent),
+    /// so every caller resolves with the same semantics.
+    ///
     /// Rules:
     ///   - Has namespace prefix (e.g. "NSE:3")  → lookup by (type, namespace, primary key)
     ///   - No namespace prefix (e.g. "3")       → lookup by (type, MergedId)
@@ -221,14 +242,18 @@ public class ReferenceIndex
     {
         if (string.IsNullOrWhiteSpace(rawId)) return null;
 
+        // R30: normalize the segment per the source field's pattern before keying.
+        var pattern = ResolvePattern(sourceEntityId, propertyName);
+        var idOnly = ReferenceParser.ExtractRawId(rawId, pattern);
+        if (string.IsNullOrWhiteSpace(idOnly)) return null;
+
         // Parse namespace prefix
         string? nsPrefix = null;
-        var idOnly = rawId;
-        var colonIdx = rawId.IndexOf(':');
+        var colonIdx = idOnly.IndexOf(':');
         if (colonIdx > 0)
         {
-            nsPrefix = rawId[..colonIdx];
-            idOnly = rawId[(colonIdx + 1)..];
+            nsPrefix = idOnly[..colonIdx];
+            idOnly = idOnly[(colonIdx + 1)..];
         }
 
         var lookupKey = ReferenceParser.BuildLookupKey(idOnly);
@@ -497,6 +522,36 @@ public class ReferenceIndex
         _mergedCompositeIndex.Clear();
         _reverse.Clear();
         _display.Clear();
+        _entityIdToType.Clear();
+        _patternCache.Clear();
+    }
+
+    /// <summary>R30 (L3): drop only the display-name cache (Subject/ModName) — used after
+    /// editing a target entity so cells show the new name without a full rebuild.</summary>
+    public void ClearDisplayCache() => _display.Clear();
+
+    /// <summary>
+    /// R30: resolve the [ReferenceField].Pattern of the SOURCE field for segment
+    /// normalization. Pattern depends on the source field, not the target type —
+    /// resolved via EntityId → source type (built at index time) + reflection,
+    /// cached per (sourceEntityId, propertyName).
+    /// </summary>
+    private string? ResolvePattern(string sourceEntityId, string propertyName)
+    {
+        if (string.IsNullOrEmpty(propertyName)) return null;
+        var key = (sourceEntityId, propertyName);
+        if (_patternCache.TryGetValue(key, out var cached)) return cached;
+
+        string? pattern = null;
+        if (_entityIdToType.TryGetValue(sourceEntityId, out var sourceType))
+        {
+            var prop = sourceType.GetProperty(propertyName,
+                BindingFlags.Instance | BindingFlags.Public | BindingFlags.IgnoreCase);
+            pattern = prop?.GetCustomAttribute<ReferenceFieldAttribute>()?.Pattern;
+        }
+
+        _patternCache[key] = pattern;
+        return pattern;
     }
 
     // ═══════════════════════════════════════════════════════════════════════

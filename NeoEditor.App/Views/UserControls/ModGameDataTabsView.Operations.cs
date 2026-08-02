@@ -114,23 +114,22 @@ public partial class ModGameDataTabsView
                 _commandsSinceSnapshot = 0;
             });
 
-            // Update snapshot markers for each affected mod so WAL replay skips saved commands.
-            // Use per-mod granularity: merge view restore reads by "mod", not "profile".
+            // WAL is now redundant: SaveAllAsync persisted the ENTIRE per-profile dirty set,
+            // and every WAL command's affected entity is in that set (HostService.ExecuteAsync
+            // marks them dirty). Clear it so stale commands cannot replay on restart and
+            // re-mark entities dirty (dirty-on-open regression). The old per-mod snapshot-marker
+            // hack never covered ("game", 0) or ModId=0 targets, so game-data edits replayed
+            // on EVERY restart no matter how many times the user saved.
             var savedModIds = savedEntityIds
                 .Select(id => _hostService.GetCachedEntity(id)?.ModId)
-                .Where(id => id is > 0)
+                .Where(id => id is >= 0)
                 .Select(id => id!.Value)
                 .Distinct()
                 .ToList();
-            foreach (var modId in savedModIds)
-            {
-                await _workspacePersistence.UpdateSnapshotMarkerAsync("mod", modId, _persistSequence);
-            }
+            await ClearWorkspaceAsync();
             await UpdateLastModifiedAsync(savedModIds);
-            _logger.LogInformation("[QuickSave] updated snapshot for {ModCount} mods, seq={Seq}",
-                savedModIds.Count, _persistSequence);
+            _logger.LogInformation("[QuickSave] cleared WAL, saved {Count} entities to DB", savedEntityIds.Count);
             UpdatePersistenceDebugInfo();
-            _logger.LogInformation("[QuickSave] saved {Count} entities to DB", savedEntityIds.Count);
 
             // Notify EntityEditorDocument instances to MarkClean() their title dirty indicators.
             // Must be dispatched to UI thread so handlers can modify Dock.Title / KV state safely.
@@ -230,28 +229,48 @@ public partial class ModGameDataTabsView
         var keyProp = DataLoaderService.ResolveEntityKeyProperty(target.GetType());
         var targetKeyVal = keyProp?.GetValue(target)?.ToString() ?? target.EntityId;
 
-        foreach (var tab in Tabs)
+        // R30: use the in-memory reverse index — the same backend the DataGrid display and
+        // the "Referenced By" panels use. The old hand-written scan fed on the damaged
+        // ToString() format ("[a, b]") and split multi-char separators char-by-char.
+        var store = WorkspaceSession.ActiveMergeStore ?? WorkspaceSession.BrowserStore;
+        if (store?.Index is { } index)
         {
-            foreach (var entity in tab.SourceCollection.OfType<IEntity>())
+            foreach (var (srcEid, propName, _) in index.ReverseLookup(target.EntityId))
             {
-                var type = entity.GetType();
-                foreach (var prop in type.GetProperties(
-                             System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public)
-                         .Where(p => p.GetCustomAttribute<ReferenceFieldAttribute>() != null))
+                var (srcType, srcEntity) = FindEntityById(store, srcEid);
+                if (srcType is null || srcEntity is null) continue;
+                var prop = srcType.GetProperty(propName,
+                    System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public
+                    | System.Reflection.BindingFlags.IgnoreCase);
+                var colName = prop?.GetCustomAttribute<ColumnAttribute>()?.Name ?? propName;
+                results.Add((srcEntity.Subject ?? srcEid, colName, srcType, srcEid));
+            }
+        }
+        else
+        {
+            // Fallback: no in-memory index (Browser mode) — scan raw values correctly.
+            foreach (var tab in Tabs)
+            {
+                foreach (var entity in tab.SourceCollection.OfType<IEntity>())
                 {
-                    var raw = prop.GetValue(entity)?.ToString();
-                    if (string.IsNullOrWhiteSpace(raw)) continue;
-
-                    var refAttr = prop.GetCustomAttribute<ReferenceFieldAttribute>()!;
-                    if (refAttr.TargetEntityType != target.GetType()) continue;
-
-                    var colName = prop.GetCustomAttribute<ColumnAttribute>()?.Name ?? prop.Name;
-
-                    // Check if raw value matches the target's key
-                    var separator = refAttr.Separator;
-                    if (separator is not null)
+                    var type = entity.GetType();
+                    foreach (var prop in type.GetProperties(
+                                 System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public)
+                             .Where(p => p.GetCustomAttribute<ReferenceFieldAttribute>() != null))
                     {
-                        foreach (var seg in raw.Split(separator[0]))
+                        var refAttr = prop.GetCustomAttribute<ReferenceFieldAttribute>()!;
+                        if (refAttr.TargetEntityType != target.GetType()) continue;
+                        if (refAttr.SecondaryTargetEntityType != null
+                            && refAttr.SecondaryTargetEntityType != target.GetType()) continue;
+
+                        var raw = ReferenceText.GetRawString(prop.GetValue(entity), refAttr);
+                        if (string.IsNullOrWhiteSpace(raw)) continue;
+
+                        var colName = prop.GetCustomAttribute<ColumnAttribute>()?.Name ?? prop.Name;
+                        var segments = refAttr.Separator is not null
+                            ? raw.Split(refAttr.Separator, StringSplitOptions.RemoveEmptyEntries)
+                            : new[] { raw };
+                        foreach (var seg in segments)
                         {
                             var id = ReferenceParser.ExtractRawId(seg.Trim(), refAttr.Pattern);
                             if (id == targetKeyVal)
@@ -260,12 +279,6 @@ public partial class ModGameDataTabsView
                                 break;
                             }
                         }
-                    }
-                    else
-                    {
-                        var id = ReferenceParser.ExtractRawId(raw, refAttr.Pattern);
-                        if (id == targetKeyVal)
-                            results.Add((entity.Subject, colName, type, entity.EntityId));
                     }
                 }
             }
@@ -287,6 +300,21 @@ public partial class ModGameDataTabsView
         }
 
         ViewServices.Notification.ShowInfo(sb.ToString(), "Find References");
+    }
+
+    /// <summary>R30: locate a source entity by id inside a merge store (for reverse-index results).</summary>
+    private static (Type? SourceType, IEntity? Entity) FindEntityById(EntityMergeStore store, string entityId)
+    {
+        foreach (var (t, list) in store.ReferenceLookups)
+        {
+            foreach (var obj in list)
+            {
+                if (obj is IEntity e && e.EntityId == entityId)
+                    return (t, e);
+            }
+        }
+
+        return (null, null);
     }
 
     private static object? ConvertValue(string str, Type targetType)

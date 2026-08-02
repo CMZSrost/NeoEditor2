@@ -14,11 +14,16 @@ using Microsoft.EntityFrameworkCore;
 using NeoEditor.Data.Command;
 using NeoEditor.Data.Context;
 using NeoEditor.Data.Messages;
+using NeoEditor.Data.Model;
 using NeoEditor.Data.Model.Game;
 using NeoEditor.Helper;
 using NeoEditor.Infra.Services;
 using NeoEditor.Services;
 using Serilog;
+
+// Aliases to avoid IWorkspaceSession/IHostService ambiguity with NeoEditor.Services.
+using IReferenceEntry = NeoEditor.Core.Abstractions.IReferenceEntry;
+using IReferenceListSerializer = NeoEditor.Core.Abstractions.IReferenceListSerializer;
 
 namespace NeoEditor.Plugins.EntityEditor.ViewModels;
 
@@ -146,6 +151,7 @@ public partial class EntityEditorDocument : PluginDocumentBase
     private readonly IDbContextFactory<GameDbContext> _dbFactory;
     private readonly IEntityLookupService _dataTable;
     private readonly INotificationService _notification;
+    private readonly IReferenceListSerializer _serializer;
 
     public EntityEditorDocument(
         IEntity entity,
@@ -154,6 +160,7 @@ public partial class EntityEditorDocument : PluginDocumentBase
         IEntityLookupService dataTable,
         ILocalizationService loc,
         INotificationService notification,
+        IReferenceListSerializer serializer,
         bool isReadOnly = false)
         : base(loc)
     {
@@ -161,6 +168,7 @@ public partial class EntityEditorDocument : PluginDocumentBase
         _dbFactory = dbFactory;
         _dataTable = dataTable;
         _notification = notification;
+        _serializer = serializer;
         Entity = entity;
         IsReadOnly = isReadOnly;
 
@@ -239,7 +247,21 @@ public partial class EntityEditorDocument : PluginDocumentBase
 
                 try
                 {
-                    var converted = ValueConverter.Convert(val, prop.PropertyType);
+                    // R30 (A1): reference columns must deserialize through the serializer —
+                    // ValueConverter.ChangeType throws on ReferenceList and the catch below
+                    // silently swallowed XML edits to reference fields.
+                    var refAttr = prop.GetCustomAttribute<ReferenceFieldAttribute>();
+                    object? converted;
+                    if (refAttr is not null
+                        && prop.PropertyType == typeof(ReferenceList<IReferenceEntry>))
+                    {
+                        converted = _serializer.Deserialize(val, refAttr);
+                    }
+                    else
+                    {
+                        converted = ValueConverter.Convert(val, prop.PropertyType);
+                    }
+
                     xmlValues[name] = (prop, converted);
                 }
                 catch
@@ -251,18 +273,26 @@ public partial class EntityEditorDocument : PluginDocumentBase
             foreach (var (colName, (prop, newValue)) in xmlValues)
             {
                 var oldValue = prop.GetValue(Entity);
-                if (!Equals(oldValue, newValue))
-                {
-                    edits.Add(new EditRecord(Entity, prop, colName, oldValue, newValue));
-                }
+                // R30 (追修 7): ReferenceList has no value equality — Equals(old, new) was
+                // always false, so EVERY XML apply (incl. the auto-apply on document open)
+                // produced spurious edits → WAL rows → dirty-on-open. Compare reference
+                // fields by raw text; skip unchanged properties entirely (no instance churn).
+                // Strings: DB NULL round-trips through XML as "" — normalize so a null column
+                // doesn't count as a diff.
+                var refAttr = prop.GetCustomAttribute<ReferenceFieldAttribute>();
+                var changed = refAttr is not null
+                    && prop.PropertyType == typeof(ReferenceList<IReferenceEntry>)
+                    ? ReferenceText.GetRawString(oldValue, refAttr) != ReferenceText.GetRawString(newValue, refAttr)
+                    : !(Equals(oldValue, newValue)
+                        || oldValue is null && newValue is string { Length: 0 }
+                        || newValue is null && oldValue is string { Length: 0 });
+                if (!changed) continue;
+
+                edits.Add(new EditRecord(Entity, prop, colName, oldValue, newValue));
+                prop.SetValue(Entity, newValue);
             }
 
             Log.Information("[XML-Apply] Phase2 done: {Count} diffs for entity {Eid}", edits.Count, Entity.EntityId);
-
-            foreach (var (_, (prop, newValue)) in xmlValues)
-            {
-                prop.SetValue(Entity, newValue);
-            }
 
             if (edits.Count > 0)
             {

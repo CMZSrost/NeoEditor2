@@ -124,7 +124,7 @@ public class ReferenceResolutionConsistencyTests
 
     private sealed class ResolverStub : IReferenceResolver
     {
-        public IEntity? LookupRefByRawId(IEntity sourceEntity, string rawId, Type targetType) => null;
+        public IEntity? LookupRefByRawId(IEntity sourceEntity, string rawId, Type targetType, EntityMergeStore? storeOverride = null) => null;
 
         public string? LookupSubject(string sourceEntityId, string propertyName, Type targetType,
             string rawId, Type? secondaryTargetType = null) => null;

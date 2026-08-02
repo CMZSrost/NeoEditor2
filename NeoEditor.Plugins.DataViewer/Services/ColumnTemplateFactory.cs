@@ -158,7 +158,13 @@ public class ColumnTemplateFactory
                 {
                     var rawId = ReferenceParser.ExtractRawId(raw, pattern);
                     var sourceEid = (item as IEntity)?.EntityId ?? "";
-                    var subject = _data.LookupSubjectByRawId(targetType, rawId, sourceEid, e.PropertyName);
+                    // R30: primary type first, then secondary (aTreasures → nested TreasureTable).
+                    var subject = _data.LookupSubjectByRawId(targetType, rawId, sourceEid, e.PropertyName,
+                        refAttr.SecondaryTargetEntityType)
+                        ?? (refAttr.SecondaryTargetEntityType is not null
+                            ? _data.LookupSubjectByRawId(refAttr.SecondaryTargetEntityType, rawId,
+                                sourceEid, e.PropertyName, null)
+                            : null);
                     string display;
                     if (!string.IsNullOrEmpty(subject))
                     {
@@ -231,7 +237,12 @@ public class ColumnTemplateFactory
                 }
                 else
                 {
-                    // Multi-value: split into individual elements
+                    // Multi-value: split into individual elements.
+                    // R30: split by the FULL separator string (multi-char separators like "],[" must
+                    // not be split char-by-char — BattleMove bracket conditions were shredded into
+                    // "[155", "0", "0" fragments). Bracket segments ("[155,0,0]") stay intact: their
+                    // internal commas are P1/P2 parameters, NOT AND separators. OR groups use the
+                    // field's OrSeparator (aTreasures "A,B|C|D") and render as "or" alternatives.
                     var wrapPanel = new WrapPanel();
                     var grid = new Grid
                     {
@@ -243,24 +254,26 @@ public class ColumnTemplateFactory
                     grid.Children.Add(wrapPanel);
 
                     var refColName = property.GetCustomAttribute<ColumnAttribute>()?.Name ?? property.Name;
-                    var segChar = (separator?.Length > 0) ? separator[0] : ',';
-                    var segments = raw.Split(segChar);
-                    for (int si = 0; si < segments.Length; si++)
+                    var orSep = refAttr.OrSeparator;
+                    var topLevel = separator is not null
+                        ? raw.Split(separator, StringSplitOptions.RemoveEmptyEntries)
+                        : new[] { raw };
+                    for (int si = 0; si < topLevel.Length; si++)
                     {
-                        var segment = segments[si].Trim();
+                        var segment = topLevel[si].Trim();
                         if (string.IsNullOrEmpty(segment)) continue;
                         if (si > 0)
                             wrapPanel.Children.Add(new TextBlock
                             {
-                                Text = $" {segChar} ",
+                                Text = $" {separator} ",
                                 VerticalAlignment = VerticalAlignment.Center,
                                 Foreground = Brushes.Teal
                             });
 
-                        var secSep = segment.Contains('|') ? '|' : (segment.Contains(',') ? ',' : '\0');
-                        var subParts = secSep != '\0'
-                            ? segment.Split(secSep).Select(s => s.Trim()).Where(s => s.Length > 0).ToArray()
-                            : [segment];
+                        var subParts = orSep is not null && segment.Contains(orSep)
+                            ? segment.Split(orSep, StringSplitOptions.RemoveEmptyEntries)
+                                .Select(s => s.Trim()).Where(s => s.Length > 0).ToArray()
+                            : new[] { segment };
 
                         for (int ai = 0; ai < subParts.Length; ai++)
                         {
@@ -268,14 +281,15 @@ public class ColumnTemplateFactory
                             if (ai > 0)
                                 wrapPanel.Children.Add(new TextBlock
                                 {
-                                    Text = secSep == '|' ? " or " : " + ",
+                                    Text = " or ",
                                     VerticalAlignment = VerticalAlignment.Center,
                                     FontSize = 10,
                                     Foreground = Brushes.Gray
                                 });
 
                             var segDisplay = _cellInteraction.FormatSegmentDisplay(andPart, targetType, pattern,
-                                (item as IEntity)?.EntityId ?? "", e.PropertyName, refAttr.TargetKey);
+                                (item as IEntity)?.EntityId ?? "", e.PropertyName, refAttr.TargetKey,
+                                refAttr.SecondaryTargetEntityType);
                             var segTb = new TextBlock
                             {
                                 Tag = andPart,
@@ -337,6 +351,12 @@ public class ColumnTemplateFactory
             }),
             CellEditingTemplate = new Avalonia.Controls.Templates.FuncDataTemplate<object>((item, _) =>
             {
+                // R30 (P2): edit controls bind through ReferenceListConverter — a raw
+                // TextBox→ReferenceList binding silently drops edits (the entity property
+                // never changes, so OnCellEditEnding sees no diff).
+                var converter = new Converters.ReferenceListConverter();
+                var refAttrForEdit = property.GetCustomAttribute<ReferenceFieldAttribute>();
+
                 if (isMulti)
                 {
                     var textBox = new TextBox
@@ -344,7 +364,12 @@ public class ColumnTemplateFactory
                         AcceptsReturn = false,
                         TextWrapping = TextWrapping.NoWrap
                     };
-                    textBox.Bind(TextBox.TextProperty, new Binding(property.Name));
+                    textBox.Bind(TextBox.TextProperty, new Binding(property.Name)
+                    {
+                        Converter = converter,
+                        ConverterParameter = refAttrForEdit,
+                        Mode = BindingMode.TwoWay
+                    });
                     return textBox;
                 }
 
@@ -355,6 +380,9 @@ public class ColumnTemplateFactory
                 };
                 comboBox.Bind(ComboBox.TextProperty, new Binding(property.Name)
                 {
+                    Converter = converter,
+                    ConverterParameter = refAttrForEdit,
+                    Mode = BindingMode.TwoWay,
                     TargetNullValue = "",
                     FallbackValue = ""
                 });

@@ -133,9 +133,9 @@ public class ReferenceList<T> : ICollection<T>, IReadOnlyList<T> where T : IRefe
 
     private void InvalidateRawText()
     {
-        // When the list is mutated, the raw text is no longer valid.
-        // The serializer will update it on the next Serialize call.
-        // For now, keep the old value — consumers that use implicit conversion
-        // to string will see the old value until the list is re-serialized.
+        // R30 (M1): mark the raw text stale on mutation — consumers that read RawText
+        // (Split / implicit string conversion) must NOT see the previous value after the
+        // entries changed. Serialize() re-populates it on the next write.
+        RawText = "";
     }
 }

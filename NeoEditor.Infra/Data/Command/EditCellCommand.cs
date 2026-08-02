@@ -28,6 +28,16 @@ public class EditCellCommand : ISerializableCommand
     /// <inheritdoc cref="IEditorCommand.GetAffectedEntityIds"/>
     public IReadOnlySet<string> GetAffectedEntityIds() => new HashSet<string> { _entity.EntityId };
 
+    /// <inheritdoc cref="IEditorCommand.GetCacheDelta"/>
+    /// <remarks>R30 (追修 6): the edited entity mutates in place — upsert it into the
+    /// HostService working-set cache or SaveAllAsync silently drops it (cache miss →
+    /// empty save → WAL never cleared → replay on restart = dirty-on-open).</remarks>
+    public IReadOnlyDictionary<string, IEntity?> GetCacheDelta() =>
+        new Dictionary<string, IEntity?> { [_entity.EntityId] = _entity };
+
+    /// <inheritdoc cref="IEditorCommand.GetUndoCacheDelta"/>
+    public IReadOnlyDictionary<string, IEntity?> GetUndoCacheDelta() => GetCacheDelta();
+
     public EditCellCommand(IEntity entity, PropertyInfo property, string columnName,
         object? oldValue, object? newValue, Action onChanged)
     {
@@ -54,14 +64,20 @@ public class EditCellCommand : ISerializableCommand
 
     public string Serialize()
     {
+        // R30 (A2): reference values persist as raw text — see BatchEditCommand.Serialize.
+        var refAttr = _property.GetCustomAttribute<ReferenceFieldAttribute>();
         var obj = new JObject
         {
             ["entityId"] = _entity.EntityId,
             ["entityType"] = _entity.GetType().Name,
             ["propertyName"] = _property.Name,
             ["columnName"] = _columnName,
-            ["oldValue"] = _oldValue != null ? JToken.FromObject(_oldValue) : JValue.CreateNull(),
-            ["newValue"] = _newValue != null ? JToken.FromObject(_newValue) : JValue.CreateNull()
+            ["oldValue"] = _oldValue != null
+                ? JToken.FromObject(ReferenceText.GetRawString(_oldValue, refAttr))
+                : JValue.CreateNull(),
+            ["newValue"] = _newValue != null
+                ? JToken.FromObject(ReferenceText.GetRawString(_newValue, refAttr))
+                : JValue.CreateNull()
         };
         return obj.ToString(Formatting.None);
     }

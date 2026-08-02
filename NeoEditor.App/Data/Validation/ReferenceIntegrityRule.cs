@@ -36,7 +36,8 @@ public class ReferenceIntegrityRule : IValidationRule
             foreach (var prop in refProps)
             {
                 var refAttr = prop.GetCustomAttribute<ReferenceFieldAttribute>()!;
-                var raw = prop.GetValue(entity)?.ToString();
+                // R30: ReferenceList must be read as raw text ("3,14"), not "[3, 14]".
+                var raw = ReferenceText.GetRawString(prop.GetValue(entity), refAttr);
                 if (string.IsNullOrWhiteSpace(raw)) continue;
 
                 var targetType = refAttr.TargetEntityType;
@@ -49,17 +50,15 @@ public class ReferenceIntegrityRule : IValidationRule
                 var pattern = refAttr.Pattern;
                 var colName = prop.GetCustomAttribute<ColumnAttribute>()?.Name ?? prop.Name;
 
-                if (separator is not null)
+                // R30: split by the FULL separator string — multi-char separators ("],[" for
+                // bracket conditions) must not be split char-by-char.
+                var segments = separator is not null
+                    ? raw.Split(separator, StringSplitOptions.RemoveEmptyEntries)
+                        .Select(s => s.Trim()).Where(s => s.Length > 0)
+                    : new[] { raw.Trim() };
+                foreach (var seg in segments)
                 {
-                    var segChar = separator[0];
-                    foreach (var seg in raw.Split(segChar).Select(s => s.Trim()).Where(s => s.Length > 0))
-                    {
-                        CheckSegment(seg, entity, colName, targetType, pattern, refAttr.TargetKey, report);
-                    }
-                }
-                else
-                {
-                    CheckSegment(raw.Trim(), entity, colName, targetType, pattern, refAttr.TargetKey, report);
+                    CheckSegment(seg, entity, colName, targetType, pattern, refAttr.TargetKey, report);
                 }
             }
         }

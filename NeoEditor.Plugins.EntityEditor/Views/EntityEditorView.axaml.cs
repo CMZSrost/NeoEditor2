@@ -31,6 +31,10 @@ public partial class EntityEditorView : UserControl
 
         XmlEditor.TextChanged += (_, _) =>
         {
+            // R30 (追修 7): only USER edits auto-apply. Programmatic text sets (initial
+            // load, RefreshXml) fire TextChanged too — auto-applying there wrote spurious
+            // WAL edits and marked the entity dirty on every open (dirty-on-open).
+            if (_lastDoc == null || !_lastDoc.IsXmlFocused) return;
             _xmlDebounce?.Cancel();
             _xmlDebounce = new CancellationTokenSource();
             var token = _xmlDebounce.Token;

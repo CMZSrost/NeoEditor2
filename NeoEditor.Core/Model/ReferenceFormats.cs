@@ -41,10 +41,17 @@ public sealed record IdXMultFormat : IReferenceFormat
 {
     public EntityRef Entity { get; init; } = new();
     public double Multiplier { get; init; } = 1.0;
+
+    /// <summary>
+    /// R30 (M2): original multiplier text — "1.0" vs "1" round-trips verbatim when set
+    /// (same pattern as <see cref="AssignFormat.RawValue"/>); falls back to <see cref="Multiplier"/>.
+    /// </summary>
+    public string? RawMult { get; init; }
+
     public string FormatTemplate => "{entityRef}x{mul}";
     public string ToRawString()
     {
-        var m = Multiplier.ToString("0.####", CultureInfo.InvariantCulture);
+        var m = RawMult ?? Multiplier.ToString("0.####", CultureInfo.InvariantCulture);
         return $"{Entity.ToRawString()}x{m}";
     }
     public string DisplayText => $"{Entity.DisplayText} x{Multiplier}";
@@ -58,10 +65,14 @@ public sealed record MultXIdFormat : IReferenceFormat
 {
     public EntityRef Entity { get; init; } = new();
     public double Multiplier { get; init; } = 1.0;
+
+    /// <summary>R30 (M2): original multiplier text ("2.0" vs "2") — verbatim round-trip when set.</summary>
+    public string? RawMult { get; init; }
+
     public string FormatTemplate => "{mul}x{entityRef}";
     public string ToRawString()
     {
-        var m = Multiplier.ToString("0.####", CultureInfo.InvariantCulture);
+        var m = RawMult ?? Multiplier.ToString("0.####", CultureInfo.InvariantCulture);
         return $"{m}x{Entity.ToRawString()}";
     }
     public string DisplayText => $"{Multiplier}x{Entity.DisplayText}";
