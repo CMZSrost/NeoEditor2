@@ -12,7 +12,6 @@ using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Collections;
 using Avalonia.Controls;
-
 using Avalonia.Platform.Storage;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
@@ -51,8 +50,6 @@ public partial class ModGameDataTabsView : UserControl, Helper.INavigationTarget
     private readonly IXmlParser _xmlParser;
     private int _loadVersion;
     private bool _isSavePreviewOpen;
-    private readonly Stack<(Type EntityType, int Id)> _navHistory = new();
-    private bool _isNavigatingBack;
     private readonly Dictionary<IEntity, List<(string ModName, int Id)>> _overlayChains = new();
     private HashSet<string> _overriddenEntityIds = new();
     private Dictionary<IEntity, int> _entityLoadIndex = new();
@@ -251,9 +248,6 @@ public partial class ModGameDataTabsView : UserControl, Helper.INavigationTarget
         }
     }
 
-    public static readonly StyledProperty<bool> CanNavigateBackProperty =
-        AvaloniaProperty.Register<ModGameDataTabsView, bool>(nameof(CanNavigateBack));
-
     public static readonly StyledProperty<bool> ShowAllEntitiesProperty =
         AvaloniaProperty.Register<ModGameDataTabsView, bool>(nameof(ShowAllEntities));
 
@@ -282,12 +276,6 @@ public partial class ModGameDataTabsView : UserControl, Helper.INavigationTarget
     {
         get => GetValue(IsLoadingProperty);
         private set => SetValue(IsLoadingProperty, value);
-    }
-
-    public bool CanNavigateBack
-    {
-        get => GetValue(CanNavigateBackProperty);
-        private set => SetValue(CanNavigateBackProperty, value);
     }
 
     public bool ShowAllEntities
@@ -682,21 +670,6 @@ public partial class ModGameDataTabsView : UserControl, Helper.INavigationTarget
             _logger.LogInformation("[Navigate] blocked — target is overridden and ShowAll is off");
             ViewServices.Notification.ShowInfo(Loc["NavigateToOverriddenRequiresShowAll"], "Navigate");
             return;
-        }
-
-        // Save current position for back-navigation (unless we're going back)
-        if (!_isNavigatingBack)
-        {
-            var currentTab = GetActiveTab();
-            if (currentTab is not null)
-            {
-                var currentId = GetSelectedEntityId();
-                if (currentId.HasValue)
-                {
-                    _navHistory.Push((currentTab.EntityType, currentId.Value));
-                    CanNavigateBack = true;
-                }
-            }
         }
 
         var targetTab = Tabs.FirstOrDefault(t => t.EntityType == entityType);
@@ -1124,16 +1097,6 @@ public partial class ModGameDataTabsView : UserControl, Helper.INavigationTarget
             grid.ScrollIntoView(grid.SelectedItem, null);
             grid.Focus();
         }
-    }
-
-    private void OnBackNavigationClick(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
-    {
-        if (_navHistory.Count == 0) return;
-        var (entityType, id) = _navHistory.Pop();
-        CanNavigateBack = _navHistory.Count > 0;
-        _isNavigatingBack = true;
-        NavigateToEntity(entityType, id);
-        _isNavigatingBack = false;
     }
 
     private async void OnImportCsvClick(object? sender, Avalonia.Interactivity.RoutedEventArgs e)

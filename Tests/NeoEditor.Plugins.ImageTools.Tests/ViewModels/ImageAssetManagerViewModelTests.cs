@@ -2,7 +2,9 @@ using CommunityToolkit.Mvvm.Messaging;
 using Moq;
 using NeoEditor.Core.Model;
 using NeoEditor.Data.Messages;
+using NeoEditor.Data.Model;
 using NeoEditor.Infra.Services;
+using NeoEditor.Plugins.ImageTools.Services;
 using NeoEditor.Plugins.ImageTools.ViewModels;
 using Xunit;
 
@@ -51,9 +53,13 @@ public class ImageAssetManagerViewModelTests : IDisposable
         config.Setup(c => c.Config).Returns(new AppConfig { GameRootDir = _root });
 
         var messenger = new WeakReferenceMessenger();
+        // Real provider: no profile → legacy Mods/ fallback scan (what the existing
+        // tests exercise); a LoadProfileMessage switches it to profile-driven paths.
+        var sourceProvider = new ProfileModSourceProvider(config.Object, messenger);
         var vm = new ImageAssetManagerViewModel(
             new Mock<ILocalizationService>().Object,
             config.Object,
+            sourceProvider,
             messenger);
 
         return (vm, messenger);
@@ -110,6 +116,30 @@ public class ImageAssetManagerViewModelTests : IDisposable
         messenger.Send(new GameRootDirChangedMessage(_root));
 
         await WaitUntilAsync(() => vm.ModNodes.Any(n => n.Name == "NewMod"));
+    }
+
+    [Fact]
+    public async Task Refresh_FindsImgUnderProfileModLoadInfoPaths()
+    {
+        // A mod dir outside gameRoot/Mods must be scanned at the profile's path.
+        var externalDir = Path.Combine(_root, "External", "MyMod");
+        Directory.CreateDirectory(Path.Combine(externalDir, "img"));
+        File.WriteAllText(Path.Combine(externalDir, "img", "ext.png"), "x");
+
+        var modInfo = new ModInfo { Name = "ExternalMod", ModId = 0, Path = "External/MyMod" };
+        var profile = new ProfileInfo { Name = "TestProfile" };
+        profile.ModLoadInfos.Add(new ModLoadInfo { Info = modInfo, Namespace = "Ext" });
+
+        var (vm, messenger) = CreateVm();
+        messenger.Send(new LoadProfileMessage(profile));
+
+        await WaitUntilAsync(() => vm.ModNodes.Any(n => n.Name == "ExternalMod"));
+
+        var node = vm.ModNodes.First(n => n.Name == "ExternalMod");
+        Assert.Single(node.Children);
+        Assert.Equal("ext.png", node.Children[0].Name);
+        // With a profile active, the Mods/ folder mod is no longer a source.
+        Assert.DoesNotContain(vm.ModNodes, n => n.Name == "MyMod");
     }
 
     private static async Task WaitUntilAsync(Func<bool> condition, int timeoutMs = 3000)

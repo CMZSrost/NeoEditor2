@@ -18,6 +18,7 @@ public static class ServiceCollectionExtensions
         // Split tool plugins (D02: one IToolPlugin per Tool, 1:1).
         services.AddSingleton<IToolPlugin, ImageAssetManagerPlugin>();
         services.AddSingleton<IToolPlugin, ImageOrchestrationPlugin>();
+        services.AddSingleton<IProfileModSourceProvider, ProfileModSourceProvider>();
         services.AddSingleton<IModImagesDocumentFactory, ModImagesDocumentFactory>();
         services.AddSingleton<PixelArtConversionService>();
         services.AddSingleton<ImageEditorProcessingService>();

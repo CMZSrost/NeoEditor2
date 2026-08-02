@@ -2,69 +2,73 @@
     x:Class="NeoEditor.Views.UserControls.ProfileToolView"
     xmlns="https://github.com/avaloniaui"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:avalonia="clr-namespace:FluentIcons.Avalonia;assembly=FluentIcons.Avalonia"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:vm="clr-namespace:NeoEditor.ViewModels.MainContent"
-    xmlns:userControls="clr-namespace:NeoEditor.Views.UserControls"
     d:DesignHeight="420"
     d:DesignWidth="280"
     x:DataType="vm:ProfileToolViewModel"
     mc:Ignorable="d">
-    <Design.DataContext>
-        <vm:ProfileToolViewModel />
-    </Design.DataContext>
-
-    <ScrollViewer>
-        <StackPanel Margin="10" Spacing="6">
-            <!--  Mod management  -->
-            <TextBlock
-                Margin="2,6,2,2"
-                FontSize="12"
-                FontWeight="Bold"
-                Text="Mod Management" />
+    <DockPanel Margin="4">
+        <!--  Single-row icon toolbar — text lives in tooltips (task 5)  -->
+        <StackPanel
+            Margin="2,2,2,6"
+            Orientation="Horizontal"
+            Spacing="2"
+            DockPanel.Dock="Top">
+            <Button Command="{Binding NewModCommand}" ToolTip.Tip="New Mod">
+                <avalonia:SymbolIcon FontSize="14" Symbol="AddCircle" />
+            </Button>
+            <Button Command="{Binding ImportModCommand}" ToolTip.Tip="Import Mod">
+                <avalonia:SymbolIcon FontSize="14" Symbol="ArrowCircleDownRight" />
+            </Button>
+            <Separator Width="1" Margin="4,2" VerticalAlignment="Stretch" />
             <Button
-                Padding="8,4"
-                HorizontalAlignment="Stretch"
-                HorizontalContentAlignment="Left"
-                Command="{Binding NewModCommand}"
-                Content="New Mod" />
-            <Button
-                Padding="8,4"
-                HorizontalAlignment="Stretch"
-                HorizontalContentAlignment="Left"
-                Command="{Binding ImportModCommand}"
-                Content="Import Mod" />
-
-            <Separator Margin="0,8" />
-
-            <!--  Profile orchestration  -->
-            <TextBlock
-                Margin="2,6,2,2"
-                FontSize="12"
-                FontWeight="Bold"
-                Text="Profiles" />
-            <ComboBox
-                HorizontalAlignment="Stretch"
-                ItemsSource="{Binding Profiles}"
-                SelectedItem="{Binding SelectedProfile}">
-                <ComboBox.ItemTemplate>
-                    <DataTemplate>
-                        <TextBlock Text="{Binding Name}" />
-                    </DataTemplate>
-                </ComboBox.ItemTemplate>
-            </ComboBox>
-            <Button
-                Padding="8,4"
-                HorizontalAlignment="Stretch"
-                HorizontalContentAlignment="Left"
                 Command="{Binding EditProfileCommand}"
-                Content="Edit Profile" />
+                IsEnabled="{Binding HasActiveProfile}"
+                ToolTip.Tip="Edit Profile">
+                <avalonia:SymbolIcon FontSize="14" Symbol="Edit" />
+            </Button>
             <Button
-                Padding="8,4"
-                HorizontalAlignment="Stretch"
-                HorizontalContentAlignment="Left"
                 Command="{Binding ReloadMergeViewCommand}"
-                Content="Reload Merge View" />
+                IsEnabled="{Binding HasActiveProfile}"
+                ToolTip.Tip="Reload Merge View">
+                <avalonia:SymbolIcon FontSize="14" Symbol="ArrowClockwise" />
+            </Button>
         </StackPanel>
-    </ScrollViewer>
+
+        <!--  Active profile: Mod → XML → non-empty data class  -->
+        <TreeView x:Name="ModTree" ItemsSource="{Binding ModNodes}">
+            <TreeView.DataTemplates>
+                <TreeDataTemplate x:DataType="vm:ProfileModNode" ItemsSource="{Binding XmlNodes}">
+                    <TextBlock FontWeight="SemiBold" Text="{Binding Name}" />
+                </TreeDataTemplate>
+                <TreeDataTemplate x:DataType="vm:ProfileXmlNode" ItemsSource="{Binding TypeNodes}">
+                    <TextBlock FontSize="11" Text="{Binding Name}" />
+                </TreeDataTemplate>
+                <TreeDataTemplate x:DataType="vm:ProfileDataTypeNode">
+                    <TextBlock
+                        FontSize="11"
+                        Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"
+                        Text="{Binding DisplayName}" />
+                </TreeDataTemplate>
+            </TreeView.DataTemplates>
+            <TreeView.Styles>
+                <Style Selector="TreeViewItem">
+                    <Setter Property="(Interaction.Behaviors)">
+                        <BehaviorCollectionTemplate>
+                            <BehaviorCollection>
+                                <EventTriggerBehavior EventName="Expanded">
+                                    <InvokeCommandAction
+                                        Command="{Binding ((vm:ProfileToolViewModel)DataContext).LoadXmlTypesCommand, ElementName=ModTree}"
+                                        CommandParameter="{Binding}" />
+                                </EventTriggerBehavior>
+                            </BehaviorCollection>
+                        </BehaviorCollectionTemplate>
+                    </Setter>
+                </Style>
+            </TreeView.Styles>
+        </TreeView>
+    </DockPanel>
 </UserControl>

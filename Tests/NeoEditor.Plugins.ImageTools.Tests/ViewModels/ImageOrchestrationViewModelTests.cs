@@ -2,6 +2,7 @@ using CommunityToolkit.Mvvm.Messaging;
 using Moq;
 using NeoEditor.Core.Model;
 using NeoEditor.Data.Messages;
+using NeoEditor.Data.Model;
 using NeoEditor.Infra.Services;
 using NeoEditor.Plugins.ImageTools.Services;
 using NeoEditor.Plugins.ImageTools.ViewModels;
@@ -68,11 +69,15 @@ public class ImageOrchestrationViewModelTests : IDisposable
         config.Setup(c => c.Config).Returns(new AppConfig { GameRootDir = _root });
 
         var messenger = new WeakReferenceMessenger();
+        // Real provider: no profile → legacy Mods/ fallback scan (what the existing
+        // tests exercise); a LoadProfileMessage switches it to profile-driven paths.
+        var sourceProvider = new ProfileModSourceProvider(config.Object, messenger);
         var vm = new ImageOrchestrationViewModel(
             new Mock<ILocalizationService>().Object,
             config.Object,
             _imageList.Object,
             _notification.Object,
+            sourceProvider,
             messenger);
 
         return (vm, messenger);
@@ -196,6 +201,36 @@ public class ImageOrchestrationViewModelTests : IDisposable
         messenger.Send(new RefreshModMessage());
 
         await WaitUntilAsync(() => vm.Sources.Any(s => s.Name == "NewMod"));
+    }
+
+    [Fact]
+    public async Task Refresh_UsesProfileModLoadInfoPaths_NotModsConvention()
+    {
+        // A mod whose directory lives OUTSIDE gameRoot/Mods (e.g. imported from an
+        // arbitrary folder) must be found via the profile's ModLoadInfo.Path.
+        var externalDir = Path.Combine(_root, "External", "MyMod");
+        Directory.CreateDirectory(Path.Combine(externalDir, "img"));
+        File.WriteAllText(Path.Combine(externalDir, "getimages.php"),
+            "nRows=1&nCols=2&strImageURL0=e.png&strImageURL1=e@2x.png");
+        File.WriteAllText(Path.Combine(externalDir, "img", "e.png"), "x");
+
+        var modInfo = new ModInfo { Name = "ExternalMod", ModId = 0, Path = "External/MyMod" };
+        var profile = new ProfileInfo { Name = "TestProfile" };
+        profile.ModLoadInfos.Add(new ModLoadInfo { Info = modInfo, Namespace = "Ext" });
+
+        var (vm, messenger) = CreateVm();
+        messenger.Send(new LoadProfileMessage(profile));
+
+        await WaitUntilAsync(() => vm.Sources.Any(s => s.Name == "ExternalMod"));
+
+        var source = vm.Sources.First(s => s.Name == "ExternalMod");
+        Assert.False(source.ReadOnly);
+        Assert.True(source.HasGetImagesFile);
+        // ContentRoot must come from the profile path, not the legacy Mods/ scan.
+        Assert.EndsWith("External/MyMod", source.ContentRoot.Replace('\\', '/'),
+            StringComparison.OrdinalIgnoreCase);
+        // With a profile active, the Mods/ folder mod is no longer a source.
+        Assert.DoesNotContain(vm.Sources, s => s.Name == "MyMod");
     }
 
     private static async Task WaitUntilAsync(Func<bool> condition, int timeoutMs = 3000)

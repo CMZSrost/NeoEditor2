@@ -25,6 +25,27 @@
             Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}"
             CornerRadius="4"
             DockPanel.Dock="Top">
+            <Border.Styles>
+                <!--  Uniform toolbar control sizing (task: no more mixed-size buttons)  -->
+                <Style Selector="Button">
+                    <Setter Property="MinHeight" Value="26" />
+                    <Setter Property="Padding" Value="8,3" />
+                    <Setter Property="FontSize" Value="11" />
+                    <Setter Property="VerticalContentAlignment" Value="Center" />
+                    <Setter Property="HorizontalContentAlignment" Value="Center" />
+                </Style>
+                <Style Selector="ToggleButton">
+                    <Setter Property="MinHeight" Value="26" />
+                    <Setter Property="Padding" Value="8,3" />
+                    <Setter Property="FontSize" Value="11" />
+                </Style>
+                <Style Selector="TextBox">
+                    <Setter Property="MinHeight" Value="26" />
+                </Style>
+                <Style Selector="ComboBox">
+                    <Setter Property="MinHeight" Value="26" />
+                </Style>
+            </Border.Styles>
             <StackPanel
                 VerticalAlignment="Center"
                 Orientation="Horizontal"
@@ -43,12 +64,6 @@
                     IsVisible="{Binding !ReadOnly, ElementName=Root}"
                     ToolTip.Tip="{Binding Loc[RedoTooltip], ElementName=Root}">
                     <avalonia:SymbolIcon FontSize="14" Symbol="ArrowRedo" />
-                </Button>
-                <Button
-                    Click="OnBackNavigationClick"
-                    IsEnabled="{Binding CanNavigateBack, ElementName=Root}"
-                    ToolTip.Tip="{Binding Loc[NavigateBack], ElementName=Root}">
-                    <avalonia:SymbolIcon FontSize="14" Symbol="ArrowLeft" />
                 </Button>
                 <Button Click="OnLocateClick" ToolTip.Tip="{Binding Loc[LocateRowTooltip], ElementName=Root}">
                     <avalonia:SymbolIcon FontSize="14" Symbol="Target" />
@@ -111,10 +126,8 @@
                     SelectionChanged="OnModFilterChanged" />
                 <ToggleButton
                     x:Name="ShowAllToggle"
-                    Padding="4,2"
                     Click="OnToggleShowAllClick"
                     Content="{Binding Loc[ShowAll], ElementName=Root}"
-                    FontSize="11"
                     IsVisible="{Binding IsMergeView, ElementName=Root}" />
                 <!--  Search filter  -->
                 <TextBox
@@ -125,11 +138,9 @@
                     Text="{Binding FilterText, ElementName=Root}"
                     Watermark="{Binding Loc[SearchHelpTooltip], ElementName=Root}" />
                 <Button
-                    Padding="4,2"
                     Click="OnClearColumnFilterClick"
-                    FontSize="11"
                     ToolTip.Tip="Clear column filters">
-                    ✕
+                    <avalonia:SymbolIcon FontSize="14" Symbol="FilterDismiss" />
                 </Button>
                 <!--  Spacer  -->
                 <StackPanel HorizontalAlignment="Stretch" />
@@ -140,35 +151,27 @@
                     IsVisible="{Binding IsPreparingSavePreview, ElementName=Root}"
                     Text="Saving…" />
                 <Button
-                    Padding="4,2"
                     Click="OnCreateModFromBrowseClick"
                     Content="{Binding Loc[CreateModToEdit], ElementName=Root}"
-                    FontSize="11"
                     IsVisible="{Binding IsBrowseMode, ElementName=Root}" />
                 <Button
-                    Padding="4,2"
                     Click="OnQuickSaveClick"
                     Content="{Binding Loc[QuickSave], ElementName=Root}"
-                    FontSize="11"
                     FontWeight="SemiBold"
                     IsEnabled="{Binding CanStartSavePreview, ElementName=Root}"
                     IsVisible="{Binding !ReadOnly, ElementName=Root}" />
                 <Button
-                    Padding="4,2"
                     Click="OnSaveAndExportClick"
                     Content="{Binding Loc[SaveAndExport], ElementName=Root}"
-                    FontSize="11"
                     IsEnabled="{Binding CanStartSavePreview, ElementName=Root}"
                     IsVisible="{Binding !ReadOnly, ElementName=Root}" />
                 <Button
-                    Padding="4,2"
                     Click="OnSaveAndLaunchClick"
-                    FontSize="11"
                     IsEnabled="{Binding CanStartSavePreview, ElementName=Root}"
                     IsVisible="{Binding !ReadOnly, ElementName=Root}">
                     <StackPanel Orientation="Horizontal" Spacing="2">
-                        <avalonia:SymbolIcon FontSize="12" Symbol="Play" />
-                        <TextBlock Text="{Binding Loc[Launch], ElementName=Root}" />
+                        <avalonia:SymbolIcon FontSize="14" Symbol="Play" />
+                        <TextBlock VerticalAlignment="Center" Text="{Binding Loc[Launch], ElementName=Root}" />
                     </StackPanel>
                 </Button>
             </StackPanel>

@@ -9,6 +9,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using NeoEditor.Data.Messages;
+using NeoEditor.Plugins.ImageTools.Services;
 
 namespace NeoEditor.Plugins.ImageTools.ViewModels;
 
@@ -24,6 +25,7 @@ public partial class ImageAssetManagerViewModel : ImageToolObservableObject
 {
     private readonly IConfigService _config;
     private readonly IMessenger _messenger;
+    private readonly IProfileModSourceProvider _sourceProvider;
 
     // Serializes refresh calls so concurrent triggers (auto-load, message nudge,
     // explicit button) never run two tree rebuilds that clobber each other.
@@ -46,16 +48,20 @@ public partial class ImageAssetManagerViewModel : ImageToolObservableObject
     public ImageAssetManagerViewModel(
         ILocalizationService loc,
         IConfigService config,
+        IProfileModSourceProvider sourceProvider,
         IMessenger messenger)
         : base(loc)
     {
         _config = config;
         _messenger = messenger;
+        _sourceProvider = sourceProvider;
 
         // 议题6: auto-load + refresh on workspace lifecycle changes (game root,
         // profile load, mod create/delete). Refresh is best-effort.
+        // OpenMergeEditorMessage covers loads triggered from the Profile Tool.
         _messenger.Register<GameRootDirChangedMessage>(this, (_, _) => _ = RefreshAsync());
         _messenger.Register<LoadProfileMessage>(this, (_, _) => _ = RefreshAsync());
+        _messenger.Register<OpenMergeEditorMessage>(this, (_, _) => _ = RefreshAsync());
         _messenger.Register<RefreshModMessage>(this, (_, _) => _ = RefreshAsync());
         _ = RefreshAsync();
     }
@@ -129,7 +135,11 @@ public partial class ImageAssetManagerViewModel : ImageToolObservableObject
         IsLoading = true;
         try
         {
-            var nodes = await Task.Run(BuildTree);
+            // Snapshot the active profile's content roots on the UI thread (message
+            // dispatch has completed, so ModLoadInfos are populated) before building
+            // the tree on the background thread.
+            var roots = _sourceProvider.GetContentRoots();
+            var nodes = await Task.Run(() => BuildTree(roots));
             _allModNodes = nodes;
             ApplyFilter();
         }
@@ -193,57 +203,26 @@ public partial class ImageAssetManagerViewModel : ImageToolObservableObject
     }
 
     /// <summary>
-    /// Builds the file-system tree. Base game = scan <c>img/</c>; mods = scan each
-    /// <c>Mods/&lt;mod&gt;/img/</c> subdirectory. Never reads getimages.php (R27).
+    /// Builds the file-system tree from the active profile's content roots (task 4).
+    /// Base game = scan <c>gameRoot/img/</c>; mods = scan <c>contentRoot/img/</c> where
+    /// contentRoot comes from the profile's ModLoadInfos. Never reads getimages.php (R27).
     /// </summary>
-    private List<ModImageTreeNode> BuildTree()
+    private List<ModImageTreeNode> BuildTree(IReadOnlyList<ModContentRoot> roots)
     {
         var nodes = new List<ModImageTreeNode>();
-        var gameRoot = _config.Config.GameRootDir;
 
-        if (string.IsNullOrWhiteSpace(gameRoot) || !Directory.Exists(gameRoot))
-            return nodes;
-
-        // 1. Base game img/ directory as a pseudo-mod
-        var baseImgDir = Path.Combine(gameRoot, "img");
-        if (Directory.Exists(baseImgDir))
+        foreach (var root in roots)
         {
+            var imgDir = Path.Combine(root.ContentRoot, "img");
+            var children = Directory.Exists(imgDir) ? ScanImageDirectory(imgDir) : [];
+
             nodes.Add(new ModImageTreeNode
             {
-                Name = "Base Game",
-                ModPath = baseImgDir,
+                Name = root.Name,
+                ModPath = root.ContentRoot,
                 IsMod = true,
-                Children = new ObservableCollection<ModImageTreeNode>(ScanImageDirectory(baseImgDir))
+                Children = new ObservableCollection<ModImageTreeNode>(children)
             });
-        }
-
-        // 2. Scan Mods/ directory for mod folders, then each mod's img/ subdirectory
-        var modsDir = Path.Combine(gameRoot, "Mods");
-        if (Directory.Exists(modsDir))
-        {
-            foreach (var modFolder in Directory.GetDirectories(modsDir))
-            {
-                var modName = Path.GetFileName(modFolder);
-                var modImgDir = Path.Combine(modFolder, "img");
-
-                List<ModImageTreeNode> imageNodes;
-                if (Directory.Exists(modImgDir))
-                {
-                    imageNodes = ScanImageDirectory(modImgDir);
-                }
-                else
-                {
-                    imageNodes = [];
-                }
-
-                nodes.Add(new ModImageTreeNode
-                {
-                    Name = modName,
-                    ModPath = modFolder,
-                    IsMod = true,
-                    Children = new ObservableCollection<ModImageTreeNode>(imageNodes)
-                });
-            }
         }
 
         return nodes;

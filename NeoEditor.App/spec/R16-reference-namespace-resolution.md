@@ -39,10 +39,9 @@ raw reference text (如 "211x1" / "NSE:86.3" / "0:38")
     │
     ├── 有前缀 ──→ rawNs = 冒号前的部分
     │              idOnly = 冒号后的部分
-    │              若 rawNs 是 "0" 或 "" → rawNs = sourceNs
-    │              （"0:" 是"同 namespace"简写，不是 game base）
+    │              → LookupByNs(entityType, rawNs, idOnly)   （直接按前缀指定的 ns 查）
     │
-    └── 无前缀 ──→ rawNs = sourceNs
+    └── 无前缀 ──→ ns = sourceNs
                    idOnly = 整个 rawId
     │
     ▼ NormalizeNamespace: "0"/null → "", 其他保留
@@ -53,11 +52,17 @@ raw reference text (如 "211x1" / "NSE:86.3" / "0:38")
 
 三条路径覆盖全部场景：
 
-| 路径 | 原文示例 | rawNs 取值 | 适用 |
-|------|----------|------------|------|
+| 路径 | 原文示例 | 解析 ns | 适用 |
+|------|----------|---------|------|
 | 无前缀 | `211x1` | `sourceNs` | 同 namespace 内引用 |
 | 显式前缀 | `NSE:5` | `"NSE"` | 跨 namespace 显式引用 |
-| `0:`/`:`简写 | `0:38` | `sourceNs` | 标注"同 namespace"但实体本身 ns 非空 |
+| `0:` 前缀 | `0:38` | `"0"`（game base） | **显式指向 0（game base）命名空间**（⚠️ 2026-08-02 订正，见下） |
+
+**⚠️ 2026-08-02 订正（mod 数据 + 代码实证）**：本 spec 原表述「`0:` 是『同 namespace』简写，不是 game base」**有误**。
+- 数据：NSE 中 `Shrink Back=0:5.6` 指向原版 5.6「存储」（NSE 自己的 5.6 是「水袋」，若按 sourceNs 解析语义错误）；`ChangeGlobalFactionRep=0:2,-100,1` 指向原版 faction 2=掠夺者（NSE faction 2=清道夫）。
+- 代码：`ReferenceResolver.LookupEntityId` 对含 `:` 的 rawId 直接 `LookupByNs(entityType, rawNs, pk)`——`0:38` 查的就是 0 命名空间，**从未映射到 sourceNs**。
+- 正确语义：`0:` = 显式 0（game base）；无前缀 = 同 sourceNs；`NSE:` = 显式 NSE。
+- 应用范围扩展：图片引用（strIMG/strImg/vImageList/creatures.strImg）与 aEffects 参数实体同样支持前缀。
 
 **⚠️ 禁止**：在 `LookupEntityId` 中添加任何 "先查 sourceNs，失败再查 game base (`""`)" 的 fallback 逻辑。namespace 错误应从源头修正，而非在解析层打补丁。
 
@@ -171,5 +176,5 @@ NSEoverride 实体在单 mod 视图和合并视图中，`EntityNamespaces` 被�
 |------|------|------|
 | `211` | 无前缀 → 使用源实体 namespace | NSEoverride 实体中 → ns="0" |
 | `NSE:5` | 显式指定 namespace `"NSE"` | 跨 namespace 引用 |
-| `0:38` | `"0"` 前缀 → 映射为 sourceNs（同 namespace 简写） | 在 NSEextended 实体中 → ns="NSEextended" |
-| `:38` | 空前缀 → 同 sourceNs | 同上 |
+| `0:38` | **显式指定 0（game base）命名空间**（⚠️ 2026-08-02 订正：非"同 ns 简写"） | 在 NSE 实体中 → ns="0"（原版 38） |
+| `:38` | 空前缀 → 同 sourceNs（理论形式，真实数据 0 出现） | 同上 |

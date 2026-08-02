@@ -40,7 +40,7 @@
                 <DataGridTextColumn Header="pk" Binding="{Binding Pk}"
                                     Width="60" CanUserResize="True" FontSize="9" />
                 <DataGridTextColumn Header="entity_id" Binding="{Binding EntityId}"
-                                    Width="150" CanUserResize="True" FontSize="9" />
+                                    Width="*" CanUserResize="True" FontSize="9" />
                 <DataGridTextColumn Header="group_id" Binding="{Binding GroupId}"
                                     Width="60" CanUserResize="True" FontSize="9" />
                 <DataGridTextColumn Header="subgroup_id" Binding="{Binding SubgroupId}"
@@ -61,7 +61,7 @@
                 <DataGridTextColumn Header="property_name" Binding="{Binding PropertyName}"
                                     Width="120" CanUserResize="True" FontSize="9" />
                 <DataGridTextColumn Header="raw_id" Binding="{Binding RawId}"
-                                    Width="100" CanUserResize="True" FontSize="9" />
+                                    Width="*" CanUserResize="True" FontSize="9" />
             </DataGrid.Columns>
         </DataGrid>
     </DockPanel>

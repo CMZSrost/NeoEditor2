@@ -37,6 +37,7 @@
 
 | 文件 | 含义 | 状态 |
 |------|------|------|
+| [Docs/38-full-field-reference.md](Docs/38-full-field-reference.md) | **全字段参考手册（整合版）**——24 表全部字段含义（非引用列实测值域+语义，引用列汇总 37） | ✅ 2026-08-02 |
 | [Docs/30-post-m12-development-plan.md](Docs/30-post-m12-development-plan.md) | **M13+ 领域驱动服务架构开发计划**（Phase 1-8 + Agent A1-A4 + 像素 G1-G3） | ✅ 全部完成 |
 | [Docs/31-prodatagrid-migration-plan.md](Docs/31-prodatagrid-migration-plan.md) | ProDataGrid 迁移计划（Avalonia DataGrid → ProDataGrid 12.0.4） | ✅ 完成 |
 | [Docs/32-agent-orchestration-plan.md](Docs/32-agent-orchestration-plan.md) | Agent 编排增强计划（系统提示词 + RAG + MCP + Streaming） | ✅ A1-A4 完成 |
@@ -64,6 +65,8 @@
 
 | 文件 | 含义 |
 |------|------|
+| [Docs/37-reference-column-semantics.md](Docs/37-reference-column-semantics.md) | **引用列字段语义参考**（值级：集合/实体/装饰三部分模型） |
+| [Docs/38-full-field-reference.md](Docs/38-full-field-reference.md) | **全字段参考手册（整合版）**（24 表全部字段含义，实测值域） |
 | [Docs/20-data-class-field-reference.md](Docs/20-data-class-field-reference.md) | 游戏数据类字段参考（25 个 Entity 类型） |
 | [Docs/14-reference-resolution-system.md](Docs/14-reference-resolution-system.md) | 引用解析系统说明（IReferenceResolver / ReferenceList / 7 Format 类） |
 | [Docs/21-entity-detail-ui-design-guide.md](Docs/21-entity-detail-ui-design-guide.md) | 实体详情 UI 设计指南 |

@@ -30,6 +30,7 @@ public partial class ImageOrchestrationViewModel : ImageToolObservableObject
     private readonly IConfigService _config;
     private readonly IModImageListService _imageListService;
     private readonly INotificationService _notification;
+    private readonly IProfileModSourceProvider _sourceProvider;
 
     // Serializes refresh calls so concurrent triggers (auto-load, message nudge,
     // explicit button) never run two source rebuilds that clobber each other.
@@ -49,16 +50,20 @@ public partial class ImageOrchestrationViewModel : ImageToolObservableObject
         IConfigService config,
         IModImageListService imageListService,
         INotificationService notificationService,
+        IProfileModSourceProvider sourceProvider,
         IMessenger messenger)
         : base(loc)
     {
         _config = config;
         _imageListService = imageListService;
         _notification = notificationService;
+        _sourceProvider = sourceProvider;
 
         // 议题6 (R27): auto-load + refresh on workspace lifecycle changes.
+        // OpenMergeEditorMessage covers loads triggered from the Profile Tool.
         messenger.Register<GameRootDirChangedMessage>(this, (_, _) => _ = RefreshAsync());
         messenger.Register<LoadProfileMessage>(this, (_, _) => _ = RefreshAsync());
+        messenger.Register<OpenMergeEditorMessage>(this, (_, _) => _ = RefreshAsync());
         messenger.Register<RefreshModMessage>(this, (_, _) => _ = RefreshAsync());
         _ = RefreshAsync();
     }
@@ -104,7 +109,11 @@ public partial class ImageOrchestrationViewModel : ImageToolObservableObject
         IsLoading = true;
         try
         {
-            var sources = await Task.Run(BuildSources);
+            // Snapshot the active profile's content roots on the UI thread (message
+            // dispatch has completed, so ModLoadInfos are populated) before building
+            // sources on the background thread.
+            var roots = _sourceProvider.GetContentRoots();
+            var sources = await Task.Run(() => BuildSources(roots));
             ApplySources(sources);
         }
         catch
@@ -342,11 +351,13 @@ public partial class ImageOrchestrationViewModel : ImageToolObservableObject
     }
 
     /// <summary>
-    /// Builds the source list. Base game reads <c>&lt;gameRoot&gt;/getimages.php</c>;
-    /// each mod reads <c>&lt;modFolder&gt;/getimages.php</c>. Sources without a
-    /// getimages.php file appear empty so the user can create one by saving.
+    /// Builds the source list from the active profile's content roots (task 4).
+    /// Base game reads <c>&lt;gameRoot&gt;/getimages.php</c>; each mod reads
+    /// <c>&lt;contentRoot&gt;/getimages.php</c> where contentRoot comes from the profile's
+    /// ModLoadInfos. Sources without a getimages.php file appear empty so the user can
+    /// create one by saving.
     /// </summary>
-    private List<ImageOrchestrationSourceNode> BuildSources()
+    private List<ImageOrchestrationSourceNode> BuildSources(IReadOnlyList<ModContentRoot> roots)
     {
         var gameRoot = _config.Config.GameRootDir;
         var sources = new List<ImageOrchestrationSourceNode>();
@@ -356,20 +367,10 @@ public partial class ImageOrchestrationViewModel : ImageToolObservableObject
             return sources;
         }
 
-        // 1. Base game getimages.php (read-only)
-        var basePhp = Path.Combine(gameRoot, "getimages.php");
-        sources.Add(BuildSource("Base Game", basePhp, gameRoot, gameRoot, isGame: true));
-
-        // 2. Each mod folder's getimages.php
-        var modsDir = Path.Combine(gameRoot, "Mods");
-        if (Directory.Exists(modsDir))
+        foreach (var root in roots)
         {
-            foreach (var modFolder in Directory.GetDirectories(modsDir))
-            {
-                var modName = Path.GetFileName(modFolder);
-                var modPhp = Path.Combine(modFolder, "getimages.php");
-                sources.Add(BuildSource(modName, modPhp, modFolder, gameRoot, isGame: false));
-            }
+            var php = Path.Combine(root.ContentRoot, "getimages.php");
+            sources.Add(BuildSource(root.Name, php, root.ContentRoot, gameRoot, isGame: root.IsGame));
         }
 
         return sources;

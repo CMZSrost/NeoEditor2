@@ -49,8 +49,23 @@
 3. 实体层：按 TargetKey 分解实体 →
      {Id}:    [Namespace:]Id
      {G}.{S}: [Namespace:]GroupId.SubgroupId   （仅 ItemType 目标）
-4. 命名空间：无前缀 → 源实体 Namespace；"0:"/":" → 同 Namespace 简写；"NSE:" → 显式（R16）
+4. 命名空间（⚠️ 2026-08-02 订正，见 §0.4）：无前缀 → 源实体 Namespace；"0:" → 显式 0（game base）命名空间；"NSE:" → 显式 NSE 命名空间
 ```
+
+### 0.4 命名空间前缀语义（⚠️ 订正 2026-08-02，mod 数据 + 代码实证）
+
+> R16 §1/§5 原表述「`0:` 是『同 namespace』简写」**有误**。`0:` 是**显式指向 0 命名空间（game base）**——数据实证：NSE 中 `0:5.6` 指向原版「存储」（NSE 自己的 5.6 是「水袋」）；代码 `ReferenceResolver.LookupEntityId` 对 `0:38` 直接 `LookupByNs(type, "0", pk)`。
+
+| 写法 | 语义 | 示例 |
+|------|------|------|
+| 无前缀 | 同 sourceNs（源实体命名空间） | NSE 实体中 `211` → ns=NSE |
+| `0:` | **显式 0 命名空间（game base）** | NSE 中 `0:5.6` → 原版 5.6 |
+| `NSE:` | 显式 NSE 命名空间 | `NSE:86.6` → NSE 的 86.6 |
+| `:`（空前缀） | 同 sourceNs（实际数据 0 出现，理论形式） | — |
+
+**适用范围扩展（mod 数据发现）**：命名空间前缀同样用于
+- **图片引用**（`attackmodes.strIMG`、`datafiles.strImg`、`itemtypes.vImageList`、`creatures.strImg`）：`0:AModeSpearSharp.png` / `NSE:ItmDataAddr.png` / `NSE:CreSquirrel.png`
+- **aEffects 参数实体**（37 §5.3）：`SetImmunity=0:316,0:618,463`、`ChainCondition=NSE:-457`、`AddItemGround=0:17,0,0,0`、`ChangeGlobalFactionRep=NSE:1,-100,1`
 
 ---
 
@@ -81,7 +96,7 @@
 
 - `GroupId.SubgroupId` 是**游戏内物品 ID**（`nGroupID.nSubgroupID`），**不是** itemtypes 表主键 `id`（数据库自增 1-537）
 - SubgroupId 可为多位数：`8.10`、`10.11`、`10.100` ✅
-- 命名空间规则见 R16（缺省=源实体 ns；`0:`=同 ns 简写；显式前缀=跨 ns）
+- 命名空间规则见 R16 与 §0.4（缺省=源实体 ns；`0:`=**显式 0 命名空间（game base）**⚠️ 2026-08-02 订正；`NSE:`=显式跨 ns）
 
 ### 2.2 例外：用「表主键 id」而非复合键的列
 
@@ -95,9 +110,30 @@
 | `encounters.aResponses` 右侧 | Encounter（**主键 id**） | 4392/4392 命中 encounters.id | ✅ |
 | `encounters.aResponses` 左侧纯数字 | Ingredient（**nID**） | 52=撬棍→49"用撬棍搜刮"、83=易思平板×3→"安装屏幕"、115=剪线钳子→"剪栅栏抄近路"，剧情语义吻合 | ✅ |
 
-### 2.3 目标实体类型总表（48 个已标注引用列）
+### 2.3 目标实体类型总表（58 个已标注引用列）
 
 见 §4 各表明细。引用关系图（Doc 20 附录 B 已完整，此处不重复）。
+⚠️ 2026-08-02：新增 **10 个图片/sprite 引用列**（ImageAsset 实体，见 §2.5）：attackmodes.strIMG、camptypes.vImageList、creatures.strImg、datafiles.strImg、dmcplaces.strImg、encounters.strImg、itemtypes.vImageList/vSpriteList/vImageUsage（索引列）、maps.strName。
+
+### 2.5 图片/sprite 资源引用（ImageAsset 实体）⚠️ 2026-08-02 mod 交叉验证新增
+
+图片列（`strIMG`/`strImg`/`vImageList`/`vSpriteList`）也是**引用列**，实体 = 图片资源（ImageAsset），TargetKey = `{FileName}`。
+
+| 属性 | 规则 |
+|------|------|
+| 实体格式 | `[Namespace:]文件名`，如 `AMode308.png`、`0:AModeSpearSharp.png`、`NSE:ItmDataAddr.png` |
+| 命名空间 | 与实体引用相同（R16/§0.4）：无前缀=同 ns（本 mod `img/` 或 game `img/`）、`0:`=game base `img/`、`NSE:`=NSE mod `img/` |
+| 资源目录 | 单值列/`vImageList` → 该 ns 的 `img/` 目录；`vSpriteList` 同上（值取 `=` 右侧） |
+| 特殊列 | `itemtypes.vImageUsage` / `vEquipSlots` 的 `=x=y` 后缀 → **不是文件名**，是指向 `vImageList` 条目的**序号索引**（0-based），见 §4.20 |
+
+**实测证据**（原版 + NSE mod）：
+- 原版图片列全部无前缀（`AMode308.png`、`CreDogman.png`、`ItmDataPDF.png`）
+- mod 单值列带前缀：NSEb `attackmodes.strIMG = 0:AModeSpearSharp.png`；NSEoverride `datafiles.strImg = NSE:ItmDataAddr.png`、`creatures.strImg = NSE:CreSquirrel.png`；NSEg `encounters.strImg = 0:ItmEncGive.png`
+- mod 列表列带前缀：NSEb `itemtypes.vImageList = ...,0:ItmSpearSlot100.png,...`（混排）；NSEb `vSpriteList = 20=0:CreItmSmBladeL.png`；NSEoverride `vSpriteList = 13=NSEf:CreItmBagDuffelBack.png`（**ns=0 的 mod 引用其他 mod 的图片**）
+
+**索引列规则**（vImageUsage）：
+- 6 位 0-based 索引，指向 `vImageList` 条目：`地上空,地上满,手上空,手上满,物品栏空,物品栏满`
+- 原版全部索引 < vImageList 长度（0 越界）；mod 可更大（NSEb 长矛 `0,0,10,10,1,1`，vImageList 11 张图）→ 编辑器不做 6 张图上限假设
 
 ### 2.4 实体层未确认项
 
@@ -118,6 +154,7 @@
 | `{mult}x{id}` | 前 | 数量 + 实体 | `1x11`、`10x12+20x13` | recipes.strTools/strConsumed/strDestroyed | ✅ |
 | `{id}={value}` | 后 | 实体 + 赋值 | `38=1`、`151=1`、`0=-100` | creatures.vBaseConditions、factions.dictFactions | ✅ |
 | `{value}={id}` | 前 | 值 + 实体 | `100=-414`（部位=状态）、`Off=8.0`、`20=10`（槽位=攻击模式） | itemtypes.aEquipConditions/aPossessConditions/aUseConditions/aAttackModes/aSwitchIDs | ✅ |
+| `{slot}={img}` | 前 | 部位 + 图片文件名 | `20=CreItmBagPlasticL.png`、`11=0:CreItmHideLongCoat.png`（⚠️ mod 图片带前缀） | itemtypes.vSpriteList | ✅ |
 | `[{id},{p1},{p2}]` | 两侧 | 括号 + 实体 + 2 参数 | `[-137,0,0]` | battlemoves vUsConditions 等 6 列 | ✅ |
 | `{id}x{prob}x{qty}` | 后×2 | 实体 + 概率 + 数量 | `86.6x1.0x5-9` | treasuretable.aTreasures | ✅ |
 | `{item}x{qty}={enc}x{p1}x{p2}x{p3}x{p4}` | 复合 | 左侧实体+装饰 = 右侧实体+4 参数 | `90.1x1=12x1x0x0x0`、`=1x1x0x0x0`（默认） | encounters.aResponses | ✅（p3/p4 待探索） |
@@ -152,6 +189,7 @@
 |----|:--:|------|------|---------|:--:|
 | `strChargeProfiles` | `,`（多为单值） | ChargeProfile `{Id}` | `{id}` | `10`、`22` | ✅ |
 | `vAttackerConditions` | `,` | Condition `{Id}` | `{id}x{mult}` | `-115x1.0,...,115x1.0` | ✅ |
+| `strIMG` | null | **ImageAsset** `{FileName}` | `{id}` | `AMode308.png`、`AModePunch.png`；⚠️ mod `0:AModeSpearSharp.png` | ✅ |
 
 ### 2. BattleMove（battlemoves）
 
@@ -166,6 +204,7 @@
 | 列 | 集合 | 实体 | 装饰 | 样本 | 置信度 |
 |----|:--:|------|------|------|:--:|
 | `nTreasureID` | null | TreasureTable `{Id}` | `{id}` | `3` | ✅ |
+| `vImageList` | null | **ImageAsset** `{FileName}` | `{id}` | `ItmScavengeGrass01.png`、`ItmScavengeApt01.png` | ✅ |
 
 ### 4. ChargeProfile（chargeprofiles）
 
@@ -194,6 +233,7 @@
 | `vAttackModes` | `,` | AttackMode `{Id}` | `{id}` | `17` | ✅ |
 | `vBaseConditions` | `,` | Condition `{Id}` | `{id}={value}`（value=概率 0~1） | `151=1,210=1`、`35=0.25` | ✅ |
 | `nCorpseID` | null | TreasureTable `{Id}` | `{id}` | — | ✅ |
+| `strImg` | null | **ImageAsset** `{FileName}` | `{id}` | `CreDogman.png`、`CreHuman.png`；⚠️ NSE `0:CreHuman.png`、NSEoverride `NSE:CreSquirrel.png` | ✅ |
 
 ### 8. CreatureSource（creaturesources）
 
@@ -203,13 +243,16 @@
 
 ### 9. DataFile（datafiles）
 
-无引用列。
+| 列 | 集合 | 实体 | 装饰 | 样本 | 置信度 |
+|----|:--:|------|------|------|:--:|
+| `strImg` | null | **ImageAsset** `{FileName}` | `{id}` | `ItmDataPDF.png`、`ItmDataTXT.png`；⚠️ mod `NSE:ItmDataAddr.png` | ✅ |
 
 ### 10. DmcPlace（dmcplaces）
 
 | 列 | 集合 | 实体 | 装饰 | 置信度 |
 |----|:--:|------|------|:--:|
 | `nEncounterID` | null | Encounter `{Id}` | `{id}` | ✅ |
+| `strImg` | null | **ImageAsset** `{FileName}` | `{id}`（无扩展名按钮名：`btn_dmc_diner`） | ✅ |
 
 ### 11. Encounter（encounters）
 
@@ -223,6 +266,7 @@
 | `vAccidents` | `,` | Encounter `{Id}` | `{id}` | `100,102,103,104,1724` | ✅ |
 | `vLoot` | null | TreasureTable `{Id}` | `{id}` | `40` | ✅ |
 | `aResponses` | `,` | 双目标+右侧实体（见 §5.1） | 复合模板 | `90.1x1=12x1x0x0x0`、`52x1=49x1x1x0x0`、`1.0x1=74x1x0x0x0` | ✅（p3/p4 待探索） |
+| `strImg` | null | **ImageAsset** `{FileName}` | `{id}` | `EncBlank.png`、`EncCryoFacility.png`；⚠️ mod `0:ItmEncGive.png`、`NSE:EncDMClockers.png` | ✅ |
 
 ### 12. EncounterTrigger（encountertriggers）
 
@@ -282,13 +326,17 @@
 | `nTreasureID` / `nComponentID` | null | TreasureTable `{Id}` | `{id}` | — | ✅ |
 | `strChargeProfiles` | `,`（多为单值） | ChargeProfile `{Id}` | `{id}` | `22` | ✅ |
 | `aAttackModes` | `,` | AttackMode `{Id}`（**右侧**） | `{value}={id}`（左侧=槽位 20/21/17…） | `20=10,21=10`、`17=16` | ✅ |
-| `aSwitchIDs` | `,` | ItemType `{G}.{S}`（**右侧**） | `{value}={id}`（左侧=状态名 On/Off/Open/Close） | `Off=8.0`、`Close=8.2,On=8.3` | ✅ |
+| `aSwitchIDs` | `,` | ItemType `{G}.{S}`（**右侧**） | `{value}={id}`（左侧=状态名，⚠️ 原版 On/Off/Open/Close，mod 为自由文本如 `Hood Off`/`Shrink Back`；目标可带 `0:` 前缀如 `Hood Off=0:78.7`） | `Off=8.0`、`Close=8.2,On=8.3` | ✅ |
+| `vImageList` | `,` | **ImageAsset** `{FileName}` | `{id}`（条目可带前缀） | `ItmStick.png,ItmStickHeld.png`；⚠️ mod `ItmSpearSharpStoredSling.png,...,0:ItmSpearSlot100.png,...` | ✅ |
+| `vSpriteList` | `,` | **ImageAsset** `{FileName}`（**右侧**） | `{slot}={img}`（左侧=部位：2/3=脚、4=下身、11=上身、13/14=肩背、17=头部、20/21=手、22=背，见附录 A） | `20=CreItmBagPlasticL.png,21=CreItmBagPlasticR.png,22=CreItmBagPlasticBack.png`；⚠️ mod `20=0:CreItmSmBladeL.png`、NSEoverride `13=NSEf:CreItmBagDuffelBack.png` | ✅ |
+| `vImageUsage` [特殊] | — | **索引列**（指向 vImageList 条目序号，非文件名） | 6 位 0-based 索引：`地上空,地上满,手上空,手上满,物品栏空,物品栏满`（⚠️ mod 索引可≥10，图列表超 6 张） | `1,0,0,0,0,0`（仅地上）、`1,1,0,0,1,1`（典型） | ✅ |
 
 ### 21. Map（maps）
 
 | 列 | 集合 | 实体 | 装饰 | 样本 | 置信度 |
 |----|:--:|------|------|------|:--:|
 | `strDef` | `,` | HexType `{Id}`（数字序列） | `{id}` | `5,3,3,4,5,...` | ✅ |
+| `strName` [特殊] | null | **ImageAsset** `{FileName}`（或内部网格名） | `{id}` | `MapMiniMichigan.png`（小地图图片）、`Excel50x100`（内部网格地图标识，非图片） | ✅ |
 
 ### 22. Recipe（recipes）
 
@@ -315,7 +363,7 @@
 
 ### 25. 无引用列表
 
-ForbiddenHex / GameVar / Headline / DataFile / ContainerType / ItemProp（Map 的 strDef 是 HexType 引用列，见 §21）。
+ForbiddenHex / GameVar / Headline / ContainerType / ItemProp（Map 的 strDef 是 HexType 引用列，见 §21）。⚠️ 2026-08-02 更新：DataFile 的 `strImg` 为 ImageAsset 引用（见 §9），不再在无引用列表。
 
 ---
 
@@ -473,9 +521,9 @@ ForbiddenHex / GameVar / Headline / DataFile / ContainerType / ItemProp（Map �
 | `PassTime` | 1 | — | — | 时间流逝 |
 | `EndGame` | 1 | — | — | 游戏结束 |
 
-## 附录 C：aSwitchIDs 状态名全集（4 种，全量统计）
+## 附录 C：aSwitchIDs 状态名（原版 4 种，⚠️ mod 为自由文本）
 
-`On` / `Off` / `Open` / `Close`
+原版 `On` / `Off` / `Open` / `Close`（4 种全量）；**mod 扩展为自由文本**（NSE：`Hood Off`/`Hood On`/`Shrink Back` 等，见 38 附录 §B）。解析器不应把左侧限定为固定枚举。
 
 ## 附录 D：未确认项汇总（含示例数据，供逐项判断）
 
@@ -500,7 +548,8 @@ ForbiddenHex / GameVar / Headline / DataFile / ContainerType / ItemProp（Map �
 | `12.2`-`12.14` | 518/520/522/524/526/736-739/755（营地类池） | `12.3x0.25x1-1,...` | 12 组=营地设施，原版仅 12.0/12.1 |
 | `36.1`-`36.21` | 447/528/529（数据文件类池） | `36.6x0.0169...` | 36 组=电子数据文件，原版无 |
 
-> 对照：itemtypes 实际只有 7.0（旧报纸）/9.0（纸条）/12.0-12.1（露营地等）/36 组缺失——**4 组物品在原版 XML 中缺失**，可能是游戏版本差异或 NSE 移除。**待后续探索**：这些池是否在游戏中正常产出？
+> 对照：itemtypes 实际只有 7.0（旧报纸）/9.0（纸条）/12.0-12.1（露营地等）/36 组缺失——**4 组物品在原版 XML 中缺失**。
+> ✅ **2026-08-02 mod 交叉验证升级**：这 107 个唯一 G.S 在 NSE 全部 8 组 mod 数据（NSEg/NSEb/NSEf/NSEa/NSE/NSEoverride/NSEtT/用户 mod，合计 947 个 G.S 键）中**也全部不存在** → 基本证实是**游戏版本移除的旧物品**，而非指向 mod 数据（详见 38 附录 §C）。
 
 ### 项2：~~槽位 207（及 213-232）~~ 已解决（2026-08-02）
 
