@@ -370,6 +370,77 @@ public class HostService : IHostService, IModManager
     }
 
     // ──────────────────────────────────────────────
+    //  IHostService — 查询/搜索
+    // ──────────────────────────────────────────────
+
+    public async Task<IReadOnlyList<IEntity>> SearchEntitiesAsync(string query, int limit = 50,
+        string? entityType = null, int? modId = null)
+    {
+        if (string.IsNullOrWhiteSpace(query) || limit <= 0)
+            return Array.Empty<IEntity>();
+
+        var results = new List<IEntity>();
+        foreach (var (typeName, type) in Constants.GameTypes.OrderBy(k => k.Key))
+        {
+            if (entityType is not null && !typeName.Equals(entityType, StringComparison.OrdinalIgnoreCase))
+                continue;
+            if (results.Count >= limit)
+                break;
+
+            var entities = await GetAllEntitiesAsync(type).ConfigureAwait(false);
+            var stringProps = type.GetProperties()
+                .Where(p => p.GetIndexParameters().Length == 0 && p.PropertyType == typeof(string))
+                .ToArray();
+
+            foreach (var entity in entities)
+            {
+                if (results.Count >= limit)
+                    break;
+                if (modId is not null && entity.ModId != modId)
+                    continue;
+                // Match subject, ID, or any string property (so content-based queries hit).
+                if (MatchesQuery(entity, query, stringProps))
+                    results.Add(entity);
+            }
+        }
+
+        return results;
+    }
+
+    private static bool MatchesQuery(IEntity entity, string query, PropertyInfo[] stringProps)
+    {
+        if ($"{entity.Subject} {entity.EntityId}".Contains(query, StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        foreach (var prop in stringProps)
+        {
+            if (prop.GetValue(entity) is string s && s.Contains(query, StringComparison.OrdinalIgnoreCase))
+                return true;
+        }
+
+        return false;
+    }
+
+    /// <summary>Reflectively calls <see cref="Repository{T}"/> for a runtime entity type and loads all rows.</summary>
+    private async Task<IReadOnlyList<IEntity>> GetAllEntitiesAsync(Type type)
+    {
+        var getRepo = typeof(IHostService).GetMethod(nameof(Repository))!.MakeGenericMethod(type);
+        var repo = getRepo.Invoke(this, null);
+        if (repo is null)
+            return Array.Empty<IEntity>();
+
+        var getAll = repo.GetType().GetMethod("GetAllAsync");
+        if (getAll?.Invoke(repo, null) is not Task task)
+            return Array.Empty<IEntity>();
+
+        await task.ConfigureAwait(false);
+        var result = task.GetType().GetProperty("Result")?.GetValue(task);
+        return result is IEnumerable enumerable
+            ? enumerable.Cast<IEntity>().ToList()
+            : Array.Empty<IEntity>();
+    }
+
+    // ──────────────────────────────────────────────
     //  IHostService — Entity 注册表
     // ──────────────────────────────────────────────
 

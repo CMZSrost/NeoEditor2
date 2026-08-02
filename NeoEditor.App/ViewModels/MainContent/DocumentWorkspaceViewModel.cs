@@ -46,7 +46,8 @@ public partial class DocumentWorkspaceViewModel : ViewModelBase,
     IRecipient<OpenModImagesDocumentMessage>,
     IRecipient<OpenHelpDocumentMessage>,
     IRecipient<OpenMergeEditorMessage>,
-    IRecipient<OpenImageDocumentMessage>
+    IRecipient<OpenImageDocumentMessage>,
+    IRecipient<OpenAiImageWorkbenchMessage>
 {
     private readonly IConfigService _config;
     public AppConfig Config => _config.Config;
@@ -235,37 +236,6 @@ public partial class DocumentWorkspaceViewModel : ViewModelBase,
         // ── New: Entity selection coordination ──
         Messenger.Register<EntitySelectedMessage>(this, (_, m) => OnEntitySelected(m));
 
-        // ── New: Peek reference resolution (from KeyValueEditor) ──
-        Messenger.Register<PeekReferenceRequestMessage>(this, (_, m) =>
-        {
-            try
-            {
-                var store = _session.ActiveMergeStore;
-                if (store?.ReferenceLookups.TryGetValue(m.TargetType, out var entities) == true)
-                {
-                    // Try to find the entity by raw ID match (like "42" matches key=42 or entityId ending with #42)
-                    foreach (var obj in entities)
-                    {
-                        if (obj is IEntity e)
-                        {
-                            var match = e.EntityId == m.RawId
-                                        || e.EntityId.EndsWith("#" + m.RawId)
-                                        || GetEntityKey(e) == m.RawId;
-                            if (match)
-                            {
-                                PeekPanel.Peek(e, m.SourceEntity, m.PropertyName);
-                                return;
-                            }
-                        }
-                    }
-                }
-            }
-            catch
-            {
-                /* resolution failure */
-            }
-        });
-
         // ── New: NavigateToEntity (Open Full from Peek / double-click) ──
         Messenger.Register<NavigateToEntityRequestedMessage>(this,
             (_, m) => { OpenEntityEditor(m.EntityType, m.EntityId); });
@@ -370,8 +340,10 @@ public partial class DocumentWorkspaceViewModel : ViewModelBase,
                 AddToolsToDock(rootDock, map);
                 return;
             }
+
             await Task.Delay(100);
         }
+
         _logger.LogWarning("[Dock] Tool dock layout sync timed out — tools may be missing.");
     }
 
@@ -398,6 +370,7 @@ public partial class DocumentWorkspaceViewModel : ViewModelBase,
                 DockFactory.SetFocusedDockable(td, DataTableTool);
             }
         }
+
         if (dockable is Dock.Model.Core.IDock dock && dock.VisibleDockables is { } list)
             foreach (var d in list)
                 AddToolsToDock(d, byId);
@@ -584,6 +557,7 @@ public partial class DocumentWorkspaceViewModel : ViewModelBase,
         var document = new ImageEditorDocument(
             _serviceProvider.GetRequiredService<IImageEditorProcessingService>(),
             _serviceProvider.GetRequiredService<PixelArtConversionService>(),
+            _serviceProvider.GetRequiredService<IImageGenerationService>(),
             _serviceProvider.GetRequiredService<ILocalizationService>());
         Documents.Add(document);
         ActivateDocument(document);
@@ -868,26 +842,45 @@ public partial class DocumentWorkspaceViewModel : ViewModelBase,
             .FirstOrDefault(d => d.ProfileInfo?.ProfileId == profileInfo.ProfileId);
     }
 
+    public void Receive(OpenAiImageWorkbenchMessage message)
+    {
+        // A blank Image Editor workbench with the AI generate panel (the user then
+        // types a prompt and generates, then saves or edits the result).
+        var doc = new ImageEditorDocument(
+            _serviceProvider.GetRequiredService<IImageEditorProcessingService>(),
+            _serviceProvider.GetRequiredService<PixelArtConversionService>(),
+            _serviceProvider.GetRequiredService<IImageGenerationService>(),
+            _serviceProvider.GetRequiredService<ILocalizationService>());
+        Documents.Add(doc);
+        ActivateDocument(doc);
+    }
+
     public void Receive(OpenImageDocumentMessage message)
     {
         var normalizedPath = NormalizeDocumentPath(message.ImagePath);
         if (!File.Exists(normalizedPath)) return;
 
-        if (FindOpenImageDocument(normalizedPath) is { } existing)
+        if (FindOpenImageEditorDocument(normalizedPath) is { } existing)
         {
             ActivateDocument(existing);
             return;
         }
 
-        var doc = new ImageDocument { ImagePath = normalizedPath };
-        doc.SetStaticTitle(message.Title);
+        // Open the full editor (crop / pixel art / AI generate / save) with the image
+        // loaded — the Image Browser's double-click/Open is the primary editing entry.
+        var doc = new ImageEditorDocument(
+            _serviceProvider.GetRequiredService<IImageEditorProcessingService>(),
+            _serviceProvider.GetRequiredService<PixelArtConversionService>(),
+            _serviceProvider.GetRequiredService<IImageGenerationService>(),
+            _serviceProvider.GetRequiredService<ILocalizationService>());
+        doc.LoadImage(normalizedPath);
         Documents.Add(doc);
         ActivateDocument(doc);
     }
 
-    private ImageDocument? FindOpenImageDocument(string path)
+    private ImageEditorDocument? FindOpenImageEditorDocument(string path)
     {
-        return Documents.OfType<ImageDocument>()
+        return Documents.OfType<ImageEditorDocument>()
             .FirstOrDefault(d => string.Equals(d.ImagePath, path, StringComparison.OrdinalIgnoreCase));
     }
 

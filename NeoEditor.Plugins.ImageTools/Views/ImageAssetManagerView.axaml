@@ -5,11 +5,11 @@
     xmlns:vm="clr-namespace:NeoEditor.Plugins.ImageTools.ViewModels"
     x:DataType="vm:ImageAssetManagerViewModel">
     <Border Padding="4">
-        <Grid ColumnDefinitions="*,4,Auto" RowDefinitions="Auto,*,Auto">
+        <!--  Vertical split: tree on top, preview pane below (round22)  -->
+        <Grid ColumnDefinitions="*" RowDefinitions="Auto,*,4,Auto,Auto">
             <!--  Toolbar row  -->
             <StackPanel
                 Grid.Row="0"
-                Grid.ColumnSpan="3"
                 Margin="0,0,0,4"
                 Orientation="Horizontal"
                 Spacing="6">
@@ -19,7 +19,6 @@
                     FontWeight="SemiBold"
                     Text="Image Browser" />
                 <TextBox
-                    Grid.Column="1"
                     Width="120"
                     FontSize="10"
                     PlaceholderText="Search..."
@@ -32,13 +31,18 @@
                     ToolTip.Tip="Refresh image list" />
             </StackPanel>
 
-            <!--  Tree view (left pane)  -->
+            <!--  Tree view (top pane)  -->
             <TreeView
                 x:Name="ImageTree"
                 Grid.Row="1"
-                Grid.Column="0"
                 ItemsSource="{Binding ModNodes}"
                 SelectedItem="{Binding SelectedNode}">
+                <TreeView.ContextMenu>
+                    <ContextMenu>
+                        <MenuItem Command="{Binding AddImageCommand}" Header="{Binding AddImageHeader}" />
+                        <MenuItem Command="{Binding GenerateImageCommand}" Header="{Binding AiGenerateHeader}" />
+                    </ContextMenu>
+                </TreeView.ContextMenu>
                 <TreeView.ItemTemplate>
                     <TreeDataTemplate ItemsSource="{Binding Children}">
                         <StackPanel Orientation="Horizontal" Spacing="4">
@@ -59,63 +63,66 @@
                 </TreeView.ItemTemplate>
             </TreeView>
 
-            <!--  Grid splitter  -->
+            <!--  Grid splitter (horizontal)  -->
             <GridSplitter
-                Grid.Row="1"
-                Grid.Column="1"
-                Width="4"
+                Grid.Row="2"
+                Height="4"
                 Background="{DynamicResource SystemControlForegroundChromeDisabledLowBrush}" />
 
-            <!--  Preview pane (right)  -->
+            <!--  Preview pane (bottom)  -->
             <Border
-                Grid.Row="1"
-                Grid.Column="2"
-                MinWidth="160"
+                Grid.Row="3"
+                MinHeight="140"
                 Padding="6"
                 IsVisible="{Binding SelectedImage, Converter={x:Static ObjectConverters.IsNotNull}}">
-                <StackPanel Spacing="6">
-                    <TextBlock
-                        FontSize="11"
-                        FontWeight="SemiBold"
-                        Text="Preview" />
-                    <Image
-                        MaxWidth="128"
-                        MaxHeight="128"
-                        Source="{Binding SelectedImage.Thumbnail}"
-                        Stretch="Uniform" />
-                    <TextBlock
-                        FontSize="10"
-                        Text="{Binding SelectedImage.FileName}"
-                        TextWrapping="Wrap" />
-                    <TextBlock
-                        FontSize="9"
-                        Foreground="{DynamicResource SystemControlForegroundChromeDisabledLowBrush}"
-                        Text="{Binding SelectedImage.Dimensions}" />
-                    <Separator />
-                    <TextBlock
-                        FontSize="9"
-                        Foreground="{DynamicResource SystemControlForegroundChromeDisabledLowBrush}"
-                        Text="{Binding SelectedImage.ModName, StringFormat='Mod: {0}'}"
-                        TextWrapping="Wrap" />
-                    <TextBlock
-                        FontSize="9"
-                        Foreground="{DynamicResource SystemControlForegroundChromeDisabledLowBrush}"
-                        IsVisible="{Binding SelectedImage.X2Path, Converter={x:Static ObjectConverters.IsNotNull}}"
-                        Text="{Binding SelectedImage.X2Path, StringFormat='x2: {0}'}"
-                        TextWrapping="Wrap" />
-                    <Button
-                        Padding="8,3"
-                        Command="{Binding OpenImageCommand}"
-                        Content="Open"
-                        FontSize="10" />
+                <StackPanel Orientation="Horizontal" Spacing="10">
+                    <Border
+                        Padding="4"
+                        BorderBrush="{DynamicResource SystemControlForegroundChromeDisabledLowBrush}"
+                        BorderThickness="1"
+                        CornerRadius="4">
+                        <Image
+                            MaxWidth="128"
+                            MaxHeight="128"
+                            Source="{Binding SelectedImage.Thumbnail}"
+                            Stretch="Uniform" />
+                    </Border>
+                    <StackPanel Spacing="4">
+                        <TextBlock
+                            FontSize="11"
+                            FontWeight="SemiBold"
+                            Text="Preview" />
+                        <TextBlock
+                            FontSize="10"
+                            Text="{Binding SelectedImage.FileName}"
+                            TextWrapping="Wrap" />
+                        <TextBlock
+                            FontSize="9"
+                            Foreground="{DynamicResource SystemControlForegroundChromeDisabledLowBrush}"
+                            Text="{Binding SelectedImage.Dimensions}" />
+                        <TextBlock
+                            FontSize="9"
+                            Foreground="{DynamicResource SystemControlForegroundChromeDisabledLowBrush}"
+                            Text="{Binding SelectedImage.ModName, StringFormat='Mod: {0}'}"
+                            TextWrapping="Wrap" />
+                        <TextBlock
+                            FontSize="9"
+                            Foreground="{DynamicResource SystemControlForegroundChromeDisabledLowBrush}"
+                            IsVisible="{Binding SelectedImage.X2Path, Converter={x:Static ObjectConverters.IsNotNull}}"
+                            Text="{Binding SelectedImage.X2Path, StringFormat='x2: {0}'}"
+                            TextWrapping="Wrap" />
+                        <Button
+                            Padding="8,3"
+                            Command="{Binding OpenImageCommand}"
+                            Content="Open"
+                            FontSize="10" />
+                    </StackPanel>
                 </StackPanel>
             </Border>
 
             <!--  Footer row  -->
             <TextBlock
-                Grid.Row="2"
-                Grid.Column="0"
-                Grid.ColumnSpan="3"
+                Grid.Row="4"
                 Margin="0,4,0,0"
                 FontSize="9"
                 Foreground="{DynamicResource SystemControlForegroundChromeDisabledLowBrush}"

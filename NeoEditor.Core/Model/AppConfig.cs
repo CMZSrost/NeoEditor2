@@ -73,6 +73,10 @@ public partial class AppConfig : ObservableRecipient
     [ObservableProperty]
     public partial int McpPort { get; set; }
 
+    /// <summary>Max MCP tool-call iterations per AI Chat turn (guards runaway loops).</summary>
+    [ObservableProperty]
+    public partial int MaxToolCallsPerConversation { get; set; } = 30;
+
     public AppConfig()
     {
         IsActive = true;

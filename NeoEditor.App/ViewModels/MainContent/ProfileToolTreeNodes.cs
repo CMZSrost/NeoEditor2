@@ -3,40 +3,47 @@ using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace NeoEditor.ViewModels.MainContent;
 
-/// <summary>
-/// Mod node in the Profile Tool tree — one entry from the active profile's ModLoadInfos.
-/// Its XML children are scanned eagerly from the mod's content root (task 5).
-/// </summary>
-public sealed class ProfileModNode : ObservableObject
+/// <summary>Level of a node in the Profile Tool's Mod → XML → data-class tree.</summary>
+public enum ProfileTreeItemKind
 {
-    public required string Name { get; init; }
-    public required int ModId { get; init; }
-    public required string Path { get; init; }
-    public required string ContentRoot { get; init; }
-    public bool IsGame { get; init; }
-
-    public ObservableCollection<ProfileXmlNode> XmlNodes { get; } = [];
+    Mod,
+    Xml,
+    DataType
 }
 
 /// <summary>
-/// XML file node under a mod. Its non-empty data-class children are loaded lazily
-/// (per mod, cached) the first time the node is expanded.
+/// Unified node for the Profile Tool tree (round22). A single node type keeps the
+/// hierarchical grid's DataTemplate simple — the <see cref="Kind"/> drives the icon,
+/// double-click behavior and right-click context menu. Mod and XML children are built
+/// eagerly; XML → data-class children load lazily the first time the node expands.
 /// </summary>
-public sealed class ProfileXmlNode : ObservableObject
+public sealed class ProfileTreeItem : ObservableObject
 {
+    public required ProfileTreeItemKind Kind { get; init; }
+
     public required string Name { get; init; }
-    public required string AbsolutePath { get; init; }
+
+    /// <summary>Mod → content-root directory; Xml/DataType → absolute XML file path.</summary>
+    public string? Path { get; init; }
+
+    public int ModId { get; init; }
+
+    /// <summary>Row count for data-class leaves.</summary>
+    public int Count { get; init; }
+
+    public bool IsGame { get; init; }
+
+    public string DisplayName => Kind == ProfileTreeItemKind.DataType ? $"{Name} ({Count})" : Name;
+
+    /// <summary>Small leading glyph for the tree row (display only).</summary>
+    public string Icon => Kind switch
+    {
+        ProfileTreeItemKind.Mod => IsGame ? "🌍" : "📦",
+        ProfileTreeItemKind.Xml => "📄",
+        _ => "🏷️"
+    };
 
     public bool TypesLoaded { get; set; }
 
-    public ObservableCollection<ProfileDataTypeNode> TypeNodes { get; } = [];
-}
-
-/// <summary>Non-empty data class node under an XML file.</summary>
-public sealed class ProfileDataTypeNode : ObservableObject
-{
-    public required string TypeName { get; init; }
-    public required int Count { get; init; }
-
-    public string DisplayName => $"{TypeName} ({Count})";
+    public ObservableCollection<ProfileTreeItem> Children { get; } = [];
 }

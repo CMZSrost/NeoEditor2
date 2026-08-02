@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Controls.DataGridHierarchical;
 using Avalonia.Platform.Storage;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -39,37 +40,50 @@ public partial class ImageOrchestrationViewModel : ImageToolObservableObject
 
     public ObservableCollection<ImageOrchestrationSourceNode> Sources { get; } = [];
 
+    /// <summary>Hierarchical grid model: source roots with their pairs as children (round22).</summary>
+    public HierarchicalModel<object> TreeModel { get; }
+
+    /// <summary>Raw DataGrid selection (a HierarchicalNode wrapper); unwrapped and synced to the pair/source below.</summary>
+    [ObservableProperty]
+    public partial object? SelectedRow { get; set; }
+
     [ObservableProperty] public partial ImageOrchestrationSourceNode? SelectedSource { get; set; }
 
     [ObservableProperty] public partial ImageOrchestrationPairItem? SelectedPair { get; set; }
 
     [ObservableProperty] public partial bool IsLoading { get; set; }
 
-    public ImageOrchestrationViewModel(
-        ILocalizationService loc,
-        IConfigService config,
-        IModImageListService imageListService,
-        INotificationService notificationService,
-        IProfileModSourceProvider sourceProvider,
-        IMessenger messenger)
-        : base(loc)
-    {
-        _config = config;
-        _imageListService = imageListService;
-        _notification = notificationService;
-        _sourceProvider = sourceProvider;
-
-        // 议题6 (R27): auto-load + refresh on workspace lifecycle changes.
-        // OpenMergeEditorMessage covers loads triggered from the Profile Tool.
-        messenger.Register<GameRootDirChangedMessage>(this, (_, _) => _ = RefreshAsync());
-        messenger.Register<LoadProfileMessage>(this, (_, _) => _ = RefreshAsync());
-        messenger.Register<OpenMergeEditorMessage>(this, (_, _) => _ = RefreshAsync());
-        messenger.Register<RefreshModMessage>(this, (_, _) => _ = RefreshAsync());
-        _ = RefreshAsync();
-    }
-
     public bool HasSelectedSource => SelectedSource is not null;
     public bool IsReadOnly => SelectedSource?.ReadOnly == true;
+
+    /// <summary>
+    /// Grid selection → VM state. Selecting a source also selects its first pair (so the
+    /// pair toolbar acts immediately, matching the old two-pane behavior); selecting a
+    /// pair selects the pair and resolves its owning source.
+    /// </summary>
+    partial void OnSelectedRowChanged(object? value)
+    {
+        var item = value switch
+        {
+            HierarchicalNode node => node.Item,
+            _ => value
+        };
+
+        switch (item)
+        {
+            case ImageOrchestrationSourceNode s:
+                SelectedSource = s; // OnSelectedSourceChanged auto-selects its first pair
+                break;
+            case ImageOrchestrationPairItem p:
+                SelectedSource = Sources.FirstOrDefault(s => s.Pairs.Contains(p));
+                SelectedPair = p; // overrides the auto-selected first pair
+                break;
+            default:
+                SelectedSource = null;
+                SelectedPair = null;
+                break;
+        }
+    }
 
     partial void OnSelectedSourceChanged(ImageOrchestrationSourceNode? value)
     {
@@ -86,6 +100,36 @@ public partial class ImageOrchestrationViewModel : ImageToolObservableObject
         MoveUpCommand.NotifyCanExecuteChanged();
         MoveDownCommand.NotifyCanExecuteChanged();
         DeletePairCommand.NotifyCanExecuteChanged();
+    }
+
+    public ImageOrchestrationViewModel(
+        ILocalizationService loc,
+        IConfigService config,
+        IModImageListService imageListService,
+        INotificationService notificationService,
+        IProfileModSourceProvider sourceProvider,
+        IMessenger messenger)
+        : base(loc)
+    {
+        _config = config;
+        _imageListService = imageListService;
+        _notification = notificationService;
+        _sourceProvider = sourceProvider;
+
+        TreeModel = new HierarchicalModel<object>(new HierarchicalOptions<object>
+        {
+            // Source roots expose their declared pairs as children; pairs are leaves.
+            ChildrenSelector = o => o is ImageOrchestrationSourceNode s ? s.Pairs : null,
+            IsLeafSelector = o => o is not ImageOrchestrationSourceNode
+        });
+
+        // 议题6 (R27): auto-load + refresh on workspace lifecycle changes.
+        // OpenMergeEditorMessage covers loads triggered from the Profile Tool.
+        messenger.Register<GameRootDirChangedMessage>(this, (_, _) => _ = RefreshAsync());
+        messenger.Register<LoadProfileMessage>(this, (_, _) => _ = RefreshAsync());
+        messenger.Register<OpenMergeEditorMessage>(this, (_, _) => _ = RefreshAsync());
+        messenger.Register<RefreshModMessage>(this, (_, _) => _ = RefreshAsync());
+        _ = RefreshAsync();
     }
 
     [RelayCommand]
@@ -128,14 +172,14 @@ public partial class ImageOrchestrationViewModel : ImageToolObservableObject
 
     private void ApplySources(IReadOnlyList<ImageOrchestrationSourceNode> sources)
     {
-        var previousName = SelectedSource?.Name;
         Sources.Clear();
         foreach (var source in sources)
         {
             Sources.Add(source);
         }
 
-        SelectedSource = sources.FirstOrDefault(s => s.Name == previousName) ?? sources.FirstOrDefault();
+        TreeModel.SetRoots(sources);
+        SelectedRow = null;
     }
 
     private bool CanSave() => SelectedSource is { ReadOnly: false };
@@ -347,7 +391,7 @@ public partial class ImageOrchestrationViewModel : ImageToolObservableObject
         }
 
         SelectedSource.Pairs.Remove(SelectedPair);
-        SelectedPair = SelectedSource.Pairs.FirstOrDefault();
+        SelectedPair = SelectedSource?.Pairs.FirstOrDefault();
     }
 
     /// <summary>
@@ -511,6 +555,22 @@ public sealed class ImageOrchestrationSourceNode : ObservableObject
         }
     }
 
+    /// <summary>Compact "N missing" hint for the status column (source rows).</summary>
+    public string MissingSummary => HasMissing ? $"{MissingCount} missing" : "";
+
+    // ── Unified grid-row shape (shared with ImageOrchestrationPairItem) — the cell
+    //    templates bind to these so the table renders without ContentControl/DataTemplate
+    //    type switching (which fell back to ToString() = class name at runtime).
+    public string RowTitle => Name;
+    public string RowSubtitle => Summary;
+    public bool HasRowSubtitle => RowSubtitle.Length > 0;
+    public string? RowToolTip => null;
+    public string X2Text => MissingSummary;
+    public string? X2ToolTip => null;
+    public bool IsPair => false;
+    public bool NormalMissing => true;
+    public bool X2Missing => true;
+
     public ImageOrchestrationSourceNode()
     {
         Pairs.CollectionChanged += OnPairsChanged;
@@ -521,6 +581,7 @@ public sealed class ImageOrchestrationSourceNode : ObservableObject
         OnPropertyChanged(nameof(Summary));
         OnPropertyChanged(nameof(MissingCount));
         OnPropertyChanged(nameof(HasMissing));
+        OnPropertyChanged(nameof(MissingSummary));
     }
 }
 
@@ -537,4 +598,15 @@ public sealed class ImageOrchestrationPairItem
     public bool IsMissing => !NormalExists && !X2Exists;
     public bool HasMissing => !NormalExists || !X2Exists;
     public string DisplayName => NormalImage;
+
+    // ── Unified grid-row shape (shared with ImageOrchestrationSourceNode) ──
+    public string RowTitle => NormalImage;
+    public string RowSubtitle => "";
+    public bool HasRowSubtitle => false;
+    public string? RowToolTip => NormalPath;
+    public string X2Text => X2Image;
+    public string? X2ToolTip => X2Path;
+    public bool IsPair => true;
+    public bool NormalMissing => !NormalExists;
+    public bool X2Missing => !X2Exists;
 }

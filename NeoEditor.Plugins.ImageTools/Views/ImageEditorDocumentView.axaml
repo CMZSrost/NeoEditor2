@@ -5,308 +5,417 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mainContent="clr-namespace:NeoEditor.Plugins.ImageTools.ViewModels"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    d:DesignHeight="450"
+    d:DesignHeight="520"
     d:DesignWidth="800"
     x:DataType="mainContent:ImageEditorDocument"
     mc:Ignorable="d">
     <Grid
         MinHeight="0"
-        ColumnDefinitions="*,4,*"
-        ColumnSpacing="12"
-        RowDefinitions="Auto,Auto,*,Auto"
+        RowDefinitions="Auto,*,Auto"
         RowSpacing="8">
-        <TextBlock
-            FontSize="15"
-            FontWeight="Bold"
-            Text="{Binding Loc[AddImage]}" />
-        <TextBlock
-            Grid.Row="0"
-            Grid.Column="2"
-            FontSize="15"
-            FontWeight="Bold"
-            Text="{Binding Loc[X2Preview]}" />
 
-        <GridSplitter
-            Grid.Row="0"
-            Grid.RowSpan="3"
-            Grid.Column="1"
-            ResizeDirection="Columns" />
-
+        <!--  Row 0: AI generation bar — prompt row + free-size row (separate lines so the
+              NumericUpDowns are never squeezed by the wider prompt TextBox)  -->
         <StackPanel
-            Grid.Row="1"
-            Grid.Column="0"
-            Spacing="2">
-            <TextBlock TextWrapping="Wrap">
-                <Run FontWeight="Bold" Text="{Binding Loc[Name]}" />
-                <Run Text=": " />
-                <Run Text="{Binding ImageName}" />
-            </TextBlock>
-            <TextBlock>
-                <Run FontWeight="Bold" Text="{Binding Loc[ImageDimensions]}" />
-                <Run Text=": " />
-                <Run Text="{Binding ImageDimensions}" />
-            </TextBlock>
-            <TextBlock>
-                <Run FontWeight="Bold" Text="{Binding Loc[FileSize]}" />
-                <Run Text=": " />
-                <Run Text="{Binding ImageFileSize}" />
-            </TextBlock>
-            <TextBlock TextWrapping="Wrap">
-                <Run FontWeight="Bold" Text="{Binding Loc[Path]}" />
-                <Run Text=": " />
-                <Run Text="{Binding ImagePath}" />
-            </TextBlock>
-            <TextBlock
-                IsVisible="{Binding HasNoImage}"
-                Opacity="0.7"
-                Text="{Binding Loc[NoImageSelected]}" />
-            <TextBlock
-                IsVisible="{Binding HasSelection}"
-                Opacity="0.7"
-                Text="{Binding SelectionDimensions}" />
+            Grid.Row="0"
+            Spacing="4">
+            <StackPanel Orientation="Horizontal" Spacing="8">
+                <TextBlock
+                    VerticalAlignment="Center"
+                    FontSize="11"
+                    FontWeight="SemiBold"
+                    Text="{Binding Loc[AiGenerate]}" />
+                <TextBox
+                    Width="280"
+                    IsEnabled="{Binding IsAiAvailable}"
+                    PlaceholderText="{Binding Loc[AiPromptPlaceholder]}"
+                    Text="{Binding AiPrompt, Mode=TwoWay}" />
+                <Button
+                    VerticalAlignment="Center"
+                    Command="{Binding AiGenerateCommand}"
+                    Content="{Binding Loc[AiGenerate]}"
+                    IsEnabled="{Binding CanGenerateAiImage}" />
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" Spacing="8">
+                <TextBlock
+                    VerticalAlignment="Center"
+                    FontSize="11"
+                    Foreground="Gray"
+                    Text="Size:" />
+                <NumericUpDown
+                    Width="110"
+                    IsEnabled="{Binding IsAiAvailable}"
+                    Value="{Binding AiWidth}"
+                    Minimum="512"
+                    Maximum="2880"
+                    Increment="16" />
+                <TextBlock
+                    VerticalAlignment="Center"
+                    Text="×" />
+                <NumericUpDown
+                    Width="110"
+                    IsEnabled="{Binding IsAiAvailable}"
+                    Value="{Binding AiHeight}"
+                    Minimum="512"
+                    Maximum="2880"
+                    Increment="16" />
+                <TextBlock
+                    VerticalAlignment="Center"
+                    FontSize="9"
+                    Foreground="#E57373"
+                    IsVisible="{Binding HasAiGenerationError}"
+                    MaxWidth="320"
+                    Text="{Binding AiGenerationError}"
+                    TextWrapping="Wrap" />
+                <TextBlock
+                    VerticalAlignment="Center"
+                    FontSize="9"
+                    IsVisible="{Binding IsAiUnavailable}"
+                    Opacity="0.7"
+                    Text="{Binding Loc[AiUnavailableHint]}" />
+            </StackPanel>
         </StackPanel>
 
-        <StackPanel
-            Grid.Row="1"
-            Grid.Column="2"
-            Spacing="2">
-            <TextBlock>
-                <Run FontWeight="Bold" Text="{Binding Loc[NormalOutput]}" />
-                <Run Text=": " />
-                <Run Text="{Binding NormalOutputDimensions}" />
-            </TextBlock>
-            <TextBlock>
-                <Run FontWeight="Bold" Text="{Binding Loc[X2Output]}" />
-                <Run Text=": " />
-                <Run Text="{Binding X2OutputDimensions}" />
-            </TextBlock>
-            <TextBlock TextWrapping="Wrap">
-                <Run FontWeight="Bold" Text="{Binding Loc[Name]}" />
-                <Run Text=": " />
-                <Run Text="{Binding ProcessedImageName}" />
-            </TextBlock>
-            <TextBlock>
-                <Run FontWeight="Bold" Text="{Binding Loc[ImageDimensions]}" />
-                <Run Text=": " />
-                <Run Text="{Binding ProcessedImageDimensions}" />
-            </TextBlock>
-            <TextBlock>
-                <Run FontWeight="Bold" Text="{Binding Loc[FileSize]}" />
-                <Run Text=": " />
-                <Run Text="{Binding ProcessedImageFileSize}" />
-            </TextBlock>
-            <TextBlock TextWrapping="Wrap">
-                <Run FontWeight="Bold" Text="{Binding Loc[Path]}" />
-                <Run Text=": " />
-                <Run Text="{Binding ProcessedImagePath}" />
-            </TextBlock>
-            <TextBlock
-                IsVisible="{Binding HasNoProcessedImage}"
-                Opacity="0.7"
-                Text="{Binding Loc[NoProcessedImage]}" />
-            <TextBlock
-                Opacity="0.7"
-                Text="{Binding Loc[ImageEditorGridConstraintHint]}"
-                TextWrapping="Wrap" />
-        </StackPanel>
-
+        <!--  Row 1: 2×2 workbench grid — 原图 / 原图像素 / AI生成图 / AI图像素  -->
         <Grid
-            x:Name="OriginalImageHost"
-            Grid.Row="2"
-            Grid.Column="0"
-            MinHeight="0">
-            <Image
-                x:Name="OriginalImageViewer"
-                MinHeight="0"
-                Source="{Binding SelectedImage}"
-                Stretch="Uniform" />
-            <Canvas x:Name="SelectionOverlayCanvas" ClipToBounds="True">
-                <Border
-                    x:Name="SelectionMaskTop"
-                    Background="#80000000"
-                    IsHitTestVisible="False" />
-                <Border
-                    x:Name="SelectionMaskLeft"
-                    Background="#80000000"
-                    IsHitTestVisible="False" />
-                <Border
-                    x:Name="SelectionMaskRight"
-                    Background="#80000000"
-                    IsHitTestVisible="False" />
-                <Border
-                    x:Name="SelectionMaskBottom"
-                    Background="#80000000"
-                    IsHitTestVisible="False" />
-                <Border
-                    x:Name="SelectionBorder"
-                    Background="#22009DFF"
-                    BorderBrush="#FF42A5F5"
-                    BorderThickness="2"
-                    Cursor="SizeAll"
-                    PointerMoved="OnHandlePointerMoved"
-                    PointerPressed="OnHandlePointerPressed"
-                    PointerReleased="OnHandlePointerReleased"
-                    Tag="Move" />
-                <Border
-                    x:Name="LeftHandle"
-                    Background="Transparent"
-                    Cursor="SizeWestEast"
-                    PointerMoved="OnHandlePointerMoved"
-                    PointerPressed="OnHandlePointerPressed"
-                    PointerReleased="OnHandlePointerReleased"
-                    Tag="Left" />
-                <Border
-                    x:Name="RightHandle"
-                    Background="Transparent"
-                    Cursor="SizeWestEast"
-                    PointerMoved="OnHandlePointerMoved"
-                    PointerPressed="OnHandlePointerPressed"
-                    PointerReleased="OnHandlePointerReleased"
-                    Tag="Right" />
-                <Border
-                    x:Name="TopHandle"
-                    Background="Transparent"
-                    Cursor="SizeNorthSouth"
-                    PointerMoved="OnHandlePointerMoved"
-                    PointerPressed="OnHandlePointerPressed"
-                    PointerReleased="OnHandlePointerReleased"
-                    Tag="Top" />
-                <Border
-                    x:Name="BottomHandle"
-                    Background="Transparent"
-                    Cursor="SizeNorthSouth"
-                    PointerMoved="OnHandlePointerMoved"
-                    PointerPressed="OnHandlePointerPressed"
-                    PointerReleased="OnHandlePointerReleased"
-                    Tag="Bottom" />
-                <Border
-                    x:Name="TopLeftHandle"
-                    Background="Transparent"
-                    Cursor="TopLeftCorner"
-                    PointerMoved="OnHandlePointerMoved"
-                    PointerPressed="OnHandlePointerPressed"
-                    PointerReleased="OnHandlePointerReleased"
-                    Tag="TopLeft" />
-                <Border
-                    x:Name="TopRightHandle"
-                    Background="Transparent"
-                    Cursor="TopRightCorner"
-                    PointerMoved="OnHandlePointerMoved"
-                    PointerPressed="OnHandlePointerPressed"
-                    PointerReleased="OnHandlePointerReleased"
-                    Tag="TopRight" />
-                <Border
-                    x:Name="BottomLeftHandle"
-                    Background="Transparent"
-                    Cursor="BottomLeftCorner"
-                    PointerMoved="OnHandlePointerMoved"
-                    PointerPressed="OnHandlePointerPressed"
-                    PointerReleased="OnHandlePointerReleased"
-                    Tag="BottomLeft" />
-                <Border
-                    x:Name="BottomRightHandle"
-                    Background="Transparent"
-                    Cursor="BottomRightCorner"
-                    PointerMoved="OnHandlePointerMoved"
-                    PointerPressed="OnHandlePointerPressed"
-                    PointerReleased="OnHandlePointerReleased"
-                    Tag="BottomRight" />
-            </Canvas>
-        </Grid>
-        <TextBlock
-            Grid.Row="2"
-            Grid.Column="0"
-            HorizontalAlignment="Center"
-            VerticalAlignment="Center"
-            IsVisible="{Binding HasNoImage}"
-            Opacity="0.7"
-            Text="{Binding Loc[NoImageSelected]}" />
-
-        <Image
-            Grid.Row="2"
-            Grid.Column="2"
+            Grid.Row="1"
             MinHeight="0"
-            Source="{Binding ProcessedImage}"
-            Stretch="Uniform" />
-        <TextBlock
-            Grid.Row="2"
-            Grid.Column="2"
-            HorizontalAlignment="Center"
-            VerticalAlignment="Center"
-            IsVisible="{Binding HasNoProcessedImage}"
-            Opacity="0.7"
-            Text="{Binding Loc[NoProcessedImage]}" />
+            ColumnDefinitions="*,6,*"
+            RowDefinitions="*,6,*">
 
-        <StackPanel
-            Grid.Row="3"
-            Grid.Column="0"
-            Grid.ColumnSpan="3"
-            Orientation="Horizontal"
-            Spacing="8">
-            <Button Command="{Binding SelectImageCommand}" Content="{Binding Loc[SelectImage]}" />
-            <TextBlock VerticalAlignment="Center">
-                <Run Text="{Binding Loc[NormalOutput]}" />
-                <Run Text=" " />
-                <Run Text="{Binding Loc[Width]}" />
-            </TextBlock>
-            <NumericUpDown
-                Width="96"
-                FormatString="F0"
-                Increment="10"
-                Minimum="10"
-                Value="{Binding TargetWidth, Mode=TwoWay}" />
-            <TextBlock VerticalAlignment="Center">
-                <Run Text="{Binding Loc[Height]}" />
-            </TextBlock>
-            <NumericUpDown
-                Width="96"
-                FormatString="F0"
-                Increment="10"
-                Minimum="10"
-                Value="{Binding TargetHeight, Mode=TwoWay}" />
-            <CheckBox
-                VerticalAlignment="Center"
-                Content="{Binding Loc[LockAspectRatio]}"
-                IsChecked="{Binding LockAspectRatio, Mode=TwoWay}" />
-            <Button
-                Click="OnPixelateClick"
-                Content="{Binding Loc[Pixelate]}"
-                IsEnabled="{Binding CanPixelate}" />
-            <Button
-                Click="OnSaveClick"
-                Content="{Binding Loc[Save]}"
-                IsEnabled="{Binding CanSaveProcessedImage}" />
-            <!-- Pixel Art Options (G1) -->
-            <Separator
-                Height="20"
-                VerticalAlignment="Center" />
-            <TextBlock
-                VerticalAlignment="Center"
-                Text="{Binding ColorCountDisplay}" />
-            <Slider
-                Width="120"
-                VerticalAlignment="Center"
-                IsEnabled="{Binding CanPixelate}"
-                LargeChange="8"
-                Maximum="{Binding MaxColorCount}"
-                Minimum="{Binding MinColorCount}"
-                TickFrequency="4"
-                Value="{Binding ColorCount, Mode=TwoWay}" />
-            <CheckBox
-                VerticalAlignment="Center"
-                Content="Edges"
-                IsChecked="{Binding EdgeEnhancement, Mode=TwoWay}"
-                IsEnabled="{Binding CanPixelate}" />
-            <CheckBox
-                VerticalAlignment="Center"
-                Content="Dither"
-                IsChecked="{Binding DitheringEnabled, Mode=TwoWay}"
-                IsEnabled="{Binding CanPixelate}" />
-            <CheckBox
-                VerticalAlignment="Center"
-                Content="Transp. BG"
-                IsChecked="{Binding TransparentBackground, Mode=TwoWay}"
-                IsEnabled="{Binding CanPixelate}" />
-        </StackPanel>
+            <!--  (0,0) 原图 — editable source with crop overlay  -->
+            <Grid
+                Grid.Row="0"
+                Grid.Column="0"
+                MinHeight="0">
+                <Grid.RowDefinitions>Auto,*,Auto</Grid.RowDefinitions>
+                <TextBlock
+                    Grid.Row="0"
+                    FontSize="11"
+                    FontWeight="SemiBold"
+                    Text="{Binding OriginalTitle}" />
+                <Grid Grid.Row="1" MinHeight="0">
+                    <Image
+                        x:Name="OriginalImageViewer"
+                        MinHeight="0"
+                        Source="{Binding SelectedImage}"
+                        Stretch="Uniform" />
+                    <Canvas x:Name="SelectionOverlayCanvas" ClipToBounds="True">
+                        <Border
+                            x:Name="SelectionMaskTop"
+                            Background="#80000000"
+                            IsHitTestVisible="False" />
+                        <Border
+                            x:Name="SelectionMaskLeft"
+                            Background="#80000000"
+                            IsHitTestVisible="False" />
+                        <Border
+                            x:Name="SelectionMaskRight"
+                            Background="#80000000"
+                            IsHitTestVisible="False" />
+                        <Border
+                            x:Name="SelectionMaskBottom"
+                            Background="#80000000"
+                            IsHitTestVisible="False" />
+                        <Border
+                            x:Name="SelectionBorder"
+                            Background="#22009DFF"
+                            BorderBrush="#FF42A5F5"
+                            BorderThickness="2"
+                            Cursor="SizeAll"
+                            PointerMoved="OnHandlePointerMoved"
+                            PointerPressed="OnHandlePointerPressed"
+                            PointerReleased="OnHandlePointerReleased"
+                            Tag="Move" />
+                        <Border
+                            x:Name="LeftHandle"
+                            Background="Transparent"
+                            Cursor="SizeWestEast"
+                            PointerMoved="OnHandlePointerMoved"
+                            PointerPressed="OnHandlePointerPressed"
+                            PointerReleased="OnHandlePointerReleased"
+                            Tag="Left" />
+                        <Border
+                            x:Name="RightHandle"
+                            Background="Transparent"
+                            Cursor="SizeWestEast"
+                            PointerMoved="OnHandlePointerMoved"
+                            PointerPressed="OnHandlePointerPressed"
+                            PointerReleased="OnHandlePointerReleased"
+                            Tag="Right" />
+                        <Border
+                            x:Name="TopHandle"
+                            Background="Transparent"
+                            Cursor="SizeNorthSouth"
+                            PointerMoved="OnHandlePointerMoved"
+                            PointerPressed="OnHandlePointerPressed"
+                            PointerReleased="OnHandlePointerReleased"
+                            Tag="Top" />
+                        <Border
+                            x:Name="BottomHandle"
+                            Background="Transparent"
+                            Cursor="SizeNorthSouth"
+                            PointerMoved="OnHandlePointerMoved"
+                            PointerPressed="OnHandlePointerPressed"
+                            PointerReleased="OnHandlePointerReleased"
+                            Tag="Bottom" />
+                        <Border
+                            x:Name="TopLeftHandle"
+                            Background="Transparent"
+                            Cursor="TopLeftCorner"
+                            PointerMoved="OnHandlePointerMoved"
+                            PointerPressed="OnHandlePointerPressed"
+                            PointerReleased="OnHandlePointerReleased"
+                            Tag="TopLeft" />
+                        <Border
+                            x:Name="TopRightHandle"
+                            Background="Transparent"
+                            Cursor="TopRightCorner"
+                            PointerMoved="OnHandlePointerMoved"
+                            PointerPressed="OnHandlePointerPressed"
+                            PointerReleased="OnHandlePointerReleased"
+                            Tag="TopRight" />
+                        <Border
+                            x:Name="BottomLeftHandle"
+                            Background="Transparent"
+                            Cursor="BottomLeftCorner"
+                            PointerMoved="OnHandlePointerMoved"
+                            PointerPressed="OnHandlePointerPressed"
+                            PointerReleased="OnHandlePointerReleased"
+                            Tag="BottomLeft" />
+                        <Border
+                            x:Name="BottomRightHandle"
+                            Background="Transparent"
+                            Cursor="BottomRightCorner"
+                            PointerMoved="OnHandlePointerMoved"
+                            PointerPressed="OnHandlePointerPressed"
+                            PointerReleased="OnHandlePointerReleased"
+                            Tag="BottomRight" />
+                    </Canvas>
+                    <TextBlock
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        IsVisible="{Binding HasNoImage}"
+                        Opacity="0.7"
+                        Text="{Binding Loc[NoImageSelected]}" />
+                </Grid>
+                <StackPanel
+                    Grid.Row="2"
+                    Margin="0,2,0,0"
+                    Orientation="Horizontal"
+                    Spacing="6">
+                    <TextBlock
+                        MaxWidth="200"
+                        VerticalAlignment="Center"
+                        FontSize="9"
+                        Opacity="0.7"
+                        Text="{Binding ImageName}"
+                        TextTrimming="CharacterEllipsis" />
+                    <Button
+                        Padding="8,2"
+                        VerticalAlignment="Center"
+                        Command="{Binding SaveOriginalImageCommand}"
+                        Content="{Binding Loc[Save]}"
+                        FontSize="10"
+                        IsEnabled="{Binding CanSaveOriginalImage}" />
+                </StackPanel>
+            </Grid>
+
+            <!--  (0,2) 原图像素处理图  -->
+            <Grid
+                Grid.Row="0"
+                Grid.Column="2"
+                MinHeight="0">
+                <Grid.RowDefinitions>Auto,*,Auto</Grid.RowDefinitions>
+                <TextBlock
+                    Grid.Row="0"
+                    FontSize="11"
+                    FontWeight="SemiBold"
+                    Text="{Binding ProcessedTitle}" />
+                <Grid Grid.Row="1" MinHeight="0">
+                    <Image
+                        MinHeight="0"
+                        Source="{Binding ProcessedImage}"
+                        Stretch="Uniform" />
+                    <TextBlock
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        IsVisible="{Binding HasNoProcessedImage}"
+                        Opacity="0.7"
+                        Text="{Binding Loc[NoProcessedImage]}" />
+                </Grid>
+                <Button
+                    Grid.Row="2"
+                    Margin="0,2,0,0"
+                    Padding="8,2"
+                    HorizontalAlignment="Left"
+                    Command="{Binding SaveProcessedImageCommand}"
+                    Content="{Binding Loc[Save]}"
+                    FontSize="10"
+                    IsEnabled="{Binding CanSaveProcessedImage}" />
+            </Grid>
+
+            <!--  (2,0) AI生成图  -->
+            <Grid
+                Grid.Row="2"
+                Grid.Column="0"
+                MinHeight="0">
+                <Grid.RowDefinitions>Auto,*,Auto</Grid.RowDefinitions>
+                <TextBlock
+                    Grid.Row="0"
+                    FontSize="11"
+                    FontWeight="SemiBold"
+                    Text="{Binding AiTitle}" />
+                <Grid Grid.Row="1" MinHeight="0">
+                    <Image
+                        MinHeight="0"
+                        Source="{Binding AiImage}"
+                        Stretch="Uniform" />
+                    <ProgressBar
+                        Width="120"
+                        Height="6"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        IsIndeterminate="True"
+                        IsVisible="{Binding IsGeneratingAi}" />
+                    <TextBlock
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        IsVisible="{Binding HasNoAiImage}"
+                        Opacity="0.7"
+                        Text="{Binding Loc[NoImageSelected]}" />
+                </Grid>
+                <Button
+                    Grid.Row="2"
+                    Margin="0,2,0,0"
+                    Padding="8,2"
+                    HorizontalAlignment="Left"
+                    Command="{Binding SaveAiImageCommand}"
+                    Content="{Binding Loc[Save]}"
+                    FontSize="10"
+                    IsEnabled="{Binding CanSaveAiImage}" />
+            </Grid>
+
+            <!--  (2,2) AI图像素处理图  -->
+            <Grid
+                Grid.Row="2"
+                Grid.Column="2"
+                MinHeight="0">
+                <Grid.RowDefinitions>Auto,*,Auto</Grid.RowDefinitions>
+                <TextBlock
+                    Grid.Row="0"
+                    FontSize="11"
+                    FontWeight="SemiBold"
+                    Text="{Binding AiProcessedTitle}" />
+                <Grid Grid.Row="1" MinHeight="0">
+                    <Image
+                        MinHeight="0"
+                        Source="{Binding AiProcessedImage}"
+                        Stretch="Uniform" />
+                    <TextBlock
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        IsVisible="{Binding HasNoAiProcessedImage}"
+                        Opacity="0.7"
+                        Text="{Binding Loc[NoProcessedImage]}" />
+                </Grid>
+                <Button
+                    Grid.Row="2"
+                    Margin="0,2,0,0"
+                    Padding="8,2"
+                    HorizontalAlignment="Left"
+                    Command="{Binding SaveAiProcessedImageCommand}"
+                    Content="{Binding Loc[Save]}"
+                    FontSize="10"
+                    IsEnabled="{Binding CanSaveAiProcessedImage}" />
+            </Grid>
+        </Grid>
+
+        <!--  Row 2: bottom controls — actions + pixel options | size adjustment (stacked)  -->
+        <Grid
+            Grid.Row="2"
+            ColumnDefinitions="*,Auto"
+            ColumnSpacing="16">
+            <StackPanel Orientation="Horizontal" Spacing="6">
+                <Button
+                    Padding="8,3"
+                    Command="{Binding SelectImageCommand}"
+                    Content="{Binding Loc[SelectImage]}"
+                    FontSize="10" />
+                <Button
+                    Padding="8,3"
+                    Click="OnPixelateClick"
+                    Content="{Binding Loc[Pixelate]}"
+                    FontSize="10"
+                    IsEnabled="{Binding CanPixelate}" />
+                <Button
+                    Padding="8,3"
+                    Command="{Binding PixelateAiImageCommand}"
+                    Content="{Binding Loc[PixelateAi]}"
+                    FontSize="10"
+                    IsEnabled="{Binding CanPixelateAiImage}" />
+                <Separator
+                    Width="1"
+                    Margin="2,2"
+                    VerticalAlignment="Stretch" />
+                <TextBlock VerticalAlignment="Center" Text="{Binding ColorCountDisplay}" />
+                <Slider
+                    Width="110"
+                    VerticalAlignment="Center"
+                    IsEnabled="{Binding CanPixelate}"
+                    LargeChange="8"
+                    Maximum="{Binding MaxColorCount}"
+                    Minimum="{Binding MinColorCount}"
+                    TickFrequency="4"
+                    Value="{Binding ColorCount, Mode=TwoWay}" />
+                <CheckBox
+                    VerticalAlignment="Center"
+                    Content="Edges"
+                    IsChecked="{Binding EdgeEnhancement, Mode=TwoWay}"
+                    IsEnabled="{Binding CanPixelate}" />
+                <CheckBox
+                    VerticalAlignment="Center"
+                    Content="Dither"
+                    IsChecked="{Binding DitheringEnabled, Mode=TwoWay}"
+                    IsEnabled="{Binding CanPixelate}" />
+                <CheckBox
+                    VerticalAlignment="Center"
+                    Content="Transp. BG"
+                    IsChecked="{Binding TransparentBackground, Mode=TwoWay}"
+                    IsEnabled="{Binding CanPixelate}" />
+            </StackPanel>
+
+            <!--  Size adjustment: width / height stacked vertically (each input wider)  -->
+            <StackPanel
+                Grid.Column="1"
+                Orientation="Vertical"
+                Spacing="2">
+                <StackPanel Orientation="Horizontal" Spacing="4">
+                    <TextBlock
+                        Width="38"
+                        VerticalAlignment="Center"
+                        Text="{Binding Loc[Width]}" />
+                    <NumericUpDown
+                        Width="130"
+                        FormatString="F0"
+                        Increment="10"
+                        Minimum="10"
+                        Value="{Binding TargetWidth, Mode=TwoWay}" />
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Spacing="4">
+                    <TextBlock
+                        Width="38"
+                        VerticalAlignment="Center"
+                        Text="{Binding Loc[Height]}" />
+                    <NumericUpDown
+                        Width="130"
+                        FormatString="F0"
+                        Increment="10"
+                        Minimum="10"
+                        Value="{Binding TargetHeight, Mode=TwoWay}" />
+                </StackPanel>
+                <CheckBox Content="{Binding Loc[LockAspectRatio]}" IsChecked="{Binding LockAspectRatio, Mode=TwoWay}" />
+            </StackPanel>
+        </Grid>
     </Grid>
 </UserControl>

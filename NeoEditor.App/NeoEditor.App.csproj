@@ -120,16 +120,17 @@
         </Compile>
     </ItemGroup>
 
-    <!--    <ItemGroup>-->
-    <!--        <Content Update="appsettings.json">-->
-    <!--            <ExcludeFromSingleFile>true</ExcludeFromSingleFile>-->
-    <!--            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>-->
-    <!--            <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>-->
-    <!--        </Content>-->
-    <!--        <Content Update="appsettings.Development.json">-->
-    <!--            <ExcludeFromSingleFile>true</ExcludeFromSingleFile>-->
-    <!--            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>-->
-    <!--            <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>-->
-    <!--        </Content>-->
-    <!--    </ItemGroup>-->
+    <!-- 单文件发布（CI Release）：appsettings.json 与 Help/*.md 在运行时从磁盘加载
+         （App.axaml.cs AddJsonFile optional:false / MainWindowViewModel），必须留在 exe 外。 -->
+    <ItemGroup>
+        <Content Update="appsettings.json">
+            <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+        </Content>
+        <Content Update="appsettings.Development.json">
+            <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+        </Content>
+        <Content Update="Help\**\*">
+            <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+        </Content>
+    </ItemGroup>
 </Project>

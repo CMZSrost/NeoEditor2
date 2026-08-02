@@ -17,8 +17,7 @@ public record OpenMergeEditorMessage(ProfileInfo ProfileInfo);
 public record OpenImageDocumentMessage(string Title, string ImagePath);
 
 /// <summary>
-/// Published when an AI-generated image is ready.
-/// The App shell subscribes to open the image in ImageEditorDocument.
+/// Opens a blank Image Editor workbench (with the AI generate panel) from the Image
+/// Browser's "AI 生成图片" context action. The App shell creates the document.
 /// </summary>
-public record ImageGeneratedMessage(string EntityType, string EntityId,
-    string NormalImagePath, string X2ImagePath);
+public record OpenAiImageWorkbenchMessage;

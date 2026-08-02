@@ -3,7 +3,6 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
-using Avalonia.Media;
 using NeoEditor.Plugins.ImageTools.Helper;
 using NeoEditor.Plugins.ImageTools.ViewModels;
 
@@ -26,7 +25,10 @@ public partial class ImageEditorDocumentView : UserControl
         _overlayPresenter = new ImageSelectionOverlayPresenter(
             SelectionBorder,
             [SelectionMaskTop, SelectionMaskLeft, SelectionMaskRight, SelectionMaskBottom],
-            [LeftHandle, RightHandle, TopHandle, BottomHandle, TopLeftHandle, TopRightHandle, BottomLeftHandle, BottomRightHandle],
+            [
+                LeftHandle, RightHandle, TopHandle, BottomHandle, TopLeftHandle, TopRightHandle, BottomLeftHandle,
+                BottomRightHandle
+            ],
             EdgeHandleThickness,
             CornerHandleSize);
         DataContextChanged += OnDataContextChanged;
@@ -171,7 +173,8 @@ public partial class ImageEditorDocumentView : UserControl
 
     private void UpdateSelectionOverlay()
     {
-        if (_viewModel is not { HasImage: true } || GetViewportGeometry() is not { } geometry || !TryGetDisplayedSelection(out var selection))
+        if (_viewModel is not { HasImage: true } || GetViewportGeometry() is not { } geometry ||
+            !TryGetDisplayedSelection(out var selection))
         {
             _overlayPresenter.Hide();
             return;
@@ -225,7 +228,8 @@ public partial class ImageEditorDocumentView : UserControl
     {
         if (_interactiveSelection is { } interactiveSelection && _viewModel is { HasImage: true } viewModel)
         {
-            viewModel.SetCropBounds(interactiveSelection.Left, interactiveSelection.Top, interactiveSelection.Right, interactiveSelection.Bottom);
+            viewModel.SetCropBounds(interactiveSelection.Left, interactiveSelection.Top, interactiveSelection.Right,
+                interactiveSelection.Bottom);
         }
 
         _interactiveSelection = null;
@@ -252,18 +256,6 @@ public partial class ImageEditorDocumentView : UserControl
 
         PrepareCropForProcessing();
         await _viewModel.PixelateImage();
-    }
-
-    private async void OnSaveClick(object? sender, RoutedEventArgs e)
-    {
-        e.Handled = true;
-        if (_viewModel is null)
-        {
-            return;
-        }
-
-        PrepareCropForProcessing();
-        await _viewModel.SaveProcessedImage();
     }
 
     private static CropHandle GetCropHandle(string? tag)

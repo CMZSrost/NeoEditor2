@@ -94,6 +94,16 @@ internal sealed class StubHostService : IHostService
 
     public IEntityRepository<T> Repository<T>() where T : IEntity => new StubEntityRepository<T>();
 
+    public Task<IReadOnlyList<IEntity>> SearchEntitiesAsync(string query, int limit = 50,
+        string? entityType = null, int? modId = null)
+    {
+        var results = Cache.Values
+            .Where(e => (e.Subject ?? e.EntityId ?? "").Contains(query, StringComparison.OrdinalIgnoreCase))
+            .Take(limit)
+            .ToList();
+        return Task.FromResult<IReadOnlyList<IEntity>>(results);
+    }
+
     public void RegisterEntityCollection(string scopeId, string entityType, System.Collections.IList collection)
     {
     }

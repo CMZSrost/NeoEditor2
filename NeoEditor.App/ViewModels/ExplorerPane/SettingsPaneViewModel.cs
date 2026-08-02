@@ -3,6 +3,9 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Globalization;
 using System.Linq;
+using System.Net.Http;
+using System.Net.Http.Json;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
@@ -233,6 +236,97 @@ public partial class SettingsPaneViewModel : ViewModelBase
         {
             if (Config.ImageModel == value) return;
             Config.ImageModel = value;
+            OnPropertyChanged();
+            Helper.AsyncHelper.FireAndForget(_config.SaveAsync());
+        }
+    }
+
+    // ── Image model connectivity test (Settings "Test" button) ──
+    // Resolves the image provider the way ImageGenerationService does, then makes a real
+    // /images/generations call so the user can verify endpoint + key + model all work
+    // without guessing.
+
+    [ObservableProperty]
+    public partial bool IsTestingImageConnection { get; set; }
+
+    [ObservableProperty]
+    public partial string ImageTestResult { get; set; } = string.Empty;
+
+    public bool HasImageTestResult => !string.IsNullOrWhiteSpace(ImageTestResult);
+
+    [RelayCommand]
+    private async Task TestImageConnection()
+    {
+        IsTestingImageConnection = true;
+        ImageTestResult = string.Empty;
+        OnPropertyChanged(nameof(HasImageTestResult));
+        try
+        {
+            var provider = AiProviderResolver.Resolve(
+                Config, Config.ImageProviderId,
+                Environment.GetEnvironmentVariable("OPENAI_ENDPOINT"),
+                Environment.GetEnvironmentVariable("OPENAI_API_KEY"));
+
+            if (provider is null)
+            {
+                ImageTestResult = _localizationService["Settings.ImageTestNoProvider"];
+                OnPropertyChanged(nameof(HasImageTestResult));
+                return;
+            }
+
+            var model = AiProviderResolver.ResolveModelName(Config.ImageModel,
+                Environment.GetEnvironmentVariable("OPENAI_IMAGE_MODEL"), "dall-e-3");
+
+            // Real call: 512x512 is the smallest size shared by dall-e and CogView (CogView
+            // rejects anything below 512 and non-multiples of 16). Tiny prompt keeps it cheap.
+            var url = $"{provider.Endpoint.TrimEnd('/')}/images/generations";
+            using var http = new HttpClient();
+            http.DefaultRequestHeaders.Add("Authorization", $"Bearer {provider.ApiKey}");
+            var body = new
+            {
+                model,
+                prompt = "test",
+                n = 1,
+                size = "512x512",
+                quality = "standard",
+                response_format = "b64_json"
+            };
+
+            var response = await http.PostAsJsonAsync(url, body);
+            var responseText = await response.Content.ReadAsStringAsync();
+
+            if (response.IsSuccessStatusCode)
+            {
+                ImageTestResult = _localizationService["Settings.ImageTestOk"];
+            }
+            else
+            {
+                // Surface the HTTP status + first line of the error body for diagnosability.
+                var detail = responseText.Replace("\n", " ").Trim();
+                if (detail.Length > 200) detail = detail[..200] + "…";
+                ImageTestResult = string.Format(
+                    _localizationService["Settings.ImageTestFailed"], (int)response.StatusCode, detail);
+            }
+        }
+        catch (Exception ex)
+        {
+            ImageTestResult = string.Format(
+                _localizationService["Settings.ImageTestError"], ex.Message);
+        }
+        finally
+        {
+            IsTestingImageConnection = false;
+            OnPropertyChanged(nameof(HasImageTestResult));
+        }
+    }
+
+    public int DisplayMaxToolCalls
+    {
+        get => Config.MaxToolCallsPerConversation;
+        set
+        {
+            if (Config.MaxToolCallsPerConversation == value) return;
+            Config.MaxToolCallsPerConversation = value;
             OnPropertyChanged();
             Helper.AsyncHelper.FireAndForget(_config.SaveAsync());
         }

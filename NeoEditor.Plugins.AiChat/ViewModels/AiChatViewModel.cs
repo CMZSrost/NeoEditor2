@@ -1,7 +1,9 @@
 using System;
 using System.Collections.ObjectModel;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows.Input;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using NeoEditor.Plugins.AiChat.Services;
@@ -10,6 +12,20 @@ namespace NeoEditor.Plugins.AiChat.ViewModels;
 
 public partial class AiChatViewModel : ObservableObject
 {
+    /// <summary>
+    /// Matches the streaming tool-execution marker ChatService yields between text chunks,
+    /// e.g. <c>"\n[tool: executing SearchAllTypes]\n"</c>. The leading/trailing whitespace is
+    /// part of the marker, so the check tolerates it.
+    /// </summary>
+    [GeneratedRegex(@"\[tool:\s*executing\s+([^\]]+)\]", RegexOptions.IgnoreCase)]
+    private static partial Regex ToolMarkerRegex();
+
+    [GeneratedRegex(@"\[tool:\s*result\s+([^\]]+)\]", RegexOptions.IgnoreCase)]
+    private static partial Regex ToolResultMarkerRegex();
+
+    [GeneratedRegex(@"\[system:\s*([^\]]+)\]", RegexOptions.IgnoreCase)]
+    private static partial Regex SystemMarkerRegex();
+
     private readonly IChatService _chatService;
     private readonly IRagService? _ragService;
 
@@ -27,14 +43,17 @@ public partial class AiChatViewModel : ObservableObject
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(CanSend))]
+    [NotifyPropertyChangedFor(nameof(CanStop))]
+    [NotifyPropertyChangedFor(nameof(SendOrStopCommand))]
+    [NotifyPropertyChangedFor(nameof(SendOrStopLabel))]
+    [NotifyCanExecuteChangedFor(nameof(StopCommand))]
     private bool _isBusy;
 
     [ObservableProperty] private string _systemPrompt;
 
     [ObservableProperty] private bool _isSystemPromptExpanded;
 
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(CanBuildIndex))]
+    [ObservableProperty] [NotifyPropertyChangedFor(nameof(CanBuildIndex))]
     private bool _isBuildingIndex;
 
     [ObservableProperty] private string _ragStatus = "";
@@ -43,13 +62,19 @@ public partial class AiChatViewModel : ObservableObject
     /// Whether AI chat is usable. False when no API key is configured — the panel shows a
     /// "not configured" notice and disables sending / index building.
     /// </summary>
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(CanSend))]
-    [NotifyPropertyChangedFor(nameof(CanBuildIndex))]
+    [ObservableProperty] [NotifyPropertyChangedFor(nameof(CanSend))] [NotifyPropertyChangedFor(nameof(CanBuildIndex))]
     private bool _isAvailable;
 
     /// <summary>True when chat input is usable (configured AND not busy).</summary>
     public bool CanSend => IsAvailable && !IsBusy;
+
+    /// <summary>True while a response is streaming — the Stop button can cancel it.</summary>
+    public bool CanStop => IsBusy;
+
+    /// <summary>The input action: Send when idle, Stop while a response is streaming (toggle).</summary>
+    public ICommand SendOrStopCommand => IsBusy ? StopCommand : SendMessageCommand;
+
+    public string SendOrStopLabel => IsBusy ? "Stop" : "Send";
 
     /// <summary>True when the RAG index can be built (configured AND not already building).</summary>
     public bool CanBuildIndex => IsAvailable && !IsBuildingIndex;
@@ -74,18 +99,47 @@ public partial class AiChatViewModel : ObservableObject
 
         Messages.Add(new ChatMessageItem("user", text));
 
-        // Placeholder for streaming assistant response
-        var assistantMsg = new ChatMessageItem("assistant", "") { IsThinking = true };
-        Messages.Add(assistantMsg);
+        // Streaming: assistant text, tool markers and post-tool text arrive interleaved.
+        // Keep ONE live assistant message; each tool call becomes its own expandable Tool
+        // block — header = tool name, content = the tool result streamed after the result
+        // marker. Cancelling (Stop) aborts the loop without an error bubble.
+        ChatMessageItem? assistantMsg = null;
+        ChatMessageItem? pendingTool = null;
 
         try
         {
             await foreach (var chunk in _chatService.SendMessageStreamingAsync(text, ct)
                                .WithCancellation(ct))
             {
-                if (chunk.StartsWith("[tool:", StringComparison.Ordinal))
+                var execMatch = ToolMarkerRegex().Match(chunk);
+                var resultMatch = ToolResultMarkerRegex().Match(chunk);
+                var systemMatch = SystemMarkerRegex().Match(chunk);
+
+                if (systemMatch.Success)
                 {
-                    // Tool execution marker — show briefly in the content
+                    FinalizeAssistant();
+                    Messages.Add(new ChatMessageItem("system", systemMatch.Groups[1].Value.Trim()));
+                }
+                else if (execMatch.Success)
+                {
+                    FinalizeAssistant();
+                    pendingTool = new ChatMessageItem("tool", "")
+                    {
+                        ToolName = execMatch.Groups[1].Value.Trim()
+                    };
+                    Messages.Add(pendingTool);
+                }
+                else if (resultMatch.Success)
+                {
+                    var rest = chunk.Substring(resultMatch.Index + resultMatch.Length);
+                    if (pendingTool is not null && !string.IsNullOrWhiteSpace(rest))
+                        pendingTool.Content += rest.TrimStart('\n', ' ', '\r', '\t');
+                }
+                else if (assistantMsg is null)
+                {
+                    assistantMsg = new ChatMessageItem("assistant", "");
+                    Messages.Add(assistantMsg);
+                    assistantMsg.IsThinking = false;
                     assistantMsg.Content += chunk;
                 }
                 else
@@ -95,21 +149,50 @@ public partial class AiChatViewModel : ObservableObject
                 }
             }
 
-            // Remove placeholder if nothing was produced
-            if (string.IsNullOrEmpty(assistantMsg.Content))
-            {
+            FinalizeAssistant();
+        }
+        catch (OperationCanceledException)
+        {
+            FinalizeAssistant();
+            if (pendingTool is not null)
+                Messages.Remove(pendingTool);
+            if (assistantMsg is not null)
                 Messages.Remove(assistantMsg);
-            }
+            Messages.Add(new ChatMessageItem("system", "Stopped."));
         }
         catch (Exception ex)
         {
-            Messages.Remove(assistantMsg);
+            if (pendingTool is not null)
+                Messages.Remove(pendingTool);
+            if (assistantMsg is not null)
+                Messages.Remove(assistantMsg);
             Messages.Add(new ChatMessageItem("system", $"Error: {ex.Message}"));
         }
         finally
         {
             IsBusy = false;
         }
+
+        return;
+
+        /// <summary>Pushes the pending assistant text as its own bubble; drops empty placeholders.</summary>
+        void FinalizeAssistant()
+        {
+            if (assistantMsg is null)
+                return;
+
+            assistantMsg.IsThinking = false;
+            if (string.IsNullOrEmpty(assistantMsg.Content))
+                Messages.Remove(assistantMsg);
+            assistantMsg = null;
+        }
+    }
+
+    /// <summary>Cancels the in-flight streaming response (SendMessageCommand supports Cancel).</summary>
+    [RelayCommand(CanExecute = nameof(CanStop))]
+    private void Stop()
+    {
+        SendMessageCommand.Cancel();
     }
 
     [RelayCommand]

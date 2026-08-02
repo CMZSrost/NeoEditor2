@@ -40,11 +40,13 @@ public sealed class EditorTools
     // ── Existing tools (descriptions enhanced for LLM guidance) ──
 
     [McpServerTool, Description(
-        "Fetch a single entity by exact type and ID. Use ListEntities FIRST to discover available " +
-        "entity IDs, then use this to get the full entity as JSON with all properties and references.")]
+         "Fetch a single entity by exact type and ID. Use ListEntities FIRST to discover available " +
+         "entity IDs, then use this to get the full entity as JSON with all properties and references.")]
     public async Task<string> GetEntity(
-        [Description("Entity type name (e.g., ItemType, Creature, Recipe, Encounter)")] string entityType,
-        [Description("Entity ID string (e.g., item_weapon_sword)")] string entityId)
+        [Description("Entity type name (e.g., ItemType, Creature, Recipe, Encounter)")]
+        string entityType,
+        [Description("Entity ID string (e.g., item_weapon_sword)")]
+        string entityId)
     {
         var entity = await GetEntityByTypeAsync(entityType, entityId);
         if (entity is null)
@@ -54,14 +56,16 @@ public sealed class EditorTools
     }
 
     [McpServerTool, Description(
-        "Edit a single property value on an entity. Changes are STAGED in memory, NOT saved to disk. " +
-        "After making all desired edits, call the Save tool to persist. " +
-        "Use GetEntitySchema to see available properties for a type.")]
+         "Edit a single property value on an entity. Changes are STAGED in memory, NOT saved to disk. " +
+         "After making all desired edits, call the Save tool to persist. " +
+         "Use GetEntitySchema to see available properties for a type.")]
     public async Task<string> EditEntity(
         [Description("Entity type name")] string entityType,
         [Description("Entity ID string")] string entityId,
-        [Description("Name of the property to edit (use GetEntitySchema to list properties)")] string propertyName,
-        [Description("New value to set (numbers parsed automatically, booleans: true/false)")] string newValue)
+        [Description("Name of the property to edit (use GetEntitySchema to list properties)")]
+        string propertyName,
+        [Description("New value to set (numbers parsed automatically, booleans: true/false)")]
+        string newValue)
     {
         var entity = await GetEntityByTypeAsync(entityType, entityId);
         if (entity is null)
@@ -87,12 +91,14 @@ public sealed class EditorTools
     }
 
     [McpServerTool, Description(
-        "Create a new entity with the given type and ID. The entity is created empty — " +
-        "use EditEntity to set its properties. Changes are staged; call Save to persist. " +
-        "Use ListEntities to check if an entity ID is already taken.")]
+         "Create a new entity with the given type and ID. The entity is created empty — " +
+         "use EditEntity to set its properties. Changes are staged; call Save to persist. " +
+         "Use ListEntities to check if an entity ID is already taken.")]
     public async Task<string> AddEntity(
-        [Description("Entity type name (from available types list)")] string entityType,
-        [Description("Unique entity ID string — must not already exist")] string entityId)
+        [Description("Entity type name (from available types list)")]
+        string entityType,
+        [Description("Unique entity ID string — must not already exist")]
+        string entityId)
     {
         if (!Constants.GameTypes.TryGetValue(entityType, out var type))
             return JsonConvert.SerializeObject(new { error = $"Unknown entity type: {entityType}" });
@@ -115,8 +121,8 @@ public sealed class EditorTools
     }
 
     [McpServerTool, Description(
-        "Delete an entity permanently. WARNING: this is irreversible once saved. " +
-        "Always confirm with the user before calling this. Changes are staged; call Save to persist.")]
+         "Delete an entity permanently. WARNING: this is irreversible once saved. " +
+         "Always confirm with the user before calling this. Changes are staged; call Save to persist.")]
     public async Task<string> DeleteEntity(
         [Description("Entity type name")] string entityType,
         [Description("Entity ID string")] string entityId)
@@ -140,13 +146,17 @@ public sealed class EditorTools
     }
 
     [McpServerTool, Description(
-        "List entities of a given type. Always use this BEFORE GetEntity to explore what exists. " +
-        "Supports optional substring filtering on entity subject/ID. Results are truncated at 500 chars; " +
-        "use a higher 'limit' to see more entries.")]
+         "List entities of a given EXACT type. Use only when the entity type is already known " +
+         "(e.g. ItemType, Creature); prefer SearchAllTypes when the type is unknown or the user " +
+         "describes the entity by name. Supports optional substring filtering on entity subject/ID. " +
+         "Results are truncated; use a higher 'limit' to see more entries.")]
     public async Task<string> ListEntities(
-        [Description("Entity type name to list")] string entityType,
-        [Description("Optional substring filter on entity subject or ID")] string? filter = null,
-        [Description("Maximum number of results (default 100)")] int limit = 100)
+        [Description("Entity type name to list")]
+        string entityType,
+        [Description("Optional substring filter on entity subject or ID")]
+        string? filter = null,
+        [Description("Maximum number of results (default 100)")]
+        int limit = 100)
     {
         var entities = await GetAllByTypeAsync(entityType);
 
@@ -180,11 +190,12 @@ public sealed class EditorTools
     }
 
     [McpServerTool, Description(
-        "Persist all staged changes to disk. After making edits with EditEntity/AddEntity/DeleteEntity, " +
-        "you MUST call this to write changes back to the database/XML files. " +
-        "Pass entityId to save only one entity, or omit to save everything.")]
+         "Persist all staged changes to disk. After making edits with EditEntity/AddEntity/DeleteEntity, " +
+         "you MUST call this to write changes back to the database/XML files. " +
+         "Pass entityId to save only one entity, or omit to save everything.")]
     public async Task<string> Save(
-        [Description("Optional: save only this entity ID instead of all dirty entities")] string? entityId = null)
+        [Description("Optional: save only this entity ID instead of all dirty entities")]
+        string? entityId = null)
     {
         if (!string.IsNullOrWhiteSpace(entityId))
             await _hostService.SaveAsync(entityId);
@@ -195,11 +206,12 @@ public sealed class EditorTools
     }
 
     [McpServerTool, Description(
-        "Show field-level differences between the in-memory (edited) version and the stored " +
-        "(on-disk) version. Use BEFORE saving to verify your changes are correct. " +
-        "Omit entityId to diff all dirty entities.")]
+         "Show field-level differences between the in-memory (edited) version and the stored " +
+         "(on-disk) version. Use BEFORE saving to verify your changes are correct. " +
+         "Omit entityId to diff all dirty entities.")]
     public async Task<string> GetDiff(
-        [Description("Optional: diff for a specific entity; omit to diff all dirty entities")] string? entityId = null)
+        [Description("Optional: diff for a specific entity; omit to diff all dirty entities")]
+        string? entityId = null)
     {
         var diffs = await _hostService.GetDiffAsync(
             string.IsNullOrWhiteSpace(entityId) ? null : entityId);
@@ -216,13 +228,14 @@ public sealed class EditorTools
     }
 
     [McpServerTool, Description(
-        "Resolve reference values on an entity property. References are IDs that point to other entities. " +
-        "Use this to find out what entity a reference points to, e.g., what weapon an ItemType's " +
-        "weaponRef points to. Returns both the raw ID and the resolved entity subject.")]
+         "Resolve reference values on an entity property. References are IDs that point to other entities. " +
+         "Use this to find out what entity a reference points to, e.g., what weapon an ItemType's " +
+         "weaponRef points to. Returns both the raw ID and the resolved entity subject.")]
     public async Task<string> ResolveReferences(
         [Description("Entity type name")] string entityType,
         [Description("Entity ID string")] string entityId,
-        [Description("Name of the reference property to resolve")] string propertyName)
+        [Description("Name of the reference property to resolve")]
+        string propertyName)
     {
         var entity = await GetEntityByTypeAsync(entityType, entityId);
         if (entity is null)
@@ -269,12 +282,13 @@ public sealed class EditorTools
     // ── New tools (A3.2) ──
 
     [McpServerTool, Description(
-        "Get the schema (all properties, their types, and reference field metadata) for a given entity type. " +
-        "Use this when you need to know what properties exist before calling EditEntity, " +
-        "or when the user asks about an entity type's structure. " +
-        "Use ListEntityTypes first to see all available types.")]
+         "Get the schema (all properties, their types, and reference field metadata) for a given entity type. " +
+         "Use this when you need to know what properties exist before calling EditEntity, " +
+         "or when the user asks about an entity type's structure. " +
+         "Call GetModInfo to see all available entity types.")]
     public async Task<string> GetEntitySchema(
-        [Description("Entity type name (e.g., ItemType, Creature, Recipe)")] string entityType)
+        [Description("Entity type name (e.g., ItemType, Creature, Recipe)")]
+        string entityType)
     {
         if (!Constants.GameTypes.TryGetValue(entityType, out var type))
         {
@@ -315,48 +329,44 @@ public sealed class EditorTools
     }
 
     [McpServerTool, Description(
-        "Search across ALL entity types for a matching subject or ID. " +
-        "Use this when you don't know which type an entity belongs to, " +
-        "or when the user asks a general question about what entities exist. " +
-        "Much faster than calling ListEntities on every type individually.")]
+         "Search across ALL entity types for a matching subject, ID, or any string property. " +
+         "PREFERRED tool for finding entities by name/keyword/content when the user does not name " +
+         "an exact type (e.g. \"find something about stone\", \"which entity is 独头弹?\"). " +
+         "Narrow with entityType (e.g. AttackMode, ItemType) or modId (the numeric namespace shown " +
+         "in search results / GetEntity) to reduce noise. Only use ListEntities when the entity " +
+         "type is already known.")]
     public async Task<string> SearchAllTypes(
-        [Description("Substring to search for in entity subject or ID")] string query,
-        [Description("Maximum total results across all types (default 30)")] int limit = 30)
+        [Description("Substring to search for in entity subject, ID, or any string property")]
+        string query,
+        [Description("Optional: restrict to one entity type (e.g. AttackMode, ItemType, Recipe)")]
+        string? entityType = null,
+        [Description("Optional: restrict to a mod's entities (its numeric modId, as shown in search results)")]
+        int? modId = null,
+        [Description("Maximum total results across all types (default 100)")]
+        int limit = 100)
     {
-        var allResults = new List<object>();
+        var matches = await _hostService.SearchEntitiesAsync(query, limit, entityType, modId);
 
-        foreach (var kvp in Constants.GameTypes.OrderBy(k => k.Key))
+        var items = matches.Select(e => new
         {
-            if (allResults.Count >= limit) break;
-
-            var entities = await GetAllByTypeAsync(kvp.Key);
-            var matches = entities
-                .Where(e =>
-                    (e.Subject ?? e.EntityId ?? "")
-                    .Contains(query, StringComparison.OrdinalIgnoreCase))
-                .Take(limit - allResults.Count)
-                .Select(e => new
-                {
-                    entityType = kvp.Key,
-                    entityId = e.EntityId ?? "",
-                    subject = e.Subject ?? e.EntityId ?? ""
-                });
-
-            allResults.AddRange(matches);
-        }
+            entityType = e.GetType().Name,
+            entityId = e.EntityId ?? "",
+            subject = e.Subject ?? e.EntityId ?? "",
+            modId = e.ModId
+        });
 
         return JsonConvert.SerializeObject(new
         {
             query,
-            totalMatches = allResults.Count,
-            items = allResults
+            totalMatches = matches.Count,
+            items
         });
     }
 
     [McpServerTool, Description(
-        "Get information about the current workspace: loaded mods, game directory, " +
-        "available entity types, dirty status. Use this when the user asks about " +
-        "the editor's current state or to orient yourself at the start of a session.")]
+         "Get information about the current workspace: loaded mods, game directory, " +
+         "available entity types, dirty status. Use this when the user asks about " +
+         "the editor's current state or to orient yourself at the start of a session.")]
     public async Task<string> GetModInfo()
     {
         var entityTypes = Constants.GameTypes.Keys.OrderBy(k => k).ToList();
@@ -483,22 +493,30 @@ public sealed class EditorTools
             if (targetType == typeof(long)) return long.Parse(raw);
             return raw;
         }
-        catch { return raw; }
+        catch
+        {
+            return raw;
+        }
     }
 
     // ── Image Generation (G2) ──
 
     [McpServerTool, Description(
-        "Generate a pixel art image for a game entity using AI image generation (DALL·E or compatible). " +
-        "Uses the entity's properties to build a prompt and returns the generated PNG image bytes. " +
-        "Use GetEntity first to review the entity data before generating. " +
-        "Requires OPENAI_API_KEY environment variable to be set.")]
+         "Generate a pixel art image for a game entity using AI image generation (DALL·E or compatible). " +
+         "Uses the entity's properties to build a prompt and returns the generated PNG image bytes. " +
+         "Use GetEntity first to review the entity data before generating. " +
+         "Requires OPENAI_API_KEY environment variable to be set.")]
     public async Task<string> GenerateImage(
-        [Description("Entity type name (e.g., ItemType, Creature)")] string entityType,
-        [Description("Entity ID string (e.g., item_weapon_sword)")] string entityId,
-        [Description("Optional: target width in pixels (default 64)")] int? width = null,
-        [Description("Optional: target height in pixels (default 64)")] int? height = null,
-        [Description("Optional: style hint ('pixel-art', 'realistic', 'sketch')")] string? style = null)
+        [Description("Entity type name (e.g., ItemType, Creature)")]
+        string entityType,
+        [Description("Entity ID string (e.g., item_weapon_sword)")]
+        string entityId,
+        [Description("Optional: target width in pixels (default 64)")]
+        int? width = null,
+        [Description("Optional: target height in pixels (default 64)")]
+        int? height = null,
+        [Description("Optional: style hint ('pixel-art', 'realistic', 'sketch')")]
+        string? style = null)
     {
         // Resolve IImageGenerationService from DI at call time (R17-compliant)
         var imageService = _serviceProvider?.GetService(

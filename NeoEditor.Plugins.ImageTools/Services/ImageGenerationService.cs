@@ -99,16 +99,55 @@ public sealed class ImageGenerationService : IImageGenerationService
             throw new ArgumentException($"Entity not found: {entityType}/{entityId}");
 
         var prompt = _promptConverter.BuildPrompt(entity, options);
+        return await GenerateCoreAsync(prompt, options, ct);
+    }
 
+    /// <summary>
+    /// Generate directly from a free-form prompt (the Image Editor workbench's AI panel).
+    /// </summary>
+    public async Task<ImageGenerationResult> GenerateAsync(
+        string prompt,
+        ImageGenerationOptions? options = null,
+        CancellationToken ct = default)
+    {
+        options ??= new ImageGenerationOptions();
+
+        if (!_isConfigured)
+            throw new InvalidOperationException(
+                "Image generation is not available. Set OPENAI_API_KEY environment variable.");
+
+        if (string.IsNullOrWhiteSpace(prompt))
+            throw new ArgumentException("Prompt is empty.", nameof(prompt));
+
+        return await GenerateCoreAsync(prompt, options, ct);
+    }
+
+    /// <summary>
+    /// Shared generation pipeline: call the OpenAI-compatible Images API with the prompt,
+    /// then apply pixel art post-processing (G1 + G2 integration) and return PNG bytes.
+    /// </summary>
+    private async Task<ImageGenerationResult> GenerateCoreAsync(
+        string prompt, ImageGenerationOptions options, CancellationToken ct)
+    {
         // ── Step 1: Call OpenAI-compatible Images API ──
         var url = $"{_endpoint.TrimEnd('/')}/images/generations";
+
+        // An explicit RequestSize (set by the workbench's free-size input) wins. Otherwise
+        // fall back to a size that satisfies both provider families: Zhipu CogView requires
+        // side length in [512, 2880] and a multiple of 16; OpenAI dall-e accepts 256/512/1024.
+        // 512x512 and 1024x1024 satisfy both, and 512 is the smallest universal size.
+        var requestSize = !string.IsNullOrWhiteSpace(options.RequestSize)
+            ? options.RequestSize
+            : options.Width <= 512 && options.Height <= 512
+                ? "512x512"
+                : "1024x1024";
 
         var requestBody = new
         {
             model = _imageModelId,
             prompt,
             n = 1,
-            size = options.Width <= 128 ? "256x256" : "1024x1024",
+            size = requestSize,
             quality = "standard",
             response_format = "b64_json"
         };
@@ -120,16 +159,53 @@ public sealed class ImageGenerationService : IImageGenerationService
         using var doc = JsonDocument.Parse(content);
         var root = doc.RootElement;
 
-        // Parse the response: {"data": [{"b64_json": "...", "revised_prompt": "..."}]}
+        // Parse the response: OpenAI returns {"data": [{"b64_json": "..."}]}; Zhipu CogView
+        // ignores response_format and returns {"data": [{"url": "..."}]} instead — so we
+        // accept both: prefer b64_json, otherwise download the image URL.
         var data = root.GetProperty("data")[0];
-        var b64Json = data.GetProperty("b64_json").GetString();
-        var rawBytes = Convert.FromBase64String(b64Json!);
+        byte[] rawBytes;
+        if (data.TryGetProperty("b64_json", out var b64JsonProp) &&
+            b64JsonProp.ValueKind == JsonValueKind.String &&
+            !string.IsNullOrWhiteSpace(b64JsonProp.GetString()))
+        {
+            var b64Json = b64JsonProp.GetString();
+            rawBytes = Convert.FromBase64String(b64Json!);
+        }
+        else if (data.TryGetProperty("url", out var urlProp) &&
+                 urlProp.ValueKind == JsonValueKind.String &&
+                 !string.IsNullOrWhiteSpace(urlProp.GetString()))
+        {
+            var imageUrl = urlProp.GetString()!;
+            // Download with a fresh client: the image URL is a public temp link, and sending
+            // the Bearer auth header meant for the API is unnecessary (and may be rejected).
+            using var downloadClient = new HttpClient();
+            rawBytes = await downloadClient.GetByteArrayAsync(imageUrl, ct);
+        }
+        else
+        {
+            throw new InvalidOperationException(
+                $"Image API response did not contain 'b64_json' or 'url'. Body: {content}");
+        }
 
         var revisedPrompt = data.TryGetProperty("revised_prompt", out var rp)
             ? rp.GetString()
             : null;
 
-        // ── Step 2: Pixel art post-processing (G1 + G2 integration) ──
+        // ── Step 2: Optional pixel art post-processing (G1 + G2 integration) ──
+        // The workbench passes ApplyPixelArt:false so a realistic render (e.g. CogView) is
+        // shown as-is; the user pixelates explicitly afterwards. Other callers (MCP / entity
+        // generation) keep the default true and get the pixel-art style directly.
+        if (!options.ApplyPixelArt)
+        {
+            // Providers return JPEG (CogView) or PNG bytes. Normalise to a single PNG so the
+            // consumer (Avalonia Bitmap) never mis-detects the format from a temp file's
+            // extension — a JPEG body with a .png name garbles the render.
+            using var src = Image.Load<Rgba32>(rawBytes);
+            using var pngMs = new MemoryStream();
+            await src.SaveAsync(pngMs, new PngEncoder(), ct);
+            return new ImageGenerationResult(pngMs.ToArray(), "png", options.Width, options.Height, revisedPrompt);
+        }
+
         using var sourceImage = Image.Load<Rgba32>(rawBytes);
         var pixelOptions = new PixelArtConversionOptions(
             TargetWidth: options.Width,

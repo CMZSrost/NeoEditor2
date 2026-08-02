@@ -107,6 +107,9 @@ public class McpServerHostTests
         public IObservable<EntityChangedEvent> Changes => null!;
         public IEntityRepository<T> Repository<T>() where T : IEntity
             => new StubRepository<T>();
+        public Task<IReadOnlyList<IEntity>> SearchEntitiesAsync(string query, int limit = 50,
+            string? entityType = null, int? modId = null)
+            => Task.FromResult<IReadOnlyList<IEntity>>(Array.Empty<IEntity>());
         public void RegisterCommandScope(string scopeId, ICommandHistory history) { }
         public void UnregisterCommandScope(string scopeId) { }
         public void SetActiveScope(string? scopeId) { }

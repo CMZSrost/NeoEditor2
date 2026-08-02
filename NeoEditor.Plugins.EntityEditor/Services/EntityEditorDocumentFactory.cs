@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using NeoEditor.Core.Abstractions;
@@ -33,7 +32,6 @@ public class EntityEditorDocumentFactory : IEntityEditorDocumentFactory
             _services.GetRequiredService<IDbContextFactory<GameDbContext>>(),
             _services.GetRequiredService<IEntityLookupService>(),
             _services.GetRequiredService<ILocalizationService>(),
-            _services.GetRequiredService<INotificationService>(),
-            _services.GetService<IEnumerable<IEntityContextActionProvider>>());
+            _services.GetRequiredService<INotificationService>());
     }
 }

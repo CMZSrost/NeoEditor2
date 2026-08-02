@@ -6,12 +6,9 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Threading;
-using System.Linq;
 using CommunityToolkit.Mvvm.Messaging;
 using Microsoft.Extensions.DependencyInjection;
-using NeoEditor.Core.Abstractions;
 using NeoEditor.Data.Messages;
-using NeoEditor.Infra.Services;
 using NeoEditor.Plugins.EntityEditor.ViewModels;
 using NeoEditor.Services;
 using NeoEditor.UI.Common.Services;
@@ -66,7 +63,10 @@ public partial class EntityEditorView : UserControl
         };
 
         GotFocus += (_, _) => NotifyActiveEntity();
-        PropertyChanged += (_, e) => { if (e.Property == IsVisibleProperty && IsVisible) NotifyActiveEntity(); };
+        PropertyChanged += (_, e) =>
+        {
+            if (e.Property == IsVisibleProperty && IsVisible) NotifyActiveEntity();
+        };
         PointerPressed += (_, _) => NotifyActiveEntity();
         AttachedToVisualTree += (_, _) => NotifyActiveEntity();
     }
@@ -104,36 +104,7 @@ public partial class EntityEditorView : UserControl
             if (_lastDoc.Entity != null)
                 RebuildVisualizer(_lastDoc);
             EditorTabs.SelectedIndex = 0;
-            BuildContextMenu(_lastDoc);
         }
-    }
-
-    private void BuildContextMenu(EntityEditorDocument doc)
-    {
-        var providers = doc.ContextActionProviders.ToList();
-        if (providers.Count == 0)
-        {
-            Root.ContextMenu = null;
-            return;
-        }
-
-        var contextMenu = new ContextMenu();
-        foreach (var provider in providers)
-        {
-            var menuItem = new MenuItem { Header = provider.ActionLabel };
-            var entityType = doc.Entity?.GetType().Name ?? "";
-            var entityId = doc.Entity?.EntityId ?? "";
-            menuItem.IsEnabled = provider.CanHandle(entityType);
-            menuItem.Click += async (_, _) =>
-            {
-                var result = await provider.ExecuteAsync(entityType, entityId);
-                var notif = GetService<INotificationService>();
-                notif.ShowInfo(result, "Image Generation");
-            };
-            contextMenu.Items.Add(menuItem);
-        }
-
-        Root.ContextMenu = contextMenu;
     }
 
     private void OnDocPropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -152,6 +123,9 @@ public partial class EntityEditorView : UserControl
             var vis = registry.Get(doc.Entity.GetType());
             VisualizationHost.Content = vis?.BuildDetail(doc.Entity);
         }
-        catch { VisualizationHost.Content = null; }
+        catch
+        {
+            VisualizationHost.Content = null;
+        }
     }
 }

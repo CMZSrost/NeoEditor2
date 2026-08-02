@@ -69,15 +69,14 @@
                     SyntaxHighlighting="XML" />
             </DataTemplate>
             <DataTemplate x:DataType="mainContent:MarkdownDocument">
-                <ScrollViewer>
+                <ScrollViewer Background="{StaticResource MarkdownBackgroundBrush}">
                     <lm:MarkdownRenderer
+                        Margin="16,12,16,24"
+                        CodeBlockColorTheme="DarkPlus"
                         ImageBasePath="{Binding BaseDirectory}"
                         LinkCommand="{Binding LinkCommand}"
                         MarkdownBuilder="{Binding MarkdownBuilder}" />
                 </ScrollViewer>
-            </DataTemplate>
-            <DataTemplate x:DataType="mainContent:ImageDocument">
-                <userControls:ZoomableImageView Source="{Binding ImageSource}" />
             </DataTemplate>
             <DataTemplate x:DataType="mainContent:EntityBrowserDocument">
                 <userControls:DomainBrowserView DataContext="{Binding}" />

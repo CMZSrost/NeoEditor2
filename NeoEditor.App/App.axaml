@@ -20,6 +20,8 @@
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
                 <ResourceInclude Source="avares://LiveMarkdown.Avalonia/Defaults.axaml"/>
+                <!--  VSCode Dark+ Markdown theme — loaded after Defaults so it wins (round22)  -->
+                <ResourceInclude Source="avares://NeoEditor/Assets/MarkdownTheme.axaml"/>
             </ResourceDictionary.MergedDictionaries>
             <uiconv:ModBaseBackgroundConverter x:Key="ModBaseBackgroundConverter" />
             <conv:ModLoadTypeIconConverter x:Key="ModLoadTypeIconConverter" />

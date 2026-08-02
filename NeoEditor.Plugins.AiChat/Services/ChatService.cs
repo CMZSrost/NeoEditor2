@@ -23,6 +23,7 @@ public class ChatService : IChatService
     private readonly ChatHistoryManager _history;
     private readonly SystemPromptBuilder _promptBuilder;
     private readonly IRagService? _ragService;
+    private readonly IConfigService? _configService;
 
     /// <inheritdoc />
     public bool IsAvailable => _chatClient is not null;
@@ -35,6 +36,7 @@ public class ChatService : IChatService
         _chatClient = chatClient;
         _toolProvider = serviceProvider.GetService(typeof(IMcpToolProvider)) as IMcpToolProvider;
         _ragService = serviceProvider.GetService(typeof(IRagService)) as IRagService;
+        _configService = serviceProvider.GetService(typeof(IConfigService)) as IConfigService;
         _history = history;
         _promptBuilder = promptBuilder;
 
@@ -67,11 +69,12 @@ public class ChatService : IChatService
     /// <inheritdoc />
     public async Task<string> SendMessageAsync(string userMessage, CancellationToken ct = default)
     {
-        // Collect all streaming chunks into a single string (full-response mode)
+        // Collect all streaming chunks into a single string (full-response mode).
+        // Markers carry a leading "\n", so trim before checking to filter them all out.
         var sb = new StringBuilder();
         await foreach (var chunk in SendMessageStreamingAsync(userMessage, ct).WithCancellation(ct))
         {
-            if (!chunk.StartsWith("[tool:", StringComparison.Ordinal))
+            if (!chunk.TrimStart().StartsWith("[tool:", StringComparison.Ordinal))
                 sb.Append(chunk);
         }
 
@@ -110,9 +113,11 @@ public class ChatService : IChatService
         var tools = BuildToolDefinitions();
         foreach (var t in tools) options.Tools.Add(t);
 
-        // Streaming function-calling loop
-        const int maxIterations = 10;
-        for (var i = 0; i < maxIterations; i++)
+        // Streaming function-calling loop — cap the NUMBER of tool calls per turn
+        // (configurable, default 30), with the iteration count as a secondary bound.
+        var maxToolCalls = Math.Max(1, _configService?.Config.MaxToolCallsPerConversation ?? 30);
+        var executedToolCalls = 0;
+        for (var i = 0; i < maxToolCalls; i++)
         {
             ct.ThrowIfCancellationRequested();
 
@@ -163,14 +168,30 @@ public class ChatService : IChatService
 
                 messages.Add(new AssistantChatMessage(toolCalls));
 
+                var limitReached = false;
                 foreach (var toolCall in toolCalls)
                 {
+                    if (executedToolCalls >= maxToolCalls)
+                    {
+                        limitReached = true;
+                        break;
+                    }
+                    executedToolCalls++;
+
                     var toolName = toolCall.FunctionName;
                     yield return $"\n[tool: executing {toolName}]\n";
 
                     var resultJson = await ExecuteMcpToolAsync(
                         toolName, toolCall.FunctionArguments.ToString(), ct);
                     messages.Add(new ToolChatMessage(toolCall.Id, resultJson));
+                    // Surface the tool result so the UI tool block can expand to show it.
+                    yield return $"\n[tool: result {toolName}]\n{resultJson}";
+                }
+
+                if (limitReached)
+                {
+                    yield return BuildLimitNotice(maxToolCalls);
+                    yield break;
                 }
 
                 continue; // Next iteration of the function-calling loop
@@ -182,7 +203,14 @@ public class ChatService : IChatService
                 _history.Add("assistant", text);
             yield break;
         }
+
+        // Loop exhausted because every iteration called tools without a final answer.
+        yield return BuildLimitNotice(maxToolCalls);
     }
+
+    private static string BuildLimitNotice(int maxToolCalls) =>
+        $"\n[system: Tool-call limit reached ({maxToolCalls} this turn). " +
+        "Narrow the search with entityType / modId filters or ask a more specific question.]\n";
 
     private static string BuildRagContextText(IReadOnlyList<RagResult> results)
     {

@@ -12,11 +12,9 @@ using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using Microsoft.EntityFrameworkCore;
 using NeoEditor.Data.Command;
-using ContextActionProvider = NeoEditor.Core.Abstractions.IEntityContextActionProvider;
 using NeoEditor.Data.Context;
 using NeoEditor.Data.Messages;
 using NeoEditor.Data.Model.Game;
-using NeoEditor.Infra.Services;
 using NeoEditor.Infra.Services;
 using NeoEditor.Services;
 using Serilog;
@@ -52,12 +50,9 @@ public partial class EntityEditorDocument : PluginDocumentBase
 
     [ObservableProperty] public partial bool IsVisualDirty { get; set; }
 
-    /// <summary>Context action providers from DI (e.g. "Generate Image").</summary>
-    public IEnumerable<ContextActionProvider> ContextActionProviders { get; }
-    public bool HasContextActions => ContextActionProviders.Any();
-
     /// <summary>R11: true when entity has unsaved edits. Cleared on successful save.</summary>
-    [ObservableProperty] public partial bool IsDirty { get; set; }
+    [ObservableProperty]
+    public partial bool IsDirty { get; set; }
 
     /// <summary>Set by the View when XmlEditor has focus. When true, RefreshXml skips
     /// updating the text so the user's undo stack is preserved.</summary>
@@ -111,11 +106,12 @@ public partial class EntityEditorDocument : PluginDocumentBase
             if (existing != null)
             {
                 foreach (var prop in type.GetProperties()
-                    .Where(p => p.GetCustomAttribute<ColumnAttribute>() != null && p.CanWrite))
+                             .Where(p => p.GetCustomAttribute<ColumnAttribute>() != null && p.CanWrite))
                 {
                     var newValue = prop.GetValue(entity);
                     prop.SetValue(existing, newValue);
                 }
+
                 db.Update(existing);
             }
             else
@@ -157,11 +153,9 @@ public partial class EntityEditorDocument : PluginDocumentBase
         IEntityLookupService dataTable,
         ILocalizationService loc,
         INotificationService notification,
-        IEnumerable<ContextActionProvider>? contextActionProviders = null,
         bool isReadOnly = false)
         : base(loc)
     {
-        ContextActionProviders = contextActionProviders ?? [];
         _session = session;
         _dbFactory = dbFactory;
         _dataTable = dataTable;
@@ -194,6 +188,7 @@ public partial class EntityEditorDocument : PluginDocumentBase
             if (prop?.GetValue(entity) is { } val)
                 return $"{type.Name} #{val}";
         }
+
         return type.Name;
     }
 
@@ -246,7 +241,10 @@ public partial class EntityEditorDocument : PluginDocumentBase
                     var converted = ValueConverter.Convert(val, prop.PropertyType);
                     xmlValues[name] = (prop, converted);
                 }
-                catch { /* skip unparseable values */ }
+                catch
+                {
+                    /* skip unparseable values */
+                }
             }
 
             foreach (var (colName, (prop, newValue)) in xmlValues)
@@ -267,7 +265,8 @@ public partial class EntityEditorDocument : PluginDocumentBase
 
             if (edits.Count > 0)
             {
-                Log.Information("[XML-Apply] Phase4: sending {Count} edits to WAL for entity {Eid}", edits.Count, Entity.EntityId);
+                Log.Information("[XML-Apply] Phase4: sending {Count} edits to WAL for entity {Eid}", edits.Count,
+                    Entity.EntityId);
                 WeakReferenceMessenger.Default.Send(new EntityFieldEditsMessage(Entity, edits));
                 RefreshVisualizationCommand.Execute(null);
                 MarkDirty();
@@ -277,9 +276,13 @@ public partial class EntityEditorDocument : PluginDocumentBase
                 Log.Information("[XML-Apply] Phase4: no diffs — nothing to persist");
                 RefreshVisualizationCommand.Execute(null);
             }
+
             WeakReferenceMessenger.Default.Send(new ActiveEntityChangedMessage(Entity));
         }
-        catch { /* XML parse error */ }
+        catch
+        {
+            /* XML parse error */
+        }
     }
 }
 
@@ -320,8 +323,9 @@ public static class EntityXmlHelper
         if (indexAttr?.PropertyNames != null)
         {
             return indexAttr.PropertyNames.Contains(prop.Name)
-                && prop.Name != nameof(IEntity.EntityId);
+                   && prop.Name != nameof(IEntity.EntityId);
         }
+
         return false;
     }
 }

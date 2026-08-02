@@ -367,8 +367,11 @@ public partial class ModGameDataTabsView
         // Works for both single-mod and merge views. Cache stores Tabs + MergeStore + EditStore.
         if (TabSnapshotCache.TryGetValue(cacheKey, out var cached))
         {
-            foreach (var tab in cached.Tabs)
-                Tabs.Add(tab);
+            // cached.Tabs IS the live _vm.Tabs collection (the cache stores the shared
+            // reference, not a snapshot) — the tabs are already present. Iterating and
+            // re-adding would mutate the collection being enumerated
+            // (InvalidOperationException) and duplicate entries, so nothing is added here;
+            // only the stores are restored below.
             _logger.LogInformation("[Attach] cache hit, replacing stores  oldES={OldES:x}→newES={NewES:x} oldMS={OldMS:x}→newMS={NewMS:x}",
                 EditStore.GetHashCode(), cached.EditStore.GetHashCode(),
                 MergeStore.GetHashCode(), cached.MergeStore.GetHashCode());

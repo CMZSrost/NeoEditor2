@@ -103,6 +103,17 @@ public interface IHostService
     /// </summary>
     IEntityRepository<T> Repository<T>() where T : IEntity;
 
+    // ── 查询/搜索 ──
+
+    /// <summary>
+    /// Search entity types for entities whose subject, ID, or any string property contains
+    /// <paramref name="query"/> (case-insensitive substring), up to <paramref name="limit"/>
+    /// total results. Optional <paramref name="entityType"/> / <paramref name="modId"/> narrow
+    /// the search. Owns the cross-type search so MCP/CLI/AI consumers share one implementation.
+    /// </summary>
+    Task<IReadOnlyList<IEntity>> SearchEntitiesAsync(string query, int limit = 50,
+        string? entityType = null, int? modId = null);
+
     // ── Entity 注册表 ──
 
     /// <summary>

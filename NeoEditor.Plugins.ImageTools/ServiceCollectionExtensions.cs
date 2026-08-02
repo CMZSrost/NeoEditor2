@@ -27,7 +27,6 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IImageSearchService, ImageSearchService>();
         services.AddSingleton<EntityToPromptConverter>();
         services.AddSingleton<IImageGenerationService, ImageGenerationService>();
-        services.AddSingleton<IEntityContextActionProvider, EntityImageGenActionProvider>();
         services.AddSingleton<ViewModels.ImagePreviewContent>();
         services.AddSingleton<ViewModels.ImageAssetManagerViewModel>();
         services.AddSingleton<ViewModels.ImageOrchestrationViewModel>();

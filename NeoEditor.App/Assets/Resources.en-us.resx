@@ -770,11 +770,35 @@
     <data name="Settings.ImageModel" xml:space="preserve">
         <value>Image Generation Model</value>
     </data>
+    <data name="Settings.TestImageConnection" xml:space="preserve">
+        <value>Test Image Model Connection</value>
+    </data>
+    <data name="Settings.TestingImageConnection" xml:space="preserve">
+        <value>Testing connection…</value>
+    </data>
+    <data name="Settings.ImageTestNoProvider" xml:space="preserve">
+        <value>Not configured: no image provider with an API key found. Fill in Endpoint and API Key below.</value>
+    </data>
+    <data name="Settings.ImageTestOk" xml:space="preserve">
+        <value>Connection OK: the image model is available.</value>
+    </data>
+    <data name="Settings.ImageTestFailed" xml:space="preserve">
+        <value>Connection failed (HTTP {0}): {1}</value>
+    </data>
+    <data name="Settings.ImageTestError" xml:space="preserve">
+        <value>Test error: {0}</value>
+    </data>
     <data name="Settings.McpEnabled" xml:space="preserve">
         <value>Start MCP Server in GUI</value>
     </data>
     <data name="Settings.McpPort" xml:space="preserve">
         <value>MCP Port (0 = stdio)</value>
+    </data>
+    <data name="Settings.MaxToolCalls" xml:space="preserve">
+        <value>Max tool calls per turn</value>
+    </data>
+    <data name="Settings.MaxToolCallsNote" xml:space="preserve">
+        <value>Cap on MCP tool calls per chat turn, to prevent runaway loops.</value>
     </data>
     <data name="Settings.AiConfigNote" xml:space="preserve">
         <value>Endpoint and API Key are grouped per provider; each model can use a different provider. Priority: config.json &gt; environment variables. Restart the app for changes to take effect. API Key is stored encrypted.</value>
@@ -2062,4 +2086,13 @@ Double-click to navigate directly.</value></data>
   <data name="Vis.Responses" xml:space="preserve"><value>Responses</value></data>
   <data name="Vis.Contents" xml:space="preserve"><value>Contents</value></data>
   <data name="Vis.CreatureStatus" xml:space="preserve"><value>Creature Status</value></data>
+  <data name="AiGenerate" xml:space="preserve"><value>Generate with AI</value></data>
+  <data name="AiPromptPlaceholder" xml:space="preserve"><value>Enter a prompt, e.g. a pixel-art sword</value></data>
+  <data name="AiUnavailableHint" xml:space="preserve"><value>AI not configured (set an API key in Settings)</value></data>
+  <data name="OriginalImage" xml:space="preserve"><value>Original</value></data>
+  <data name="PixelatedImage" xml:space="preserve"><value>Pixel Art</value></data>
+  <data name="AiGeneratedImage" xml:space="preserve"><value>AI Generated</value></data>
+  <data name="AiPixelatedImage" xml:space="preserve"><value>AI Pixel Art</value></data>
+  <data name="SaveImage" xml:space="preserve"><value>Save Image</value></data>
+  <data name="PixelateAi" xml:space="preserve"><value>Pixelate AI</value></data>
 </root>

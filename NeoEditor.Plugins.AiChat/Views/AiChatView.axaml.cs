@@ -29,6 +29,6 @@ public partial class AiChatView : UserControl
     private void OnMessagesChanged(object? sender, NotifyCollectionChangedEventArgs e)
     {
         if (e.Action == NotifyCollectionChangedAction.Add && _vm is { Messages.Count: > 0 })
-            MessageGrid.ScrollIntoView(_vm.Messages[^1], null);
+            MessageScroll.ScrollToEnd();
     }
 }

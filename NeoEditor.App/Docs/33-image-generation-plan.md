@@ -218,6 +218,8 @@ public interface IImageGenerationService
 
 ### Phase G3: 编辑器集成 ✅ 已完成 (2026-07-30)
 
+> ⚠️ **2026-08-02 移除**：G3 实体右键「Generate Image」已整体移除——`EntityImageGenActionProvider` + `IEntityContextActionProvider` 扩展点（EntityEditorDocument/Fatory/Plugin/View 接线、DI）+ 死消息 `ImageGeneratedMessage` 全删，EntityEditor 右键菜单清空（N04 无死代码）。AI 生成迁往**图像编辑工作台**：`IImageGenerationService` 新增 `GenerateAsync(prompt)`（`GenerateCoreAsync` 共享管线），工作台 AI 面板 prompt→生成→保存/编辑，Image Browser 右键「AI 生成图片」入口。详见 [test_round25](testround/test_round25_summary.md)。
+
 | 步骤 | 内容 | 涉及文件 |
 |:--:|------|---------|
 | G3.1 | EntityEditor 右键菜单 "Generate Image" | EntityEditor/Views/EntityEditorView.axaml.cs + EntityEditorDocument.cs |

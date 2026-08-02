@@ -29,9 +29,6 @@ public record RefreshEntityEditorMessage(IEntity Entity);
 /// <summary>Emitted when session state changes (started/cleared). MainWindow uses this for page switching.</summary>
 public record SessionStateChangedMessage(bool IsActive);
 
-/// <summary>Request to resolve a reference and peek at the target entity.</summary>
-public record PeekReferenceRequestMessage(IEntity SourceEntity, System.Type TargetType, string RawId, string PropertyName);
-
 /// <summary>Emitted when data loading completes in ModGameDataTabsView. Carries type and entity counts.</summary>
 public record DataLoadCompletedMessage(int TypeCount, int EntityCount);
 

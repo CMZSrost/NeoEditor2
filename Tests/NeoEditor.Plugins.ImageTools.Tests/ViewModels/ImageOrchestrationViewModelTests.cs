@@ -189,6 +189,43 @@ public class ImageOrchestrationViewModelTests : IDisposable
     }
 
     [Fact]
+    public async Task TreeModel_IsBuiltWithSourcesAsRoots()
+    {
+        var (vm, _) = CreateVm();
+        await vm.RefreshCommand.ExecuteAsync(null);
+
+        // SetRoots materialized the source roots into the hierarchical model.
+        Assert.NotNull(vm.TreeModel.Root);
+    }
+
+    [Fact]
+    public async Task Selection_OnSourceRow_SelectsSourceAndFirstPair()
+    {
+        var (vm, _) = CreateVm();
+        await vm.RefreshCommand.ExecuteAsync(null);
+
+        var mod = vm.Sources.First(s => s.Name == "MyMod");
+        vm.SelectedRow = mod;
+
+        Assert.Same(mod, vm.SelectedSource);
+        Assert.Same(mod.Pairs[0], vm.SelectedPair);
+    }
+
+    [Fact]
+    public async Task Selection_OnPairRow_ResolvesOwningSource()
+    {
+        var (vm, _) = CreateVm();
+        await vm.RefreshCommand.ExecuteAsync(null);
+
+        var mod = vm.Sources.First(s => s.Name == "MyMod");
+        var pair = mod.Pairs[1];
+        vm.SelectedRow = pair;
+
+        Assert.Same(mod, vm.SelectedSource);
+        Assert.Same(pair, vm.SelectedPair);
+    }
+
+    [Fact]
     public async Task RefreshModMessage_TriggersAutoRefresh()
     {
         var (vm, messenger) = CreateVm();

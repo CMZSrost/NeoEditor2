@@ -274,6 +274,12 @@ public class McpToolExecutorTests
         public IEntityRepository<T> Repository<T>() where T : IEntity
             => new StubRepository<T>();
 
+        public List<IEntity> SearchResults { get; } = new();
+
+        public Task<IReadOnlyList<IEntity>> SearchEntitiesAsync(string query, int limit = 50,
+            string? entityType = null, int? modId = null)
+            => Task.FromResult<IReadOnlyList<IEntity>>(SearchResults);
+
         public void RegisterCommandScope(string scopeId, ICommandHistory history)
         {
         }
@@ -320,6 +326,19 @@ public class McpToolExecutorTests
         public void RemoveEntityFromCache(string entityId)
         {
         }
+    }
+
+    private sealed class StubEntity : IEntity
+    {
+        public StubEntity(string entityId, string subject)
+        {
+            EntityId = entityId;
+            _subject = subject;
+        }
+
+        private readonly string _subject;
+
+        public override string Subject => _subject;
     }
 
     private sealed class StubRepository<T> : IEntityRepository<T> where T : IEntity
@@ -383,6 +402,24 @@ public class McpToolExecutorTests
 
         public string? LookupEntityId(ReferenceIndexService indexService, string entityType,
             string rawId, string? sourceNs) => null;
+    }
+
+    // ── SearchAllTypes routes through IHostService (round22) ──
+
+    [Fact]
+    public async Task SearchAllTypes_DelegatesToHostServiceSearch()
+    {
+        var hostService = new StubHostService();
+        hostService.SearchResults.Add(new StubEntity("1", "Stone") { ModId = 0 });
+        hostService.SearchResults.Add(new StubEntity("2", "Flint") { ModId = 0 });
+        var executor = new McpToolExecutor(new EditorTools(hostService, new StubReferenceResolver(), null!));
+
+        var result = await executor.ExecuteToolAsync("SearchAllTypes", """{"query": "st"}""");
+
+        var parsed = JsonConvert.DeserializeObject<dynamic>(result);
+        Assert.NotNull(parsed);
+        Assert.Equal(2, (int)parsed!.totalMatches);
+        Assert.Equal("Stone", (string)parsed.items[0].subject);
     }
 
     // ── G2: GenerateImage tool ──

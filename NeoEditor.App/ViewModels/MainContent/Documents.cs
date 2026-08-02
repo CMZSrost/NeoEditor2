@@ -364,18 +364,6 @@ public partial class MarkdownDocument : DocumentViewBase
     }
 }
 
-public partial class ImageDocument : DocumentBase
-{
-    [ObservableProperty] public partial string ImagePath { get; set; } = "";
-    [ObservableProperty] public partial Avalonia.Media.IImage? ImageSource { get; set; }
-
-    partial void OnImagePathChanged(string value)
-    {
-        if (!string.IsNullOrWhiteSpace(value) && System.IO.File.Exists(value))
-            ImageSource = new Avalonia.Media.Imaging.Bitmap(value);
-    }
-}
-
 /// <summary>
 /// Read-only entity browser tab. Left: entity list. Right: tabbed visual overviews.
 /// </summary>

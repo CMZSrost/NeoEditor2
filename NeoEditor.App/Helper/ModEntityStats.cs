@@ -19,7 +19,7 @@ public static class ModEntityStats
     /// by querying every entity type in <see cref="Constants.GameTypes"/> filtered by ModId.
     /// </summary>
     public static Dictionary<string, Dictionary<string, int>> LoadModEntityStats(
-        GameDbContext db, int modId)
+        GameDbContext db, int modId, string? gameRoot = null)
     {
         var result = new Dictionary<string, Dictionary<string, int>>(StringComparer.OrdinalIgnoreCase);
 
@@ -33,7 +33,9 @@ public static class ModEntityStats
 
             foreach (var entity in entities)
             {
-                var key = Normalize(entity.FilePath);
+                // DB paths may be relative to the game root (e.g. "data/itemtypes.xml") —
+                // resolve them so the key matches the absolute paths scanned on disk.
+                var key = Normalize(ResolvePath(entity.FilePath, gameRoot));
                 if (!result.TryGetValue(key, out var types))
                 {
                     types = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
@@ -45,6 +47,13 @@ public static class ModEntityStats
         }
 
         return result;
+    }
+
+    private static string ResolvePath(string path, string? gameRoot)
+    {
+        if (Path.IsPathRooted(path) || string.IsNullOrWhiteSpace(gameRoot))
+            return path;
+        return Path.Combine(gameRoot, path);
     }
 
     /// <summary>Normalizes a path for DB-to-disk matching (absolute, forward slashes, case-insensitive).</summary>

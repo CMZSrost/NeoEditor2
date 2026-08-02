@@ -145,12 +145,28 @@
                     </ComboBox>
                     <TextBox Text="{Binding SettingsPane.DisplayImageModel}" Watermark="dall-e-3" />
                 </StackPanel>
+                <!-- Image model connectivity test -->
+                <StackPanel Spacing="4">
+                    <Button HorizontalAlignment="Left" Content="{Binding Loc[Settings.TestImageConnection]}"
+                            Command="{Binding SettingsPane.TestImageConnectionCommand}"
+                            IsEnabled="{Binding !SettingsPane.IsTestingImageConnection}" />
+                    <TextBlock IsVisible="{Binding SettingsPane.IsTestingImageConnection}"
+                               FontSize="11" Foreground="Gray" Text="{Binding Loc[Settings.TestingImageConnection]}" />
+                    <TextBlock IsVisible="{Binding SettingsPane.HasImageTestResult}"
+                               FontSize="11" TextWrapping="Wrap" Foreground="Gray"
+                               Text="{Binding SettingsPane.ImageTestResult}" />
+                </StackPanel>
                 <StackPanel Spacing="4">
                     <CheckBox Content="{Binding Loc[Settings.McpEnabled]}" IsChecked="{Binding SettingsPane.DisplayMcpEnabled}" />
                 </StackPanel>
                 <StackPanel Spacing="4">
                     <TextBlock FontWeight="SemiBold" Text="{Binding Loc[Settings.McpPort]}" />
                     <NumericUpDown Value="{Binding SettingsPane.DisplayMcpPort}" Minimum="0" Maximum="65535" Increment="1" />
+                </StackPanel>
+                <StackPanel Spacing="4">
+                    <TextBlock FontWeight="SemiBold" Text="{Binding Loc[Settings.MaxToolCalls]}" />
+                    <TextBlock FontSize="11" Foreground="Gray" Text="{Binding Loc[Settings.MaxToolCallsNote]}" />
+                    <NumericUpDown Value="{Binding SettingsPane.DisplayMaxToolCalls}" Minimum="1" Maximum="200" Increment="1" />
                 </StackPanel>
 
                 <!-- Column Visibility -->

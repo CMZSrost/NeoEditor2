@@ -30,7 +30,6 @@ namespace NeoEditor.Plugins.EntityEditor.Views;
 public partial class ReferenceFieldEditor : UserControl
 {
     private FieldRow? _fieldRow;
-    private IEntity? _currentEntity;
     private ReferenceFieldAttribute? _refAttr;
 
     private static T GetService<T>() where T : notnull
@@ -85,10 +84,6 @@ public partial class ReferenceFieldEditor : UserControl
         // Cache the ReferenceFieldAttribute
         _refAttr = _fieldRow.Property.GetCustomAttribute<ReferenceFieldAttribute>();
         if (_refAttr is null) return;
-
-        // Get the current entity via the parent KeyValueEditorViewModel
-        // We walk up the visual tree to find the DataContext of the parent view
-        _currentEntity = FindCurrentEntity();
 
         try
         {
@@ -186,22 +181,6 @@ public partial class ReferenceFieldEditor : UserControl
         };
     }
 
-    /// <summary>
-    /// Walk up the visual tree to find the KeyValueEditorViewModel
-    /// and get its CurrentEntity for reference resolution context.
-    /// </summary>
-    private IEntity? FindCurrentEntity()
-    {
-        var parent = this.Parent;
-        while (parent is not null)
-        {
-            if (parent is UserControl uc && uc.DataContext is KeyValueEditorViewModel kveVm)
-                return kveVm.CurrentEntity;
-            parent = (parent as Visual)?.Parent ?? (parent as Control)?.Parent;
-        }
-        return null;
-    }
-
     // ── Event handlers ───────────────────────────────────────────────────
 
     private async void OnEditClick(object? sender, RoutedEventArgs e)
@@ -232,11 +211,37 @@ public partial class ReferenceFieldEditor : UserControl
 
     private void OnPeekClick(object? sender, RoutedEventArgs e)
     {
-        if (_fieldRow is null || _currentEntity is null || _refAttr is null) return;
-        var rawId = _fieldRow.CurrentValue;
-        if (string.IsNullOrEmpty(rawId)) return;
+        if (_fieldRow?.Property is null) return;
+        if (_refAttr is null)
+            _refAttr = _fieldRow.Property.GetCustomAttribute<ReferenceFieldAttribute>();
+        if (_refAttr is null) return;
 
-        WeakReferenceMessenger.Default.Send(
-            new PeekReferenceRequestMessage(_currentEntity, _refAttr.TargetEntityType, rawId, _fieldRow.PropertyName));
+        // Resolve the first reference entry to its target entity — the same path the badges
+        // use — then peek. Decoupled from the (possibly null) source-entity visual-tree walk.
+        try
+        {
+            var serializer = GetService<IReferenceListSerializer>();
+            var lookup = GetService<IEntityLookupService>();
+            var refList = serializer.Deserialize(_fieldRow.CurrentValue, _refAttr);
+            if (refList.Count == 0) return;
+
+            var baseRef = GetBaseEntityRef(refList[0]);
+            if (baseRef is null) return;
+
+            var lookupKey = baseRef.IsComposite
+                ? $"{baseRef.GroupId}.{baseRef.SubgroupId}"
+                : baseRef.Id;
+
+            var target = lookup.FindBestMatch(_refAttr.TargetEntityType, lookupKey, _refAttr.TargetKey);
+            if (target is not null)
+            {
+                WeakReferenceMessenger.Default.Send(
+                    new PeekEntityMessage(_refAttr.TargetEntityType, target.EntityId, target));
+            }
+        }
+        catch (Exception ex)
+        {
+            Log.Debug(ex, "[RefFieldEditor] Peek failed for '{Val}'", _fieldRow.CurrentValue);
+        }
     }
 }

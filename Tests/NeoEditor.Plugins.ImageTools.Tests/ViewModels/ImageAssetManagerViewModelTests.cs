@@ -1,5 +1,6 @@
 using CommunityToolkit.Mvvm.Messaging;
 using Moq;
+using NeoEditor.Core.Abstractions;
 using NeoEditor.Core.Model;
 using NeoEditor.Data.Messages;
 using NeoEditor.Data.Model;
@@ -47,7 +48,8 @@ public class ImageAssetManagerViewModelTests : IDisposable
         }
     }
 
-    private (ImageAssetManagerViewModel Vm, IMessenger Messenger) CreateVm()
+    private (ImageAssetManagerViewModel Vm, IMessenger Messenger) CreateVm(
+        IImageGenerationService? imageGen = null)
     {
         var config = new Mock<IConfigService>();
         config.Setup(c => c.Config).Returns(new AppConfig { GameRootDir = _root });
@@ -58,8 +60,8 @@ public class ImageAssetManagerViewModelTests : IDisposable
         var sourceProvider = new ProfileModSourceProvider(config.Object, messenger);
         var vm = new ImageAssetManagerViewModel(
             new Mock<ILocalizationService>().Object,
-            config.Object,
             sourceProvider,
+            imageGen ?? new Mock<IImageGenerationService>().Object,
             messenger);
 
         return (vm, messenger);
@@ -84,6 +86,43 @@ public class ImageAssetManagerViewModelTests : IDisposable
         var modNode = vm.ModNodes.First(n => n.Name == "MyMod");
         Assert.Single(modNode.Children);
         Assert.Equal("b.png", modNode.Children[0].Name);
+    }
+
+    [Fact]
+    public async Task AddImage_CanExecute_OnlyForWritableModDirectories()
+    {
+        var (vm, _) = CreateVm();
+        await vm.RefreshCommand.ExecuteAsync(null);
+
+        // Base game root is read-only — never copy into game install files.
+        var baseNode = vm.ModNodes.First(n => n.Name == "Base Game");
+        Assert.True(baseNode.IsGame);
+        vm.SelectedNode = baseNode;
+        Assert.False(vm.AddImageCommand.CanExecute(null));
+
+        // A writable mod directory is a valid target.
+        var modNode = vm.ModNodes.First(n => n.Name == "MyMod");
+        Assert.False(modNode.IsGame);
+        vm.SelectedNode = modNode;
+        Assert.True(vm.AddImageCommand.CanExecute(null));
+
+        // An image leaf is not a target directory.
+        vm.SelectedNode = modNode.Children[0];
+        Assert.False(vm.AddImageCommand.CanExecute(null));
+    }
+
+    [Fact]
+    public void GenerateImage_CanExecute_FollowsAiAvailability()
+    {
+        var available = new Mock<IImageGenerationService>();
+        available.Setup(s => s.IsAvailable).Returns(true);
+        var (vm, _) = CreateVm(available.Object);
+        Assert.True(vm.GenerateImageCommand.CanExecute(null));
+
+        var unavailable = new Mock<IImageGenerationService>();
+        unavailable.Setup(s => s.IsAvailable).Returns(false);
+        var (vm2, _) = CreateVm(unavailable.Object);
+        Assert.False(vm2.GenerateImageCommand.CanExecute(null));
     }
 
     [Fact]

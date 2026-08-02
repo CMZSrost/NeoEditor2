@@ -4,10 +4,15 @@ using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using Avalonia;
+using Avalonia.Controls;
+using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Media.Imaging;
+using Avalonia.Platform.Storage;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
+using NeoEditor.Core.Abstractions;
 using NeoEditor.Data.Messages;
 using NeoEditor.Plugins.ImageTools.Services;
 
@@ -23,9 +28,9 @@ namespace NeoEditor.Plugins.ImageTools.ViewModels;
 /// </summary>
 public partial class ImageAssetManagerViewModel : ImageToolObservableObject
 {
-    private readonly IConfigService _config;
     private readonly IMessenger _messenger;
     private readonly IProfileModSourceProvider _sourceProvider;
+    private readonly IImageGenerationService _imageGenerationService;
 
     // Serializes refresh calls so concurrent triggers (auto-load, message nudge,
     // explicit button) never run two tree rebuilds that clobber each other.
@@ -47,14 +52,14 @@ public partial class ImageAssetManagerViewModel : ImageToolObservableObject
 
     public ImageAssetManagerViewModel(
         ILocalizationService loc,
-        IConfigService config,
         IProfileModSourceProvider sourceProvider,
+        IImageGenerationService imageGenerationService,
         IMessenger messenger)
         : base(loc)
     {
-        _config = config;
         _messenger = messenger;
         _sourceProvider = sourceProvider;
+        _imageGenerationService = imageGenerationService;
 
         // 议题6: auto-load + refresh on workspace lifecycle changes (game root,
         // profile load, mod create/delete). Refresh is best-effort.
@@ -71,6 +76,8 @@ public partial class ImageAssetManagerViewModel : ImageToolObservableObject
     /// </summary>
     partial void OnSelectedNodeChanged(ModImageTreeNode? value)
     {
+        AddImageCommand.NotifyCanExecuteChanged();
+
         if (value?.IsImage == true && !string.IsNullOrWhiteSpace(value.FullImagePath))
         {
             try
@@ -163,6 +170,118 @@ public partial class ImageAssetManagerViewModel : ImageToolObservableObject
         _messenger.Send(new OpenImageDocumentMessage(title, SelectedNode.FullImagePath));
     }
 
+    /// <summary>Localized context-menu header for the Add-Image command.</summary>
+    public string AddImageHeader => Loc["AddImage"];
+
+    private bool CanAddImage() => SelectedNode is { IsMod: true, IsGame: false };
+
+    /// <summary>
+    /// Context-menu "Add Image" on a mod directory: pick image files, copy them into the
+    /// mod's <c>img/</c> directory, refresh the tree, then open an editor tab per added
+    /// image. Base game is read-only — never copy into game install files.
+    /// </summary>
+    [RelayCommand(CanExecute = nameof(CanAddImage))]
+    private async Task AddImageAsync()
+    {
+        if (SelectedNode is not { IsMod: true, IsGame: false } || SelectedNode.ModPath is not { } modPath)
+            return;
+
+        var storageProvider = GetStorageProvider();
+        if (storageProvider is null)
+            return;
+
+        var files = await storageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+        {
+            Title = Loc["SelectImage"],
+            AllowMultiple = true,
+            FileTypeFilter =
+            [
+                new FilePickerFileType(Loc["ImageFiles"])
+                {
+                    Patterns = ["*.png", "*.jpg", "*.jpeg", "*.bmp", "*.gif", "*.webp"]
+                }
+            ]
+        });
+
+        if (files.Count == 0)
+            return;
+
+        var paths = files
+            .Select(file => file.TryGetLocalPath())
+            .Where(static path => !string.IsNullOrWhiteSpace(path))
+            .Cast<string>()
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+        if (paths.Count == 0)
+            return;
+
+        var imgDir = Path.Combine(modPath, "img");
+        Directory.CreateDirectory(imgDir);
+
+        var added = new List<string>();
+        foreach (var path in paths)
+        {
+            var fileName = Path.GetFileName(path);
+            if (string.IsNullOrWhiteSpace(fileName))
+                continue;
+
+            var target = Path.Combine(imgDir, fileName);
+            try
+            {
+                if (!File.Exists(target) && !PathsEqual(path, target))
+                    File.Copy(path, target);
+                added.Add(target);
+            }
+            catch
+            {
+                // Copy is best-effort; a failed copy is surfaced by the tree refresh below.
+            }
+        }
+
+        if (added.Count == 0)
+            return;
+
+        // Refresh so the newly copied files appear in the tree.
+        await RefreshAsync();
+
+        // Open the image editor tab for each added image (dedup by path in the shell).
+        foreach (var addedPath in added)
+            _messenger.Send(new OpenImageDocumentMessage(Path.GetFileName(addedPath), addedPath));
+    }
+
+    /// <summary>Localized context-menu header for the AI generate action.</summary>
+    public string AiGenerateHeader => Loc["AiGenerate"];
+
+    private bool CanGenerateImage() => _imageGenerationService.IsAvailable;
+
+    /// <summary>
+    /// Context-menu "AI 生成图片": opens a blank Image Editor workbench whose AI panel
+    /// takes a prompt and generates pixel art. Disabled when the AI API is not configured.
+    /// </summary>
+    [RelayCommand(CanExecute = nameof(CanGenerateImage))]
+    private void GenerateImage()
+    {
+        _messenger.Send(new OpenAiImageWorkbenchMessage());
+    }
+
+    private static IStorageProvider? GetStorageProvider()
+    {
+        if (Application.Current?.ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime
+            {
+                MainWindow: { } mainWindow
+            })
+        {
+            return null;
+        }
+
+        return TopLevel.GetTopLevel(mainWindow)?.StorageProvider;
+    }
+
+    private static bool PathsEqual(string a, string b)
+    {
+        return string.Equals(Path.GetFullPath(a), Path.GetFullPath(b), StringComparison.OrdinalIgnoreCase);
+    }
+
     private void ApplyFilter()
     {
         ModNodes.Clear();
@@ -196,6 +315,7 @@ public partial class ImageAssetManagerViewModel : ImageToolObservableObject
                     Name = modNode.Name,
                     ModPath = modNode.ModPath,
                     IsMod = true,
+                    IsGame = modNode.IsGame,
                     Children = new ObservableCollection<ModImageTreeNode>(matchingChildren)
                 });
             }
@@ -221,6 +341,7 @@ public partial class ImageAssetManagerViewModel : ImageToolObservableObject
                 Name = root.Name,
                 ModPath = root.ContentRoot,
                 IsMod = true,
+                IsGame = root.IsGame,
                 Children = new ObservableCollection<ModImageTreeNode>(children)
             });
         }
@@ -308,6 +429,9 @@ public class ModImageTreeNode
     public ObservableCollection<ModImageTreeNode> Children { get; set; } = [];
     public bool IsMod { get; set; }
     public bool IsImage { get; set; }
+
+    /// <summary>True for the base-game root node, which is read-only (never write into game files).</summary>
+    public bool IsGame { get; set; }
 }
 
 /// <summary>

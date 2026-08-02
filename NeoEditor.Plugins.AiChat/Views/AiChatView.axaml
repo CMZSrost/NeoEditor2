@@ -2,12 +2,16 @@
     x:Class="NeoEditor.Plugins.AiChat.Views.AiChatView"
     xmlns="https://github.com/avaloniaui"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:conv="clr-namespace:NeoEditor.Plugins.AiChat.Converters"
     xmlns:vm="clr-namespace:NeoEditor.Plugins.AiChat.ViewModels;assembly=NeoEditor.Plugins.AiChat"
     x:DataType="vm:AiChatViewModel">
     <UserControl.Resources>
-        <conv:BoolToHorizontalAlignmentConverter x:Key="UserAlignment" />
-        <conv:BoolToBubbleBrushConverter x:Key="BubbleBrush" />
+        <!--  Bubble / block brushes — fixed colors so they read the same on light and dark  -->
+        <SolidColorBrush x:Key="UserBubbleBrush" Color="#40478FD9" />
+        <SolidColorBrush x:Key="AssistantBubbleBrush" Color="#14FFFFFF" />
+        <SolidColorBrush x:Key="AssistantBorderBrush" Color="#66808080" />
+        <SolidColorBrush x:Key="ToolBlockBrush" Color="#FF2D2D30" />
+        <SolidColorBrush x:Key="ToolBlockTextBrush" Color="#FFE8E8E8" />
+        <SolidColorBrush x:Key="SystemStripBrush" Color="#1A808080" />
     </UserControl.Resources>
 
     <!--  Grid rows so the history gets the * fill and the input stays compact (task 6).
@@ -97,37 +101,94 @@
             </StackPanel>
         </Border>
 
-        <!--  Chat history — single-column DataGrid, ChatMimic bubbles (task 6)  -->
-        <DataGrid
-            x:Name="MessageGrid"
+        <!--  Chat history — ItemsControl with a per-Kind bubble/block template (round22).
+              One template; exactly one Border is visible depending on the message Kind.  -->
+        <ScrollViewer
+            x:Name="MessageScroll"
             Grid.Row="3"
-            Margin="0,0,0,8"
-            ItemsSource="{Binding Messages}"
-            AutoGenerateColumns="False"
-            HeadersVisibility="None"
-            GridLinesVisibility="None"
-            IsReadOnly="True"
-            UseLogicalScrollable="True"
-            CanUserSortColumns="False"
-            CanUserResizeColumns="False"
-            CanUserReorderColumns="False">
-            <DataGrid.Columns>
-                <DataGridTemplateColumn Width="*">
-                    <DataGridTemplateColumn.CellTemplate>
-                        <DataTemplate x:DataType="vm:ChatMessageItem">
+            Margin="0,0,0,8">
+            <ItemsControl ItemsSource="{Binding Messages}">
+                <ItemsControl.DataTemplates>
+                    <DataTemplate x:DataType="vm:ChatMessageItem">
+                        <Grid>
+                            <!--  Tool invocation block: expandable — header shows the tool name,
+                                  content shows the tool result (click to expand).  -->
+                            <Expander
+                                Margin="0,4"
+                                Padding="8,2,8,4"
+                                CornerRadius="6"
+                                Background="{StaticResource ToolBlockBrush}"
+                                Foreground="{StaticResource ToolBlockTextBrush}"
+                                HorizontalAlignment="Stretch"
+                                IsVisible="{Binding IsTool}">
+                                <Expander.Header>
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <TextBlock
+                                            VerticalAlignment="Center"
+                                            FontSize="12"
+                                            Text="&#x2699;" />
+                                        <SelectableTextBlock
+                                            VerticalAlignment="Center"
+                                            FontFamily="Cascadia Code, Consolas, monospace"
+                                            FontSize="11"
+                                            Text="{Binding ToolName}" />
+                                    </StackPanel>
+                                </Expander.Header>
+                                <SelectableTextBlock
+                                    Margin="4,2,0,4"
+                                    FontFamily="Cascadia Code, Consolas, monospace"
+                                    FontSize="10"
+                                    Text="{Binding Content}"
+                                    TextWrapping="Wrap" />
+                            </Expander>
+
+                            <!--  System notice: centered neutral strip  -->
+                            <Border
+                                Margin="0,4"
+                                Padding="10,4"
+                                CornerRadius="6"
+                                Background="{StaticResource SystemStripBrush}"
+                                HorizontalAlignment="Center"
+                                IsVisible="{Binding IsSystem}">
+                                <SelectableTextBlock
+                                    FontSize="11"
+                                    Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"
+                                    Text="{Binding Content}"
+                                    TextWrapping="Wrap" />
+                            </Border>
+
+                            <!--  User bubble: right-aligned blue  -->
                             <Border
                                 MaxWidth="480"
                                 Margin="0,4"
                                 Padding="10,6"
                                 CornerRadius="8"
-                                HorizontalAlignment="{Binding IsUser, Converter={StaticResource UserAlignment}}"
-                                Background="{Binding IsUser, Converter={StaticResource BubbleBrush}}">
+                                Background="{StaticResource UserBubbleBrush}"
+                                HorizontalAlignment="Right"
+                                IsVisible="{Binding IsUser}">
+                                <SelectableTextBlock
+                                    Text="{Binding Content}"
+                                    TextWrapping="Wrap" />
+                            </Border>
+
+                            <!--  Assistant bubble: left-aligned with a visible border  -->
+                            <Border
+                                MaxWidth="480"
+                                Margin="0,4"
+                                Padding="10,6"
+                                CornerRadius="8"
+                                Background="{StaticResource AssistantBubbleBrush}"
+                                BorderBrush="{StaticResource AssistantBorderBrush}"
+                                BorderThickness="1"
+                                HorizontalAlignment="Left"
+                                IsVisible="{Binding IsAssistant}">
                                 <StackPanel>
                                     <StackPanel Orientation="Horizontal" Spacing="4">
                                         <TextBlock
-                                            FontSize="10"
+                                            FontSize="9"
                                             FontWeight="Bold"
-                                            Text="{Binding Role}" />
+                                            Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"
+                                            Text="AI" />
                                         <TextBlock
                                             FontSize="10"
                                             Foreground="Gray"
@@ -140,11 +201,11 @@
                                         TextWrapping="Wrap" />
                                 </StackPanel>
                             </Border>
-                        </DataTemplate>
-                    </DataGridTemplateColumn.CellTemplate>
-                </DataGridTemplateColumn>
-            </DataGrid.Columns>
-        </DataGrid>
+                        </Grid>
+                    </DataTemplate>
+                </ItemsControl.DataTemplates>
+            </ItemsControl>
+        </ScrollViewer>
 
         <!--  Input  -->
         <Border
@@ -159,14 +220,18 @@
                     AcceptsReturn="False"
                     IsEnabled="{Binding CanSend}"
                     Text="{Binding InputText}"
-                    Watermark="Type a message..." />
+                    PlaceholderText="Type a message...">
+                    <TextBox.KeyBindings>
+                        <KeyBinding Gesture="Enter" Command="{Binding SendMessageCommand}" />
+                    </TextBox.KeyBindings>
+                </TextBox>
                 <Button
                     Grid.Column="1"
                     Margin="8,0,0,0"
                     Padding="16,4"
-                    Command="{Binding SendMessageCommand}"
-                    Content="Send"
-                    IsEnabled="{Binding CanSend}" />
+                    Command="{Binding SendOrStopCommand}"
+                    Content="{Binding SendOrStopLabel}"
+                    IsEnabled="{Binding IsAvailable}" />
             </Grid>
         </Border>
     </Grid>

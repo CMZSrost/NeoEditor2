@@ -778,11 +778,35 @@
     <data name="Settings.ImageModel" xml:space="preserve">
         <value>图片生成模型</value>
     </data>
+    <data name="Settings.TestImageConnection" xml:space="preserve">
+        <value>测试图片模型连接</value>
+    </data>
+    <data name="Settings.TestingImageConnection" xml:space="preserve">
+        <value>正在测试连接…</value>
+    </data>
+    <data name="Settings.ImageTestNoProvider" xml:space="preserve">
+        <value>未配置：找不到带 API Key 的图片供应商。请在下方填写 Endpoint 和 API Key。</value>
+    </data>
+    <data name="Settings.ImageTestOk" xml:space="preserve">
+        <value>连接成功：图片模型可用。</value>
+    </data>
+    <data name="Settings.ImageTestFailed" xml:space="preserve">
+        <value>连接失败（HTTP {0}）：{1}</value>
+    </data>
+    <data name="Settings.ImageTestError" xml:space="preserve">
+        <value>测试出错：{0}</value>
+    </data>
     <data name="Settings.McpEnabled" xml:space="preserve">
         <value>GUI 内启动 MCP Server</value>
     </data>
     <data name="Settings.McpPort" xml:space="preserve">
         <value>MCP 端口（0 = stdio）</value>
+    </data>
+    <data name="Settings.MaxToolCalls" xml:space="preserve">
+        <value>每轮对话最大工具调用次数</value>
+    </data>
+    <data name="Settings.MaxToolCallsNote" xml:space="preserve">
+        <value>限制一轮对话中 MCP 工具调用次数，防止失控循环。</value>
     </data>
     <data name="Settings.AiConfigNote" xml:space="preserve">
         <value>Endpoint 与 API Key 按供应商（Provider）分组，每个模型可选用不同供应商。配置优先级：config.json &gt; 环境变量。修改后重启应用生效。API Key 加密存储。</value>
@@ -2315,4 +2339,13 @@ Ctrl+右键点击引用 = 仅预览不跳转。
     <data name="ToggleBottomPanel" xml:space="preserve"><value>切换底部面板</value></data>
     <data name="NewMod" xml:space="preserve"><value>新建 Mod</value></data>
     <data name="ImportMod" xml:space="preserve"><value>导入 Mod</value></data>
+    <data name="AiGenerate" xml:space="preserve"><value>AI 生成图片</value></data>
+    <data name="AiPromptPlaceholder" xml:space="preserve"><value>输入提示词，如：一把像素风的剑</value></data>
+    <data name="AiUnavailableHint" xml:space="preserve"><value>AI 未配置（设置中填写 API Key）</value></data>
+    <data name="OriginalImage" xml:space="preserve"><value>原图</value></data>
+    <data name="PixelatedImage" xml:space="preserve"><value>像素处理图</value></data>
+    <data name="AiGeneratedImage" xml:space="preserve"><value>AI 生成图</value></data>
+    <data name="AiPixelatedImage" xml:space="preserve"><value>AI 像素处理图</value></data>
+    <data name="SaveImage" xml:space="preserve"><value>保存图片</value></data>
+    <data name="PixelateAi" xml:space="preserve"><value>AI 像素化</value></data>
 </root>

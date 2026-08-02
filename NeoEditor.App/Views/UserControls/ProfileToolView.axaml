@@ -38,37 +38,49 @@
             </Button>
         </StackPanel>
 
-        <!--  Active profile: Mod → XML → non-empty data class  -->
-        <TreeView x:Name="ModTree" ItemsSource="{Binding ModNodes}">
-            <TreeView.DataTemplates>
-                <TreeDataTemplate x:DataType="vm:ProfileModNode" ItemsSource="{Binding XmlNodes}">
-                    <TextBlock FontWeight="SemiBold" Text="{Binding Name}" />
-                </TreeDataTemplate>
-                <TreeDataTemplate x:DataType="vm:ProfileXmlNode" ItemsSource="{Binding TypeNodes}">
-                    <TextBlock FontSize="11" Text="{Binding Name}" />
-                </TreeDataTemplate>
-                <TreeDataTemplate x:DataType="vm:ProfileDataTypeNode">
-                    <TextBlock
-                        FontSize="11"
-                        Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"
-                        Text="{Binding DisplayName}" />
-                </TreeDataTemplate>
-            </TreeView.DataTemplates>
-            <TreeView.Styles>
-                <Style Selector="TreeViewItem">
-                    <Setter Property="(Interaction.Behaviors)">
-                        <BehaviorCollectionTemplate>
-                            <BehaviorCollection>
-                                <EventTriggerBehavior EventName="Expanded">
-                                    <InvokeCommandAction
-                                        Command="{Binding ((vm:ProfileToolViewModel)DataContext).LoadXmlTypesCommand, ElementName=ModTree}"
-                                        CommandParameter="{Binding}" />
-                                </EventTriggerBehavior>
-                            </BehaviorCollection>
-                        </BehaviorCollectionTemplate>
-                    </Setter>
-                </Style>
-            </TreeView.Styles>
-        </TreeView>
+        <!--  Active profile: Mod → XML → non-empty data class (ProDataGrid hierarchical grid, round22).
+              Roots + lazy leaves come from the HierarchicalModel; double-click opens an XML doc.  -->
+        <DataGrid
+            x:Name="ModTreeGrid"
+            AutoGenerateColumns="False"
+            Classes="hierarchical"
+            GridLinesVisibility="None"
+            HeadersVisibility="None"
+            HierarchicalModel="{Binding TreeModel}"
+            HierarchicalRowsEnabled="True"
+            IsReadOnly="True"
+            CanUserReorderColumns="False"
+            CanUserResizeColumns="False"
+            CanUserSortColumns="False"
+            DoubleTapped="OnDataGridDoubleTapped"
+            SelectedItem="{Binding SelectedRow}">
+            <DataGrid.ContextMenu>
+                <ContextMenu>
+                    <MenuItem Header="Open in Explorer" Command="{Binding OpenDirectoryCommand}" />
+                    <MenuItem Header="Open file" Command="{Binding OpenFileCommand}" />
+                </ContextMenu>
+            </DataGrid.ContextMenu>
+            <DataGrid.Columns>
+                <DataGridHierarchicalColumn
+                    Width="*"
+                    x:CompileBindings="False"
+                    Binding="{Binding Item}">
+                    <DataGridHierarchicalColumn.CellTemplate>
+                        <DataTemplate x:DataType="vm:ProfileTreeItem">
+                            <StackPanel Orientation="Horizontal" Spacing="4">
+                                <TextBlock
+                                    VerticalAlignment="Center"
+                                    FontSize="11"
+                                    Text="{Binding Icon}" />
+                                <TextBlock
+                                    VerticalAlignment="Center"
+                                    FontSize="11"
+                                    Text="{Binding DisplayName}" />
+                            </StackPanel>
+                        </DataTemplate>
+                    </DataGridHierarchicalColumn.CellTemplate>
+                </DataGridHierarchicalColumn>
+            </DataGrid.Columns>
+        </DataGrid>
     </DockPanel>
 </UserControl>

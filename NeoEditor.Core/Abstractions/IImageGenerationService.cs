@@ -25,6 +25,19 @@ public interface IImageGenerationService
         CancellationToken ct = default);
 
     /// <summary>
+    /// Generate a pixel art image directly from a text prompt (no entity involved).
+    /// Used by the Image Editor workbench's AI panel.
+    /// </summary>
+    /// <param name="prompt">Free-form text prompt describing the image to generate.</param>
+    /// <param name="options">Generation options. Uses defaults if null.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>The generated image bytes (PNG) and metadata.</returns>
+    Task<ImageGenerationResult> GenerateAsync(
+        string prompt,
+        ImageGenerationOptions? options = null,
+        CancellationToken ct = default);
+
+    /// <summary>
     /// Build a prompt string for the entity (for preview / debugging).
     /// </summary>
     string BuildPrompt(string entityType, string entityId);
@@ -41,7 +54,9 @@ public interface IImageGenerationService
 public sealed record ImageGenerationOptions(
     int Width = 64,
     int Height = 64,
-    string Style = "pixel-art"
+    string Style = "pixel-art",
+    string? RequestSize = null,
+    bool ApplyPixelArt = true
 );
 
 /// <summary>
