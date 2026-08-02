@@ -181,7 +181,9 @@ public partial class App : Application
                 services.AddSingleton<NeoEditor.Plugins.EntityEditor.Services.RefNode>(
                     sp => new NeoEditor.Plugins.EntityEditor.Services.RefNode(
                         sp.GetRequiredService<Helper.IReferenceResolver>(),
-                        sp.GetRequiredService<Helper.INavigationRouter>()));
+                        sp.GetRequiredService<Helper.INavigationRouter>(),
+                        sp.GetRequiredService<NeoEditor.Plugins.EntityEditor.Services.VisHelperService>()
+                            .BuildRefTooltip));
 
                 services.AddAutoMapper((expression => { }));
 
@@ -341,9 +343,14 @@ public partial class App : Application
     private void InitializeFieldDescriptions()
     {
         var fieldDescService = _host.Services.GetRequiredService<FieldDescriptionService>();
-        // M9: FieldDescriptions moved from GenericDataGridHelper to ColumnTemplateFactory delegate
+        // M9: FieldDescriptions moved from GenericDataGridHelper to ColumnTemplateFactory delegate.
+        // R30: embedded authoritative descriptions (Docs/38, keyed by TableAttribute name + property)
+        // take priority; the .docx cache only fills gaps (its extracted keys carry Chinese table
+        // suffixes and don't match TableAttribute names).
         _host.Services.GetRequiredService<NeoEditor.Plugins.DataViewer.Services.ColumnTemplateFactory>()
-            .FieldDescriptionProvider = (table, prop) => fieldDescService.GetDescription(table, prop);
+            .FieldDescriptionProvider = (table, prop) =>
+                NeoEditor.Data.Model.FieldDescriptions.GetDescription(table, prop)
+                ?? fieldDescService.GetDescription(table, prop);
         var config = _host.Services.GetRequiredService<IConfigService>().Config;
 
         // Try to load cached JSON first

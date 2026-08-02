@@ -236,15 +236,18 @@ public class DataExportService
                 {
                     var val = p.GetValue(entity);
                     var refAttr = p.GetCustomAttribute<ReferenceFieldAttribute>();
-                    if (refAttr is not null && val is string refStr && !string.IsNullOrWhiteSpace(refStr))
+                    // R30: reference columns are ReferenceList now — take the raw text
+                    // ("3,14") instead of the damaged "[3, 14]" ToString().
+                    var raw = ReferenceText.GetRawString(val, refAttr);
+                    if (refAttr is not null && !string.IsNullOrWhiteSpace(raw))
                     {
                         // Show both raw value and resolved names
-                        var resolved = ResolveReferenceDisplay(refStr, refAttr, refLookups);
-                        row.Add(string.IsNullOrEmpty(resolved) ? (val?.ToString() ?? "") : resolved);
+                        var resolved = ResolveReferenceDisplay(raw, refAttr, refLookups);
+                        row.Add(string.IsNullOrEmpty(resolved) ? raw : resolved);
                     }
                     else
                     {
-                        var strVal = val is bool b ? (b ? "1" : "0") : val?.ToString() ?? "";
+                        var strVal = val is bool b ? (b ? "1" : "0") : raw;
                         row.Add(UnescapeUnicode(strVal));
                     }
                 }

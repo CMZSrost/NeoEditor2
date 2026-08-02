@@ -118,6 +118,7 @@
 ### 2.5 图片/sprite 资源引用（ImageAsset 实体）⚠️ 2026-08-02 mod 交叉验证新增
 
 图片列（`strIMG`/`strImg`/`vImageList`/`vSpriteList`）也是**引用列**，实体 = 图片资源（ImageAsset），TargetKey = `{FileName}`。
+✅ **2026-08-02 代码已标注**：8 个文件名列（attackmodes.strIMG / camptypes.vImageList / creatures.strImg / datafiles.strImg / dmcplaces.strImg / encounters.strImg / itemtypes.vImageList / vSpriteList）已标 `[ReferenceField(typeof(ImageAsset), TargetKey="{FileName}")]`，走引用序列化/导出管线（只标注不拾取：ImageAsset 无实体索引，Lookup 自然 miss）。`itemtypes.vImageUsage`（索引列）与 `maps.strName`（含内部网格名）保持裸 string。
 
 | 属性 | 规则 |
 |------|------|

@@ -1,5 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using NeoEditor.Core.Abstractions;
+using NeoEditor.Helper;
 
 namespace NeoEditor.Data.Model.Game;
 
@@ -32,7 +34,8 @@ public class DataFile : IEntity
 
     [Column("strImg", TypeName = "varchar(1000)")]
     [StringLength(1000)]
-    
+
     [Display(Name = "Image")]
-    public string Image { get; set; } = "";
+    [ReferenceField(typeof(ImageAsset), TargetKey = "{FileName}")]
+    public ReferenceList<IReferenceEntry> Image { get; set; } = new();
 }

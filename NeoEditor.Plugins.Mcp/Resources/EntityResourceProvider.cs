@@ -1,11 +1,13 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using NeoEditor.Core.Abstractions;
 using NeoEditor.Data;
 using NeoEditor.Data.Model.Game;
+using NeoEditor.Helper;
 using Newtonsoft.Json;
 
 namespace NeoEditor.Plugins.Mcp.Resources;
@@ -59,11 +61,13 @@ public class EntityResourceProvider : IMcpResourceProvider
         var entity = resultProp?.GetValue(task) as IEntity;
         if (entity is null) return null;
 
-        // Serialize to JSON
+        // Serialize to JSON. R30: reference columns must serialize as their raw text
+        // ("16,46"), not the damaged "[16, 46]" ReferenceList.ToString() format.
         var dict = entity.GetType()
-            .GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance)
+            .GetProperties(BindingFlags.Public | BindingFlags.Instance)
             .Where(p => p.CanRead && p.GetIndexParameters().Length == 0)
-            .ToDictionary(p => p.Name, p => p.GetValue(entity)?.ToString() ?? "");
+            .ToDictionary(p => p.Name, p => ReferenceText.GetRawString(p.GetValue(entity),
+                p.GetCustomAttribute<ReferenceFieldAttribute>()));
 
         return JsonConvert.SerializeObject(new
         {

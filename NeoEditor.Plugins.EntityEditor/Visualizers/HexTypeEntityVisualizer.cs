@@ -32,7 +32,8 @@ public class HexTypeEntityVisualizer : IEntityVisualizer
         _vis = vis;
         _refNode = refNode ?? new Services.RefNode(
             vis.Resolver,
-            vis.Router);
+            vis.Router,
+            vis.BuildRefTooltip);
     }
 
     public Control BuildDetail(IEntity entity)
@@ -238,7 +239,7 @@ public class HexTypeEntityVisualizer : IEntityVisualizer
             sp.Children.Add(_vis.SectionLabel(_vis.Loc("Vis.DefaultCamp")));
             var wp = new WrapPanel();
             wp.Children.Add(_refNode.Badge<CampType>(ht, nameof(HexType.DefaultCampId),
-                ht.DefaultCampId.ToString(), "#FFF3E0", "#E65100"));
+                ht.DefaultCampId.ToRawString(null), "#FFF3E0", "#E65100"));
             sp.Children.Add(_vis.Card(wp));
         }
 

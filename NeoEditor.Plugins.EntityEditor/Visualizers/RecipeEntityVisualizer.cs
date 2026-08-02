@@ -35,7 +35,8 @@ public class RecipeEntityVisualizer : IEntityVisualizer
         _vis = vis;
         _refNode = refNode ?? new Services.RefNode(
             _vis.Resolver,
-            _vis.Router);
+            _vis.Router,
+            _vis.BuildRefTooltip);
         _dataTable = dataTable!;
     }
 
@@ -54,6 +55,8 @@ public class RecipeEntityVisualizer : IEntityVisualizer
         root.Children.Add(BuildProductPanel(r));
         if (!string.IsNullOrWhiteSpace(r.AlsoTry))
             root.Children.Add(BuildAlsoTryPanel(r));
+        if (!string.IsNullOrWhiteSpace(r.HiddenId))
+            root.Children.Add(BuildHiddenPanel(r));
         root.Children.Add(BuildReverseRefsPanel(r));
 
         return new ScrollViewer { Content = root, HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled };
@@ -394,6 +397,22 @@ public class RecipeEntityVisualizer : IEntityVisualizer
         }
 
         return _vis.Card(wp, "Also Try (Alternative Recipes)");
+    }
+
+    /// <summary>
+    /// R30: nHiddenID → Recipe — unlock/related recipes (e.g. "reveal on identification").
+    /// Previously only visible in the Raw Data table.
+    /// </summary>
+    private Control BuildHiddenPanel(Recipe r)
+    {
+        var wp = new WrapPanel();
+        foreach (var seg in r.HiddenId.Split(',').Select(s => s.Trim()).Where(s => s.Length > 0))
+        {
+            wp.Children.Add(_refNode.Badge<Recipe>(r, nameof(Recipe.HiddenId), seg,
+                "#FFF3E0", "#E65100"));
+        }
+
+        return _vis.Card(wp, _vis.Loc("Vis.Hidden"));
     }
 
     private Control BuildReverseRefsPanel(Recipe r)

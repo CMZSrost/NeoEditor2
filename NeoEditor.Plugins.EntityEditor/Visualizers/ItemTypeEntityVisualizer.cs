@@ -34,7 +34,8 @@ public class ItemTypeEntityVisualizer : IEntityVisualizer
         _vis = vis;
         _refNode = refNode ?? new Services.RefNode(
             _vis.Resolver,
-            _vis.Router);
+            _vis.Router,
+            _vis.BuildRefTooltip);
         _dataTable = dataTable!;
     }
 
@@ -135,8 +136,9 @@ public class ItemTypeEntityVisualizer : IEntityVisualizer
             Margin = new Thickness(0, 0, 0, 4)
         };
 
-        var imageNames = (it.ImageList ?? "").Split(',').Select(s => s.Trim()).Where(s => s.Length > 0).ToList();
-        var isImageList = (it.ImageList ?? "").Contains(',');
+        var imageListRaw = it.ImageList.ToRawString(",");
+        var imageNames = imageListRaw.Split(',').Select(s => s.Trim()).Where(s => s.Length > 0).ToList();
+        var isImageList = imageListRaw.Contains(',');
 
         // ── Image area (top-left) ──
         var imageArea = new Border
@@ -555,13 +557,13 @@ public class ItemTypeEntityVisualizer : IEntityVisualizer
         var findImage = _vis.FindImageFunc;
 
         // ImageList: comma-separated filenames
-        var imageNames = (it.ImageList ?? "").Split(',').Select(s => s.Trim())
+        var imageNames = it.ImageList.ToRawString(",").Split(',').Select(s => s.Trim())
             .Where(s => s.Length > 0).ToList();
 
         // SpriteList: slot=filename pairs (e.g. "1=HumanHead.png,2=HumanBody.png")
         var spriteSlotMap = new Dictionary<int, string>();
         var freeSpriteFiles = new List<string>();
-        foreach (var seg in (it.SpriteList ?? "").Split(',').Select(s => s.Trim()).Where(s => s.Length > 0))
+        foreach (var seg in it.SpriteList.ToRawString(",").Split(',').Select(s => s.Trim()).Where(s => s.Length > 0))
         {
             var eqIdx = seg.IndexOf('=');
             if (eqIdx > 0 && int.TryParse(seg[..eqIdx].Trim(), out var sl))

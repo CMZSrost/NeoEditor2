@@ -33,7 +33,8 @@ public class BarterHexEntityVisualizer : IEntityVisualizer
         _vis = vis;
         _refNode = refNode ?? new Services.RefNode(
             vis.Resolver,
-            vis.Router);
+            vis.Router,
+            vis.BuildRefTooltip);
         _dataTable = dataTable!;
     }
 

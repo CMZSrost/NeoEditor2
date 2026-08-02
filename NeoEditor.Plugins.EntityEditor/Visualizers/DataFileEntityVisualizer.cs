@@ -67,7 +67,13 @@ public class DataFileEntityVisualizer : IEntityVisualizer
             Background = Brush.Parse("#0A000000"), VerticalAlignment = VerticalAlignment.Top
         };
         if (bmp is not null)
+        {
             imageArea.Child = new Image { Source = bmp, Stretch = Stretch.Uniform, Width = 132, Height = 132 };
+            // R30 (Doc 21 §10): click the hero image to zoom.
+            var capturedBmp = bmp;
+            imageArea.Cursor = new Cursor(StandardCursorType.Hand);
+            imageArea.PointerPressed += (_, _) => _vis.OpenZoomableImage(capturedBmp, df.Subject ?? df.Name);
+        }
         else
             imageArea.Child = new SymbolIcon
             {

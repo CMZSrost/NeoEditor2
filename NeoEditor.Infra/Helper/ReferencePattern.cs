@@ -32,6 +32,7 @@ public abstract class ReferencePattern
     public static readonly ReferencePattern Id = new IdPattern();
     public static readonly ReferencePattern IdXMult = new IdXMultPattern();
     public static readonly ReferencePattern MultXId = new MultXIdPattern();
+    public static readonly ReferencePattern IdXMultXQty = new IdXMultXQtyPattern();
     public static readonly ReferencePattern IdEqualsValue = new IdEqualsValuePattern();
     public static readonly ReferencePattern ValueEqualsId = new ValueEqualsIdPattern();
     public static readonly ReferencePattern BracketId = new BracketIdPattern();
@@ -41,6 +42,7 @@ public abstract class ReferencePattern
     {
         "{id}x{mult}" => IdXMult,
         "{mult}x{id}" => MultXId,
+        "{id}x{mult}x{qty}" => IdXMultXQty,
         "{id}={value}" => IdEqualsValue,
         "{value}={id}" => ValueEqualsId,
         "[{id}" => BracketId,
@@ -140,6 +142,35 @@ public abstract class ReferencePattern
         }
     }
 
+    private sealed class IdXMultXQtyPattern : ReferencePattern
+    {
+        public IdXMultXQtyPattern() : base("IdXMultXQty") { }
+        public override string ExtractRawId(string segment)
+        {
+            var trimmed = segment.Trim();
+            var isNeg = trimmed.StartsWith('-');
+            var body = isNeg ? trimmed[1..].Trim() : trimmed;
+            var xIdx = body.IndexOf('x');
+            return xIdx > 0 ? body[..xIdx].Trim() : body;
+        }
+        public override string FormatDisplay(string segment, string? subject, string? modName)
+        {
+            if (string.IsNullOrEmpty(subject)) return segment;
+            var isNeg = segment.TrimStart().StartsWith('-');
+            var negPrefix = isNeg ? "~" : "";
+            var modPrefix = !string.IsNullOrEmpty(modName) && modName != "0" ? modName + ":" : "";
+            var xIdx = segment.IndexOf('x');
+            var suffix = xIdx > 0 ? segment[xIdx..] : "";
+            return $"{negPrefix}{modPrefix}{subject}{suffix}";
+        }
+        public override string FormatExtraInfo(string segment)
+        {
+            var trimmed = segment.Trim();
+            var xIdx = trimmed.IndexOf('x');
+            return xIdx > 0 && xIdx < trimmed.Length - 1 ? trimmed[xIdx..] : "";
+        }
+    }
+
     private sealed class IdEqualsValuePattern : ReferencePattern
     {
         public IdEqualsValuePattern() : base("IdEqualsValue") { }
@@ -199,6 +230,15 @@ public abstract class ReferencePattern
             var start = trimmed.StartsWith('[') ? 1 : 0;
             var commaIdx = trimmed.IndexOf(',', start);
             return commaIdx > start ? trimmed[start..commaIdx].Trim() : trimmed[start..].TrimEnd(']').Trim();
+        }
+        public override string FormatExtraInfo(string segment)
+        {
+            var trimmed = segment.Trim();
+            var start = trimmed.StartsWith('[') ? 1 : 0;
+            var commaIdx = trimmed.IndexOf(',', start);
+            if (commaIdx <= start) return "";
+            var tail = trimmed[(commaIdx + 1)..].TrimEnd(']').Trim();
+            return tail.Length > 0 ? $",{tail}" : "";
         }
     }
 }

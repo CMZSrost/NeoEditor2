@@ -29,9 +29,10 @@ public class Encounter : IEntity
 
     [Column("strImg", TypeName = "varchar(1000)")]
     [StringLength(1000)]
-    
+
     [Display(Name = "Image")]
-    public string Image { get; set; } = "EncBlank.png";
+    [ReferenceField(typeof(ImageAsset), TargetKey = "{FileName}")]
+    public ReferenceList<IReferenceEntry> Image { get; set; } = new();
 
     [Column("nTreasureID")]
     
@@ -86,9 +87,9 @@ public class Encounter : IEntity
     public bool RemoveUsed { get; set; } = false;
 
     [Column("nItemsID")]
-    
+
     [Display(Name = "ItemsId")]
-    [ReferenceField(typeof(ItemType), TargetKey = "{GroupId}.{SubgroupId}")]
+    [ReferenceField(typeof(ItemType))]
     public ReferenceList<IReferenceEntry> ItemsId { get; set; } = new();
 
     [Column("nCreatureID")]

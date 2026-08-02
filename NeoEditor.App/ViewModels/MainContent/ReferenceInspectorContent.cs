@@ -74,7 +74,10 @@ public partial class ReferenceInspectorContent : LocalizedObservableObject
             foreach (var prop in entityType.GetProperties(BindingFlags.Instance | BindingFlags.Public)
                 .Where(p => p.DeclaringType != typeof(IEntity) && p.GetCustomAttribute<ColumnAttribute>() != null))
             {
-                var val = prop.GetValue(entity)?.ToString() ?? "(null)";
+                // R30: reference columns render as raw text ("3,14"), not "[3, 14]".
+                var val = ReferenceText.GetRawString(prop.GetValue(entity),
+                    prop.GetCustomAttribute<ReferenceFieldAttribute>());
+                if (string.IsNullOrEmpty(val)) val = "(null)";
                 props.Add(new PropEntry(prop.Name, val));
             }
         }

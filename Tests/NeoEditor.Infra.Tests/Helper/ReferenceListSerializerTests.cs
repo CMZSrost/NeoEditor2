@@ -226,4 +226,158 @@ public class ReferenceListSerializerTests
         string s = list!;
         Assert.Equal("42", s);
     }
+
+    // ═══════════════════════════════════════════════════════════
+    // {id}x{mult}x{qty} — IdXMultXQtyFormat (treasuretable.aTreasures)
+    // ═══════════════════════════════════════════════════════════
+
+    [Fact]
+    public void IdXMultXQty_three_segment_roundtrip()
+    {
+        var attr = new ReferenceFieldAttribute(typeof(ItemType))
+        {
+            Pattern = "{id}x{mult}x{qty}", Separator = ",", TargetKey = "{GroupId}.{SubgroupId}"
+        };
+        var list = _serializer.Deserialize("86.6x1.0x5-9", attr);
+        var f = Assert.IsType<IdXMultXQtyFormat>(list[0]);
+        Assert.True(f.Entity.IsComposite);
+        Assert.Equal(86, f.Entity.GroupId);
+        Assert.Equal(6, f.Entity.SubgroupId);
+        Assert.Equal("1.0", f.Prob);
+        Assert.Equal("5-9", f.Qty);
+        Assert.Equal("86.6x1.0x5-9", _serializer.Serialize(list, attr));
+    }
+
+    [Fact]
+    public void IdXMultXQty_qty_omitted_roundtrip()
+    {
+        var attr = new ReferenceFieldAttribute(typeof(ItemType))
+        {
+            Pattern = "{id}x{mult}x{qty}", Separator = ",", TargetKey = "{GroupId}.{SubgroupId}"
+        };
+        var list = _serializer.Deserialize("36.6x0.01694915254", attr);
+        var f = Assert.IsType<IdXMultXQtyFormat>(list[0]);
+        Assert.Equal("0.01694915254", f.Prob);
+        Assert.Null(f.Qty);
+        Assert.Equal("36.6x0.01694915254", _serializer.Serialize(list, attr));
+    }
+
+    [Fact]
+    public void aTreasures_or_group_roundtrip()
+    {
+        var attr = new ReferenceFieldAttribute(typeof(ItemType))
+        {
+            Pattern = "{id}x{mult}x{qty}", Separator = ",", OrSeparator = "|",
+            TargetKey = "{GroupId}.{SubgroupId}"
+        };
+        const string raw = "10.3x0.25x1-20,35.1x0.1x1-1|35.2x0.1x1-1,11.4x1x1-1";
+        var list = _serializer.Deserialize(raw, attr);
+        Assert.Equal(3, list.Count);
+        Assert.IsType<IdXMultXQtyFormat>(list[0]);
+        var group = Assert.IsType<OrGroupFormat>(list[1]);
+        Assert.Equal(2, group.Alternatives.Count);
+        Assert.IsType<IdXMultXQtyFormat>(group.Alternatives[0]);
+        Assert.IsType<IdXMultXQtyFormat>(group.Alternatives[1]);
+        Assert.IsType<IdXMultXQtyFormat>(list[2]);
+        Assert.Equal(raw, _serializer.Serialize(list, attr));
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // [{id},{p1},{p2}] — BracketFormat params preserved (BattleMove)
+    // ═══════════════════════════════════════════════════════════
+
+    [Fact]
+    public void Bracket_params_preserved_roundtrip()
+    {
+        var attr = new ReferenceFieldAttribute(typeof(Condition)) { Separator = "],[", Pattern = "[{id}" };
+        const string raw = "[-137,0,0],[146,0,0]";
+        var list = _serializer.Deserialize(raw, attr);
+        Assert.Equal(2, list.Count);
+        var f0 = Assert.IsType<BracketFormat>(list[0]);
+        Assert.Equal("-137", f0.Entity.Id);
+        Assert.Equal("0", f0.P1);
+        Assert.Equal("0", f0.P2);
+        Assert.Equal(raw, _serializer.Serialize(list, attr));
+    }
+
+    [Fact]
+    public void Bracket_decimal_param_preserved()
+    {
+        var attr = new ReferenceFieldAttribute(typeof(Condition)) { Separator = "],[", Pattern = "[{id}" };
+        var list = _serializer.Deserialize("[209,4,0.5]", attr);
+        var f = Assert.IsType<BracketFormat>(list[0]);
+        Assert.Equal("209", f.Entity.Id);
+        Assert.Equal("4", f.P1);
+        Assert.Equal("0.5", f.P2);
+        Assert.Equal("[209,4,0.5]", _serializer.Serialize(list, attr));
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // {value}={id} with free-text value (aSwitchIDs state names)
+    // ═══════════════════════════════════════════════════════════
+
+    [Fact]
+    public void SwitchId_freetext_value_roundtrip()
+    {
+        var attr = new ReferenceFieldAttribute(typeof(ItemType))
+        {
+            Separator = ",", Pattern = "{value}={id}", TargetKey = "{GroupId}.{SubgroupId}"
+        };
+        const string raw = "Hood Off=8.7,On=8.3";
+        var list = _serializer.Deserialize(raw, attr);
+        Assert.Equal(2, list.Count);
+        var f0 = Assert.IsType<AssignFormat>(list[0]);
+        Assert.Equal("Hood Off", f0.RawValue);
+        Assert.Equal("8.7", f0.Entity.ToRawString());
+        Assert.True(f0.ValueFirst);
+        Assert.Equal(raw, _serializer.Serialize(list, attr));
+    }
+
+    [Fact]
+    public void Thresholds_roundtrip()
+    {
+        var attr = new ReferenceFieldAttribute(typeof(Condition)) { Separator = ";", Pattern = "{value}={id}" };
+        const string raw = "1=795;2=794;3=763";
+        var list = _serializer.Deserialize(raw, attr);
+        Assert.Equal(3, list.Count);
+        var f0 = Assert.IsType<AssignFormat>(list[0]);
+        Assert.Equal(1, f0.Value);
+        Assert.Equal("795", f0.Entity.Id);
+        Assert.Equal(raw, _serializer.Serialize(list, attr));
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // ImageAsset — [Namespace:]FileName, non-numeric Id
+    // ═══════════════════════════════════════════════════════════
+
+    [Fact]
+    public void Image_file_ref_roundtrip()
+    {
+        var attr = new ReferenceFieldAttribute(typeof(ImageAsset)) { TargetKey = "{FileName}" };
+        const string raw = "0:AModeSpearSharp.png";
+        var list = _serializer.Deserialize(raw, attr);
+        var f = Assert.IsType<PureRefFormat>(list[0]);
+        Assert.Equal("0", f.Entity.Namespace);
+        Assert.Equal("AModeSpearSharp.png", f.Entity.Id);
+        Assert.Equal(raw, _serializer.Serialize(list, attr));
+    }
+
+    [Fact]
+    public void SpriteList_roundtrip()
+    {
+        var attr = new ReferenceFieldAttribute(typeof(ImageAsset))
+        {
+            Separator = ",", Pattern = "{value}={id}", TargetKey = "{FileName}"
+        };
+        const string raw = "20=CreItmBagPlasticL.png,13=NSEf:CreItmBagDuffelBack.png";
+        var list = _serializer.Deserialize(raw, attr);
+        Assert.Equal(2, list.Count);
+        var f0 = Assert.IsType<AssignFormat>(list[0]);
+        Assert.Equal(20, f0.Value);
+        Assert.Equal("CreItmBagPlasticL.png", f0.Entity.Id);
+        var f1 = Assert.IsType<AssignFormat>(list[1]);
+        Assert.Equal(13, f1.Value);
+        Assert.Equal("NSEf", f1.Entity.Namespace);
+        Assert.Equal(raw, _serializer.Serialize(list, attr));
+    }
 }

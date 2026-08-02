@@ -34,7 +34,8 @@ public class ConditionEntityVisualizer : IEntityVisualizer
         _vis = vis;
         _refNode = refNode ?? new Services.RefNode(
             vis.Resolver,
-            vis.Router);
+            vis.Router,
+            vis.BuildRefTooltip);
     }
     private static readonly Dictionary<string, string> ConditionFieldTranslations = new()
     {
@@ -226,7 +227,7 @@ public class ConditionEntityVisualizer : IEntityVisualizer
 
         if (!string.IsNullOrWhiteSpace(cond.Thresholds))
             identity.Children.Add(new TextBlock
-                { Text = $"Thresholds: {cond.Thresholds}", FontSize = 11, Foreground = Brush.Parse("#6A1B9A") });
+                { Text = $"Thresholds: {cond.Thresholds.ToRawString(";")}", FontSize = 11, Foreground = Brush.Parse("#6A1B9A") });
         if (!string.IsNullOrWhiteSpace(cond.ChanceNext) && cond.ChanceNext != "0")
             identity.Children.Add(new TextBlock
                 { Text = $"Chance Next: {cond.ChanceNext}", FontSize = 11, Foreground = Brush.Parse("#666") });

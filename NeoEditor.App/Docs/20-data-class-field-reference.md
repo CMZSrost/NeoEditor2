@@ -5,6 +5,36 @@
 
 ---
 
+## ⚠️ 2026-08-02 实测订正
+
+> 本节为对原版 `data/*.xml`（phpMyAdmin dump）+ NSE mod 数据全量扫描后的**实测更正**。
+> **权威基准：[38-full-field-reference.md](38-full-field-reference.md)**（24 表实测值域）。
+> 引用列语义以 **[37-reference-column-semantics.md](37-reference-column-semantics.md)** 为准。
+> 与本文档正文冲突时，以 38/37 为准；正文对应行已用 ⚠️ 标注。
+
+| # | 表.字段 | 本文档原说法 | 实测结论（详见 38） |
+|---|--------|-------------|---------------------|
+| 1 | `conditions.bPermanent` | "长期影响" | ⚠️ **1=瞬时效果**（吃/喝/一次性状态，dur=0） |
+| 2 | `conditions.aFieldNames` | 74 种 | ⚠️ **78 种**（新增 WoundCut/WoundBruise/fFatigueModifier/m_fMoveCost） |
+| 3 | `containertypes.strName` | 仅 6 种 | ⚠️ **39 种**（弹药/电池/滤芯等类别名） |
+| 4 | `chargeprofiles.fPerUse/fPerHour` | 无负值说明 | ⚠️ **负值=充电/补充** |
+| 5 | `battlemoves.bInAttackRange` | bool | ⚠️ 实测 **0-3 三值**（3=窃眼特例） |
+| 6 | `battlemoves.vChanceType` | 未知 | ⚠️ 三值格式 `0,距离档,概率系数` |
+| 7 | `encountertriggers.bUnique` | bool | ⚠️ 实测 **0-2 三值**（2=剔骸之谷特例） |
+| 8 | `encounters.nType` | 0/1 | ⚠️ 实测 **4 值**：0=普通、1=搜刮、2=战斗、3=破解 |
+| 9 | `encounters.aMinimapHexes` | 坐标+标签 | ⚠️ 格式 `x,y=标签[=flag]`，flag 语义待探索 |
+| 10 | `factions.strName` | 3=食人族等 | ⚠️ 实测 14 阵营全确认：3=摇滚帮、5=魔迦怨灵… |
+| 11 | `itemtypes.nCondID` | 辨识状态ID | ⚠️ **1=空状态（无条件）**占 468/537；mod 用 0 同样表示无条件 |
+| 12 | `itemtypes.fDurability` | 耐久性 | ⚠️ 实测**恒 1**，原版未用可变值 |
+| 13 | `hextypes.nTerrainCost` | 行动力 | ⚠️ **11=不可通行标记**（海洋/海滨/山地） |
+| 14 | `recipes.bScrap` | 是否可分解 | ⚠️ 实测恒 1 |
+| 15 | `itemtypes.Weight` | 重量 | ⚠️ **50×130 为不可拾取系统物品标记** |
+| 16 | `battlemoves.strID` | 物品编号 | ⚠️ 实测 float **90.1-90.95**（90 组=战斗 UI 类物品） |
+
+---
+
+## 1. AttackMode（攻击模式）— `attackmodes`
+
 ## 1. AttackMode（攻击模式）— `attackmodes`
 
 | # | 模型字段 | DB列名 | 类型 | 说明 | 引用 |
@@ -35,13 +65,13 @@
 | # | 模型字段 | DB列名 | 类型 | 说明 | 引用 |
 |---|---------|--------|------|------|------|
 | 1 | `Id` | `id` | int | 序列编号 | — |
-| 2 | `StrId` | `strID` | string | 物品编号（如90.29，90为组号，29为次级组号） | — |
+| 2 | `StrId` | `strID` | string | ⚠️ 物品编号（实测 float 90.1-90.95，90 组=战斗 UI 类物品，见 [38 §2](38-full-field-reference.md)） | → ItemType |
 | 3 | `Name` | `strName` | string | 动作名称，不显示在游戏内 | — |
 | 4 | `Notes` | `strNotes` | string | 注解 | — |
 | 5 | `Success` | `strSuccess` | string | 行动成功时游戏内显示的文本，`<us>`=玩家，`<them>`=目标 | — |
 | 6 | `Fail` | `strFail` | string | 行动失败时显示的文本 | — |
 | 7 | `PopUp` | `strPopUp` | string | 游戏内战斗行动的说明 | — |
-| 8 | `ChanceType` | `vChanceType` | string | 几率类型（目前未明） | — |
+| 8 | `ChanceType` | `vChanceType` | string | ⚠️ 三值格式 `0,距离档,概率系数`（`0,7,0`=潜行类），见 [38 §2](38-full-field-reference.md) | — |
 | 9 | `UsConditions` | `vUsConditions` | string | 需要我方处于的状态，格式 `[condId,param1,param2]` | → Condition |
 | 10 | `ThemConditions` | `vThemConditions` | string | 需要对方处于的状态，格式同上 | → Condition |
 | 11 | `PairConditions` | `vPairConditions` | string | 需要同时满足的状态 | → Condition |
@@ -53,7 +83,7 @@
 | 17 | `SeeThem` | `nSeeThem` | int | 需要看见对方的暴露等级 | — |
 | 18 | `SeeUs` | `nSeeUs` | int | 对方需要看见我方的暴露等级 | — |
 | 19 | `AllOutOfRange` | `bAllOutOfRange` | bool | 是否需要在所有敌方攻击范围外 | — |
-| 20 | `InAttackRange` | `bInAttackRange` | bool | 是否需要在攻击范围内 | — |
+| 20 | `InAttackRange` | `bInAttackRange` | bool | ⚠️ 实测 0-3 三值（3=窃眼特例），非纯 bool，见 [38 §2](38-full-field-reference.md) | — |
 | 21 | `MinCharges` | `nMinCharges` | int | 攻击次数（存疑） | — |
 | 22 | `MinRange` | `nMinRange` | int | 最小使用距离，-1=全场覆盖 | — |
 | 23 | `MaxRange` | `nMaxRange` | int | 最大使用距离，-1=全场覆盖 | — |
@@ -101,8 +131,8 @@
 | 1 | `Id` | `nID` | int | 序列编号 | — |
 | 2 | `Name` | `strName` | string | 名称（不显示在游戏中），如 `nanomedkit electricity` | — |
 | 3 | `ItemId` | `strItemID` | string | 物品编码（如 `10.3`，10为组号，3为次级组号） | — |
-| 4 | `PerUse` | `fPerUse` | float | 每次使用消耗的数量，0=不消耗 | — |
-| 5 | `PerHour` | `fPerHour` | float | 每小时消耗（电器耗电） | — |
+| 4 | `PerUse` | `fPerUse` | float | ⚠️ 每次使用消耗；**负=充电/补充**（id30 每次+40格电量），见 [38 §4](38-full-field-reference.md) | — |
+| 5 | `PerHour` | `fPerHour` | float | ⚠️ 每小时消耗；**负=每小时补充**（id28 每小时+10格电量），见 [38 §4](38-full-field-reference.md) | — |
 | 6 | `PerHourEquipped` | `fPerHourEquipped` | float | 装备时每小时消耗（仅用于XM54过滤芯片） | — |
 | 7 | `PerHex` | `fPerHex` | float | 每走一格消耗的数量 | — |
 | 8 | `Degrade` | `bDegrade` | bool | 是否降解（如防毒面具碳芯就不降解） | — |
@@ -118,13 +148,13 @@
 | 1 | `Id` | `id` | int | 序列编号（其他地方用此编号而非名称引用） | — |
 | 2 | `Name` | `strName` | string | 状态名称（游戏内显示），如 `Starving` | — |
 | 3 | `Description` | `strDesc` | string | 获得该状态的描述文本，`<us>`=玩家 | — |
-| 4 | `FieldNames` | `aFieldNames` | string | 哪些属性变化了，逗号分隔 | — |
+| 4 | `FieldNames` | `aFieldNames` | string | ⚠️ 效果字段列表，实测 **78 种**（含 WoundCut/WoundBruise/fFatigueModifier/m_fMoveCost），见 [38 §5 附录A](38-full-field-reference.md) | — |
 | 5 | `Modifiers` | `aModifiers` | string | 与 FieldNames 一一对应的属性变化值 | — |
 | 6 | `Effects` | `aEffects` | string | 特殊影响：SetImmunity(免疫力)、ArmorWound(护甲) | — |
 | 7 | `Fatal` | `bFatal` | bool | 是否致命（得到该状态即死） | — |
 | 8 | `IdNext` | `vIDNext` | string | 此状态结束后触发的下一状态ID | → Condition |
 | 9 | `Duration` | `fDuration` | float | 持续时间（小时） | — |
-| 10 | `Permanent` | `bPermanent` | bool | 是否瞬时（使用食物增加饱食度等会是1） | — |
+| 10 | `Permanent` | `bPermanent` | bool | ⚠️ **1=瞬时效果**（吃/喝/一次性消费状态，dur=0），非"永久"，见 [38 §5](38-full-field-reference.md) | — |
 | 11 | `ChanceNext` | `vChanceNext` | string | 触发下一状态的几率，1=100% | — |
 | 12 | `Stackable` | `bStackable` | bool | 是否可堆叠（不可叠加则在持续时间内再获得不刷新） | — |
 | 13 | `Display` | `bDisplay` | bool | 该状态是否可见（如蓝腐1不显示） | — |
@@ -142,6 +172,8 @@
 ---
 
 ## 6. ContainerType（容器类型）— `containertypes`
+
+> ⚠️ **实测订正**：`strName`（容器/内容类别名）实测 **39 种**（弹药/电池/滤芯/粗/地形/电/防火/防水…），非 6 种，见 [38 §6](38-full-field-reference.md)。
 
 | # | 模型字段 | DB列名 | 类型 | 说明 | 引用 |
 |---|---------|--------|------|------|------|
@@ -233,7 +265,7 @@
 | 8 | `PreConditions` | `aPreConditions` | string | 发生剧情前提状态，负数=必须不拥有 | → Condition |
 | 9 | `Price` | `fPrice` | float | 给/扣的钱，玩家钱不够则节点不显示 | — |
 | 10 | `Responses` | `aResponses` | string | 玩家可选回应：`物品IDx数量=接下来剧情IDx参数...` | — |
-| 11 | `MinimapHexes` | `aMinimapHexes` | string | 小地图坐标+标签，如 `20x164=GygesCryo Facility` | — |
+| 11 | `MinimapHexes` | `aMinimapHexes` | string | ⚠️ 格式 `x,y=标签[=flag]`（flag 语义待探索），见 [38 §11](38-full-field-reference.md) | — |
 | 12 | `RemoveCreatures` | `bRemoveCreatures` | bool | 是否移除当前格生物 | — |
 | 13 | `RemoveUsed` | `bRemoveUsed` | bool | 是否移除用来抵达此节点的物品（如光源） | — |
 | 14 | `ItemsId` | `nItemsID` | string | 特殊遭遇可获得的物品（如破碎窗户/控制面板） | → ItemType |
@@ -241,7 +273,7 @@
 | 16 | `CreatureHex` | `ptCreatureHex` | string | 生物出现坐标，如 `40,0`（半径,方向） | — |
 | 17 | `Teleport` | `ptTeleport` | string | 玩家传送目标坐标，仅x=随机传送到x半径环 | — |
 | 18 | `Editor` | `ptEditor` | string | 编辑器坐标（游戏忽略） | — |
-| 19 | `Type` | `nType` | enum | 0=普通, 1=搜刮(Scavenge), 2=战斗, 3=黑客 | — |
+| 19 | `Type` | `nType` | enum | ⚠️ 实测 4 值：0=普通、1=搜刮、2=战斗（仅 id236）、3=破解，见 [38 §11](38-full-field-reference.md) | — |
 | 20 | `LootChance` | `fLootChance` | float | 搜刮成功几率 | — |
 | 21 | `AccidentChance` | `fAccidentChance` | float | 事故发生几率 | — |
 | 22 | `CreatureChance` | `fCreatureChance` | float | 生物出现几率 | — |
@@ -263,7 +295,7 @@
 | 5 | `LocBased` | `bLocBased` | bool | 基于坐标触发 → 对应 aArea | — |
 | 6 | `DateBased` | `bDateBased` | bool | 基于时间触发 → 对应 dateMin/dateMax | — |
 | 7 | `HexBased` | `bHexBased` | bool | 基于格点触发 → 对应 aHexTypes | → HexType |
-| 8 | `Unique` | `bUnique` | bool | 是否独一无二（只触发一次） | — |
+| 8 | `Unique` | `bUnique` | bool | ⚠️ 实测 0-2 三值（2=剔骸之谷特例），非纯 bool，见 [38 §12](38-full-field-reference.md) | — |
 | 9 | `AIPassable` | `bAIPassable` | bool | 是否可被AI触发 | — |
 | 10 | `Area` | `aArea` | string | 触发坐标，格式 `x,y,距离` | — |
 | 11 | `DateMin` | `dateMin` | string | 最小触发时间，格式 `年-月-日-小时`，游戏开始=`1000-0-1-6` | — |
@@ -275,6 +307,8 @@
 ---
 
 ## 13. Faction（阵营/派系）— `factions`
+
+> ⚠️ **实测订正**：14 阵营名称全部确认——3=摇滚帮、5=魔迦怨灵、8=鹿、9=夜辛卡…（非旧表 3=食人族），见 [38 §13](38-full-field-reference.md)。
 
 | # | 模型字段 | DB列名 | 类型 | 说明 | 引用 |
 |---|---------|--------|------|------|------|
@@ -339,7 +373,7 @@
 | 1 | `Id` | `id` | int | 序列编号（地图strDef中用此编号） | — |
 | 2 | `Name` | `strName` | string | 地块名称，如 `ocean` | — |
 | 3 | `Description` | `strDesc` | string | 游戏内显示的名称，如 `deep water` | — |
-| 4 | `TerrainCost` | `nTerrainCost` | int | 在该地形消耗的行动力 | — |
+| 4 | `TerrainCost` | `nTerrainCost` | int | ⚠️ 移动消耗；**11=不可通行标记**（海洋/海滨/山地），见 [38 §17](38-full-field-reference.md) | — |
 | 5 | `VizLimiter` | `nVizLimiter` | int | 视野减少值 | — |
 | 6 | `VizIncrease` | `nVizIncrease` | int | 视野增加值 | — |
 | 7 | `TreasureId` | `nTreasureID` | string | 地形上的战利品池ID（默认3=空） | → TreasureTable |
@@ -401,14 +435,14 @@
 | 4 | `Name` | `strName` | string | 名称 | — |
 | 5 | `Description` | `strDesc` | string | 游戏内描述（汉化内容） | — |
 | 6 | `DescriptionAlt` | `strDescAlt` | string | 真实描述（需要技能才能看到，如阿莫西林没技能=白色药丸，有技能=阿莫西林） | — |
-| 7 | `ConditionId` | `nCondID` | int | 辨识需要的状态ID | → Condition |
+| 7 | `ConditionId` | `nCondID` | int | ⚠️ 辨识需要的状态ID；**1=空状态（无条件）**占 468/537，mod 用 0 同样表示无条件（0/1 等价），见 [38 §20](38-full-field-reference.md) | → Condition |
 | 8 | `ImageList` | `vImageList` | string | 调用图片（多张逗号分隔） | — |
 | 9 | `SpriteList` | `vSpriteList` | string | 大地图小人显示图片：`部位=图片名`（20=左手,21=右手,22=背部,11=上身...） | — |
 | 10 | `ImageUsage` | `vImageUsage` | string | ImageList图片使用位置：0=地上空,1=地上满,2=手上空,3=手上满,4=物品栏空,5=物品栏满 | — |
-| 11 | `Weight` | `fWeight` | float | 重量 | — |
+| 11 | `Weight` | `fWeight` | float | ⚠️ 重量；**50×130 为不可拾取系统物品标记**，见 [38 §20](38-full-field-reference.md) | — |
 | 12 | `MonetaryValue` | `fMonetaryValue` | float | 价值 | — |
 | 13 | `MonetaryValueAlt` | `fMonetaryValueAlt` | float | 鉴定后价值 | — |
-| 14 | `Durability` | `fDurability` | float | 耐久性（1=100%） | — |
+| 14 | `Durability` | `fDurability` | float | ⚠️ 实测**恒 1**，原版未用可变值，见 [38 §20](38-full-field-reference.md) | — |
 | 15 | `DegradePerHour` | `fDegradePerHour` | float | 每小时耐久损耗 | — |
 | 16 | `EquipDegradePerHour` | `fEquipDegradePerHour` | float | 装备时每小时损耗 | — |
 | 17 | `DegradePerUse` | `fDegradePerUse` | float | 每次使用消耗耐久 | — |
@@ -485,7 +519,7 @@
 | 14 | `TempTreasureId` | `nTempTreasureID` | string | 合成时虚影显示的合成结果（默认3=空） | → TreasureTable |
 | 15 | `DegradeOutput` | `bDegradeOutput` | bool | true=成品耐久100%，false=成品耐久=材料中最低耐久 | — |
 | 16 | `Type` | `strType` | string | 配方类型：工具/食物/医务/武器/载具/杂项(misc) | — |
-| 17 | `Scrap` | `bScrap` | bool | 是否可分解 | — |
+| 17 | `Scrap` | `bScrap` | bool | ⚠️ 实测恒 1（原版无 0 值，语义待探索），见 [38 §22](38-full-field-reference.md) | — |
 
 **核心机制**：配方以Ingredient的**属性**匹配物品，非具体物品。
 

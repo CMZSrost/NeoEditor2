@@ -35,7 +35,8 @@ public class CampTypeEntityVisualizer : IEntityVisualizer
         _vis = vis;
         _refNode = refNode ?? new Services.RefNode(
             vis.Resolver,
-            vis.Router);
+            vis.Router,
+            vis.BuildRefTooltip);
         _dataTable = dataTable!;
     }
 
@@ -78,7 +79,13 @@ public class CampTypeEntityVisualizer : IEntityVisualizer
             VerticalAlignment = VerticalAlignment.Top
         };
         if (bmp is not null)
+        {
             imageArea.Child = new Image { Source = bmp, Stretch = Stretch.Uniform, Width = 132, Height = 132 };
+            // R30 (Doc 21 §10): click the hero image to zoom.
+            var capturedBmp = bmp;
+            imageArea.Cursor = new Cursor(StandardCursorType.Hand);
+            imageArea.PointerPressed += (_, _) => _vis.OpenZoomableImage(capturedBmp, ct.Subject ?? ct.Description);
+        }
         else
             imageArea.Child = new SymbolIcon
             {

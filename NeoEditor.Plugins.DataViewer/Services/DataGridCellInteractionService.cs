@@ -52,7 +52,7 @@ public class DataGridCellInteractionService : IDataGridCellInteractionService
             {
                 if (pmArgs is PointerEventArgs pe && (pe.KeyModifiers & KeyModifiers.Control) != 0)
                 {
-                    var currentRaw = property.GetValue(rowItem)?.ToString() ?? "";
+                    var currentRaw = ReferenceText.GetRawString(property.GetValue(rowItem), refAttr);
                     var rawId = ReferenceParser.ExtractRawId(currentRaw, pattern);
                     var subject = LookupSubjectByRawId(targetType, rawId,
                         (rowItem as IEntity)?.EntityId ?? "", propertyName,
@@ -63,7 +63,8 @@ public class DataGridCellInteractionService : IDataGridCellInteractionService
             }
             catch (Exception ex)
             {
-                Serilog.Log.Logger.Verbose(ex, "[CellInteraction:Hover] Single-val hover threw for {TargetType}", targetType.Name);
+                Serilog.Log.Logger.Verbose(ex, "[CellInteraction:Hover] Single-val hover threw for {TargetType}",
+                    targetType.Name);
             }
         }, RoutingStrategies.Bubble, true);
 
@@ -76,7 +77,7 @@ public class DataGridCellInteractionService : IDataGridCellInteractionService
                 {
                     _state.CtrlWasPressed = true;
                     _state.SuppressNextSelectionChanged = true;
-                    var currentRaw = property.GetValue(rowItem)?.ToString() ?? "";
+                    var currentRaw = ReferenceText.GetRawString(property.GetValue(rowItem), refAttr);
                     var rawId = ReferenceParser.ExtractRawId(currentRaw, pattern);
                     if (string.IsNullOrWhiteSpace(rawId)) return;
                     pp.Handled = true;
@@ -86,12 +87,13 @@ public class DataGridCellInteractionService : IDataGridCellInteractionService
                     {
                         var srcEid = (rowItem as IEntity)?.EntityId ?? "";
                         var target = _nav.FindBestMatch(targetType, rawId, refAttr.TargetKey, srcEid, propertyName)
-                            ?? (refAttr.SecondaryTargetEntityType is not null
-                                ? _nav.FindBestMatch(refAttr.SecondaryTargetEntityType, rawId, refAttr.SecondaryTargetKey, srcEid, propertyName)
-                                : null)
-                            ?? (int.TryParse(rawId, out var intId) && intId >= 0
-                                ? _nav.FindBestMatch(targetType, intId.ToString(), null, srcEid, propertyName)
-                                : null);
+                                     ?? (refAttr.SecondaryTargetEntityType is not null
+                                         ? _nav.FindBestMatch(refAttr.SecondaryTargetEntityType, rawId,
+                                             refAttr.SecondaryTargetKey, srcEid, propertyName)
+                                         : null)
+                                     ?? (int.TryParse(rawId, out var intId) && intId >= 0
+                                         ? _nav.FindBestMatch(targetType, intId.ToString(), null, srcEid, propertyName)
+                                         : null);
                         _router.RequestPeek(targetType, target?.EntityId ?? rawId, target);
                         _state.SuppressNextSelectionChanged = true;
                     }
@@ -105,14 +107,19 @@ public class DataGridCellInteractionService : IDataGridCellInteractionService
             }
             catch (Exception ex)
             {
-                Serilog.Log.Logger.Error(ex, "[CellInteraction:PtrPressed] Single-val handler threw for {TargetType}", targetType.Name);
+                Serilog.Log.Logger.Error(ex, "[CellInteraction:PtrPressed] Single-val handler threw for {TargetType}",
+                    targetType.Name);
             }
         }, RoutingStrategies.Tunnel, true);
 
         // Suppress right-click context menu after Ctrl+Click
         grid.AddHandler(Control.ContextRequestedEvent, (_, ctxArgs) =>
         {
-            if (_state.CtrlWasPressed) { ctxArgs.Handled = true; _state.CtrlWasPressed = false; }
+            if (_state.CtrlWasPressed)
+            {
+                ctxArgs.Handled = true;
+                _state.CtrlWasPressed = false;
+            }
         }, RoutingStrategies.Bubble, true);
     }
 
@@ -139,14 +146,19 @@ public class DataGridCellInteractionService : IDataGridCellInteractionService
             }
             catch (Exception ex)
             {
-                Serilog.Log.Logger.Verbose(ex, "[CellInteraction:Hover] Multi-seg hover threw for {TargetType}", targetType.Name);
+                Serilog.Log.Logger.Verbose(ex, "[CellInteraction:Hover] Multi-seg hover threw for {TargetType}",
+                    targetType.Name);
             }
         }, RoutingStrategies.Bubble, true);
 
         // Suppress context menu (checked by wrapPanel-level handler)
         segBorder.AddHandler(Control.ContextRequestedEvent, (_, ctxArgs) =>
         {
-            if (_state.CtrlWasPressed) { ctxArgs.Handled = true; _state.CtrlWasPressed = false; }
+            if (_state.CtrlWasPressed)
+            {
+                ctxArgs.Handled = true;
+                _state.CtrlWasPressed = false;
+            }
         }, RoutingStrategies.Bubble, true);
     }
 
@@ -187,12 +199,13 @@ public class DataGridCellInteractionService : IDataGridCellInteractionService
                 {
                     var srcEid = (rowItem as IEntity)?.EntityId ?? "";
                     var target = _nav.FindBestMatch(targetType, clickedRawId, refAttr.TargetKey, srcEid, propertyName)
-                        ?? (refAttr.SecondaryTargetEntityType is not null
-                            ? _nav.FindBestMatch(refAttr.SecondaryTargetEntityType, clickedRawId, refAttr.SecondaryTargetKey, srcEid, propertyName)
-                            : null)
-                        ?? (int.TryParse(clickedRawId, out var intId) && intId >= 0
-                            ? _nav.FindBestMatch(targetType, intId.ToString(), null, srcEid, propertyName)
-                            : null);
+                                 ?? (refAttr.SecondaryTargetEntityType is not null
+                                     ? _nav.FindBestMatch(refAttr.SecondaryTargetEntityType, clickedRawId,
+                                         refAttr.SecondaryTargetKey, srcEid, propertyName)
+                                     : null)
+                                 ?? (int.TryParse(clickedRawId, out var intId) && intId >= 0
+                                     ? _nav.FindBestMatch(targetType, intId.ToString(), null, srcEid, propertyName)
+                                     : null);
                     _router.RequestPeek(targetType, target?.EntityId ?? clickedRawId, target);
                     _state.SuppressNextSelectionChanged = true;
                 }
@@ -205,7 +218,8 @@ public class DataGridCellInteractionService : IDataGridCellInteractionService
             }
             catch (Exception ex)
             {
-                Serilog.Log.Logger.Error(ex, "[CellInteraction:PtrPressed] Multi-val wrap handler threw for {TargetType}", targetType.Name);
+                Serilog.Log.Logger.Error(ex,
+                    "[CellInteraction:PtrPressed] Multi-val wrap handler threw for {TargetType}", targetType.Name);
             }
         }, RoutingStrategies.Tunnel, true);
     }

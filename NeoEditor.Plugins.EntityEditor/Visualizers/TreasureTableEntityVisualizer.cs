@@ -35,7 +35,8 @@ public class TreasureTableEntityVisualizer : IEntityVisualizer
         _vis = vis;
         _refNode = refNode ?? new Services.RefNode(
             _vis.Resolver,
-            _vis.Router);
+            _vis.Router,
+            _vis.BuildRefTooltip);
         _dataTable = dataTable!;
     }
 

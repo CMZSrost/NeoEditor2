@@ -955,7 +955,11 @@ public partial class ModGameDataTabsView : UserControl, Helper.INavigationTarget
             {
                 var prop = colProps.FirstOrDefault(p => p.Name == col.SortMemberPath);
                 if (prop is not null)
-                    rowParts.Add(prop.GetValue(entity)?.ToString() ?? "");
+                {
+                    // R30: reference columns copy as raw text ("3,14"), not "[3, 14]".
+                    rowParts.Add(ReferenceText.GetRawString(prop.GetValue(entity),
+                        prop.GetCustomAttribute<ReferenceFieldAttribute>()));
+                }
             }
 
             sb.AppendLine(string.Join("\t", rowParts));
@@ -1248,7 +1252,9 @@ public partial class ModGameDataTabsView : UserControl, Helper.INavigationTarget
         {
             sb.AppendLine(string.Join(",", colProps.Select(p =>
             {
-                var val = p.GetValue(entity)?.ToString() ?? "";
+                // R30: reference columns export as raw text ("3,14"), not "[3, 14]".
+                var val = ReferenceText.GetRawString(p.GetValue(entity),
+                    p.GetCustomAttribute<ReferenceFieldAttribute>());
                 return val.Contains(',') || val.Contains('"') || val.Contains('\n')
                     ? $"\"{val.Replace("\"", "\"\"")}\""
                     : val;

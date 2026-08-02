@@ -5,6 +5,7 @@ using System.Linq;
 using System.Reflection;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
 using CommunityToolkit.Mvvm.Messaging;
@@ -16,6 +17,7 @@ using NeoEditor.Data.Model;
 using NeoEditor.Data.Model.Game;
 using NeoEditor.Helper;
 using NeoEditor.Infra.Services;
+using NeoEditor.Plugins.EntityEditor.Services;
 using NeoEditor.Plugins.EntityEditor.ViewModels;
 using Serilog;
 
@@ -115,6 +117,8 @@ public partial class ReferenceFieldEditor : UserControl
     /// <summary>
     /// Build a badge Border for one reference entry.
     /// Shows the resolved entity Subject with EntityId as subtitle.
+    /// R30: Ctrl+Click navigates to the target detail (same semantics as the DataGrid),
+    /// Ctrl+RMB opens the Peek panel, hover shows the P6 preview panel.
     /// </summary>
     private Border CreateBadge(IReferenceEntry entry, IEntityLookupService lookup)
     {
@@ -122,14 +126,16 @@ public partial class ReferenceFieldEditor : UserControl
         var baseRef = GetBaseEntityRef(entry);
         var rawId = entry.ToRawString();
         var displayName = rawId;
+        IEntity? resolved = null;
 
         if (baseRef is not null && _refAttr is not null)
         {
-            var lookupKey = baseRef.IsComposite
-                ? $"{baseRef.GroupId}.{baseRef.SubgroupId}"
-                : baseRef.Id;
+            // ToRawString() preserves the namespace prefix ("NSE:42") and composite
+            // key ("86.6") — FindBestMatch must NOT receive a namespace-stripped key,
+            // or mod references resolve against the game namespace instead.
+            var lookupKey = baseRef.ToRawString();
 
-            var resolved = lookup.FindBestMatch(
+            resolved = lookup.FindBestMatch(
                 _refAttr.TargetEntityType, lookupKey, _refAttr.TargetKey);
             if (resolved is not null)
                 displayName = resolved.Subject ?? lookupKey;
@@ -161,7 +167,46 @@ public partial class ReferenceFieldEditor : UserControl
             Child = stack
         };
 
+        if (resolved is not null && _refAttr is not null)
+        {
+            var targetType = _refAttr.TargetEntityType;
+            var targetEid = resolved.EntityId;
+            var targetEntity = resolved;
+
+            badge.Cursor = new Cursor(StandardCursorType.Hand);
+            badge.PointerPressed += (_, e) =>
+            {
+                var action = ResolveClickAction(e.KeyModifiers,
+                    e.GetCurrentPoint(null).Properties.IsRightButtonPressed);
+                if (!action.Navigate && !action.Peek) return;
+                e.Handled = true;
+                var nav = GetService<INavigationRouter>();
+                if (action.Peek)
+                    nav.RequestPeek(targetType, targetEid, targetEntity);
+                else
+                    nav.NavigateToEntity(targetType, targetEid, targetEntity);
+            };
+
+            // P6: hover preview of the resolved target entity.
+            var vis = GetService<VisHelperService>();
+            var preview = vis.BuildRefTooltip(resolved);
+            if (preview is not null)
+                ToolTip.SetTip(badge, preview);
+        }
+
         return badge;
+    }
+
+    /// <summary>
+    /// R30 (C1): same Ctrl semantics as the DataGrid — plain click does nothing,
+    /// Ctrl+LeftClick navigates to the target detail, Ctrl+RMB opens the Peek panel.
+    /// Extracted so the decision logic is unit-testable without pointer input simulation.
+    /// </summary>
+    internal static (bool Navigate, bool Peek) ResolveClickAction(
+        KeyModifiers modifiers, bool isRightButtonPressed)
+    {
+        if ((modifiers & KeyModifiers.Control) == 0) return (false, false);
+        return isRightButtonPressed ? (false, true) : (true, false);
     }
 
     private static EntityRef? GetBaseEntityRef(IReferenceEntry entry)
@@ -174,9 +219,11 @@ public partial class ReferenceFieldEditor : UserControl
         {
             PureRefFormat p => p.Entity,
             IdXMultFormat i => i.Entity,
+            IdXMultXQtyFormat q => q.Entity,
             MultXIdFormat m => m.Entity,
             AssignFormat a => a.Entity,
             BracketFormat b => b.Entity,
+            OrGroupFormat o => o.Alternatives.FirstOrDefault() is { } first ? GetBaseEntityRef(first) : null,
             _ => null,
         };
     }
@@ -228,9 +275,8 @@ public partial class ReferenceFieldEditor : UserControl
             var baseRef = GetBaseEntityRef(refList[0]);
             if (baseRef is null) return;
 
-            var lookupKey = baseRef.IsComposite
-                ? $"{baseRef.GroupId}.{baseRef.SubgroupId}"
-                : baseRef.Id;
+            // Keep the namespace prefix (and composite key) — see CreateBadge.
+            var lookupKey = baseRef.ToRawString();
 
             var target = lookup.FindBestMatch(_refAttr.TargetEntityType, lookupKey, _refAttr.TargetKey);
             if (target is not null)

@@ -26,7 +26,8 @@ public class CampType : IEntity
     [StringLength(1000)]
 
     [Display(Name = "ImageList")]
-    public string ImageList { get; set; } = "ItmScavengeGrass01.png";
+    [ReferenceField(typeof(ImageAsset), TargetKey = "{FileName}")]
+    public ReferenceList<IReferenceEntry> ImageList { get; set; } = new();
 
     [Column("aCapacities", TypeName = "varchar(1000)")]
     [StringLength(1000)]

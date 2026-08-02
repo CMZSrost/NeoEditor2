@@ -15,6 +15,7 @@
     <UserControl.Resources>
         <vm:BoolStringConverter x:Key="BoolStringConverter" />
         <vm:ControlTypeVisibilityConverter x:Key="CtrlTypeVis" />
+        <vm:EmptyStringToNullConverter x:Key="EmptyToNull" />
     </UserControl.Resources>
     <UserControl.Styles>
         <Style Selector="TextBox.Dirty">
@@ -73,7 +74,9 @@
                                                            Text="{Binding DisplayName}"
                                                            VerticalAlignment="Center"
                                                            FontSize="10"
-                                                           TextWrapping="NoWrap" />
+                                                           TextWrapping="NoWrap"
+                                                           ToolTip.Tip="{Binding Description, Converter={StaticResource EmptyToNull}}"
+                                                           ToolTip.ShowDelay="300" />
                                                 <!-- ReadOnly: TextBlock -->
                                                 <TextBlock Grid.Column="1"
                                                            Text="{Binding CurrentValue}"

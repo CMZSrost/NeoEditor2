@@ -282,6 +282,108 @@ public class VisHelperService
         return badge;
     }
 
+    /// <summary>
+    /// R30 (Doc 21 §7 P6): hover preview panel for a resolved reference entity —
+    /// a compact type-specific stat summary. Falls back to identity info for
+    /// entity types without a dedicated preview. Used by RefNode badges and the
+    /// Value Editor reference badges.
+    /// </summary>
+    public Control BuildRefTooltip(IEntity entity)
+    {
+        var sp = new StackPanel { Spacing = 2, MaxWidth = 280 };
+        sp.Children.Add(new TextBlock
+        {
+            Text = $"{entity.GetType().Name}: {entity.Subject ?? entity.EntityId}",
+            FontSize = 11, FontWeight = FontWeight.SemiBold, TextWrapping = TextWrapping.Wrap
+        });
+
+        List<(string, string)> rows = entity switch
+        {
+            ChargeProfile cp =>
+            [
+                ("PerUse", $"{cp.PerUse:F2}"),
+                ("PerHour", $"{cp.PerHour:F2}"),
+                ("PerHrEquip", $"{cp.PerHourEquipped:F2}"),
+                ("PerHex", $"{cp.PerHex:F2}"),
+                ("Degrade", cp.Degrade ? "Yes" : "No"),
+            ],
+            AttackMode am =>
+            [
+                ("Type", am.Type == AttackType.Ranged ? "Ranged" : "Melee"),
+                ("Range", am.Range.ToString()),
+                ("Cut", $"{am.DamageCut:F1}"),
+                ("Blunt", $"{am.DamageBlunt:F1}"),
+                ("Penetration", am.Penetration.ToString()),
+            ],
+            Condition c =>
+            [
+                ("Duration", $"{c.Duration:F1}"),
+                ("Fatal", c.Fatal ? "Yes" : "No"),
+                ("Stackable", c.Stackable ? "Yes" : "No"),
+                ("Color", c.Color.ToString()),
+            ],
+            ItemType it =>
+            [
+                ("Weight", $"{it.Weight:F2}"),
+                ("Value", $"{it.MonetaryValue:F2}"),
+                ("StackLimit", it.StackLimit.ToString()),
+                ("Capacities", it.Capacities),
+            ],
+            Creature cr =>
+            [
+                ("NamePublic", cr.NamePublic),
+                ("Moves/Turn", cr.MovesPerTurn.ToString()),
+                ("Notes", cr.Notes),
+            ],
+            TreasureTable tt =>
+            [
+                ("Entries", tt.Treasures.Count.ToString()),
+                ("Nested", tt.Nested ? "Yes" : "No"),
+                ("Suppress", tt.Suppress ? "Yes" : "No"),
+            ],
+            Encounter e =>
+            [
+                ("Type", e.Type.ToString()),
+                ("Price", $"{e.Price:F2}"),
+                ("LootChance", $"{e.LootChance:F2}"),
+            ],
+            Recipe r =>
+            [
+                ("Hours", r.Hours.ToString()),
+                ("Identify", r.Identify ? "Yes" : "No"),
+                ("Scrap", r.Scrap ? "Yes" : "No"),
+            ],
+            _ => [("EntityId", entity.EntityId), ("ModId", entity.ModId.ToString())],
+        };
+
+        foreach (var (label, value) in rows)
+        {
+            if (string.IsNullOrWhiteSpace(value)) continue;
+            sp.Children.Add(new TextBlock
+            {
+                Text = $"{label}: {value}",
+                FontSize = 10,
+                Foreground = Brush.Parse("#555555"),
+                TextWrapping = TextWrapping.Wrap
+            });
+        }
+
+        sp.Children.Add(new TextBlock
+        {
+            Text = "Ctrl+Click → open detail",
+            FontSize = 9,
+            Foreground = Brush.Parse("#999999")
+        });
+
+        return new Border
+        {
+            Background = Brushes.White,
+            CornerRadius = new CornerRadius(6),
+            Padding = new Thickness(8),
+            Child = sp
+        };
+    }
+
     public Control BuildRawDataTable(IEntity entity)
     {
         var entityType = entity.GetType();
@@ -308,7 +410,8 @@ public class VisHelperService
             var val = p.GetValue(entity);
             var colName = p.GetCustomAttribute<System.ComponentModel.DataAnnotations.Schema.ColumnAttribute>()?.Name ?? p.Name;
             var refAttr = p.GetCustomAttribute<ReferenceFieldAttribute>();
-            var strVal = val is bool b ? (b ? "1" : "0") : val?.ToString() ?? "";
+            // R30: ReferenceList must render as its raw text ("3,14"), not "[3, 14]".
+            var strVal = val is bool b ? (b ? "1" : "0") : ReferenceText.GetRawString(val, refAttr);
 
             var isRef = refAttr is not null && !string.IsNullOrWhiteSpace(strVal);
             var display = strVal.Length > 100 ? strVal[..100] + "..." : strVal;
@@ -321,6 +424,11 @@ public class VisHelperService
             Grid.SetColumn(keyTb, 0);
             grid.Children.Add(keyTb);
 
+            // R30: field explanation tooltip (embedded Docs/38 authoritative meaning).
+            var desc = FieldDescriptions.GetDescription(entity.GetType(), p.Name);
+            if (desc is not null)
+                ToolTip.SetTip(keyTb, desc);
+
             var valTb = EditorUIFactory.SelectableText(display, fontSize: 10,
                 foreground: isRef ? Brush.Parse("#00796B") :
                     string.IsNullOrWhiteSpace(strVal) ? Brush.Parse("#CCC") : Brush.Parse("#333"),
@@ -330,6 +438,26 @@ public class VisHelperService
             Grid.SetRow(valTb, row);
             Grid.SetColumn(valTb, 1);
             grid.Children.Add(valTb);
+
+            // R30: for reference columns, hover the raw value to see each segment's resolved subject.
+            if (isRef && refAttr is not null)
+            {
+                var subjects = new List<string>();
+                var segSep = refAttr.Separator;
+                var segments = segSep is null
+                    ? new[] { strVal }
+                    : strVal.Split(segSep, StringSplitOptions.RemoveEmptyEntries);
+                foreach (var seg in segments)
+                {
+                    var rawId = ReferenceParser.ExtractRawId(seg, refAttr.Pattern);
+                    var subject = _resolver.LookupSubject(entity.EntityId, p.Name,
+                        refAttr.TargetEntityType, rawId);
+                    if (!string.IsNullOrEmpty(subject)) subjects.Add($"{subject} ({rawId})");
+                }
+
+                if (subjects.Count > 0)
+                    ToolTip.SetTip(valTb, string.Join("\n", subjects));
+            }
 
             row++;
         }

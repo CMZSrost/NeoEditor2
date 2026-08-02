@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
+using NeoEditor.Core.Abstractions;
+using NeoEditor.Data.Model;
 using NeoEditor.Data.Model.Game;
 using NeoEditor.Services;
 
@@ -36,6 +38,12 @@ public class ReferenceIndex
 
     /// <summary>(EntityType, MergedId) → EntityId</summary>
     private readonly Dictionary<(Type EntityType, int MergedId), string> _mergedIdIndex = new();
+
+    /// <summary>(EntityType, Namespace, GroupId, SubgroupId) → EntityId — composite-key (ItemType 86.6) ns-prefixed lookups</summary>
+    private readonly Dictionary<(Type EntityType, string Ns, int GroupId, int SubgroupId), string> _nsCompositeIndex = new();
+
+    /// <summary>(EntityType, GroupId, SubgroupId) → EntityId — composite-key (ItemType 86.6) merged lookups</summary>
+    private readonly Dictionary<(Type EntityType, int GroupId, int SubgroupId), string> _mergedCompositeIndex = new();
 
     // ── Reverse: targetEntityId → list of (sourceEntityId, propertyName, rawId) ──
     private readonly Dictionary<string, List<(string SourceEntityId, string PropertyName, string RawId)>> _reverse = new();
@@ -120,6 +128,13 @@ public class ReferenceIndex
                     }
                     _nsIndex[nsKey] = entity.EntityId;
                     nsIdxCount++;
+
+                    // Composite-key index (e.g. ItemType nGroupID.nSubgroupID) — mirrors nsIndex/mergedIdIndex semantics
+                    if (TryGetCompositeKey(entity, out var gid, out var sid))
+                    {
+                        _mergedCompositeIndex[(entityType, gid, sid)] = entity.EntityId;
+                        _nsCompositeIndex[(entityType, ns, gid, sid)] = entity.EntityId;
+                    }
                 }
             }
 
@@ -167,7 +182,7 @@ public class ReferenceIndex
                 foreach (var prop in refProps)
                 {
                     var refAttr = prop.GetCustomAttribute<ReferenceFieldAttribute>()!;
-                    var rawValue = prop.GetValue(sourceEntity)?.ToString();
+                    var rawValue = GetReferenceRawValue(prop.GetValue(sourceEntity), refAttr);
                     if (string.IsNullOrWhiteSpace(rawValue)) continue;
 
                     var ids = ReferenceParser.ExtractIds(rawValue, refAttr);
@@ -219,6 +234,18 @@ public class ReferenceIndex
         var lookupKey = ReferenceParser.BuildLookupKey(idOnly);
         if (lookupKey.Length == 0) return null;
 
+        // Composite key form "GroupId.SubgroupId" (e.g. ItemType "86.6")
+        int? cGid = null;
+        int? cSid = null;
+        var dotIdx = lookupKey.IndexOf('.');
+        if (dotIdx > 0
+            && int.TryParse(lookupKey[..dotIdx], out var g)
+            && int.TryParse(lookupKey[(dotIdx + 1)..], out var s))
+        {
+            cGid = g;
+            cSid = s;
+        }
+
         if (nsPrefix is not null)
         {
             // Namespace-prefixed: lookup by (type, namespace, primary key)
@@ -232,6 +259,16 @@ public class ReferenceIndex
                 var entityPk = TryGetEntityPrimaryKey(eid, targetType);
                 Serilog.Log.Logger.Debug("[RefIndex:Lookup] NS hit → {Eid} mod={Mod} pk={Pk}", eid, mod ?? "?", entityPk ?? "?");
                 return eid;
+            }
+
+            // Composite ns-prefixed (e.g. "0:86.6")
+            if (cGid is { } cg && cSid is { } cs)
+            {
+                if (_nsCompositeIndex.TryGetValue((targetType, nsPrefix, cg, cs), out var ceid))
+                    return ceid;
+                if (_store.NamespaceToModName.TryGetValue(nsPrefix, out var cmapped)
+                    && _nsCompositeIndex.TryGetValue((targetType, cmapped, cg, cs), out var cmappedEid))
+                    return cmappedEid;
             }
 
             // Also try mapping through NamespaceToModName
@@ -275,6 +312,12 @@ public class ReferenceIndex
             }
             else
             {
+                // Composite merged (e.g. "86.6")
+                if (cGid is { } cg && cSid is { } cs
+                    && _mergedCompositeIndex.TryGetValue((targetType, cg, cs), out var ceid))
+                {
+                    return ceid;
+                }
                 Serilog.Log.Logger.Debug(
                     "[RefIndex:Lookup] lookupKey '{Key}' is not a valid MergedId (not an int) — returning null",
                     lookupKey);
@@ -390,7 +433,7 @@ public class ReferenceIndex
         foreach (var prop in refProps)
         {
             var refAttr = prop.GetCustomAttribute<ReferenceFieldAttribute>()!;
-            var rawValue = prop.GetValue(entity)?.ToString();
+            var rawValue = GetReferenceRawValue(prop.GetValue(entity), refAttr);
             if (!string.IsNullOrWhiteSpace(rawValue))
                 IndexReferenceField(entity, prop.Name, refAttr, rawValue);
         }
@@ -439,6 +482,8 @@ public class ReferenceIndex
         // Remove from core indices
         RemoveFromValueDict(_nsIndex, entityId);
         RemoveFromValueDict(_mergedIdIndex, entityId);
+        RemoveFromValueDict(_nsCompositeIndex, entityId);
+        RemoveFromValueDict(_mergedCompositeIndex, entityId);
 
         // Remove display cache
         _display.Remove(entityId);
@@ -448,6 +493,8 @@ public class ReferenceIndex
     {
         _nsIndex.Clear();
         _mergedIdIndex.Clear();
+        _nsCompositeIndex.Clear();
+        _mergedCompositeIndex.Clear();
         _reverse.Clear();
         _display.Clear();
     }
@@ -460,7 +507,7 @@ public class ReferenceIndex
     {
         var data = new IndexDiskData
         {
-            Version = 7, // v7: simplified nsIndex + mergedIdIndex model
+            Version = 8, // v8: adds composite-key (GroupId.SubgroupId) indices
             NsIndex = _nsIndex.Select(kv => new NsIdxEntry
             {
                 Type = kv.Key.EntityType.FullName!,
@@ -472,6 +519,21 @@ public class ReferenceIndex
             {
                 Type = kv.Key.EntityType.FullName!,
                 Mid = kv.Key.MergedId,
+                Tgt = kv.Value
+            }).ToList(),
+            NsCompositeIndex = _nsCompositeIndex.Select(kv => new NsCompositeEntry
+            {
+                Type = kv.Key.EntityType.FullName!,
+                Ns = kv.Key.Ns,
+                Gid = kv.Key.GroupId,
+                Sid = kv.Key.SubgroupId,
+                Tgt = kv.Value
+            }).ToList(),
+            MergedCompositeIndex = _mergedCompositeIndex.Select(kv => new MergedCompositeEntry
+            {
+                Type = kv.Key.EntityType.FullName!,
+                Gid = kv.Key.GroupId,
+                Sid = kv.Key.SubgroupId,
                 Tgt = kv.Value
             }).ToList(),
             Reverse = _reverse.ToDictionary(
@@ -496,10 +558,10 @@ public class ReferenceIndex
             if (data is null) return false;
 
             // Invalidate caches built with an older index strategy
-            if (data.Version < 7)
+            if (data.Version < 8)
             {
                 Serilog.Log.Logger.Information(
-                    "[RefIndex:LoadDisk] Stale cache v{OldVersion} (current v7) — rebuilding", data.Version);
+                    "[RefIndex:LoadDisk] Stale cache v{OldVersion} (current v8) — rebuilding", data.Version);
                 return false;
             }
 
@@ -514,14 +576,24 @@ public class ReferenceIndex
                 var t = Type.GetType(e.Type);
                 if (t is not null) _mergedIdIndex[(t, e.Mid)] = e.Tgt;
             }
+            foreach (var e in data.NsCompositeIndex)
+            {
+                var t = Type.GetType(e.Type);
+                if (t is not null) _nsCompositeIndex[(t, e.Ns, e.Gid, e.Sid)] = e.Tgt;
+            }
+            foreach (var e in data.MergedCompositeIndex)
+            {
+                var t = Type.GetType(e.Type);
+                if (t is not null) _mergedCompositeIndex[(t, e.Gid, e.Sid)] = e.Tgt;
+            }
             foreach (var (k, v) in data.Reverse)
                 _reverse[k] = v.Select(r => (r.Src, r.Prop, r.Key)).ToList();
             foreach (var (k, v) in data.Display)
                 _display[k] = (v.Sub, v.Mod);
 
             Serilog.Log.Logger.Information(
-                "[RefIndex:LoadDisk] nsIdx={Ns} mergedIdIdx={Mid} rev={Rev}",
-                _nsIndex.Count, _mergedIdIndex.Count, _reverse.Count);
+                "[RefIndex:LoadDisk] nsIdx={Ns} mergedIdIdx={Mid} nsComposite={NsComp} mergedComposite={MidComp} rev={Rev}",
+                _nsIndex.Count, _mergedIdIndex.Count, _nsCompositeIndex.Count, _mergedCompositeIndex.Count, _reverse.Count);
 
             return _nsIndex.Count > 0 || _mergedIdIndex.Count > 0;
         }
@@ -536,21 +608,55 @@ public class ReferenceIndex
 
     private class IndexDiskData
     {
-        public int Version { get; set; } = 7;
+        public int Version { get; set; } = 8;
         public List<NsIdxEntry> NsIndex { get; set; } = new();
         public List<MidIdxEntry> MergedIdIndex { get; set; } = new();
+        public List<NsCompositeEntry> NsCompositeIndex { get; set; } = new();
+        public List<MergedCompositeEntry> MergedCompositeIndex { get; set; } = new();
         public Dictionary<string, List<RevEntry>> Reverse { get; set; } = new();
         public Dictionary<string, DispEntry> Display { get; set; } = new();
     }
 
     private class NsIdxEntry { public string Type { get; set; } = ""; public string Ns { get; set; } = ""; public string Pk { get; set; } = ""; public string Tgt { get; set; } = ""; }
     private class MidIdxEntry { public string Type { get; set; } = ""; public int Mid { get; set; } public string Tgt { get; set; } = ""; }
+    private class NsCompositeEntry { public string Type { get; set; } = ""; public string Ns { get; set; } = ""; public int Gid { get; set; } public int Sid { get; set; } public string Tgt { get; set; } = ""; }
+    private class MergedCompositeEntry { public string Type { get; set; } = ""; public int Gid { get; set; } public int Sid { get; set; } public string Tgt { get; set; } = ""; }
     private class RevEntry { public string Src { get; set; } = ""; public string Prop { get; set; } = ""; public string Key { get; set; } = ""; }
     private class DispEntry { public string? Sub { get; set; } public string? Mod { get; set; } }
 
     // ═══════════════════════════════════════════════════════════════════════
     //  Internals
     // ═══════════════════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Get the raw serialized value of a reference property — ReferenceList must go through
+    /// <see cref="ReferenceList{T}.ToRawString"/> (never ToString(), which emits "[a, b]").
+    /// </summary>
+    private static string? GetReferenceRawValue(object? value, ReferenceFieldAttribute refAttr)
+    {
+        if (value is ReferenceList<IReferenceEntry> rl)
+            return rl.ToRawString(refAttr.Separator);
+        return value?.ToString();
+    }
+
+    /// <summary>Read composite key (GroupId/SubgroupId) from an entity that has them (ItemType).</summary>
+    private static bool TryGetCompositeKey(IEntity entity, out int groupId, out int subgroupId)
+    {
+        groupId = 0;
+        subgroupId = 0;
+        var type = entity.GetType();
+        var g = type.GetProperty("GroupId",
+            BindingFlags.Instance | BindingFlags.Public | BindingFlags.IgnoreCase)?.GetValue(entity);
+        var s = type.GetProperty("SubgroupId",
+            BindingFlags.Instance | BindingFlags.Public | BindingFlags.IgnoreCase)?.GetValue(entity);
+        if (g is int gi && s is int si)
+        {
+            groupId = gi;
+            subgroupId = si;
+            return true;
+        }
+        return false;
+    }
 
     /// <summary>Compute the primary key string for an entity. Uses Id or nID property.</summary>
     /// <summary>Compute the primary key string for an entity. Tries Id first, then nID (same as MergeService).</summary>

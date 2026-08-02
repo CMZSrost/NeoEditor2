@@ -31,7 +31,7 @@ public class EncounterEntityVisualizer : IEntityVisualizer
     public EncounterEntityVisualizer(VisHelperService vis, Services.RefNode? refNode, IEntityLookupService? dataTable)
     {
         _vis = vis;
-        _refNode = refNode ?? new Services.RefNode(vis.Resolver, vis.Router);
+        _refNode = refNode ?? new Services.RefNode(vis.Resolver, vis.Router, vis.BuildRefTooltip);
         _dataTable = dataTable!;
     }
 
@@ -77,7 +77,13 @@ public class EncounterEntityVisualizer : IEntityVisualizer
             Background = Brush.Parse("#0A000000"), VerticalAlignment = VerticalAlignment.Top
         };
         if (bmp is not null)
+        {
             imageArea.Child = new Image { Source = bmp, Stretch = Stretch.Uniform, Width = 132, Height = 132 };
+            // R30 (Doc 21 §10): click the hero image to zoom.
+            var capturedBmp = bmp;
+            imageArea.Cursor = new Cursor(StandardCursorType.Hand);
+            imageArea.PointerPressed += (_, _) => _vis.OpenZoomableImage(capturedBmp, enc.Subject ?? enc.Name);
+        }
         else
             imageArea.Child = new SymbolIcon
             {
@@ -1029,7 +1035,8 @@ public class EncounterEntityVisualizer : IEntityVisualizer
         }
         if (root.CreatureId != "0")
         {
-            var cs = _vis.Resolver.LookupRef<CreatureSource>(root, nameof(Encounter.CreatureId), root.CreatureId);
+            // R30: nCreatureID → Creature (Doc 37 §4.11 / model annotation), not CreatureSource.
+            var cs = _vis.Resolver.LookupRef<Creature>(root, nameof(Encounter.CreatureId), root.CreatureId);
             if (cs is not null)
                 contextBadges.Children.Add(_vis.MiniBadge($"🐾{cs.Subject}", "#E8EAF6", "#283593"));
         }
@@ -1272,6 +1279,28 @@ public class EncounterEntityVisualizer : IEntityVisualizer
             sp.Children.Add(_vis.Card(wp));
         }
 
+        if (!string.IsNullOrWhiteSpace(enc.ItemsId) && enc.ItemsId != "0")
+        {
+            sp.Children.Add(_vis.SectionLabel(_vis.Loc("Vis.GiveItem")));
+            var wp = new WrapPanel();
+            // R30: nItemsID → ItemType {Id}（Doc 37 §4.11；round28 已改默认 {Id}）
+            wp.Children.Add(_refNode.Badge<ItemType>(enc, nameof(Encounter.ItemsId), enc.ItemsId,
+                resolvedBg: "#E3F2FD", resolvedFg: "#1565C0",
+                unresolvedBg: "#F5F5F5", unresolvedFg: "#999"));
+            sp.Children.Add(_vis.Card(wp));
+        }
+
+        if (!string.IsNullOrWhiteSpace(enc.Loot) && enc.Loot != "0")
+        {
+            sp.Children.Add(_vis.SectionLabel(_vis.Loc("Vis.Loot")));
+            var wp = new WrapPanel();
+            // R30: vLoot → TreasureTable {Id}（Doc 37 §4.11）
+            wp.Children.Add(_refNode.Badge<TreasureTable>(enc, nameof(Encounter.Loot), enc.Loot,
+                resolvedBg: "#E8F5E9", resolvedFg: "#2E7D32",
+                unresolvedBg: "#F5F5F5", unresolvedFg: "#999"));
+            sp.Children.Add(_vis.Card(wp));
+        }
+
         if (!string.IsNullOrWhiteSpace(enc.Conditions) && enc.Conditions != "1")
         {
             sp.Children.Add(_vis.SectionLabel(_vis.Loc("Vis.Conditions")));
@@ -1314,8 +1343,8 @@ public class EncounterEntityVisualizer : IEntityVisualizer
         {
             sp.Children.Add(_vis.SectionLabel(_vis.Loc("Vis.SpawnCreature")));
             var wp = new WrapPanel();
-            // M3: CreatureSource reference → RefNode badge
-            wp.Children.Add(_refNode.Badge<CreatureSource>(enc, nameof(Encounter.CreatureId), enc.CreatureId,
+            // R30: nCreatureID → Creature (Doc 37 §4.11 / model annotation), not CreatureSource.
+            wp.Children.Add(_refNode.Badge<Creature>(enc, nameof(Encounter.CreatureId), enc.CreatureId,
                 resolvedBg: "#E8EAF6", resolvedFg: "#283593",
                 unresolvedBg: "#F5F5F5", unresolvedFg: "#999"));
             if (!string.IsNullOrWhiteSpace(enc.CreatureHex) && enc.CreatureHex != "0,0")
@@ -1371,7 +1400,9 @@ public class EncounterEntityVisualizer : IEntityVisualizer
     {
         if (!(_dataTable?.ReferenceLookups ?? []).TryGetValue(typeof(EncounterTrigger), out var list) || list is null)
             return [];
-        return list.OfType<EncounterTrigger>().Where(t => t.EncounterId.RawText == encounterId.ToString()).ToList();
+        // R30: ToRawString derives from the entries (RawText can be stale after mutation).
+        return list.OfType<EncounterTrigger>()
+            .Where(t => t.EncounterId.ToRawString(null) == encounterId.ToString()).ToList();
     }
 
     private Control BuildReverseRefsPanel(Encounter enc)

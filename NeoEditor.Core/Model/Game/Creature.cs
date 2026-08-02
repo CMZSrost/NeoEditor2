@@ -36,15 +36,16 @@ public class Creature : IEntity
 
     [Column("strImg", TypeName = "varchar(1000)")]
     [StringLength(1000)]
-    
+
     [Display(Name = "Image")]
-    public string Image { get; set; } = "";
+    [ReferenceField(typeof(ImageAsset), TargetKey = "{FileName}")]
+    public ReferenceList<IReferenceEntry> Image { get; set; } = new();
 
     [Column("vEncounterIDs", TypeName = "varchar(1000)")]
     [StringLength(1000)]
-    
+
     [Display(Name = "EncounterIds")]
-    [ReferenceField(typeof(Condition), Separator = ",")]
+    [ReferenceField(typeof(Encounter), Separator = ",")]
     public ReferenceList<IReferenceEntry> EncounterIds { get; set; } = new();
 
     [Column("nMovesPerTurn")]

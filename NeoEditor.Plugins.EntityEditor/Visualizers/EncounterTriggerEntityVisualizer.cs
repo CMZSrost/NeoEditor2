@@ -31,7 +31,8 @@ public class EncounterTriggerEntityVisualizer : IEntityVisualizer
         _vis = vis;
         _refNode = refNode ?? new Services.RefNode(
             vis.Resolver,
-            vis.Router);
+            vis.Router,
+            vis.BuildRefTooltip);
     }
 
     public Control BuildDetail(IEntity entity)
@@ -118,16 +119,20 @@ public class EncounterTriggerEntityVisualizer : IEntityVisualizer
         {
             sp.Children.Add(_vis.SectionLabel(_vis.Loc("Vis.EncounterRef")));
             var wp = new WrapPanel();
+            // R30: ReferenceList.ToString() emits "[a, b]" and breaks resolution —
+            // the DataGrid shows the raw text via ReferenceText.GetRawString, so the
+            // badge must receive the same clean raw id ("123", not "[123]").
             wp.Children.Add(_refNode.Badge<Encounter>(et, nameof(EncounterTrigger.EncounterId),
-                et.EncounterId.ToString(), "#E8F5E9", "#2E7D32"));
+                et.EncounterId.ToRawString(null), "#E8F5E9", "#2E7D32"));
             sp.Children.Add(_vis.Card(wp));
         }
 
-        if (!string.IsNullOrWhiteSpace(et.HexTypes))
+        if (et.HexTypes.Count > 0)
         {
             sp.Children.Add(_vis.SectionLabel(_vis.Loc("Vis.HexTypesRef")));
             var wp = new WrapPanel();
-            foreach (var seg in et.HexTypes.Split(',').Select(s => s.Trim()).Where(s => s.Length > 0))
+            foreach (var seg in et.HexTypes.ToRawString(",")
+                         .Split(',').Select(s => s.Trim()).Where(s => s.Length > 0))
             {
                 wp.Children.Add(_refNode.Badge<HexType>(et, nameof(EncounterTrigger.HexTypes), seg,
                     "#E0F2F1", "#00695C"));

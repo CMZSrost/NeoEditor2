@@ -119,7 +119,8 @@ public class Condition : IEntity
 
     [Column("aThresholds", TypeName = "varchar(1000)")]
     [StringLength(1000)]
-    
+
     [Display(Name = "Thresholds")]
-    public string Thresholds { get; set; } = "";
+    [ReferenceField(typeof(Condition), Separator = ";", Pattern = "{value}={id}")]
+    public ReferenceList<IReferenceEntry> Thresholds { get; set; } = new();
 }

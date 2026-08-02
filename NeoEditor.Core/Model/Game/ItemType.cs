@@ -41,13 +41,17 @@ public class ItemType : IEntity
     public ReferenceList<IReferenceEntry> CondId { get; set; } = new();
 
     [Column("vImageList", TypeName = "longtext")]
-    
-    public string ImageList { get; set; } = "";
+
+    [Display(Name = "ImageList")]
+    [ReferenceField(typeof(ImageAsset), Separator = ",", TargetKey = "{FileName}")]
+    public ReferenceList<IReferenceEntry> ImageList { get; set; } = new();
 
     [Column("vSpriteList", TypeName = "varchar(1000)")]
     [StringLength(1000)]
-    
-    public string SpriteList { get; set; } = "";
+
+    [Display(Name = "SpriteList")]
+    [ReferenceField(typeof(ImageAsset), Separator = ",", Pattern = "{value}={id}", TargetKey = "{FileName}")]
+    public ReferenceList<IReferenceEntry> SpriteList { get; set; } = new();
 
     [Column("vImageUsage", TypeName = "varchar(1000)")]
     [StringLength(1000)]
@@ -192,9 +196,9 @@ public class ItemType : IEntity
 
     [Column("aSwitchIDs", TypeName = "varchar(1000)")]
     [StringLength(1000)]
-    
+
     [Display(Name = "SwitchIds")]
-    [ReferenceField(typeof(ItemType), Separator = ",", TargetKey = "{GroupId}.{SubgroupId}")]
+    [ReferenceField(typeof(ItemType), Separator = ",", Pattern = "{value}={id}", TargetKey = "{GroupId}.{SubgroupId}")]
     public ReferenceList<IReferenceEntry> SwitchIds { get; set; } = new();
 
     [Column("aSounds", TypeName = "varchar(1000)")]

@@ -153,7 +153,7 @@ public class ColumnTemplateFactory
             Width = new DataGridLength(160),
             CellTemplate = new Avalonia.Controls.Templates.FuncDataTemplate<object>((item, _) =>
             {
-                var raw = property.GetValue(item)?.ToString() ?? "";
+                var raw = ReferenceText.GetRawString(property.GetValue(item), refAttr);
                 if (!isMulti)
                 {
                     var rawId = ReferenceParser.ExtractRawId(raw, pattern);
@@ -169,6 +169,7 @@ public class ColumnTemplateFactory
                     {
                         display = raw;
                     }
+
                     var tb = new TextBlock
                     {
                         Text = display,
@@ -225,6 +226,7 @@ public class ColumnTemplateFactory
                             ConverterParameter = refColName2
                         });
                     }
+
                     return grid;
                 }
                 else
@@ -345,6 +347,7 @@ public class ColumnTemplateFactory
                     textBox.Bind(TextBox.TextProperty, new Binding(property.Name));
                     return textBox;
                 }
+
                 var comboBox = new ComboBox
                 {
                     MaxDropDownHeight = 200,
@@ -379,6 +382,7 @@ public class ColumnTemplateFactory
                         }
                     };
                 }
+
                 return comboBox;
             })
         };
@@ -421,6 +425,7 @@ public class ColumnTemplateFactory
                     });
                     return grid;
                 }
+
                 return tb;
             }),
             CellEditingTemplate = new Avalonia.Controls.Templates.FuncDataTemplate<object>((item, _) =>
@@ -474,6 +479,7 @@ public class ColumnTemplateFactory
                     });
                     return grid;
                 }
+
                 return tb;
             }),
             CellEditingTemplate = new Avalonia.Controls.Templates.FuncDataTemplate<object>((_, _) =>
@@ -497,12 +503,15 @@ public class ColumnTemplateFactory
         var colNameForFs = colAttrForFs?.Name ?? e.PropertyName;
         var hasFieldSources = _data.FieldSources.Count > 0;
 
-        var colWidth = property.PropertyType == typeof(int) || property.PropertyType == typeof(long) ? new DataGridLength(80)
-            : property.PropertyType == typeof(float) || property.PropertyType == typeof(double) ? new DataGridLength(90)
-            : new DataGridLength(160);
+        var colWidth = property.PropertyType == typeof(int) || property.PropertyType == typeof(long)
+            ? new DataGridLength(80)
+            : property.PropertyType == typeof(float) || property.PropertyType == typeof(double)
+                ? new DataGridLength(90)
+                : new DataGridLength(160);
 
         var isNumeric = property.PropertyType == typeof(int) || property.PropertyType == typeof(long)
-            || property.PropertyType == typeof(float) || property.PropertyType == typeof(double);
+                                                             || property.PropertyType == typeof(float) ||
+                                                             property.PropertyType == typeof(double);
 
         if (hasFieldSources || isNumeric)
         {
@@ -540,9 +549,11 @@ public class ColumnTemplateFactory
                             ConverterParameter = colNameForFs
                         });
                     }
+
                     return grid;
                 }),
-                CellEditingTemplate = new Avalonia.Controls.Templates.FuncDataTemplate<object>((_, _) => CreateEditControl(property))
+                CellEditingTemplate =
+                    new Avalonia.Controls.Templates.FuncDataTemplate<object>((_, _) => CreateEditControl(property))
             };
         }
         else
@@ -564,12 +575,14 @@ public class ColumnTemplateFactory
             nud.Bind(NumericUpDown.ValueProperty, new Binding(property.Name));
             return nud;
         }
+
         if (property.PropertyType == typeof(float) || property.PropertyType == typeof(double))
         {
             var nud = new NumericUpDown { Increment = 0.1m, FormatString = "0.##" };
             nud.Bind(NumericUpDown.ValueProperty, new Binding(property.Name));
             return nud;
         }
+
         var tb = new TextBox();
         tb.Bind(TextBox.TextProperty, new Binding(property.Name));
         return tb;

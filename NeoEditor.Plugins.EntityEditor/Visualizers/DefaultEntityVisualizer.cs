@@ -47,7 +47,8 @@ public class DefaultEntityVisualizer : IEntityVisualizer
             var colName = p.GetCustomAttribute<System.ComponentModel.DataAnnotations.Schema.ColumnAttribute>()?.Name ??
                           p.Name;
             var refAttr = p.GetCustomAttribute<ReferenceFieldAttribute>();
-            var strVal = val is bool b ? (b ? "1" : "0") : val?.ToString() ?? "";
+            // R30: ReferenceList must render as its raw text ("3,14"), not "[3, 14]".
+            var strVal = val is bool b ? (b ? "1" : "0") : ReferenceText.GetRawString(val, refAttr);
 
             if (refAttr is not null && !string.IsNullOrWhiteSpace(strVal))
             {

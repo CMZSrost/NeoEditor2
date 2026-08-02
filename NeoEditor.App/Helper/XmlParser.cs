@@ -125,9 +125,14 @@ public class XmlParser : IXmlParser
                 {
                     var rawValue = property.GetValue(entity);
                     var columnName = ResolveColumnName(property);
+                    // ReferenceList must serialize via the serializer (ToRawString), never ToString()
+                    var text = rawValue is ReferenceList<IReferenceEntry> rl
+                               && property.GetCustomAttribute<ReferenceFieldAttribute>() is { } refAttr
+                        ? _refSerializer.Serialize(rl, refAttr)
+                        : FormatValue(rawValue, property.PropertyType);
                     tableElement.Add(new XElement("column",
                         new XAttribute("name", columnName),
-                        FormatValue(rawValue, property.PropertyType)));
+                        text));
                 }
 
                 databaseElement.Add(tableElement);

@@ -330,6 +330,37 @@ public static class ReferenceParser
     // ── High-level parse entry points ───────────────────────────────────────
 
     /// <summary>
+    /// Split a field value into leaf segments, flattening OR groups.
+    /// Top-level split by <see cref="ReferenceFieldAttribute.Separator"/>, then any segment
+    /// containing <see cref="ReferenceFieldAttribute.OrSeparator"/> is split further.
+    /// </summary>
+    private static IEnumerable<string> SplitSegments(string value, ReferenceFieldAttribute attr)
+    {
+        var parts = attr.Separator is not null
+            ? value.Split(attr.Separator)
+            : [value];
+
+        foreach (var part in parts)
+        {
+            var trimmed = part.Trim();
+            if (trimmed.Length == 0) continue;
+
+            if (attr.OrSeparator is not null && trimmed.Contains(attr.OrSeparator))
+            {
+                foreach (var leaf in trimmed.Split(attr.OrSeparator))
+                {
+                    var lt = leaf.Trim();
+                    if (lt.Length > 0) yield return lt;
+                }
+            }
+            else
+            {
+                yield return trimmed;
+            }
+        }
+    }
+
+    /// <summary>
     /// Parse a complete reference field value using its [ReferenceField] attribute metadata.
     /// Returns structured segments with extracted IDs, key values, and extra info.
     /// </summary>
@@ -343,16 +374,8 @@ public static class ReferenceParser
         var refPattern = ReferencePattern.FromName(pattern);
         var keyInfo = ParseTargetKey(attr.TargetKey);
 
-        // Split by separator (multi-value) or treat as single value
-        var parts = attr.Separator is not null
-            ? value.Split(attr.Separator)
-            : [value];
-
-        foreach (var part in parts)
+        foreach (var trimmed in SplitSegments(value, attr))
         {
-            var trimmed = part.Trim();
-            if (trimmed.Length == 0) continue;
-
             var extractedId = refPattern.ExtractRawId(trimmed);
             var (modName, numericId) = ParseReference(extractedId);
             var extraInfo = refPattern.FormatExtraInfo(trimmed);
@@ -386,15 +409,8 @@ public static class ReferenceParser
         var refPattern = ReferencePattern.FromName(pattern);
         var keyInfo = ParseTargetKey(attr.TargetKey);
 
-        var parts = attr.Separator is not null
-            ? value.Split(attr.Separator)
-            : [value];
-
-        foreach (var part in parts)
+        foreach (var trimmed in SplitSegments(value, attr))
         {
-            var trimmed = part.Trim();
-            if (trimmed.Length == 0) continue;
-
             var extractedId = refPattern.ExtractRawId(trimmed);
             var keyValues = DecomposeId(extractedId, keyInfo);
             results.Add((extractedId, keyValues));

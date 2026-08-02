@@ -510,10 +510,9 @@ public partial class BrowserEntityRow : ObservableObject
         }
 
         // DmcPlace: use strImg (Image) field as display name
-        if (entity is Data.Model.Game.DmcPlace dp && !string.IsNullOrWhiteSpace(dp.Image))
+        if (entity is Data.Model.Game.DmcPlace dp && dp.Image.ToRawString(null) is { Length: > 0 } dpImg)
         {
-            var img = dp.Image.Length > 30 ? dp.Image[..27] + "..." : dp.Image;
-            return img;
+            return dpImg.Length > 30 ? dpImg[..27] + "..." : dpImg;
         }
 
         // ItemType: use strName(strDesc前10字符) as display name

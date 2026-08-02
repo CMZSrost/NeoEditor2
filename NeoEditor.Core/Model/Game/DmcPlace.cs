@@ -18,9 +18,10 @@ public class DmcPlace : IEntity
 
     [Column("strImg", TypeName = "varchar(1000)")]
     [StringLength(1000)]
-    
+
     [Display(Name = "Image")]
-    public string Image { get; set; } = "";
+    [ReferenceField(typeof(ImageAsset), TargetKey = "{FileName}")]
+    public ReferenceList<IReferenceEntry> Image { get; set; } = new();
 
     [Column("nEncounterID")]
     

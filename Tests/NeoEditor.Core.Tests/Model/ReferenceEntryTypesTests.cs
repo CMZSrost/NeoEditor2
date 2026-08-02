@@ -58,7 +58,7 @@ public class ReferenceEntryTypesTests
     public void AssignFormat_ValueFirst() { Assert.Equal("1=38", new AssignFormat { Entity = new() { Id = "38" }, Value = 1, ValueFirst = true }.ToRawString()); }
 
     [Fact]
-    public void BracketFormat() { Assert.Equal("[211", new BracketFormat { Entity = new() { Id = "211" } }.ToRawString()); }
+    public void BracketFormat() { Assert.Equal("[211]", new BracketFormat { Entity = new() { Id = "211" } }.ToRawString()); }
 
     [Fact]
     public void MultiIngredientRecipeFormat_IngredientsOnly()

@@ -13,16 +13,21 @@ namespace NeoEditor.Plugins.EntityEditor.Services;
 /// Injectable reference node renderer (M3).
 /// M10: moved from App/Helper to EntityEditor Plugin.
 /// Dependencies (IReferenceResolver, INavigationRouter) are Core/Infra interfaces — safe for Plugin layer.
+/// R30: optional tooltipBuilder (VisHelperService.BuildRefTooltip) attaches a hover
+/// preview panel to resolved badges (Doc 21 §7 P6).
 /// </summary>
 public class RefNode
 {
     private readonly IReferenceResolver? _resolver;
     private readonly INavigationRouter? _router;
+    private readonly Func<IEntity, Control?>? _tooltipBuilder;
 
-    public RefNode(IReferenceResolver? resolver, INavigationRouter? router)
+    public RefNode(IReferenceResolver? resolver, INavigationRouter? router,
+        Func<IEntity, Control?>? tooltipBuilder = null)
     {
         _resolver = resolver;
         _router = router;
+        _tooltipBuilder = tooltipBuilder;
     }
 
     /// <summary>
@@ -40,7 +45,11 @@ public class RefNode
 
         var badge = BuildBadge(label, bg, fg);
         if (isResolved && entity is not null)
+        {
             WireNavigation(badge, typeof(T), entity.EntityId, sourceEntity);
+            AttachTooltip(badge, entity);
+        }
+
         return badge;
     }
 
@@ -65,7 +74,11 @@ public class RefNode
         });
         panel.Children.Add(BuildBadge(label, bg, fg));
         if (isResolved && entity is not null)
+        {
             WireNavigation(panel, typeof(T), entity.EntityId, sourceEntity);
+            AttachTooltip(panel, entity);
+        }
+
         return panel;
     }
 
@@ -79,6 +92,7 @@ public class RefNode
         var fg = ColorFromHex(fgHex);
         var badge = BuildBadge(label, bg, fg);
         WireNavigation(badge, typeof(T), targetEntity.EntityId, sourceEntity);
+        AttachTooltip(badge, targetEntity);
         return badge;
     }
 
@@ -92,6 +106,7 @@ public class RefNode
         var fg = ColorFromHex(fgHex);
         var badge = BuildBadge(label, bg, fg);
         WireNavigation(badge, targetEntity.GetType(), targetEntity.EntityId, sourceEntity);
+        AttachTooltip(badge, targetEntity);
         return badge;
     }
 
@@ -121,6 +136,15 @@ public class RefNode
     }
 
     // ── Helpers ────────────────────────────────────────────────────────────
+
+    /// <summary>R30 (Doc 21 §7 P6): attach the hover preview panel to a resolved badge.</summary>
+    private void AttachTooltip(Control control, IEntity targetEntity)
+    {
+        if (_tooltipBuilder is null) return;
+        var tip = _tooltipBuilder(targetEntity);
+        if (tip is not null)
+            ToolTip.SetTip(control, tip);
+    }
 
     private static Border BuildBadge(string label, Color bg, Color fg)
     {

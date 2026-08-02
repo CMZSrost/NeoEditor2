@@ -50,9 +50,11 @@ public static class DocxTextExtractor
             var trimmed = line.Trim();
             if (string.IsNullOrWhiteSpace(trimmed)) continue;
 
-            // Detect table header: "第X部分 tablename 中文名" or just a pattern like "attackmodes"
+            // Detect table header: "第X部分 tablename 中文名" or just a pattern like "attackmodes".
+            // R30: capture only the ASCII table name — the Chinese suffix used to leak into the
+            // key ("attackmodes攻击模式.strname") and break lookups against TableAttribute names.
             var partMatch = System.Text.RegularExpressions.Regex.Match(trimmed,
-                @"第[^部分]+部分\s*(\w+)");
+                @"第[^部分]+部分\s*([a-zA-Z_][a-zA-Z0-9_]*)");
             if (partMatch.Success)
             {
                 currentTable = partMatch.Groups[1].Value.ToLowerInvariant();

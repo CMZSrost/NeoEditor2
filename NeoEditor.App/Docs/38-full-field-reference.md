@@ -547,7 +547,7 @@ ResetUsSpotted(1) EmptyGroundSlot(1) CleanAndDress(1) AddRecipe(75) (空名×1)
 - NSEf `ChangeGlobalFactionRep=0:2,-100,1` → 原版 faction 2=掠夺者（NSE faction 2=清道夫）✅
 - 代码 `ReferenceResolver.LookupEntityId`：`0:38` → `LookupByNs(type, "0", pk)` 直接查 0 命名空间 ✅
 
-**⚠️ 与既有文档冲突**：R16 §1/§5 与 37 §0.3 写「`0:` 是『同 namespace』简写，不是 game base」——**表述错误**，实际 `0:` 就是显式 0（game base）命名空间。代码行为正确，文档需订正（已列入待办）。
+**⚠️ 与既有文档冲突（已订正）**：R16 §1/§5 与 37 §0.3 原写「`0:` 是『同 namespace』简写，不是 game base」——**表述错误**，实际 `0:` 就是显式 0（game base）命名空间。代码行为正确；**R16 与 37 §0.4 均已内嵌 2026-08-02 订正标注**，本文档附录为本轮订正来源。
 
 **图片引用同样支持命名空间前缀**（37 未覆盖，原版无此用法，mod 使用）：
 - `attackmodes.strIMG`：NSEb `0:AModeSpearSharp.png`（引用原版图片）

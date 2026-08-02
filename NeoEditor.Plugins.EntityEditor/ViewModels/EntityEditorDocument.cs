@@ -15,6 +15,7 @@ using NeoEditor.Data.Command;
 using NeoEditor.Data.Context;
 using NeoEditor.Data.Messages;
 using NeoEditor.Data.Model.Game;
+using NeoEditor.Helper;
 using NeoEditor.Infra.Services;
 using NeoEditor.Services;
 using Serilog;
@@ -309,7 +310,10 @@ public static class EntityXmlHelper
         {
             var colName = prop.GetCustomAttribute<ColumnAttribute>()!.Name;
             var value = prop.GetValue(entity);
-            var escapedValue = System.Security.SecurityElement.Escape(value?.ToString() ?? "");
+            // R30: reference columns serialize as raw text ("3,14"), not "[3, 14]".
+            var rawValue = ReferenceText.GetRawString(value,
+                prop.GetCustomAttribute<ReferenceFieldAttribute>());
+            var escapedValue = System.Security.SecurityElement.Escape(rawValue);
             sb.AppendLine($"  <column name=\"{colName}\">{escapedValue}</column>");
         }
 

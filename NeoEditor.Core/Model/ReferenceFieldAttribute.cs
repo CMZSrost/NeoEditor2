@@ -13,6 +13,13 @@ public class ReferenceFieldAttribute : Attribute
     /// <summary>Segment separator. null = single value, "," = comma-separated, "|" = pipe-separated.</summary>
     public string? Separator { get; init; }
 
+    /// <summary>
+    /// Optional secondary separator that binds tighter than <see cref="Separator"/> (OR branch).
+    /// A top-level segment containing this separator becomes an OR-group of alternatives.
+    /// Used by treasuretable.aTreasures: Separator="," (AND) + OrSeparator="|" (pick-one).
+    /// </summary>
+    public string? OrSeparator { get; init; }
+
     /// <summary>Parse pattern for each segment. "{id}" (default), "{id}x{mult}", "{id}={value}".</summary>
     public string? Pattern { get; init; }
 

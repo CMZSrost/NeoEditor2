@@ -31,7 +31,8 @@ public class CreatureEntityVisualizer : IEntityVisualizer
         _vis = vis;
         _refNode = refNode ?? new Services.RefNode(
             vis.Resolver,
-            vis.Router);
+            vis.Router,
+            vis.BuildRefTooltip);
     }
 
     public Control BuildDetail(IEntity entity)
@@ -186,7 +187,9 @@ public class CreatureEntityVisualizer : IEntityVisualizer
             var wp = new WrapPanel();
             foreach (var seg in c.EncounterIds.Split(',').Select(s => s.Trim()).Where(s => s.Length > 0))
             {
-                wp.Children.Add(_refNode.Badge<Condition>(c, nameof(Creature.EncounterIds), seg,
+                // R30: EncounterIds points to Encounter (model annotation since round28),
+                // not Condition — the badge type must match or resolution misses.
+                wp.Children.Add(_refNode.Badge<Encounter>(c, nameof(Creature.EncounterIds), seg,
                     "#E8EAF6", "#283593"));
             }
 

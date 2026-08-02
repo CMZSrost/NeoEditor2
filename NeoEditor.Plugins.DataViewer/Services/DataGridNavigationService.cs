@@ -67,26 +67,46 @@ public class DataGridNavigationService : IDataGridNavigationService
     public IEntity? FindBestMatch(Type entityType, string rawId, string? targetKey,
         string sourceEntityId = "", string propertyName = "")
     {
-        var indexService = ActiveMergeStore?.IndexService
-            ?? BrowserStore?.IndexService;
-        if (indexService is null) return null;
+        var store = ActiveMergeStore ?? BrowserStore;
+        if (store is null) return null;
 
-        var entityNamespaces = _session.ActiveMergeStore?.EntityNamespaces
-            ?? _session.BrowserStore?.EntityNamespaces
-            ?? new Dictionary<string, string>();
-        var sourceNs = !string.IsNullOrWhiteSpace(sourceEntityId)
-            && entityNamespaces.TryGetValue(sourceEntityId, out var sn)
-            ? sn : null;
+        // Canonical path: in-memory ReferenceIndex (R16 semantics — ns-prefix → ns index,
+        // no-prefix → MergedId, composite "86.6"). Same backend the DataGrid display uses
+        // via LookupSubject, so navigation/peek stay consistent with what the cell shows.
+        var entityId = store.Index.Lookup(sourceEntityId, propertyName, entityType, rawId);
+        if (entityId is not null && TryFindEntity(entityType, entityId, out var hit))
+            return hit;
 
-        var entityId = _resolver.LookupEntityId(indexService, entityType.Name, rawId, sourceNs);
-        if (entityId is not null && ReferenceLookups.TryGetValue(entityType, out var list))
+        // Fallback: SQLite index — only when the in-memory index is unavailable
+        // (e.g. a Browser store that never built its in-memory ReferenceIndex).
+        var indexService = store.IndexService;
+        if (indexService is not null)
         {
-            foreach (var obj in list)
-                if (obj is IEntity e && e.EntityId == entityId)
-                    return e;
+            var sourceNs = !string.IsNullOrWhiteSpace(sourceEntityId)
+                           && store.EntityNamespaces.TryGetValue(sourceEntityId, out var sn)
+                ? sn
+                : null;
+            var sqliteId = _resolver.LookupEntityId(indexService, entityType.Name, rawId, sourceNs);
+            if (sqliteId is not null && TryFindEntity(entityType, sqliteId, out var hit2))
+                return hit2;
         }
 
         return null;
+    }
+
+    private bool TryFindEntity(Type entityType, string entityId, out IEntity entity)
+    {
+        entity = null!;
+        if (!ReferenceLookups.TryGetValue(entityType, out var list))
+            return false;
+        foreach (var obj in list)
+            if (obj is IEntity e && e.EntityId == entityId)
+            {
+                entity = e;
+                return true;
+            }
+
+        return false;
     }
 
     public string? ResolveEntityIdByTargetKey(Type entityType, string rawId, string? targetKey,
@@ -99,7 +119,7 @@ public class DataGridNavigationService : IDataGridNavigationService
     public void NavigateTo(Type entityType, int id)
     {
         var indexService = ActiveMergeStore?.IndexService
-            ?? BrowserStore?.IndexService;
+                           ?? BrowserStore?.IndexService;
         if (indexService is not null)
         {
             var entityId = indexService.LookupByNs(entityType.Name, "", id.ToString());
@@ -109,6 +129,7 @@ public class DataGridNavigationService : IDataGridNavigationService
                 return;
             }
         }
+
         Serilog.Log.Logger.Warning("[NavSvc] Could not resolve {EntityType} id={Id} to EntityId",
             entityType.Name, id);
     }

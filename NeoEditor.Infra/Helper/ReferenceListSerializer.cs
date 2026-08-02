@@ -36,6 +36,7 @@ public class ReferenceListSerializer : IReferenceListSerializer
         var pattern = metadata.Pattern ?? "{id}";
         var keyInfo = ReferenceParser.ParseTargetKey(metadata.TargetKey);
         var separator = metadata.Separator;
+        var orSeparator = metadata.OrSeparator;
 
         var parts = separator is not null
             ? raw.Split(separator)
@@ -46,11 +47,35 @@ public class ReferenceListSerializer : IReferenceListSerializer
             var trimmed = part.Trim();
             if (trimmed.Length == 0) continue;
 
-            var entry = DeserializeSegment(trimmed, pattern, separator, keyInfo);
+            var entry = DeserializeTopLevelPart(trimmed, pattern, orSeparator, keyInfo);
             result.Add(entry);
         }
 
         return result;
+    }
+
+    /// <summary>
+    /// Deserialize one top-level segment. When the column declares an OR separator and this
+    /// segment contains it, split further into an <see cref="OrGroupFormat"/> of alternatives.
+    /// </summary>
+    private static IReferenceEntry DeserializeTopLevelPart(
+        string part, string pattern, string? orSeparator, TargetKeyInfo keyInfo)
+    {
+        if (orSeparator is not null && part.Contains(orSeparator))
+        {
+            var leaves = part.Split(orSeparator)
+                .Select(l => l.Trim())
+                .Where(l => l.Length > 0)
+                .Select(l => DeserializeSegment(l, pattern, keyInfo))
+                .ToList();
+
+            if (leaves.Count > 1)
+                return new OrGroupFormat { Alternatives = leaves };
+            if (leaves.Count == 1)
+                return leaves[0];
+        }
+
+        return DeserializeSegment(part, pattern, keyInfo);
     }
 
     /// <inheritdoc/>
@@ -74,13 +99,13 @@ public class ReferenceListSerializer : IReferenceListSerializer
 
     // ── Segment deserialization ──────────────────────────────────────────
 
-    private static IReferenceEntry DeserializeSegment(
-        string segment, string pattern, string? separator, TargetKeyInfo keyInfo)
+    private static IReferenceEntry DeserializeSegment(string segment, string pattern, TargetKeyInfo keyInfo)
     {
         return pattern switch
         {
             "{id}x{mult}" => DeserializeIdXMult(segment, keyInfo),
             "{mult}x{id}" => DeserializeMultXId(segment, keyInfo),
+            "{id}x{mult}x{qty}" => DeserializeIdXMultXQty(segment, keyInfo),
             "{id}={value}" => DeserializeAssign(segment, keyInfo, valueFirst: false),
             "{value}={id}" => DeserializeAssign(segment, keyInfo, valueFirst: true),
             "[{id}" => DeserializeBracket(segment, keyInfo),
@@ -129,6 +154,44 @@ public class ReferenceListSerializer : IReferenceListSerializer
             : fmt;
     }
 
+    private static IReferenceEntry DeserializeIdXMultXQty(string segment, TargetKeyInfo keyInfo)
+    {
+        var trimmed = segment.Trim();
+        var isNeg = trimmed.StartsWith('-');
+        var body = isNeg ? trimmed[1..].Trim() : trimmed;
+
+        // id is everything before the FIRST 'x'; the remainder is "{prob}" or "{prob}x{qty}".
+        var xIdx = body.IndexOf('x');
+        var idPart = xIdx > 0 ? body[..xIdx].Trim() : body;
+        var rest = xIdx > 0 && xIdx < body.Length - 1 ? body[(xIdx + 1)..].Trim() : "";
+
+        string prob;
+        string? qty;
+        if (rest.Length == 0)
+        {
+            prob = "1.0";
+            qty = null;
+        }
+        else
+        {
+            var qx = rest.IndexOf('x');
+            if (qx > 0)
+            {
+                prob = rest[..qx].Trim();
+                qty = rest[(qx + 1)..].Trim();
+            }
+            else
+            {
+                prob = rest;
+                qty = null;
+            }
+        }
+
+        var entity = BuildEntityRef(idPart, keyInfo);
+        var fmt = new IdXMultXQtyFormat { Entity = entity, Prob = prob, Qty = qty };
+        return isNeg ? new NegatedRefFormat { Inner = fmt } : fmt;
+    }
+
     private static IReferenceEntry DeserializeMultXId(string segment, TargetKeyInfo keyInfo)
     {
         var trimmed = segment.Trim();
@@ -158,7 +221,18 @@ public class ReferenceListSerializer : IReferenceListSerializer
 
         var idPart = valueFirst ? right : left;
         var valPart = valueFirst ? left : right;
-        double.TryParse(valPart, NumberStyles.Float, CultureInfo.InvariantCulture, out var val);
+
+        // Non-numeric value (e.g. aSwitchIDs free-text state name "Hood Off") → keep verbatim.
+        if (!double.TryParse(valPart, NumberStyles.Float, CultureInfo.InvariantCulture, out var val))
+        {
+            return new AssignFormat
+            {
+                Entity = BuildEntityRef(idPart, keyInfo),
+                Value = 0,
+                RawValue = valPart,
+                ValueFirst = valueFirst
+            };
+        }
 
         return new AssignFormat
         {
@@ -171,15 +245,20 @@ public class ReferenceListSerializer : IReferenceListSerializer
     private static IReferenceEntry DeserializeBracket(string segment, TargetKeyInfo keyInfo)
     {
         var trimmed = segment.Trim();
-        var idStr = trimmed.StartsWith('[') ? trimmed[1..].Trim() : trimmed;
+        var start = trimmed.StartsWith('[') ? trimmed[1..] : trimmed;
+        var body = start.EndsWith(']') ? start[..^1] : start;
+        var parts = body.Split(',');
 
-        // If bracket segment has comma-separated data, strip everything after comma
-        var commaIdx = idStr.IndexOf(',');
-        if (commaIdx > 0) idStr = idStr[..commaIdx].Trim();
+        var idStr = parts[0].Trim();
+        string? p1 = parts.Length > 1 ? parts[1].Trim() : null;
+        string? p2 = parts.Length > 2 ? parts[2].Trim() : null;
 
         return new BracketFormat
         {
-            Entity = BuildEntityRef(idStr, keyInfo)
+            Entity = BuildEntityRef(idStr, keyInfo),
+            P1 = p1,
+            P2 = p2,
+            RawSegment = trimmed
         };
     }
 

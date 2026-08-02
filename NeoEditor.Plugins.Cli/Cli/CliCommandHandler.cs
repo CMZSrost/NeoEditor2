@@ -201,7 +201,8 @@ public class CliCommandHandler
         if (prop is null)
             return new { error = $"Property '{cmd.PropertyName}' not found on {cmd.EntityType}" };
 
-        var rawValue = prop.GetValue(entity)?.ToString() ?? "";
+        var rawValue = ReferenceText.GetRawString(prop.GetValue(entity),
+            prop.GetCustomAttribute<ReferenceFieldAttribute>());
         var refAttr = prop.GetCustomAttribute<ReferenceFieldAttribute>();
 
         var separator = refAttr?.Separator;
@@ -283,7 +284,8 @@ public class CliCommandHandler
         var props = entity.GetType()
             .GetProperties(BindingFlags.Public | BindingFlags.Instance)
             .Where(p => p.CanRead && p.GetIndexParameters().Length == 0)
-            .ToDictionary(p => p.Name, p => p.GetValue(entity)?.ToString() ?? "");
+            .ToDictionary(p => p.Name, p => ReferenceText.GetRawString(p.GetValue(entity),
+                p.GetCustomAttribute<ReferenceFieldAttribute>()));
 
         return new
         {

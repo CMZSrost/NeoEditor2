@@ -2336,6 +2336,7 @@ Double-click to navigate directly.</value></data>
   <data name="Vis.StoryBranch" xml:space="preserve"><value>Story Branch</value></data>
   <data name="Vis.NoBranches" xml:space="preserve"><value>(No branches)</value></data>
   <data name="Vis.RemoveSubmit" xml:space="preserve"><value>Remove (submit/destroy)</value></data>
+  <data name="Vis.GiveItem" xml:space="preserve"><value>Give Item</value></data>
   <data name="Vis.Conditions" xml:space="preserve"><value>Conditions</value></data>
   <data name="Vis.PreConditions" xml:space="preserve"><value>Pre-Conditions</value></data>
   <data name="Vis.CurrentEncounter" xml:space="preserve"><value>📍 Current</value></data>

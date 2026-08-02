@@ -12,13 +12,13 @@ namespace NeoEditor.Plugins.EntityEditor.Tests;
 /// Reusable stub implementations for EntityEditor Plugin tests.
 /// </summary>
 
-internal sealed class StubReferenceResolver : IReferenceResolver
+internal class StubReferenceResolver : IReferenceResolver
 {
     public IEntity? LookupRefByRawId(IEntity sourceEntity, string rawId, Type targetType) => null;
     public string? LookupSubject(string sourceEntityId, string propertyName, Type targetType, string rawId,
         Type? secondaryTargetType = null) => null;
     public string? LookupEntityId(ReferenceIndexService indexService, string entityType, string rawId, string? sourceNs) => null;
-    public T? LookupRef<T>(IEntity sourceEntity, string propertyName, string rawId) where T : IEntity => null;
+    public virtual T? LookupRef<T>(IEntity sourceEntity, string propertyName, string rawId) where T : IEntity => null;
     public IReadOnlyList<(string SourceEntityId, string PropertyName, string RawId)> ReverseLookup(
         EntityMergeStore store, string targetEntityId) => [];
     public Task BuildReverseIndexAsync(ReferenceIndexService indexService, EntityMergeStore store) => Task.CompletedTask;
@@ -27,17 +27,17 @@ internal sealed class StubReferenceResolver : IReferenceResolver
     public void ClearLookupCache() { }
 }
 
-internal sealed class StubNavigationRouter : INavigationRouter
+internal class StubNavigationRouter : INavigationRouter
 {
     public event Action<Type, string>? NavigationRequested;
     public event Action<Type, string, IEntity?>? PeekRequested;
 
     public bool Navigate(Type entityType, string entityId) => false;
     public bool NavigateDataTable(Type entityType, string entityId) => false;
-    public void NavigateToEntity(Type entityType, string entityId, IEntity? resolvedEntity = null) { }
+    public virtual void NavigateToEntity(Type entityType, string entityId, IEntity? resolvedEntity = null) { }
     public void NavigateToEntity(string entityTypeName, string entityId) { }
     public void NavigateTo(Type entityType, int id) { }
-    public void RequestPeek(Type entityType, string entityId, IEntity? sourceEntity) { }
+    public virtual void RequestPeek(Type entityType, string entityId, IEntity? sourceEntity) { }
     public void Peek(Type entityType, string entityId, IEntity? entity) { }
     public void RegisterTarget(INavigationTarget target) { }
     public void UnregisterTarget(INavigationTarget target) { }
@@ -56,7 +56,7 @@ internal class StubEntityLookupService : IEntityLookupService
     public Dictionary<int, T> GetEntities<T>() where T : IEntity => [];
     public Dictionary<string, T> GetCompositeEntities<T>(Func<T, string> keySelector, int sourceModId = int.MaxValue) where T : IEntity => [];
     public List<T> GetDedupedEntities<T>() where T : IEntity => [];
-    public IEntity? FindBestMatch(Type entityType, string rawId, string? targetKey,
+    public virtual IEntity? FindBestMatch(Type entityType, string rawId, string? targetKey,
         string sourceEntityId = "", string propertyName = "") => null;
 }
 

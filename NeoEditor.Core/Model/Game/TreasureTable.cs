@@ -23,9 +23,9 @@ public class TreasureTable : IEntity
     public string Name { get; set; } = "";
 
     [Column("aTreasures", TypeName = "text")]
-    
+
     [Display(Name = "Treasures")]
-    [ReferenceField(typeof(ItemType), Separator = ",", Pattern = "{id}x{mult}",
+    [ReferenceField(typeof(ItemType), Separator = ",", OrSeparator = "|", Pattern = "{id}x{mult}x{qty}",
         TargetKey = "{GroupId}.{SubgroupId}",
         SecondaryTargetEntityType = typeof(TreasureTable), SecondaryTargetKey = "{Id}")]
     public ReferenceList<IReferenceEntry> Treasures { get; set; } = new();

@@ -2,9 +2,12 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using NeoEditor.Data.Model;
 using NeoEditor.Data.Model.Game;
 using NeoEditor.Plugins.DataViewer.Services;
 using NeoEditor.Services;
+// Alias only IReferenceEntry to avoid IWorkspaceSession/IHostService ambiguity with NeoEditor.Services.
+using IReferenceEntry = NeoEditor.Core.Abstractions.IReferenceEntry;
 
 namespace NeoEditor.Helper;
 
@@ -105,6 +108,26 @@ public class ReferenceResolver : IReferenceResolver
             // No namespace prefix: lookup by MergedId, highest ModId
             if (!int.TryParse(cleanId, out var mergedId))
             {
+                // Composite key (ItemType "86.6"): match by GroupId.SubgroupId, highest ModId
+                var gidProp = typeof(T).GetProperty("GroupId",
+                    System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.IgnoreCase);
+                var sidProp = typeof(T).GetProperty("SubgroupId",
+                    System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.IgnoreCase);
+                var dotIdx = cleanId.IndexOf('.');
+                if (gidProp is not null && sidProp is not null && dotIdx > 0
+                    && int.TryParse(cleanId[..dotIdx], out var gid)
+                    && int.TryParse(cleanId[(dotIdx + 1)..], out var sid))
+                {
+                    T? cbest = default;
+                    foreach (var obj in list)
+                    {
+                        if (obj is not T e) continue;
+                        if (gidProp.GetValue(e) is not int gi || gi != gid) continue;
+                        if (sidProp.GetValue(e) is not int si || si != sid) continue;
+                        if (cbest is null || e.ModId > cbest.ModId) cbest = e;
+                    }
+                    return cbest;
+                }
                 Serilog.Log.Logger.Debug(
                     "[RefResolver:Fallback] non-prefixed key '{Key}' not an int → null", cleanId);
                 return default;
@@ -269,7 +292,9 @@ public class ReferenceResolver : IReferenceResolver
                 {
                     var refAttr = prop.GetCustomAttribute<ReferenceFieldAttribute>();
                     if (refAttr is null) continue;
-                    var val = prop.GetValue(entity)?.ToString();
+                    var val = prop.GetValue(entity) is ReferenceList<IReferenceEntry> rl
+                        ? rl.ToRawString(refAttr.Separator)
+                        : prop.GetValue(entity)?.ToString();
                     if (string.IsNullOrWhiteSpace(val)) continue;
                     var parsed = ReferenceParser.Parse(val, refAttr);
                     foreach (var seg in parsed.Segments)
@@ -320,12 +345,27 @@ public class ReferenceResolver : IReferenceResolver
         {
             var ns = rawId[..colonIdx];
             var pk = rawId[(colonIdx + 1)..];
-            return indexService.LookupByNs(entityType, ns, pk);
+            return LookupPkByNs(indexService, entityType, ns, pk);
         }
 
         if (sourceNs is not null)
-            return indexService.LookupByNs(entityType, sourceNs, rawId);
+            return LookupPkByNs(indexService, entityType, sourceNs, rawId);
 
-        return indexService.LookupByNs(entityType, "0", rawId);
+        return LookupPkByNs(indexService, entityType, "0", rawId);
+    }
+
+    /// <summary>
+    /// Look up by (type, ns, pk), routing composite keys ("86.6") to the composite index.
+    /// </summary>
+    private static string? LookupPkByNs(ReferenceIndexService indexService, string entityType, string ns, string pk)
+    {
+        var dotIdx = pk.IndexOf('.');
+        if (dotIdx > 0
+            && int.TryParse(pk[..dotIdx], out var gid)
+            && int.TryParse(pk[(dotIdx + 1)..], out var sid))
+        {
+            return indexService.LookupByNsComposite(entityType, ns, gid, sid);
+        }
+        return indexService.LookupByNs(entityType, ns, pk);
     }
 }

@@ -31,7 +31,8 @@ public class DmcPlaceEntityVisualizer : IEntityVisualizer
         _vis = vis;
         _refNode = refNode ?? new Services.RefNode(
             vis.Resolver,
-            vis.Router);
+            vis.Router,
+            vis.BuildRefTooltip);
     }
 
     public Control BuildDetail(IEntity entity)
@@ -66,7 +67,13 @@ public class DmcPlaceEntityVisualizer : IEntityVisualizer
             Background = Brush.Parse("#0A000000"), VerticalAlignment = VerticalAlignment.Top
         };
         if (bmp is not null)
+        {
             imageArea.Child = new Image { Source = bmp, Stretch = Stretch.Uniform, Width = 132, Height = 132 };
+            // R30 (Doc 21 §10): click the hero image to zoom.
+            var capturedBmp = bmp;
+            imageArea.Cursor = new Cursor(StandardCursorType.Hand);
+            imageArea.PointerPressed += (_, _) => _vis.OpenZoomableImage(capturedBmp, dp.Subject ?? dp.Id.ToString());
+        }
         else
             imageArea.Child = new SymbolIcon
             {
@@ -105,7 +112,7 @@ public class DmcPlaceEntityVisualizer : IEntityVisualizer
         });
         if (!string.IsNullOrWhiteSpace(dp.Image))
             identity.Children.Add(new TextBlock
-                { Text = $"{_vis.Loc("Vis.Icon")}: {dp.Image}", FontSize = 11, Foreground = Brush.Parse("#666") });
+                { Text = $"{_vis.Loc("Vis.Icon")}: {dp.Image.ToRawString(null)}", FontSize = 11, Foreground = Brush.Parse("#666") });
         Grid.SetColumn(identity, 1);
         grid.Children.Add(identity);
         return _vis.Card(grid);
@@ -130,7 +137,7 @@ public class DmcPlaceEntityVisualizer : IEntityVisualizer
         sp.Children.Add(_vis.SectionLabel(_vis.Loc("Vis.Encounter")));
         var wp = new WrapPanel();
         wp.Children.Add(_refNode.Badge<Encounter>(dp, nameof(DmcPlace.EncounterId),
-            dp.EncounterId.ToString(), "#E8F5E9", "#2E7D32"));
+            dp.EncounterId.ToRawString(null), "#E8F5E9", "#2E7D32"));
         sp.Children.Add(_vis.Card(wp));
         return sp;
     }

@@ -7,6 +7,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using NeoEditor.Data.Model.Game;
+using NeoEditor.Helper;
 
 namespace NeoEditor.Services;
 
@@ -79,7 +80,9 @@ public class CsvImportExportService
         {
             sb.AppendLine(string.Join(",", colProps.Select(p =>
             {
-                var val = p.GetValue(entity)?.ToString() ?? "";
+                // R30: ReferenceList must export as its raw text ("16,46"), not "[16, 46]".
+                var val = ReferenceText.GetRawString(p.GetValue(entity),
+                    p.GetCustomAttribute<ReferenceFieldAttribute>());
                 return val.Contains(',') || val.Contains('"') || val.Contains('\n')
                     ? $"\"{val.Replace("\"", "\"\"")}\""
                     : val;
@@ -139,8 +142,9 @@ public class CsvImportExportService
             {
                 foreach (var prop in colProps)
                 {
-                    var oldVal = prop.GetValue(existingEntity)?.ToString() ?? "";
-                    var newVal = prop.GetValue(importedEntity)?.ToString() ?? "";
+                    var refAttr = prop.GetCustomAttribute<ReferenceFieldAttribute>();
+                    var oldVal = ReferenceText.GetRawString(prop.GetValue(existingEntity), refAttr);
+                    var newVal = ReferenceText.GetRawString(prop.GetValue(importedEntity), refAttr);
                     if (oldVal != newVal)
                     {
                         result.Add(new CsvDiffRow
@@ -160,7 +164,8 @@ public class CsvImportExportService
                 var keyStr = key?.ToString() ?? "?";
                 foreach (var prop in colProps)
                 {
-                    var val = prop.GetValue(importedEntity)?.ToString() ?? "";
+                    var refAttr = prop.GetCustomAttribute<ReferenceFieldAttribute>();
+                    var val = ReferenceText.GetRawString(prop.GetValue(importedEntity), refAttr);
                     if (!string.IsNullOrEmpty(val))
                     {
                         result.Add(new CsvDiffRow

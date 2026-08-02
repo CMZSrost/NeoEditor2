@@ -599,4 +599,46 @@ public class ReferenceParserTests
         var recombined = string.Join(",", parsed.Segments.Select(s => s.RawText));
         Assert.Equal("10,11,12", recombined);
     }
+
+    // ═══════════════════════════════════════════════════════════════
+    // OrSeparator flattening + {id}x{mult}x{qty} pattern
+    // ═══════════════════════════════════════════════════════════════
+
+    [Fact]
+    public void ExtractIds_flattens_or_groups()
+    {
+        var attr = new ReferenceFieldAttribute(typeof(ItemType))
+        {
+            Pattern = "{id}x{mult}x{qty}", Separator = ",", OrSeparator = "|",
+            TargetKey = "{GroupId}.{SubgroupId}"
+        };
+        var ids = ReferenceParser.ExtractIds("10.3x0.25x1-20,35.1x0.1x1-1|35.2x0.1x1-1", attr);
+        Assert.Equal(3, ids.Count);
+        Assert.Equal("10.3", ids[0].ExtractedId);
+        Assert.Equal("35.1", ids[1].ExtractedId);
+        Assert.Equal("35.2", ids[2].ExtractedId);
+    }
+
+    [Fact]
+    public void Parse_flattens_or_groups()
+    {
+        var attr = new ReferenceFieldAttribute(typeof(ItemType))
+        {
+            Pattern = "{id}x{mult}x{qty}", Separator = ",", OrSeparator = "|",
+            TargetKey = "{GroupId}.{SubgroupId}"
+        };
+        var parsed = ReferenceParser.Parse("35.1x0.1x1-1|35.2x0.1x1-1", attr);
+        Assert.Equal(2, parsed.Segments.Count);
+        Assert.Equal("35.1", parsed.Segments[0].ExtractedId);
+        Assert.Equal("35.2", parsed.Segments[1].ExtractedId);
+    }
+
+    [Fact]
+    public void IdXMultXQty_pattern_extracts_before_first_x()
+    {
+        var pat = ReferencePattern.FromName("{id}x{mult}x{qty}");
+        Assert.Equal("86.6", pat.ExtractRawId("86.6x1.0x5-9"));
+        Assert.Equal("NSE:36.6", pat.ExtractRawId("NSE:36.6x0.01694915254"));
+        Assert.Equal("86.6", pat.ExtractRawId("86.6x1.0"));
+    }
 }

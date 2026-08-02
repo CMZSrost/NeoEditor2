@@ -2302,6 +2302,7 @@ Ctrl+右键点击引用 = 仅预览不跳转。
     <data name="Vis.StoryBranch" xml:space="preserve"><value>剧情分支</value></data>
     <data name="Vis.NoBranches" xml:space="preserve"><value>（无分支）</value></data>
     <data name="Vis.RemoveSubmit" xml:space="preserve"><value>移除（上交/摧毁）</value></data>
+    <data name="Vis.GiveItem" xml:space="preserve"><value>给予物品</value></data>
     <data name="Vis.Conditions" xml:space="preserve"><value>获得状态</value></data>
     <data name="Vis.PreConditions" xml:space="preserve"><value>前置条件</value></data>
     <data name="Vis.CurrentEncounter" xml:space="preserve"><value>📍 当前场景</value></data>

@@ -9,6 +9,11 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <!-- R30: badge interaction / named-control tests (same pattern as Mcp plugin) -->
+        <InternalsVisibleTo Include="NeoEditor.Plugins.EntityEditor.Tests" />
+    </ItemGroup>
+
+    <ItemGroup>
         <ProjectReference Include="..\NeoEditor.Core\NeoEditor.Core.csproj" />
         <ProjectReference Include="..\NeoEditor.Infra\NeoEditor.Infra.csproj" />
         <ProjectReference Include="..\NeoEditor.UI.Common\NeoEditor.UI.Common.csproj" />
