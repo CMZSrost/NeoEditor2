@@ -1,10 +1,12 @@
-name: Release Windows
+name: Release Windows (NeoPlayer)
 
-# 手动打 tag（如 v1.0.0）时触发：打包 Windows 版并发布到 GitHub Releases
+# NeoPlayer 分支打 tag（如 NeoPlayer-v1.2.3）时触发：打包 Windows 版并发布到 GitHub Releases
+# 构建 NeoEditor.Player（程序集名 NeoScavengerPlayer），产物命名 NeoPlayer-<版本>-win-x64.zip
+# 版本号取自 tag（NeoPlayer-v1.2.3 → 1.2.3），写入所有程序集的 Version / AssemblyVersion / FileVersion
 on:
   push:
     tags:
-      - 'v*'
+      - 'NeoPlayer-v*'
 
 permissions:
   contents: write # 创建 Release 所需
@@ -21,29 +23,66 @@ jobs:
         with:
           dotnet-version: '10.0.x'
 
+      - name: Resolve version from tag
+        shell: pwsh
+        run: |
+          $tag = $env:GITHUB_REF_NAME               # 例：NeoPlayer-v1.2.3
+          $ver = $tag -replace '^NeoPlayer-v', ''   # 例：1.2.3
+          $asmVer = ($ver -split '-')[0]            # AssemblyVersion 只允许数字段（去掉 -beta 等后缀）
+          [IO.File]::AppendAllText($env:GITHUB_ENV, "VERSION=$ver`n")
+          [IO.File]::AppendAllText($env:GITHUB_ENV, "ASSEMBLY_VERSION=$asmVer`n")
+          Write-Host "tag=$tag version=$ver assemblyVersion=$asmVer"
+
       - name: Publish (win-x64, self-contained single-file)
         shell: pwsh
         run: |
-          dotnet publish NeoEditor.App/NeoEditor.App.csproj `
+          dotnet publish NeoEditor.Player/NeoEditor.Player.csproj `
             -c Release -r win-x64 --self-contained true `
             -p:PublishSingleFile=true `
             -p:IncludeNativeLibrariesForSelfExtract=true `
             -p:DebugType=None -p:DebugSymbols=false `
+            -p:Version="$env:VERSION" `
+            -p:AssemblyVersion="$env:ASSEMBLY_VERSION" `
+            -p:FileVersion="$env:ASSEMBLY_VERSION" `
+            -p:InformationalVersion="$env:VERSION" `
             -o publish/win-x64
+
+      - name: Sign (optional — 配置 SIGN_PFX_BASE64 / SIGN_PFX_PASSWORD secret 后启用)
+        shell: pwsh
+        env:
+          SIGN_PFX_BASE64: ${{ secrets.SIGN_PFX_BASE64 }}
+          SIGN_PFX_PASSWORD: ${{ secrets.SIGN_PFX_PASSWORD }}
+        run: |
+          if (-not $env:SIGN_PFX_BASE64) {
+            Write-Host "未配置 SIGN_PFX_BASE64，跳过签名（不影响发包）。"
+            exit 0
+          }
+          $pfx = Join-Path $env:RUNNER_TEMP 'sign.pfx'
+          [IO.File]::WriteAllBytes($pfx, [Convert]::FromBase64String($env:SIGN_PFX_BASE64))
+          $signtool = Get-ChildItem 'C:\Program Files (x86)\Windows Kits\10\bin\*\x64\signtool.exe' |
+            Sort-Object FullName -Descending | Select-Object -First 1
+          if (-not $signtool) { throw '未找到 signtool.exe（Windows SDK）' }
+          $targets = Get-ChildItem publish/win-x64 -Recurse -File |
+            Where-Object { $_.Extension -in '.exe', '.dll' }
+          foreach ($t in $targets) {
+            & $signtool.FullName sign /fd SHA256 /f $pfx /p $env:SIGN_PFX_PASSWORD `
+              /tr http://timestamp.digicert.com /td SHA256 $t.FullName
+            if ($LASTEXITCODE -ne 0) { throw "签名失败: $($t.FullName)" }
+          }
+          Write-Host "已签名 $($targets.Count) 个文件"
 
       - name: Package zip
         shell: pwsh
         run: |
-          $tag = $env:GITHUB_REF_NAME
           Remove-Item publish/win-x64/*.pdb -ErrorAction SilentlyContinue
-          Compress-Archive -Path publish/win-x64/* -DestinationPath "NeoEditor-$tag-win-x64.zip"
+          Compress-Archive -Path publish/win-x64/* -DestinationPath "NeoPlayer-$env:VERSION-win-x64.zip"
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.ref_name }}
-          name: NeoEditor ${{ github.ref_name }}
+          name: NeoPlayer ${{ env.VERSION }}
           body: |
-            Windows (x64) 自包含单文件版，解压后运行 `NeoEditor.exe`，无需安装 .NET 运行时。
+            Windows (x64) 自包含单文件版，解压后运行 `NeoScavengerPlayer.exe`，无需安装 .NET 运行时。
           generate_release_notes: true
-          files: NeoEditor-*-win-x64.zip
+          files: NeoPlayer-*-win-x64.zip
