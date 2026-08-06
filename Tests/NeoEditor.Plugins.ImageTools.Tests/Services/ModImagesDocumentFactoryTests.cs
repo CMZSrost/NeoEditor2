@@ -1,4 +1,5 @@
 using Moq;
+using NeoEditor.Core.Abstractions;
 using NeoEditor.Core.Model;
 using NeoEditor.Data.Model;
 using NeoEditor.Infra.Services;

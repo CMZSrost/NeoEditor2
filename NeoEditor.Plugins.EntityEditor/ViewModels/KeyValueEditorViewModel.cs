@@ -54,6 +54,30 @@ public partial class KeyValueEditorViewModel : ObservableObject
             else
                 IsCurrentEntityDirty = false;
         };
+
+        // Docs/41 需求1: after Save & Export, EditStore was cleared — re-derive the
+        // per-field "edited (not yet exported)" markers.
+        WeakReferenceMessenger.Default.Register<SaveCompletedMessage>(this, (_, _) =>
+        {
+            if (CurrentEntity is null) return;
+            foreach (var section in Sections)
+                foreach (var field in section.Fields)
+                    field.IsEdited = IsEditedField(CurrentEntity, field.PropertyName);
+        });
+    }
+
+    /// <summary>Docs/41 需求2: editor-internal metadata columns (EntityId/ModId/FilePath).</summary>
+    private static bool IsMetaProperty(PropertyInfo p) => p.DeclaringType == typeof(IEntity);
+
+    /// <summary>Docs/41 需求1: edited this session, not yet exported. Matches the DataGrid
+    /// cell-highlight source (EditStore.EditedCells), including the "*" wildcard used by
+    /// KV/XML edit paths.</summary>
+    private bool IsEditedField(IEntity entity, string colName)
+    {
+        var editedCells = _session.ActiveEditStore?.EditedCells;
+        if (editedCells is null) return false;
+        return editedCells.Contains((entity.EntityId, colName))
+               || editedCells.Contains((entity.EntityId, "*"));
     }
 
     private static readonly Dictionary<Type, List<(PropertyInfo Prop, string Section, bool IsKey, bool IsRef,
@@ -90,11 +114,17 @@ public partial class KeyValueEditorViewModel : ObservableObject
                 .Select(p =>
                 {
                     var ca = p.GetCustomAttribute<ColumnAttribute>()!;
+                    // Docs/41: metadata fields render as a read-only TextBlock only —
+                    // forcing EditControlType.ReadOnly prevents the editable control from
+                    // also rendering (ghost/重影 fix).
+                    var isReadOnly = IsKeyProperty(p) || IsMetaProperty(p);
                     return (Prop: p, Section: FieldGroupMetadata.GetSection(type, p.Name),
                         IsKey: IsKeyProperty(p), IsRef: p.GetCustomAttribute<ReferenceFieldAttribute>() != null,
                         ColName: ca.Name ?? p.Name,
-                        CtrlType: DetermineControlType(p, p.GetCustomAttribute<ReferenceFieldAttribute>() != null,
-                            IsKeyProperty(p)));
+                        CtrlType: isReadOnly
+                            ? EditControlType.ReadOnly
+                            : DetermineControlType(p, p.GetCustomAttribute<ReferenceFieldAttribute>() != null,
+                                isKey: false));
                 }).ToList();
             PropCache[type] = cached;
         }
@@ -115,6 +145,9 @@ public partial class KeyValueEditorViewModel : ObservableObject
                     field.OriginalValue = str;
                     field.CurrentValue = str;
                     field.Property = prop;
+                    // Docs/41: metadata + edited-state per field (survives auto-save).
+                    field.IsMeta = IsMetaProperty(prop);
+                    field.IsEdited = IsEditedField(entity, field.PropertyName);
                     idx++;
                 }
             }
@@ -143,6 +176,9 @@ public partial class KeyValueEditorViewModel : ObservableObject
                     IsReference = isRef, IsKey = isKey, ControlType = ctrlType,
                     EnumValues = enumVals,
                     Description = BuildFieldDescription(type, prop),
+                    // Docs/41: metadata read-only + edited-state per field.
+                    IsMeta = IsMetaProperty(prop),
+                    IsEdited = IsEditedField(entity, colName),
                 };
                 row.CompleteInit();
                 section.Fields.Add(row);
@@ -234,6 +270,9 @@ public partial class KeyValueEditorViewModel : ObservableObject
                         edits.Add(new EditRecord(
                             CurrentEntity, field.Property, field.PropertyName,
                             oldValue, newValue));
+                        // Docs/41 追修: reflect "edited, not yet exported" immediately — the
+                        // EditStore entry is added when the EntityFieldEditsMessage is handled.
+                        field.IsEdited = true;
                     }
                     else
                     {
@@ -298,8 +337,7 @@ public partial class KeyValueEditorViewModel : ObservableObject
     private static EditControlType DetermineControlType(PropertyInfo prop, bool isRef, bool isKey)
     {
         if (isKey) return EditControlType.ReadOnly;
-        if (isRef) return EditControlType.ReferencePicker;
-        if (prop.PropertyType == typeof(bool)) return EditControlType.ToggleSwitch;
+        if (isRef) return EditControlType.ReferencePicker;        if (prop.PropertyType == typeof(bool)) return EditControlType.ToggleSwitch;
         if (prop.PropertyType == typeof(int) || prop.PropertyType == typeof(long)
                                              || prop.PropertyType == typeof(float) ||
                                              prop.PropertyType == typeof(double))
@@ -355,10 +393,24 @@ public partial class FieldRow : ObservableObject
     public PropertyInfo? Property { get; set; }
     public bool IsReference { get; set; }
     public bool IsKey { get; set; }
+
+    /// <summary>Docs/41 需求2: editor-internal metadata (EntityId/ModId/FilePath) — read-only.</summary>
+    public bool IsMeta { get; set; }
+
+    /// <summary>Read-only display: primary key OR editor metadata.</summary>
+    public bool IsReadOnly => IsKey || IsMeta;
+
+    /// <summary>Docs/41 需求1: edited this session and not yet exported (EditStore-driven).
+    /// Auto-save does NOT clear it — only Save & Export does.</summary>
+    [ObservableProperty] public partial bool IsEdited { get; set; }
+
     public EditControlType ControlType { get; set; }
 
     /// <summary>R30: field explanation tooltip (embedded Docs/38 meaning + reference format).</summary>
     public string Description { get; set; } = "";
+
+    /// <summary>Docs/41 P4: whether the '?' hint glyph is shown for this field.</summary>
+    public bool HasDescription => !string.IsNullOrEmpty(Description);
     [ObservableProperty] public partial bool IsDirty { get; set; }
     [ObservableProperty] public partial bool IsJustApplied { get; set; }
     [ObservableProperty] public partial List<string>? Suggestions { get; set; }

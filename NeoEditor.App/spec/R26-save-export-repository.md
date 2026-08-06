@@ -61,14 +61,17 @@ public interface IEntityRepository<T> : IDataRepository<T> where T : IEntity
 ```csharp
 Task<SaveResult> SaveAsync(string? entityId = null);        // Save：内存 → DB
 Task<SaveResult> SaveAllAsync();                             // 全部 dirty 落库
-Task<IReadOnlyList<ExportResult>> ExportModAsync(int modId); // Export：DB → XML
+Task<IReadOnlyList<ExportResult>> ExportModAsync(int modId); // Export：DB → XML（计算 diff 供预览）
 Task<IReadOnlyList<ExportResult>> ExportProfileAsync();
+Task CommitExportAsync(IEnumerable<RowDiff> diffs);         // 写盘：确认后的 XML diff 唯一写入口（2026-08-03）
 Task<PublishResult> PublishAsync();                          // 默认：Save + Export 事务
 ```
 
 - 返回值 `SaveResult.PartialDiff` 驱动 dirty 清理（R01/R09）。
 - 事务语义：diff 弹窗取消 = 整个 Publish 回滚（DB 也不落库）。
 - hook（R25）：`PreSaveHook` 挂 DB 落库前；`PreExportHook` 挂 XML 写盘前；`PreExecuteHook` 在命令执行前。
+- **写盘路径**：`ExportModAsync` 只计算 diff（`XmlRepository.GetDiffAsync`），**不写文件**；用户确认后的
+  diff 由 `CommitExportAsync` 落盘（唯一写入口）。View 不得直接 `File.WriteAllText`（R24 收束，2026-08-03）。
 
 ### 5. dirty session 按 profile
 
@@ -84,7 +87,7 @@ Task<PublishResult> PublishAsync();                          // 默认：Save + 
 ## 禁止
 
 - 禁止 View 层直接持有 `GameDbContext` / `EditorDbContext` 做写入（R24）
-- 禁止在 HostService 之外另起一套 diff/导出逻辑（diff 只能走 repository）
+- 禁止在 HostService 之外另起一套 **写盘/导出提交** 逻辑（写盘只能走 `CommitExportAsync`；预览用 diff 可基于内存态计算，供弹窗展示，不落盘）
 - 禁止 repository 契约出现后端特判（NotSupported / 空返回 / 仅单端方法）
 - 禁止 repository 新增独立静态/全局状态（R01/N01）
 

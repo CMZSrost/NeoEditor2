@@ -33,10 +33,20 @@ public partial class MainWindow : Window
                     if (_vm?.CurrentPage == PageType.Workspace)
                     {
                         var messenger = WeakReferenceMessenger.Default;
-                        // R11: Ctrl+S saves only the current document/tab, not all.
-                        messenger.Send(new SaveRequestedMessage(SaveScope.CurrentTab));
+                        if (e.KeyModifiers.HasFlag(KeyModifiers.Shift))
+                        {
+                            // Docs/41 P1.4: Ctrl+Shift+S = full save + XML export preview.
+                            messenger.Send(new SaveAndExportRequestedMessage());
+                        }
+                        else
+                        {
+                            // R11: Ctrl+S saves only the current document/tab, not all.
+                            messenger.Send(new SaveRequestedMessage(SaveScope.CurrentTab));
+                        }
+
                         e.Handled = true;
                     }
+
                     break;
             }
         }

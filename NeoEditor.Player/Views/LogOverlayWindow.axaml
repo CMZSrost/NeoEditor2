@@ -1,0 +1,79 @@
+<Window
+    x:Class="NeoEditor.Player.Views.LogOverlayWindow"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:vm="clr-namespace:NeoEditor.Player.ViewModels"
+    xmlns:loc="clr-namespace:NeoEditor.Player.Services"
+    xmlns:log="clr-namespace:NeoEditor.Player.Core.Logging;assembly=NeoEditor.Player.Core"
+    x:Name="Root"
+    x:DataType="vm:PlayerViewModel"
+    Title="运行日志"
+    SystemDecorations="None"
+    ShowInTaskbar="False"
+    WindowState="FullScreen"
+    Background="#CC101010"
+    TransparencyLevelHint="Transparent"
+    Topmost="True">
+
+    <DockPanel Margin="0,32">
+        <Border
+            DockPanel.Dock="Top"
+            Padding="16,8"
+            Background="#66101010">
+            <StackPanel Orientation="Horizontal" Spacing="12">
+                <TextBlock
+                    VerticalAlignment="Center"
+                    FontSize="16"
+                    FontWeight="SemiBold"
+                    Foreground="White"
+                    Text="{Binding [Log.OverlayTitle], Source={x:Static loc:LocalizationManager.Instance}}" />
+                <TextBlock
+                    VerticalAlignment="Center"
+                    FontSize="11"
+                    Foreground="#999999">
+                    <Run Text="{Binding [Log.FilePrefix], Source={x:Static loc:LocalizationManager.Instance}}" />
+                    <Run Text="{Binding FileLogDirectory}" />
+                </TextBlock>
+                <TextBlock VerticalAlignment="Center" Text="{Binding [Log.Level], Source={x:Static loc:LocalizationManager.Instance}}" Foreground="#CCCCCC" />
+                <ComboBox
+                    Width="140"
+                    ItemsSource="{x:Static vm:PlayerViewModel.LevelFilters}"
+                    SelectedItem="{Binding LevelFilter}" />
+                <Button
+                    Content="{Binding [Log.Clear], Source={x:Static loc:LocalizationManager.Instance}}"
+                    Click="OnClearLogsClick"
+                    Background="#E8E8E8"
+                    Foreground="Black" />
+                <Button
+                    Content="{Binding [Log.Close], Source={x:Static loc:LocalizationManager.Instance}}"
+                    Click="OnCloseClick"
+                    Background="#E8E8E8"
+                    Foreground="Black" />
+            </StackPanel>
+        </Border>
+
+        <ListBox
+            Margin="16,8"
+            ItemsSource="{Binding VisibleLines}"
+            Background="Transparent"
+            FontFamily="Consolas, Sarasa Mono SC, monospace"
+            FontSize="13">
+            <ListBox.ItemTemplate>
+                <DataTemplate DataType="log:PlayerLogLine">
+                    <!--  v2.29: fixed-height rows — wrapped text made every row's height
+                          vary, so the virtualized ListBox scrollbar jumped while lines
+                          streamed in; full message is shown as a tooltip  -->
+                    <StackPanel Orientation="Horizontal" Spacing="10" Height="22">
+                        <TextBlock Text="{Binding Timestamp, StringFormat={}{0:HH:mm:ss}}" Foreground="#AAAAAA" />
+                        <TextBlock Text="{Binding Level}" Foreground="#7FC8FF" Width="80" />
+                        <TextBlock
+                            Text="{Binding Message}"
+                            Foreground="#EEEEEE"
+                            TextTrimming="CharacterEllipsis"
+                            ToolTip.Tip="{Binding Message}" />
+                    </StackPanel>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+    </DockPanel>
+</Window>

@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="Menu.File" xml:space="preserve"><value>文件</value></data>
+  <data name="Menu.OpenSwf" xml:space="preserve"><value>打开 SWF…</value></data>
+  <data name="Menu.Reload" xml:space="preserve"><value>重新加载</value></data>
+  <data name="Menu.Exit" xml:space="preserve"><value>退出</value></data>
+  <data name="Menu.View" xml:space="preserve"><value>视图</value></data>
+  <data name="Menu.FullScreen" xml:space="preserve"><value>全屏 (F11)</value></data>
+  <data name="Menu.Log" xml:space="preserve"><value>日志（Shift+Tab）</value></data>
+  <data name="Menu.BackgroundRun" xml:space="preserve"><value>后台运行</value></data>
+  <data name="Menu.BackgroundRunTip" xml:space="preserve"><value>开启后窗口失焦不暂停游戏（声音继续）</value></data>
+  <data name="Menu.Theme" xml:space="preserve"><value>主题</value></data>
+  <data name="Menu.Theme.System" xml:space="preserve"><value>跟随系统</value></data>
+  <data name="Menu.Theme.Light" xml:space="preserve"><value>亮色</value></data>
+  <data name="Menu.Theme.Dark" xml:space="preserve"><value>暗色</value></data>
+  <data name="Menu.Language" xml:space="preserve"><value>语言</value></data>
+  <data name="Menu.Language.Zh" xml:space="preserve"><value>中文</value></data>
+  <data name="Menu.Language.En" xml:space="preserve"><value>English</value></data>
+  <data name="Menu.DataBrowser" xml:space="preserve"><value>数据浏览</value></data>
+  <data name="Placeholder.Drop" xml:space="preserve"><value>把 SWF 文件拖到这里</value></data>
+  <data name="Placeholder.Click" xml:space="preserve"><value>或点击浏览…（NEOScavenger.swf）</value></data>
+  <data name="Placeholder.MenuHint" xml:space="preserve"><value>菜单：文件 → 打开 SWF (Ctrl+O) / 重新加载 (F5)&#x0a;视图 → 全屏 (F11) / 日志 (Shift+Tab) / 数据浏览 / 后台运行&#x0a;视图 → 主题 / 语言</value></data>
+  <data name="Log.OverlayTitle" xml:space="preserve"><value>运行日志 — Shift+Tab 关闭</value></data>
+  <data name="Log.Level" xml:space="preserve"><value>级别：</value></data>
+  <data name="Log.Clear" xml:space="preserve"><value>清空</value></data>
+  <data name="Log.Close" xml:space="preserve"><value>关闭 (Shift+Tab)</value></data>
+  <data name="Log.FilePrefix" xml:space="preserve"><value>日志文件：</value></data>
+  <data name="DataBrowser.Title" xml:space="preserve"><value>数据浏览</value></data>
+  <data name="Db.Status.NotLoaded" xml:space="preserve"><value>未加载</value></data>
+  <data name="Db.Status.QuitReset" xml:space="preserve"><value>游戏已退出，数据已重置</value></data>
+  <data name="Db.Status.NoData" xml:space="preserve"><value>未找到数据（data/ 或 Mods/*/neogame.xml）</value></data>
+  <data name="Db.Status.Summary" xml:space="preserve"><value>{0} 类数据，共 {1} 行（已合并模组覆盖）</value></data>
+  <data name="Db.Status.Rows" xml:space="preserve"><value>{0} — {1} 行</value></data>
+  <data name="Db.Status.NotFound" xml:space="preserve"><value>{0} — 未找到 {1}</value></data>
+  <data name="Status.NotLoaded" xml:space="preserve"><value>未加载 — 点击「打开 SWF」选择游戏文件（NEOScavenger.swf）</value></data>
+  <data name="Status.ResourcesMissing" xml:space="preserve"><value>Ruffle Web 资源缺失（Web/ruffle 未随应用部署）。</value></data>
+  <data name="Status.RootUnknown" xml:space="preserve"><value>无法确定游戏根目录。</value></data>
+  <data name="Status.ServerFailed" xml:space="preserve"><value>本地预览服务器启动失败（回环端口绑定）。</value></data>
+  <data name="Status.Loading" xml:space="preserve"><value>加载 {0}（{1}）— 磁盘模式</value></data>
+  <data name="Status.Quit" xml:space="preserve"><value>游戏已退出。</value></data>
+  <data name="Status.Blocked" xml:space="preserve"><value>游戏尝试打开外部链接（已拦截）。</value></data>
+  <data name="Status.Stopped" xml:space="preserve"><value>已停止</value></data>
+  <data name="Gallery.Title" xml:space="preserve"><value>图片</value></data>
+  <data name="Gallery.Missing" xml:space="preserve"><value>{0}（缺失）</value></data>
+  <data name="Field.Title" xml:space="preserve"><value>字段</value></data>
+  <data name="Menu.Storage" xml:space="preserve"><value>存档管理</value></data>
+  <data name="Storage.Title" xml:space="preserve"><value>存档管理</value></data>
+  <data name="Storage.Hint" xml:space="preserve"><value>存档保存在页面 localStorage（Ruffle SharedObject）；固定回环端口后重开游戏存档保留</value></data>
+  <data name="Storage.Refresh" xml:space="preserve"><value>刷新</value></data>
+  <data name="Storage.ClearAll" xml:space="preserve"><value>清空全部</value></data>
+  <data name="Storage.Delete" xml:space="preserve"><value>删除</value></data>
+  <data name="Storage.Empty" xml:space="preserve"><value>（无存档）</value></data>
+  <data name="Storage.ReadFailed" xml:space="preserve"><value>无法读取存档（请先加载游戏）</value></data>
+  <data name="Storage.ParseFailed" xml:space="preserve"><value>存档数据解析失败</value></data>
+  <data name="Storage.Summary" xml:space="preserve"><value>{0} 个存档 · 共 {1} KB</value></data>
+  <data name="Storage.Tabs.Saves" xml:space="preserve"><value>存档</value></data>
+  <data name="Storage.Tabs.Backups" xml:space="preserve"><value>备份</value></data>
+  <data name="Storage.Restore" xml:space="preserve"><value>恢复</value></data>
+  <data name="Storage.Restored" xml:space="preserve"><value>{0} 已恢复</value></data>
+  <data name="Storage.RestoreFailed" xml:space="preserve"><value>恢复失败（备份文件不可读）</value></data>
+  <data name="Common.Ok" xml:space="preserve"><value>确定</value></data>
+  <data name="Common.Cancel" xml:space="preserve"><value>取消</value></data>
+  <data name="Storage.Backup" xml:space="preserve"><value>备份</value></data>
+  <data name="Storage.BackupPromptTitle" xml:space="preserve"><value>备份存档</value></data>
+  <data name="Storage.BackupDone" xml:space="preserve"><value>已手动备份：{0}</value></data>
+  <data name="Storage.Rename" xml:space="preserve"><value>改名</value></data>
+  <data name="Storage.RenamePromptTitle" xml:space="preserve"><value>重命名备份</value></data>
+  <data name="Storage.ConfirmDeleteTitle" xml:space="preserve"><value>删除确认</value></data>
+  <data name="Storage.ConfirmDelete" xml:space="preserve"><value>确定删除存档「{0}」？此操作无法撤销。</value></data>
+  <data name="Storage.ConfirmDeleteBackup" xml:space="preserve"><value>确定删除备份「{0}」？</value></data>
+  <data name="Storage.ConfirmClearAllTitle" xml:space="preserve"><value>清空确认</value></data>
+  <data name="Storage.ConfirmClearAll" xml:space="preserve"><value>确定清空全部存档？此操作无法撤销。</value></data>
+</root>

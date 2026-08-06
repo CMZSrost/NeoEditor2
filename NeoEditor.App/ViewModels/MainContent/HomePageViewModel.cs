@@ -12,6 +12,7 @@ using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using NeoEditor.Core.Abstractions;
 using NeoEditor.Data.Context;
 using NeoEditor.Data.Messages;
 using NeoEditor.Data.Model;
@@ -152,9 +153,10 @@ public partial class HomePageViewModel : ViewModelBase
                 var dirtyCount = 0;
                 foreach (var mli in loadInfos)
                 {
-                    if (mli.Info?.ModId is > 0 or -1 &&
-                        await _persistenceSvc.HasUnsavedCommandsAsync("mod", mli.Info.ModId))
-                        dirtyCount++;
+                    // Docs/41 追修: entity-level count — N edited rows in one mod used to
+                    // show "1 dirty" everywhere (pending-export ∪ WAL-window ids).
+                    if (mli.Info?.ModId is > 0 or -1)
+                        dirtyCount += (await _persistenceSvc.GetDirtyEntityIdsAsync(mli.Info.ModId)).Count;
                 }
                 entry.HasUnsavedEdits = dirtyCount > 0;
                 entry.DirtyModCount = dirtyCount;
@@ -164,7 +166,7 @@ public partial class HomePageViewModel : ViewModelBase
 
         // --- Mark dirty recent mods (RecentMods entries) ---
         foreach (var entry in RecentMods)
-            entry.HasUnsavedEdits = await _persistenceSvc.HasUnsavedCommandsAsync("mod", entry.ModId);
+            entry.HasUnsavedEdits = (await _persistenceSvc.GetDirtyEntityIdsAsync(entry.ModId)).Count > 0;
     }
 
     private static string FormatTimeAgo(DateTime dt)

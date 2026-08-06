@@ -7,6 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Avalonia.Controls;
 using NeoEditor.Core.Model;
+using NeoEditor.Core.Abstractions;
 using NeoEditor.Infra.Services;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -38,8 +39,10 @@ public class ConfigService : IConfigService
             var json = await File.ReadAllTextAsync("config.json");
             // R28 + provider list: each AiProviders[].ApiKey is stored encrypted (ProtectedData)
             // — decrypt them back to plaintext in memory so the AI services / settings UI can use them.
+            // D03: ParatranzToken uses the same protection.
             var obj = JObject.Parse(json);
             DecryptProviderKeys(obj);
+            DecryptParatranzToken(obj);
             MigrateLegacyAiConfig(obj);
 
             Config = obj.ToObject<AppConfig>() ?? new AppConfig();
@@ -59,9 +62,10 @@ public class ConfigService : IConfigService
         try
         {
             // R28 + provider list: encrypt every AiProviders[].ApiKey at rest — never write
-            // a plaintext key to config.json.
+            // a plaintext key to config.json. D03: ParatranzToken likewise.
             var obj = JObject.FromObject(Config);
             EncryptProviderKeys(obj);
+            EncryptParatranzToken(obj);
 
             var json = obj.ToString(Formatting.Indented);
             await File.WriteAllTextAsync("config.json", json);
@@ -92,6 +96,20 @@ public class ConfigService : IConfigService
             if (p["ApiKey"] is JValue key)
                 p["ApiKey"] = ConfigValueProtector.Decrypt(key.Value<string>());
         }
+    }
+
+    /// <summary>D03: encrypt the ParaTranz API token at rest (no-op when absent/empty).</summary>
+    private static void EncryptParatranzToken(JObject obj)
+    {
+        if (obj["ParatranzToken"] is JValue token)
+            obj["ParatranzToken"] = ConfigValueProtector.Encrypt(token.Value<string>());
+    }
+
+    /// <summary>D03: decrypt the ParaTranz API token back to plaintext in memory.</summary>
+    private static void DecryptParatranzToken(JObject obj)
+    {
+        if (obj["ParatranzToken"] is JValue token)
+            obj["ParatranzToken"] = ConfigValueProtector.Decrypt(token.Value<string>());
     }
 
     /// <summary>

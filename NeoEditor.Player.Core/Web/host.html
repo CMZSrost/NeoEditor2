@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Neo Scavenger (Ruffle Web Preview)</title>
+    <style>
+        html, body { margin: 0; height: 100%; background: #000; overflow: hidden; }
+        #container { width: 100vw; height: 100vh; }
+        #overlay {
+            position: fixed; left: 0; top: 0; right: 0; bottom: 0;
+            display: none; align-items: center; justify-content: center;
+            background: rgba(0, 0, 0, 0.85); color: #eee;
+            font-family: sans-serif; font-size: 14px; line-height: 1.6;
+            padding: 24px; text-align: center; z-index: 10;
+        }
+        #overlay h2 { color: #ffb14e; margin: 0 0 8px; }
+        #overlay code { color: #7fc8ff; }
+    </style>
+</head>
+<body>
+    <div id="container"></div>
+    <div id="overlay"></div>
+
+    <!-- v2.44: LSO 存档引用展开器（Ruffle #1069 修复）—— 必须在下方 getItem 包装之前加载 -->
+    <script src="lso-expand-web.js"></script>
+
+    <script>
+        // ── 日志捕获（Docs/42 §3.4）──
+        // 必须在 ruffle.js 之前执行：拦截 console（Ruffle 自身日志 + SWF trace()）、
+        // 页面错误与游戏剪贴板日志（游戏把内部日志写入剪贴板），转发到同源 /__log。
+        (function () {
+            var orig = {};
+            ["log", "info", "warn", "error", "debug", "trace"].forEach(function (k) {
+                orig[k] = console[k] ? console[k].bind(console) : function () {};
+                console[k] = function () {
+                    orig[k].apply(console, arguments);
+                    var parts = [];
+                    for (var i = 0; i < arguments.length; i++) {
+                        var a = arguments[i];
+                        if (typeof a === "string") {
+                            // v2.29: strip Ruffle's "%c" style markers and pure-style
+                            // arguments ("color: lawngreen; ...") — they were polluting
+                            // every console line.
+                            var s = a.replace(/%c/g, "");
+                            if (/^\s*(color|background|font-style|font-weight)[\s:;]/.test(s)) continue;
+                            parts.push(s);
+                        } else {
+                            parts.push(safeStringify(a));
+                        }
+                    }
+                    // v2.29 fix: console.log/info/trace normalize to "console" (the UI
+                    // level filter has console/clipboard/error/warn/debug — no "log").
+                    send(k === "log" || k === "info" || k === "trace" ? "console" : k, parts.join(" "));
+                };
+            });
+            function safeStringify(o) {
+                try { return JSON.stringify(o); } catch (e) { return String(o); }
+            }
+            var RUN_ID = Date.now();
+            var queue = [], timer = null;
+            function send(level, msg) {
+                queue.push({ level: level, msg: msg });
+                if (!timer) timer = setTimeout(flush, 800);
+            }
+            function flush() {
+                timer = null;
+                var batch = queue; queue = [];
+                // v2.29: group by level — the old code stamped EVERY batch as "console",
+                // so clipboard/debug lines showed up as console and filtering was useless.
+                var groups = {};
+                batch.forEach(function (b) {
+                    (groups[b.level] = groups[b.level] || []).push(b.msg);
+                });
+                Object.keys(groups).forEach(function (level) {
+                    try {
+                        fetch("/__log", {
+                            method: "POST",
+                            headers: { "Content-Type": "text/plain" },
+                            body: JSON.stringify({
+                                run: RUN_ID,
+                                level: level,
+                                msg: groups[level].join("\n")
+                            }),
+                            keepalive: true
+                        }).catch(function () {});
+                    } catch (e) {}
+                });
+            }
+            window.addEventListener("error", function (e) {
+                send("error", "window.onerror: " + (e.message || "") + " @ " + (e.filename || "") + ":" + (e.lineno || ""));
+            });
+
+            // 游戏内部日志 = 剪贴板：writeText/write/execCommand 包装 + readText 轮询 + textarea 扫描
+            var lastClipboard = null;
+            function captureClipboard(text) {
+                var t = String(text == null ? "" : text);
+                if (t && t !== lastClipboard) {
+                    lastClipboard = t;
+                    send("clipboard", "游戏剪贴板日志(截获): " + t.slice(0, 50000));
+                }
+            }
+            try {
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    // v2.44: WebView2 rejects the async Clipboard API when called outside a
+                    // user-gesture stack (Ruffle's AVM dispatch) → "Couldn't set clipboard
+                    // contents" WARN spam + broken copy. Fall back to a hidden-textarea
+                    // execCommand('copy') first — it succeeds in the synchronous click chain.
+                    navigator.clipboard.writeText = function (text) {
+                        captureClipboard(text);
+                        try {
+                            var ta = document.createElement("textarea");
+                            ta.value = String(text == null ? "" : text);
+                            ta.style.position = "fixed";
+                            ta.style.opacity = "0";
+                            document.body.appendChild(ta);
+                            ta.select();
+                            var ok = document.execCommand("copy");
+                            document.body.removeChild(ta);
+                            if (ok) return Promise.resolve();
+                        } catch (e) {}
+                        return Promise.reject("copy failed");
+                    };
+                }
+                function grantClipboardAccess() {
+                    try {
+                        if (navigator.clipboard && navigator.clipboard.readText) {
+                            navigator.clipboard.readText().then(function (t) {
+                                send("debug", "剪贴板读取权限已授予,轮询捕获启动");
+                                captureClipboard(t);
+                            }).catch(function () {});
+                        }
+                    } catch (e) {}
+                }
+                document.addEventListener("click", grantClipboardAccess, { once: true });
+                document.addEventListener("keydown", grantClipboardAccess, { once: true });
+                setInterval(function () {
+                    try {
+                        if (navigator.clipboard && navigator.clipboard.readText) {
+                            navigator.clipboard.readText().then(captureClipboard).catch(function () {});
+                        }
+                    } catch (e) {}
+                }, 800);
+            } catch (e) {}
+
+            // 存档备份（v2.37 + v2.43 语义修正）：POST /__backup 落盘
+            // （{gameRoot}/save_backup，自动保留最近 5 份）。
+            // - setItem：备份**写入的值**——每次保存都留下备份（v2.43 前只备旧值，
+            //   首次写入/先删后写时 getItem 为 null 导致后续保存无备份）
+            // - removeItem：备份被删除的旧值——死亡删档保护
+            function backupValue(key, value) {
+                try {
+                    fetch("/__backup", {
+                        method: "POST",
+                        headers: { "Content-Type": "text/plain" },
+                        body: JSON.stringify({ k: key, v: value }),
+                        keepalive: true
+                    }).catch(function () {});
+                } catch (e) {}
+            }
+            try {
+                // defineProperty (enumerable:false): a plain assignment would create
+                // own *enumerable* props on the Storage instance, so Object.keys(localStorage)
+                // would list setItem/removeItem as fake "saves" in the storage manager.
+                var origSetItem = localStorage.setItem.bind(localStorage);
+                Object.defineProperty(localStorage, "setItem", {
+                    value: function (key, value) {
+                        backupValue(key, value);
+                        return origSetItem(key, value);
+                    },
+                    writable: true,
+                    configurable: true,
+                    enumerable: false
+                });
+                var origRemoveItem = localStorage.removeItem.bind(localStorage);
+                Object.defineProperty(localStorage, "removeItem", {
+                    value: function (key) {
+                        try {
+                            var old = localStorage.getItem(key);
+                            if (old !== null) backupValue(key, old);
+                        } catch (e) {}
+                        return origRemoveItem(key);
+                    },
+                    writable: true,
+                    configurable: true,
+                    enumerable: false
+                });
+                // v2.44: LSO 引用展开（Ruffle #1069 修复）—— getItem 拦截：
+                // SWF 加载存档时把「含引用的原始 LSO」替换为「引用全部内联」的展开版本，
+                // Ruffle 反序列化时无 Amf3ObjectReference 可误解析（引用→undefined/Number 崩溃）。
+                // 只处理本游戏存档 key；解析失败回退原始值，绝不阻塞游戏。
+                var origGetItem = localStorage.getItem.bind(localStorage);
+                Object.defineProperty(localStorage, "getItem", {
+                    value: function (key) {
+                        var v = origGetItem(key);
+                        if (v === null || !key || key.indexOf("nsSGv1") === -1) return v;
+                        try {
+                            if (window.LsoExpand && window.LsoExpand.expand) {
+                                var expanded = window.LsoExpand.expand(v);
+                                if (expanded && expanded !== v) {
+                                    send("debug", "LSO 展开: " + key + " " + v.length + "→" + expanded.length + "（引用全内联, Ruffle #1069 修复生效）");
+                                    return expanded;
+                                }
+                            }
+                        } catch (e) {
+                            send("error", "LSO 展开失败, 回退原始值: " + (e && e.message ? e.message : e));
+                        }
+                        return v;
+                    },
+                    writable: true,
+                    configurable: true,
+                    enumerable: false
+                });
+            } catch (e) {}
+        })();
+    </script>
+
+    <script>
+        window.RufflePlayer = window.RufflePlayer || {};
+
+        function showOverlay(title, body) {
+            var o = document.getElementById("overlay");
+            o.innerHTML = "<h2>" + title + "</h2><div>" + body + "</div>";
+            o.style.display = "flex";
+        }
+
+        // ── 覆盖层热键（Docs/42 §v2.3）：Shift+Tab 切换宿主覆盖层（如日志），
+        //    类似 Steam 的 shift+tab。capture 阶段监听,避免被游戏/Ruffle 的事件处理吞掉；
+        //    仅 WebView2 宿主（window.chrome.webview 存在）时转发。 ──
+        document.addEventListener("keydown", function (e) {
+            if (e.shiftKey && e.key === "Tab") {
+                try {
+                    if (window.chrome && window.chrome.webview && window.chrome.webview.postMessage) {
+                        e.preventDefault();
+                        window.chrome.webview.postMessage({ type: "toggle-overlay" });
+                    }
+                } catch (err) { /* host bridge unavailable */ }
+            }
+        }, true);
+
+        // ── 阻止 Chromium 默认拖放（拖文件到播放区会变成"下载"）——
+        //    SWF 请拖到顶栏或初始占位区（宿主侧拖放入口）。 ──
+        document.addEventListener("dragover", function (e) { e.preventDefault(); });
+        document.addEventListener("drop", function (e) { e.preventDefault(); });
+
+        window.addEventListener("DOMContentLoaded", function () {
+            var ruffle = window.RufflePlayer.newest();
+            if (!ruffle) { showOverlay("Ruffle 加载失败", "Ruffle 未就绪 —— 请检查 Web/ruffle 资源是否完整。"); return; }
+
+            var player = ruffle.createPlayer();
+            player.config = {
+                autoplay: "on",
+                letterbox: "on",
+                scale: "showAll",              // 等比适应窗口,不裁切不变形
+                forceScale: true,              // 忽略 SWF 自身 scaleMode(noScale),窗口 resize 时画面自适应
+                allowScriptAccess: false,
+                openUrlMode: "deny",
+                unmuteOverlay: "hidden",
+                splashScreen: false,
+                showSwfDownload: false,
+                logLevel: "Warn",
+                maxExecutionDuration: 600      // 秒;数据解析需数分钟,默认 15s 不够
+            };
+            player.style.width = "100%";
+            player.style.height = "100%";
+            player.style.display = "block";
+            document.getElementById("container").appendChild(player);
+            window.__player = player;       // 供宿主 InvokeScript / 页面 blur 处理调用
+            window.__gameLoaded = false;    // loaded 事件后才算就绪（加载中不暂停）
+            window.__backgroundMode = false;// 宿主「后台运行」开关：true 时失焦不暂停
+
+            player.addEventListener("loaded", function () { window.__gameLoaded = true; });
+
+            // ── 失焦暂停（Docs/42 v2.7/v2.8）：游戏用 Stage.deactivate 实现失焦暂停，但 Ruffle
+            //    只在 document.hidden（最小化/切 tab）时暂停 —— 窗口失焦（画面仍可见）不触发。
+            //    页面级 window blur/focus 在宿主窗口失焦时必然触发，这里调用 RufflePlayer 的
+            //    pause()/play() 补齐该行为；加载中不暂停；「后台运行」开启时不暂停。 ──
+            window.addEventListener("blur", function () {
+                try {
+                    if (window.__gameLoaded && !window.__backgroundMode && window.__player && window.__player.pause)
+                        window.__player.pause();
+                } catch (e) {}
+            });
+            window.addEventListener("focus", function () {
+                try {
+                    if (window.__gameLoaded && !window.__backgroundMode && window.__player && window.__player.play)
+                        window.__player.play();
+                } catch (e) {}
+            });
+
+            // SWF 来源：默认游戏根目录 NEOScavenger.swf；?swf= 可切换对比源
+            var swfUrl = "NEOScavenger.swf";
+            try {
+                var p = new URLSearchParams(location.search).get("swf");
+                if (p) swfUrl = p;
+            } catch (e) {}
+
+            player.ruffle().load(swfUrl).catch(function (err) {
+                showOverlay(
+                    "SWF 加载失败",
+                    "无法加载 <code>" + swfUrl + "</code><br>（" + (err && err.message ? err.message : err) + "）" +
+                    "<br><br>完整游戏请用工具栏「用 Ruffle 启动」。");
+            });
+        });
+    </script>
+    <script src="ruffle/ruffle.js"></script>
+</body>
+</html>

@@ -2,6 +2,7 @@
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Controls.Notifications;
 using Microsoft.Extensions.Logging;
+using NeoEditor.Core.Abstractions;
 using NeoEditor.Infra.Services;
 
 namespace NeoEditor.Services;

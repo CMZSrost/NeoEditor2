@@ -26,6 +26,7 @@
         <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
         <PackageReference Include="CommunityToolkit.VectorData.InMemory" Version="1.0.0-preview.3" />
         <PackageReference Include="FluentIcons.Avalonia" Version="2.1.333" />
+        <PackageReference Include="LiveMarkdown.Avalonia" Version="1.9.2" />
         <PackageReference Include="Microsoft.Extensions.AI" Version="10.5.2" />
         <PackageReference Include="Microsoft.Extensions.AI.OpenAI" Version="10.5.2" />
         <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />

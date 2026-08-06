@@ -31,6 +31,9 @@ using NeoEditor.Data.Messages;
 using NeoEditor.ViewModels.MainContent;
 using System.Xml.Linq;
 using NeoEditor.Data.Command;
+using NeoEditor.Data.Repository;
+using NeoEditor.Core.Abstractions;
+using NeoEditor.Core.Model;
 
 
 namespace NeoEditor.Views.UserControls;
@@ -85,16 +88,22 @@ public partial class ModGameDataTabsView
             var confirmedItems = await BuildExportPreviewAsync(allEntities, affectedMods);
             if (confirmedItems is null) return;
 
-            // Commit: Save (memory → DB via HostService) then write the confirmed XML files.
+            // Commit: Save (memory → DB via HostService), then export XML through HostService
+            // (R24 — the view no longer writes mod XML files directly).
             await _hostService.SaveAllAsync();
             await UpdateLastModifiedAsync(affectedModIds);
-            foreach (var item in confirmedItems)
-            {
-                await File.WriteAllTextAsync(item.FilePath, item.NewXml, Encoding.UTF8);
-                _logger.LogInformation("[ExportXml] wrote {Path}", item.FilePath);
-            }
+            await _hostService.CommitExportAsync(confirmedItems.Select(i =>
+                new RowDiff(i.FilePath, DiffKind.Modified, i.OldXml, i.NewXml)));
+
+            // Docs/41 追修(C): the exported state becomes the shared baseline — advance the
+            // entity tables and drop this profile's overlay (its edits are now in the XML).
+            await _hostService.AdvanceBaselineAsync(entitiesToSave.Select(e => e.EntityId).ToList());
+            await _workspacePersistence.ClearProfileEditsAsync(ProfileInfo.ProfileId,
+                entitiesToSave.Select(e => e.EntityId));
 
             await UpdateExportTimestampsAsync(affectedMods.Select(m => m.ModId));
+            // Docs/41: XML is now on disk — clear the persisted "not yet exported" markers.
+            await _workspacePersistence.ClearPendingExportsAsync(affectedModIds);
 
             // All UI state changes MUST run on the UI thread.
             // (HostService already cleared the per-profile dirty set.)
@@ -109,6 +118,9 @@ public partial class ModGameDataTabsView
             _logger.LogInformation("[MergeSave] saved {Count} entities to DB + exported XML", entitiesToSave.Count);
 
             ViewServices.Notification.ShowSuccess(Loc["ModGameDataSaveSuccessMessage"], Loc["Save"]);
+            // Docs/41 P3: one-shot positive reinforcement after the first real export.
+            if (_hintService.TryShow("first-export"))
+                ViewServices.Notification.ShowInfo(Loc["OnboardingFirstExport"], Loc["Save"]);
             AsyncHelper.FireAndForget(ClearWorkspaceAsync());
         }
         catch (Exception ex)
@@ -241,11 +253,9 @@ public partial class ModGameDataTabsView
             return;
         }
 
-        foreach (var item in confirmedItems)
-        {
-            await File.WriteAllTextAsync(item.FilePath, item.NewXml, Encoding.UTF8);
-            _logger.LogInformation("[ExportXml] wrote {Path}", item.FilePath);
-        }
+        // R24: write the confirmed XML files through the HostService export commit path.
+        await _hostService.CommitExportAsync(confirmedItems.Select(i =>
+            new RowDiff(i.FilePath, DiffKind.Modified, i.OldXml, i.NewXml)));
 
         await UpdateExportTimestampsAsync(exportedModIds);
 
@@ -535,6 +545,11 @@ public partial class ModGameDataTabsView
             "[ReloadMergeTabs] completed: {TabCount} tabs, {TotalOverridden} overridden entities across all types",
             Tabs.Count, _overriddenEntityIds.Count);
 
+        // Docs/41 追修(C): merge THIS profile's edit overlay (per-column overrides + new /
+        // deleted markers) into the loaded baseline view — multi-profile isolation: another
+        // profile's edits live in its own overlay and never touch this view (or game.db).
+        await ApplyProfileOverlayAsync();
+
         // R30 (追修 6): seed the HostService working-set cache with every loaded entity.
         // SaveAllAsync persists ONLY entities present in that cache (dirty id → cache miss
         // → silently dropped → "No mod entities to save" → WAL never cleared → replay on
@@ -565,6 +580,10 @@ public partial class ModGameDataTabsView
         _persistSequence = 0;
         _commandsSinceSnapshot = 0;
         await RestoreCommandsFromLogAsync();
+        // Docs/41: restore the persisted "edited, not yet exported" set so row/cell
+        // highlights (and green "new" rows) survive an app restart. NOT marked dirty —
+        // those entities are already in game.db (auto-saved); dirty now means "not in DB".
+        await RestorePendingExportsAsync();
         PushEditStateToGrid(MergeStore, EditStore);
         IsLoading = false;
         var totalEntities = Tabs.Sum(t => t.SourceCollection.Count);
@@ -573,6 +592,247 @@ public partial class ModGameDataTabsView
         Dispatcher.UIThread.Post(() => { RefreshIsEmptyMod(); }, DispatcherPriority.Loaded);
     }
 
+
+    /// <summary>
+    /// Docs/41: restore the persisted "edited, not yet exported" set into the EditStore so
+    /// row/cell highlights survive a restart. Deliberately does NOT mark session-dirty —
+    /// those entities are already persisted to game.db (auto-save); dirty now means
+    /// "changed but not in the DB yet" (WAL window).
+    /// </summary>
+    private async Task RestorePendingExportsAsync()
+    {
+        var modIds = ProfileInfo?.ModLoadInfos
+            .Where(m => m.Info is not null)
+            .Select(m => m.Info!.ModId)
+            .Distinct()
+            .ToList() ?? [];
+        var count = 0;
+        var pendingRows = new List<(string EntityId, int ModId, string? ColumnName, bool IsNew)>();
+        foreach (var modId in modIds)
+        {
+            var pending = await _workspacePersistence.GetPendingExportsAsync(modId);
+            foreach (var (entityId, columnName, isNew) in pending)
+            {
+                // Docs/41 追修: per-column markers restore FIELD-level highlights; the "*"
+                // wildcard fallback covers legacy rows persisted before per-column tracking.
+                // New rows restore via NewEntityIds (green) and need no cell markers.
+                if (isNew)
+                    EditStore.NewEntityIds.Add(entityId);
+                else if (columnName is not null)
+                    EditStore.EditedCells.Add((entityId, columnName));
+                else
+                    EditStore.EditedCells.Add((entityId, "*"));
+                pendingRows.Add((entityId, modId, columnName, isNew));
+                count++;
+            }
+        }
+
+        if (count > 0)
+            _logger.LogInformation("[RestorePending] {Count} not-yet-exported entities restored", count);
+
+        // Docs/41 追修: validate every marker against the game XML on disk — an entity that
+        // was edited then reverted (or changed back externally) no longer differs from the
+        // XML, so its marker is stale. Real diffs are rewritten per column (this also
+        // upgrades legacy NULL-column rows); stale markers are removed (memory + DB);
+        // anything unresolvable (new entities, missing files) is kept conservatively.
+        if (pendingRows.Count > 0)
+            await ValidatePendingMarkersAsync(pendingRows);
+    }
+
+    /// <summary>
+    /// Docs/41 追修: DB-vs-XML validation of pending-export markers. The entity was never
+    /// exported, so the game XML still holds the ORIGINAL values — diff it against the
+    /// current (DB) entity:
+    /// - diff &gt; 0 → rewrite the marker with the exact changed columns (in-memory + DB);
+    /// - diff == 0 → the edit was undone / reverted — remove the stale marker;
+    /// - unresolvable (new entities, missing files, parse errors) → keep as-is.
+    /// </summary>
+    private async Task ValidatePendingMarkersAsync(
+        IReadOnlyList<(string EntityId, int ModId, string? ColumnName, bool IsNew)> pendingRows)
+    {
+        // Loaded entities give the concrete type + FilePath + current values.
+        var entitiesById = new Dictionary<string, IEntity>();
+        foreach (var tab in Tabs)
+            foreach (var item in tab.SourceCollection)
+                if (item is IEntity e && !entitiesById.ContainsKey(e.EntityId))
+                    entitiesById[e.EntityId] = e;
+
+        var importMethod = typeof(IXmlParser).GetMethod(nameof(IXmlParser.ImportEntities))!;
+        // One file may hold many pending entities — parse it once, reuse for all of them.
+        var originalsByFile = new Dictionary<string, Dictionary<string, IEntity>>();
+
+        foreach (var (entityId, modId, _, isNew) in pendingRows)
+        {
+            if (isNew) continue; // created this session — not in the XML, keep the green marker
+            try
+            {
+                if (!entitiesById.TryGetValue(entityId, out var current)) continue;
+                var fullPath = ResolveLegacyXmlPath(current.FilePath);
+                if (fullPath is null || !File.Exists(fullPath)) continue;
+
+                if (!originalsByFile.TryGetValue(fullPath, out var originals))
+                {
+                    originals = LoadOriginalsFromFile(importMethod, current.GetType(), modId, fullPath);
+                    originalsByFile[fullPath] = originals;
+                }
+                if (!originals.TryGetValue(entityId, out var original)) continue; // not in XML — keep
+
+                var columns = DiffEngine.ComputeChangedColumns(original, current);
+                if (columns.Count == 0)
+                {
+                    // Edit was undone / value reverted — the marker is stale: drop it.
+                    EditStore.EditedCells.RemoveWhere(c => c.EntityId == entityId);
+                    await _workspacePersistence.RemovePendingExportEntityAsync(modId, entityId);
+                    _logger.LogInformation(
+                        "[PendingValidate] {Eid} matches the XML — stale marker removed", entityId);
+                    continue;
+                }
+
+                // Real diff → rewrite with the exact columns (replaces "*" or old columns,
+                // and upgrades legacy NULL-column rows permanently).
+                EditStore.EditedCells.RemoveWhere(c => c.EntityId == entityId);
+                foreach (var col in columns)
+                    EditStore.EditedCells.Add((entityId, col));
+                await _workspacePersistence.RemovePendingExportEntityAsync(modId, entityId);
+                await _workspacePersistence.UpsertPendingExportsAsync(modId,
+                    columns.Select(col => (entityId, (string?)col, false)));
+                _logger.LogInformation(
+                    "[PendingValidate] {Eid} rewritten as {ColumnCount} column(s): [{Columns}]",
+                    entityId, columns.Count, string.Join(", ", columns));
+            }
+            catch (Exception ex)
+            {
+                // Never drop dirty state on a validation hiccup.
+                _logger.LogWarning(ex, "[PendingValidate] failed for {Eid} — keeping marker", entityId);
+            }
+        }
+    }
+
+    /// <summary>Parse a source XML file once and index its entities by EntityId.</summary>
+    private Dictionary<string, IEntity> LoadOriginalsFromFile(MethodInfo importMethod,
+        Type entityType, int modId, string fullPath)
+    {
+        var doc = LoadXmlSafe(fullPath);
+        var generic = importMethod.MakeGenericMethod(entityType);
+        var list = (IList)generic.Invoke(_xmlParser, new object[] { doc, modId, fullPath })!;
+        var map = new Dictionary<string, IEntity>();
+        foreach (var item in list)
+            if (item is IEntity e)
+                map[e.EntityId] = e;
+        return map;
+    }
+
+    /// <summary>Resolve an entity's source XML file: absolute paths are used as-is, relative
+    /// paths are joined onto the game root (mirrors XmlRepository.ResolveFilePath).</summary>
+    private string? ResolveLegacyXmlPath(string? filePath)
+    {
+        if (string.IsNullOrWhiteSpace(filePath)) return null;
+        if (Path.IsPathRooted(filePath)) return filePath;
+        var root = _configService.Config.GameRootDir;
+        return string.IsNullOrWhiteSpace(root) ? null : Path.GetFullPath(Path.Combine(root, filePath));
+    }
+
+
+    /// <summary>
+    /// Docs/41 追修(C): merge this profile's edit overlay into the loaded baseline view.
+    /// Column overrides are applied to the matching entities, deleted entities are removed,
+    /// and entities created in this profile are rebuilt from their overlay rows. Runs after
+    /// the merge tabs are built and BEFORE the HostService cache seeding / WAL restore.
+    /// </summary>
+    private async Task ApplyProfileOverlayAsync()
+    {
+        var profileId = ProfileInfo?.ProfileId ?? -1;
+        if (profileId < 0) return;
+        var edits = await _workspacePersistence.GetProfileEditsAsync(profileId);
+        if (edits.Count == 0) return;
+
+        var entitiesById = new Dictionary<string, IEntity>();
+        foreach (var tab in Tabs)
+            foreach (var item in tab.SourceCollection)
+                if (item is IEntity e && !entitiesById.ContainsKey(e.EntityId))
+                    entitiesById[e.EntityId] = e;
+
+        var deleted = edits.Where(e => e.IsDeleted).Select(e => e.EntityId).ToHashSet();
+        var created = edits.Where(e => e.IsNew && e.ColumnName is null).ToList();
+        var overrides = edits.Where(e => e.ColumnName is not null).ToList();
+
+        // 1) Deleted entities → remove from the source collections (ItemsSource is a
+        // filtered view rebuilt below).
+        if (deleted.Count > 0)
+        {
+            foreach (var tab in Tabs)
+            {
+                for (var i = tab.SourceCollection.Count - 1; i >= 0; i--)
+                    if (tab.SourceCollection[i] is IEntity e && deleted.Contains(e.EntityId))
+                        tab.SourceCollection.RemoveAt(i);
+            }
+        }
+
+        // 2) Entities created in this profile → rebuild from their overlay rows.
+        foreach (var marker in created)
+        {
+            if (string.IsNullOrWhiteSpace(marker.EntityType)) continue;
+            if (!Constants.GameTypes.TryGetValue(marker.EntityType, out var type)) continue;
+
+            var entity = (IEntity)Activator.CreateInstance(type)!;
+            entity.EntityId = marker.EntityId;
+            entity.ModId = marker.ModId;
+            ApplyColumnOverrides(entity, overrides.Where(o => o.EntityId == marker.EntityId).ToList());
+
+            var tab = Tabs.FirstOrDefault(t => t.EntityType == type);
+            if (tab is null) continue;
+            tab.SourceCollection.Add(entity);
+            _hostService.AddEntityToCache(entity);
+            EditStore.NewEntityIds.Add(marker.EntityId);
+        }
+
+        // 3) Column overrides on existing entities.
+        foreach (var group in overrides.GroupBy(o => o.EntityId))
+        {
+            if (!entitiesById.TryGetValue(group.Key, out var entity)) continue;
+            ApplyColumnOverrides(entity, group.ToList());
+        }
+
+        if (deleted.Count > 0 || created.Count > 0)
+            RebuildFilteredItemsSources();
+
+        _logger.LogInformation(
+            "[ProfileOverlay] applied {EditCount} overlay rows for profile {ProfileId} " +
+            "(deleted={Deleted}, created={Created}, overrides={Overrides})",
+            edits.Count, profileId, deleted.Count, created.Count, overrides.Count);
+    }
+
+    /// <summary>Apply raw-text overlay rows to an entity's [Column] properties.</summary>
+    private void ApplyColumnOverrides(IEntity entity, IReadOnlyList<ProfileEdit> rows)
+    {
+        var type = entity.GetType();
+        foreach (var row in rows)
+        {
+            if (row.ColumnName is null) continue;
+            var prop = type.GetProperties().FirstOrDefault(p =>
+                p.GetCustomAttribute<ColumnAttribute>()?.Name == row.ColumnName);
+            if (prop is null || !prop.CanWrite) continue;
+            try
+            {
+                var raw = row.RawValue ?? "";
+                object? value = raw;
+                if (prop.PropertyType == typeof(int)) value = int.Parse(raw);
+                else if (prop.PropertyType == typeof(long)) value = long.Parse(raw);
+                else if (prop.PropertyType == typeof(float)) value = float.Parse(raw);
+                else if (prop.PropertyType == typeof(double)) value = double.Parse(raw);
+                else if (prop.PropertyType == typeof(bool)) value = bool.Parse(raw);
+                else if (prop.PropertyType.IsEnum) value = Enum.ToObject(prop.PropertyType, int.Parse(raw));
+                else if (prop.PropertyType == typeof(ReferenceList<IReferenceEntry>))
+                    value = ViewServices.Get<IReferenceListSerializer>()
+                        .Deserialize(raw, prop.GetCustomAttribute<ReferenceFieldAttribute>());
+                prop.SetValue(entity, value);
+            }
+            catch
+            {
+                // Skip unparseable overlay values — never crash the load.
+            }
+        }
+    }
 
     /// <summary>
     /// Build the SQLite reference_index (in-memory) for the merge view.

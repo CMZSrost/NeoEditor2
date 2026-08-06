@@ -6,6 +6,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Input;
+using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.Threading;
 using AvaloniaEdit;
@@ -114,6 +116,15 @@ public partial class XmlDiffView : UserControl
     {
         InitializeComponent();
         AttachedToVisualTree += OnAttachedToVisualTree;
+        // 追修: 阻止 AvaloniaEdit 的 Ctrl+滚轮 / 触控板捏合 文本缩放（Tunnel 早于
+        // TextEditor class handler，Handled 后缩放不执行；普通滚动不受影响）。
+        AddHandler(InputElement.PointerWheelChangedEvent, (_, e) =>
+        {
+            if (e.KeyModifiers.HasFlag(KeyModifiers.Control))
+                e.Handled = true;
+        }, RoutingStrategies.Tunnel, handledEventsToo: true);
+        AddHandler(InputElement.PointerTouchPadGestureMagnifyEvent, (_, e) => e.Handled = true,
+            RoutingStrategies.Tunnel, handledEventsToo: true);
         OldEditorControl.TextChanged += OnEditorTextChanged;
         NewEditorControl.TextChanged += OnEditorTextChanged;
         OldEditorControl.SizeChanged += OnEditorSizeChanged;

@@ -6,6 +6,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Localization;
 using NeoEditor.Assets;
+using NeoEditor.Core.Abstractions;
 using NeoEditor.Infra.Services;
 
 namespace NeoEditor.Services;

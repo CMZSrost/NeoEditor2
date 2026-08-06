@@ -98,13 +98,13 @@
                     <TextBlock
                         FontSize="18"
                         FontWeight="Bold"
-                        Text="NeoEditor Session" />
+                        Text="{Binding Loc[Welcome.Title]}" />
                     <TextBlock FontSize="13" Text="{Binding StatusText}" />
                     <Border
                         Padding="4"
                         Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}"
                         IsVisible="{Binding IsLoading}">
-                        <TextBlock FontSize="11" Text="Loading entity data from database…" />
+                        <TextBlock FontSize="11" Text="{Binding Loc[Welcome.Loading]}" />
                     </Border>
                     <Border
                         Padding="8"

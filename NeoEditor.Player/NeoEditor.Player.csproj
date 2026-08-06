@@ -1,0 +1,78 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <OutputType>WinExe</OutputType>
+        <TargetFramework>net10.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <LangVersion>preview</LangVersion>
+        <RootNamespace>NeoEditor.Player</RootNamespace>
+        <AssemblyName>NeoScavengerPlayer</AssemblyName>
+        <ApplicationManifest>app.manifest</ApplicationManifest>
+        <ApplicationIcon>Assets\nsLogo.ico</ApplicationIcon>
+        <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+        <NoWarn>CS8618;CS9264</NoWarn>
+        <Title>NeoPlayer</Title>
+        <Authors>Cromzst</Authors>
+        <PackageIcon>Assets\nsLogo.png</PackageIcon>
+        <Company>Cromzst</Company>
+        <SignAssembly>true</SignAssembly>
+        <AssemblyOriginatorKeyFile>NeoPlayer.snk</AssemblyOriginatorKeyFile>
+        <PublicSign>true</PublicSign>
+
+        <!--
+            v2.27 distribution policy — Windows-only for now:
+            - Avalonia.Win32 instead of Avalonia.Desktop → no X11/macOS backends shipped.
+            - Fixed RuntimeIdentifier win-x64 → only win-x64 native assets (Skia/HarfBuzz)
+              are built/copied; the multi-platform runtimes/ tree stays out of the package.
+            Other platforms are ADDED as NEW build targets later (e.g. RuntimeIdentifier
+            linux-x64 or TargetFramework net10.0-android36.0) — never mixed into this one.
+        -->
+        <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+        <SelfContained>true</SelfContained>
+    </PropertyGroup>
+
+    <!-- Release: strip PDBs (SkiaSharp symbols alone are ~300MB) from this project AND its
+         ProjectReference dependencies (property propagates through the build); dev builds
+         (Debug config) keep symbols -->
+    <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+        <DebugType>None</DebugType>
+        <DebugSymbols>false</DebugSymbols>
+    </PropertyGroup>
+
+    <!-- NuGet native packages ship their own PDBs (libSkiaSharp.pdb ~81MB) which DebugType
+         cannot suppress — delete every .pdb from the publish output (v2.27) -->
+    <Target Name="StripPublishedSymbols" AfterTargets="Publish">
+        <ItemGroup>
+            <_PublishedPdb Include="$(PublishDir)**\*.pdb" />
+        </ItemGroup>
+        <Delete Files="@(_PublishedPdb)" />
+    </Target>
+
+    <ItemGroup>
+        <!-- Window icon (avares://NeoScavengerPlayer/Assets/nsLogo.png) -->
+        <AvaloniaResource Include="Assets\**" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <!-- Shared player core: server / proxy / logs / ruffle assets (Docs/42 §3.8) -->
+        <ProjectReference Include="..\NeoEditor.Player.Core\NeoEditor.Player.Core.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Avalonia" Version="12.1.1" />
+        <!-- v2.27: Win32-only backend (was Avalonia.Desktop) — see distribution policy above.
+             Skia rendering is a SEPARATE package since Avalonia 12 (DeskTop used to carry it). -->
+        <PackageReference Include="Avalonia.Win32" Version="12.1.1" />
+        <PackageReference Include="Avalonia.Skia" Version="12.1.1" />
+        <!-- v2.27: text shaping (HarfBuzz) is a separate package since Avalonia 12 -->
+        <PackageReference Include="Avalonia.HarfBuzz" Version="12.1.1" />
+        <PackageReference Include="Avalonia.Themes.Fluent" Version="12.1.1" />
+        <PackageReference Include="Avalonia.Fonts.Inter" Version="12.1.1" />
+        <!-- Avalonia 12 official WebView (re-open-sourced); WebView2 on Windows (Docs/42 §2.1) -->
+        <PackageReference Include="Avalonia.Controls.WebView" Version="12.0.1" />
+        <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
+        <!-- Markdown wiki detail pages in the data browser (Docs/42 v2.22; same package the editor uses) -->
+        <PackageReference Include="LiveMarkdown.Avalonia" Version="2.2.2" />
+        <PackageReference Include="Serilog" Version="4.3.1" />
+        <PackageReference Include="Serilog.Sinks.Console" Version="6.1.1" />
+    </ItemGroup>
+</Project>

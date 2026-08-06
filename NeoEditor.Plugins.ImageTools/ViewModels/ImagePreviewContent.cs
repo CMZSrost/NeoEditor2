@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using CommunityToolkit.Mvvm.ComponentModel;
+using NeoEditor.Core.Abstractions;
 using NeoEditor.Data.Model.Game;
 using NeoEditor.Infra.Services;
 using NeoEditor.Plugins.ImageTools.Services;

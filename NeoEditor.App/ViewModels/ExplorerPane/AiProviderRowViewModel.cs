@@ -1,6 +1,7 @@
 using System;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using NeoEditor.Core.Abstractions;
 using NeoEditor.Helper;
 
 namespace NeoEditor.ViewModels.ExplorerPane;

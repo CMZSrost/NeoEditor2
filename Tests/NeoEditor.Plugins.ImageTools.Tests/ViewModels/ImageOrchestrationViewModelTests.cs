@@ -1,5 +1,6 @@
 using CommunityToolkit.Mvvm.Messaging;
 using Moq;
+using NeoEditor.Core.Abstractions;
 using NeoEditor.Core.Model;
 using NeoEditor.Data.Messages;
 using NeoEditor.Data.Model;

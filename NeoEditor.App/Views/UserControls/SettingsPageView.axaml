@@ -169,6 +169,39 @@
                     <NumericUpDown Value="{Binding SettingsPane.DisplayMaxToolCalls}" Minimum="1" Maximum="200" Increment="1" />
                 </StackPanel>
 
+                <!-- ParaTranz (D03 §6.1): token + project + connection test -->
+                <Border Height="1" Margin="0,8" Background="{DynamicResource SystemControlForegroundChromeDisabledLowBrush}" />
+                <StackPanel Spacing="2">
+                    <TextBlock FontSize="16" FontWeight="Bold" Text="{Binding Loc[Settings.Paratranz]}" />
+                    <TextBlock FontSize="11" Foreground="Gray" TextWrapping="Wrap"
+                               Text="{Binding Loc[Settings.ParatranzNote]}" />
+                </StackPanel>
+                <StackPanel Spacing="4">
+                    <TextBlock FontWeight="SemiBold" Text="{Binding Loc[Settings.ParatranzToken]}" />
+                    <TextBox Text="{Binding SettingsPane.DisplayParatranzToken}" PasswordChar="•" />
+                </StackPanel>
+                <StackPanel Spacing="4">
+                    <TextBlock FontWeight="SemiBold" Text="{Binding Loc[Settings.ParatranzProject]}" />
+                    <ComboBox ItemsSource="{Binding SettingsPane.ParatranzProjectChoices}"
+                              SelectedItem="{Binding SettingsPane.SelectedParatranzProject}">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate x:DataType="explorerPane:ParatranzProjectChoice">
+                                <TextBlock Text="{Binding DisplayLabel}" />
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
+                </StackPanel>
+                <StackPanel Spacing="4">
+                    <Button HorizontalAlignment="Left" Content="{Binding Loc[Settings.TestParatranzConnection]}"
+                            Command="{Binding SettingsPane.TestParatranzConnectionCommand}"
+                            IsEnabled="{Binding !SettingsPane.IsTestingParatranzConnection}" />
+                    <TextBlock IsVisible="{Binding SettingsPane.IsTestingParatranzConnection}"
+                               FontSize="11" Foreground="Gray" Text="{Binding Loc[Settings.TestingParatranzConnection]}" />
+                    <TextBlock IsVisible="{Binding SettingsPane.HasParatranzTestResult}"
+                               FontSize="11" TextWrapping="Wrap" Foreground="Gray"
+                               Text="{Binding SettingsPane.ParatranzTestResult}" />
+                </StackPanel>
+
                 <!-- Column Visibility -->
                 <Expander Header="Column Visibility" IsExpanded="False" Margin="0,8,0,0">
                     <ScrollViewer MaxHeight="400" HorizontalScrollBarVisibility="Disabled">
@@ -199,6 +232,14 @@
                         </ItemsControl>
                     </ScrollViewer>
                 </Expander>
+
+                <!-- Docs/41 P3: reset one-shot onboarding hints -->
+                <Button
+                    Margin="0,8,0,0"
+                    Padding="10,4"
+                    HorizontalAlignment="Left"
+                    Command="{Binding SettingsPane.ResetOnboardingHintsCommand}"
+                    Content="{Binding Loc[Settings.ResetOnboardingHints]}" />
             </StackPanel>
         </ScrollViewer>
     </DockPanel>

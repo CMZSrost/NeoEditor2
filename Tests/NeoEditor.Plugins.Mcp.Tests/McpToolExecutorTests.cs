@@ -22,12 +22,12 @@ public class McpToolExecutorTests
     }
 
     [Fact]
-    public void GetTools_Returns_AllTwelveTools()
+    public void GetTools_Returns_AllNineteenTools()
     {
         var executor = new McpToolExecutor(CreateTools());
         var tools = executor.GetTools();
 
-        Assert.Equal(12, tools.Count);
+        Assert.Equal(19, tools.Count);
 
         var names = tools.Select(t => t.Name).ToHashSet();
         // Original 8 tools
@@ -45,6 +45,15 @@ public class McpToolExecutorTests
         Assert.Contains("GetModInfo", names);
         // New G2 tool
         Assert.Contains("GenerateImage", names);
+        // New R31 tools
+        Assert.Contains("Undo", names);
+        Assert.Contains("Redo", names);
+        Assert.Contains("Publish", names);
+        Assert.Contains("ExportMod", names);
+        // Docs/41 MCP feedback tools (AI review)
+        Assert.Contains("BatchEditEntity", names);
+        Assert.Contains("FindReferencingEntities", names);
+        Assert.Contains("DiscardChanges", names);
     }
 
     [Fact]
@@ -116,14 +125,20 @@ public class McpToolExecutorTests
     }
 
     [Fact]
-    public async Task ExecuteTool_Save_ReturnsSuccess()
+    public async Task ExecuteTool_Save_ReportsRealResult()
     {
         var executor = new McpToolExecutor(CreateTools());
+        // Stub host has no dirty entities and saves nothing → saved must be false,
+        // and the response must carry the real SaveResult counts.
         var result = await executor.ExecuteToolAsync("Save", """{"entityId": null}""");
 
         var parsed = JsonConvert.DeserializeObject<dynamic>(result);
         Assert.NotNull(parsed);
-        Assert.True((bool?)parsed!.saved);
+        Assert.False((bool?)parsed!.saved);
+        Assert.Equal(0, (int?)parsed.savedCount);
+        Assert.NotNull(parsed.savedEntityIds);
+        Assert.NotNull((int?)parsed.dirtyBefore);
+        Assert.NotNull((int?)parsed.remainingDirty);
     }
 
     [Fact]
@@ -210,6 +225,110 @@ public class McpToolExecutorTests
         Assert.NotNull((bool?)parsed.hasUnsavedChanges);
     }
 
+    // ── New R31 tools (Undo/Redo/Publish/ExportMod) ───────────────────────
+
+    [Fact]
+    public async Task ExecuteTool_Undo_ReturnsSuccess()
+    {
+        var executor = new McpToolExecutor(CreateTools());
+        var result = await executor.ExecuteToolAsync("Undo", "{}");
+
+        var parsed = JsonConvert.DeserializeObject<dynamic>(result);
+        Assert.NotNull(parsed);
+        Assert.True((bool?)parsed!.success);
+        Assert.NotNull((int?)parsed.dirtyEntityCount);
+    }
+
+    [Fact]
+    public async Task ExecuteTool_Redo_ReturnsSuccess()
+    {
+        var executor = new McpToolExecutor(CreateTools());
+        var result = await executor.ExecuteToolAsync("Redo", "{}");
+
+        var parsed = JsonConvert.DeserializeObject<dynamic>(result);
+        Assert.NotNull(parsed);
+        Assert.True((bool?)parsed!.success);
+        Assert.NotNull((int?)parsed.dirtyEntityCount);
+    }
+
+    [Fact]
+    public async Task ExecuteTool_Publish_ReturnsSaveAndExportSummary()
+    {
+        var executor = new McpToolExecutor(CreateTools());
+        // Stub host publishes nothing → savedCount 0, empty exports.
+        var result = await executor.ExecuteToolAsync("Publish", """{"commit": false}""");
+
+        var parsed = JsonConvert.DeserializeObject<dynamic>(result);
+        Assert.NotNull(parsed);
+        Assert.True((bool?)parsed!.success);
+        Assert.Equal(0, (int?)parsed.savedCount);
+        Assert.NotNull(parsed.savedEntityIds);
+        Assert.False((bool?)parsed.committed);
+        Assert.NotNull(parsed.exports);
+    }
+
+    [Fact]
+    public async Task ExecuteTool_ExportMod_ReturnsFileSummary()
+    {
+        var executor = new McpToolExecutor(CreateTools());
+        var result = await executor.ExecuteToolAsync("ExportMod",
+            """{"modId": 7, "commit": false}""");
+
+        var parsed = JsonConvert.DeserializeObject<dynamic>(result);
+        Assert.NotNull(parsed);
+        Assert.True((bool?)parsed!.success);
+        Assert.Equal(7, (int?)parsed.modId);
+        Assert.False((bool?)parsed.committed);
+        Assert.Equal(0, (int?)parsed.fileCount);
+        Assert.NotNull(parsed.files);
+    }
+
+    // ── SearchAllTypes: filters / multi-type / offset ─────────────────────
+
+    [Fact]
+    public async Task ExecuteTool_SearchAllTypes_InvalidFiltersJson_ReturnsError()
+    {
+        var executor = new McpToolExecutor(CreateTools());
+        var result = await executor.ExecuteToolAsync("SearchAllTypes",
+            """{"query": "sword", "filtersJson": "not-json"}""");
+
+        var parsed = JsonConvert.DeserializeObject<dynamic>(result);
+        Assert.NotNull(parsed);
+        Assert.Contains("filtersJson", (string?)parsed!.error ?? "");
+    }
+
+    [Fact]
+    public async Task ExecuteTool_SearchAllTypes_InvalidEntityTypesJson_ReturnsError()
+    {
+        var executor = new McpToolExecutor(CreateTools());
+        var result = await executor.ExecuteToolAsync("SearchAllTypes",
+            """{"query": "sword", "entityTypesJson": "not-json"}""");
+
+        var parsed = JsonConvert.DeserializeObject<dynamic>(result);
+        Assert.NotNull(parsed);
+        Assert.Contains("entityTypesJson", (string?)parsed!.error ?? "");
+    }
+
+    [Fact]
+    public async Task ExecuteTool_SearchAllTypes_ValidFiltersAndOffset_Delegates()
+    {
+        var hostService = new StubHostService();
+        hostService.SearchResults.Add(new StubEntity("1", "Stone") { ModId = 0 });
+        var executor = new McpToolExecutor(new EditorTools(hostService, new StubReferenceResolver(), null!));
+
+        var result = await executor.ExecuteToolAsync("SearchAllTypes",
+            """{"query": "", "filtersJson": "[{\"field\":\"Weight\",\"op\":\">=\",\"value\":\"1.5\"}]", "entityTypesJson": "[\"ItemType\"]", "offset": 5, "limit": 2}""");
+
+        var parsed = JsonConvert.DeserializeObject<dynamic>(result);
+        Assert.NotNull(parsed);
+        Assert.Equal(1, (int?)parsed!.totalMatches);
+        Assert.Equal(5, (int?)parsed.offset);
+        Assert.Equal(1, (int?)parsed.returned);
+        // Stub host ignores offset (default interface impl does no paging) → "more results" is true.
+        Assert.True((bool?)parsed.truncated);
+        Assert.Equal("Stone", (string)parsed.items[0].subject);
+    }
+
     // ── Stubs ────────────────────────────────────────────────────────────
 
     private sealed class StubHostService : IHostService
@@ -262,6 +381,10 @@ public class McpToolExecutorTests
 
         public Task<IReadOnlyList<ExportResult>> ExportProfileAsync()
             => Task.FromResult<IReadOnlyList<ExportResult>>([]);
+
+        public Task CommitExportAsync(IEnumerable<RowDiff> diffs) => Task.CompletedTask;
+    public Task AdvanceBaselineAsync(IReadOnlyList<string> entityIds) => Task.CompletedTask;
+    public IReadOnlyList<IEntity> MergeProfileOverlay(IEnumerable<IEntity> baselineEntities) => baselineEntities.ToList();
 
         public Task<PublishResult> PublishAsync()
             => Task.FromResult(new PublishResult(new SaveResult([], []), []));
@@ -433,5 +556,55 @@ public class McpToolExecutorTests
 
         Assert.NotNull(result);
         Assert.Contains("error", result, StringComparison.OrdinalIgnoreCase);
+    }
+
+    // ── Docs/41: MCP feedback tools (AI review) ──
+
+    [Fact]
+    public async Task ExecuteTool_BatchEditEntity_UnknownType_ReturnsError()
+    {
+        var executor = new McpToolExecutor(CreateTools());
+        var result = await executor.ExecuteToolAsync("BatchEditEntity",
+            """{"entityType": "NoSuchType", "entityId": "x", "fieldsJson": "[{\"name\":\"StrName\",\"value\":\"a\"}]"}""");
+
+        var parsed = JsonConvert.DeserializeObject<dynamic>(result);
+        Assert.NotNull(parsed);
+        Assert.Contains("Unknown entity type", (string?)parsed!.error);
+    }
+
+    [Fact]
+    public async Task ExecuteTool_BatchEditEntity_InvalidJson_ReturnsError()
+    {
+        var executor = new McpToolExecutor(CreateTools());
+        var result = await executor.ExecuteToolAsync("BatchEditEntity",
+            """{"entityType": "ItemType", "entityId": "x", "fieldsJson": "not-json"}""");
+
+        var parsed = JsonConvert.DeserializeObject<dynamic>(result);
+        Assert.NotNull(parsed);
+        Assert.Contains("Invalid fieldsJson", (string?)parsed!.error);
+    }
+
+    [Fact]
+    public async Task ExecuteTool_BatchEditEntity_EmptyFields_ReturnsError()
+    {
+        var executor = new McpToolExecutor(CreateTools());
+        var result = await executor.ExecuteToolAsync("BatchEditEntity",
+            """{"entityType": "ItemType", "entityId": "x", "fieldsJson": "[]"}""");
+
+        var parsed = JsonConvert.DeserializeObject<dynamic>(result);
+        Assert.NotNull(parsed);
+        Assert.Contains("at least one", (string?)parsed!.error);
+    }
+
+    [Fact]
+    public async Task ExecuteTool_DiscardChanges_UnknownType_ReturnsError()
+    {
+        var executor = new McpToolExecutor(CreateTools());
+        var result = await executor.ExecuteToolAsync("DiscardChanges",
+            """{"entityType": "NoSuchType", "entityId": "x"}""");
+
+        var parsed = JsonConvert.DeserializeObject<dynamic>(result);
+        Assert.NotNull(parsed);
+        Assert.Contains("Unknown entity type", (string?)parsed!.error);
     }
 }

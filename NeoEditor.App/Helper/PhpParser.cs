@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using Microsoft.Extensions.DependencyInjection;
+using NeoEditor.Core.Abstractions;
 using NeoEditor.Data.DTO;
 using NeoEditor.Services;
 using NeoEditor.Helper;
@@ -11,7 +12,11 @@ using Newtonsoft.Json;
 
 namespace NeoEditor.Helper;
 
-public class PhpParser
+/// <summary>
+/// Game PHP-list parsing/generation. Also implements <see cref="IGamePhpGenerator"/> so the
+/// WebView preview's ProxyHttpModule can serve getmods.php / getimages.php live (Docs/42 §3.6).
+/// </summary>
+public class PhpParser : IGamePhpGenerator
 {
     private IImageService? _imageService;
 
@@ -63,21 +68,31 @@ public class PhpParser
     public List<(string NormalImage, string X2Image)> PairImages(IReadOnlyList<string> imagePaths)
         => ImageService.PairImages(imagePaths);
 
+    /// <summary>
+    /// Generate getmods.php content as a SINGLE query-string line: the game parses the file
+    /// as a URL query (key=value pairs joined by '&amp;') and chokes on spaces or line breaks
+    /// (a saved file with stray CR/LF or spaces silently fails to load in-game).
+    /// </summary>
     public string GenerateModsPhp(List<ModEntry> mods)
     {
         var sb = new StringBuilder();
-        sb.AppendLine($"nRows={mods.Count}");
+        sb.Append($"nRows={mods.Count}");
         for (var i = 0; i < mods.Count; i++)
         {
-            sb.Append($"&strModName{i}={mods[i].Name}");
-            sb.AppendLine($"&strModURL{i}={mods[i].Path}");
+            sb.Append($"&strModName{i}={mods[i].Name.Trim()}");
+            sb.Append($"&strModURL{i}={mods[i].Path.Trim()}");
         }
 
         return sb.ToString();
     }
 
+    /// <summary>IGamePhpGenerator adapter (Core tuple form → ModEntry form).</summary>
+    string IGamePhpGenerator.GenerateModsPhp(IReadOnlyList<(string Name, string Path)> mods)
+        => GenerateModsPhp(mods.Select(static m => new ModEntry { Name = m.Name, Path = m.Path }).ToList());
+
     /// <summary>
-    ///     生成 getimages.php 内容
+    ///     生成 getimages.php 内容（单行 query-string：无空格、无换行——游戏按 URL query 解析，
+    ///     空格/回车会导致整份图片清单加载失败）
     ///     注意 图片Url里，不带x2_要排前面，然后带x2的同名Url紧跟其后，接着就是下一个Url，这样形成一个 n*2 的表格
     /// </summary>
     public string GenerateImagePhp(IReadOnlyList<(string NormalImage, string X2Image)> imagePairs)
@@ -89,19 +104,10 @@ public class PhpParser
             .ToList();
 
         var sb = new StringBuilder();
-        sb.AppendLine($"nRows={flattenedImages.Count}&nCols=2");
-        // if (flattenedImages.Count > 0)
-        // {
-        //     sb.AppendLine($"&strImageURL0={flattenedImages[0]}");
-        // }
-        // else
-        // {
-        //     sb.AppendLine();
-        // }
-
+        sb.Append($"nRows={flattenedImages.Count}&nCols=2");
         for (var i = 0; i < flattenedImages.Count; i++)
         {
-            sb.AppendLine($"&strImageURL{i}={flattenedImages[i]}");
+            sb.Append($"&strImageURL{i}={flattenedImages[i]}");
         }
 
         return sb.ToString();

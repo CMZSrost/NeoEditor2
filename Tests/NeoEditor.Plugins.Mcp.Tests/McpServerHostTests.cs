@@ -41,7 +41,7 @@ public class McpServerHostTests
 
         // Without the fix this throws NRE before the assertion is reached.
         Assert.NotNull(options.ToolCollection);
-        Assert.Equal(12, options.ToolCollection!.Count);
+        Assert.Equal(19, options.ToolCollection!.Count);
 
         var names = new HashSet<string>(options.ToolCollection.Select(t => t.ProtocolTool.Name));
         Assert.Contains("GetEntity", names);
@@ -56,6 +56,14 @@ public class McpServerHostTests
         Assert.Contains("SearchAllTypes", names);
         Assert.Contains("GetModInfo", names);
         Assert.Contains("GenerateImage", names);
+        Assert.Contains("Undo", names);
+        Assert.Contains("Redo", names);
+        Assert.Contains("Publish", names);
+        Assert.Contains("ExportMod", names);
+        // Docs/41 MCP feedback tools (AI review)
+        Assert.Contains("BatchEditEntity", names);
+        Assert.Contains("FindReferencingEntities", names);
+        Assert.Contains("DiscardChanges", names);
     }
 
     [Fact]
@@ -100,6 +108,9 @@ public class McpServerHostTests
             => Task.FromResult<IReadOnlyList<ExportResult>>([]);
         public Task<IReadOnlyList<ExportResult>> ExportProfileAsync()
             => Task.FromResult<IReadOnlyList<ExportResult>>([]);
+        public Task CommitExportAsync(IEnumerable<RowDiff> diffs) => Task.CompletedTask;
+    public Task AdvanceBaselineAsync(IReadOnlyList<string> entityIds) => Task.CompletedTask;
+    public IReadOnlyList<IEntity> MergeProfileOverlay(IEnumerable<IEntity> baselineEntities) => baselineEntities.ToList();
         public Task<PublishResult> PublishAsync()
             => Task.FromResult(new PublishResult(new SaveResult([], []), []));
         public Task<IReadOnlyList<DiffEntry>> GetDiffAsync(string? entityId = null)

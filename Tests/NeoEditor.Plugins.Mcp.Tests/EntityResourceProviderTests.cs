@@ -129,6 +129,10 @@ public class EntityResourceProviderTests
         public Task<IReadOnlyList<ExportResult>> ExportProfileAsync()
             => Task.FromResult<IReadOnlyList<ExportResult>>([]);
 
+        public Task CommitExportAsync(IEnumerable<RowDiff> diffs) => Task.CompletedTask;
+    public Task AdvanceBaselineAsync(IReadOnlyList<string> entityIds) => Task.CompletedTask;
+    public IReadOnlyList<IEntity> MergeProfileOverlay(IEnumerable<IEntity> baselineEntities) => baselineEntities.ToList();
+
         public Task<PublishResult> PublishAsync()
             => Task.FromResult(new PublishResult(new SaveResult([], []), []));
 

@@ -72,6 +72,51 @@ public class CliCommandHandlerReferenceTests
         Assert.DoesNotContain("[3, 14]", result);
     }
 
+    // ── R31: undo / redo / publish / export-mod route through IHostService ──
+
+    [Fact]
+    public async Task Undo_DelegatesToHostService()
+    {
+        var handler = new CliCommandHandler(new StubHostService(null!), null!, new CliOutputFormatter());
+        var cmd = new CliParsedCommand { Command = CliCommandType.Undo, Format = "json" };
+        var result = await handler.ExecuteAsync(cmd);
+
+        Assert.Contains("\"success\"", result);
+        Assert.Contains("\"dirtyEntityCount\"", result);
+    }
+
+    [Fact]
+    public async Task Redo_DelegatesToHostService()
+    {
+        var handler = new CliCommandHandler(new StubHostService(null!), null!, new CliOutputFormatter());
+        var cmd = new CliParsedCommand { Command = CliCommandType.Redo, Format = "json" };
+        var result = await handler.ExecuteAsync(cmd);
+
+        Assert.Contains("\"success\"", result);
+    }
+
+    [Fact]
+    public async Task Publish_DelegatesToHostService_ReturnsSummary()
+    {
+        var handler = new CliCommandHandler(new StubHostService(null!), null!, new CliOutputFormatter());
+        var cmd = new CliParsedCommand { Command = CliCommandType.Publish, Format = "json" };
+        var result = await handler.ExecuteAsync(cmd);
+
+        Assert.Contains("\"savedCount\"", result);
+        Assert.Contains("\"exports\"", result);
+    }
+
+    [Fact]
+    public async Task ExportMod_DelegatesToHostService()
+    {
+        var handler = new CliCommandHandler(new StubHostService(null!), null!, new CliOutputFormatter());
+        var cmd = new CliParsedCommand { Command = CliCommandType.ExportMod, ModId = 7, Format = "json" };
+        var result = await handler.ExecuteAsync(cmd);
+
+        Assert.Contains("\"fileCount\"", result);
+        Assert.Contains("\"modId\": 7", result);
+    }
+
     // ── Stubs ──────────────────────────────────────────────────────────────
 
     private sealed class StubReferenceResolver : IReferenceResolver
@@ -157,6 +202,10 @@ public class CliCommandHandlerReferenceTests
 
         public Task<IReadOnlyList<ExportResult>> ExportProfileAsync()
             => Task.FromResult<IReadOnlyList<ExportResult>>([]);
+
+        public Task CommitExportAsync(IEnumerable<RowDiff> diffs) => Task.CompletedTask;
+    public Task AdvanceBaselineAsync(IReadOnlyList<string> entityIds) => Task.CompletedTask;
+    public IReadOnlyList<IEntity> MergeProfileOverlay(IEnumerable<IEntity> baselineEntities) => baselineEntities.ToList();
 
         public Task<PublishResult> PublishAsync()
             => Task.FromResult(new PublishResult(new SaveResult([], []), []));

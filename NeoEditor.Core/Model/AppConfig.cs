@@ -14,10 +14,24 @@ public partial class AppConfig : ObservableRecipient
     [ObservableProperty] public partial string Theme { get; set; } = "System";
     [ObservableProperty] public partial int FontSize { get; set; } = 12;
     [ObservableProperty] public partial int ActiveProfileId { get; set; } = -1;
-    [ObservableProperty] public partial int AutoSaveInterval { get; set; } = 0;
+    [ObservableProperty] public partial int AutoSaveInterval { get; set; } = 60;
     [ObservableProperty] public partial string DefaultExportFormat { get; set; } = "csv";
     [ObservableProperty] public partial int GridRowHeight { get; set; } = 0;
     [ObservableProperty] public partial int SnapshotInterval { get; set; } = 10;
+
+    /// <summary>
+    /// Player loopback server port (Docs/42 v2.36): 0 = pick one and persist. PERSISTED —
+    /// a random port per launch would change the page origin and WebView2 isolates
+    /// localStorage per origin, making game saves appear to vanish between runs.
+    /// </summary>
+    [ObservableProperty] public partial int ServerPort { get; set; }
+
+    // ── Onboarding hints (Docs/41 P2/P3) ────────────────────────────────
+    /// <summary>One-shot hints the user has already seen/dismissed (Settings → Reset).</summary>
+    public HashSet<string> DismissedHints { get; set; } = new();
+
+    /// <summary>Empty-mod three-step banner dismissed by user (Docs/41 P2).</summary>
+    public bool EmptyModHintDismissed { get; set; }
 
     // Panel layout persistence
     [ObservableProperty] public partial double LeftPanelWidth { get; set; } = 220;
@@ -80,6 +94,19 @@ public partial class AppConfig : ObservableRecipient
     /// <summary>Max MCP tool-call iterations per AI Chat turn (guards runaway loops).</summary>
     [ObservableProperty]
     public partial int MaxToolCallsPerConversation { get; set; } = 30;
+
+    // ── ParaTranz translation platform (D03) ───────────────────────────────
+    // Token is encrypted at rest by ConfigService (DPAPI, same as AiProviders[].ApiKey).
+    // API sync (channels A/B/C) only needs the token; the web workbench (channel D)
+    // uses a separate web login.
+
+    /// <summary>ParaTranz API Token (personal settings page; Bearer auth).</summary>
+    [ObservableProperty]
+    public partial string ParatranzToken { get; set; } = "";
+
+    /// <summary>Selected ParaTranz project id. 0 = not selected.</summary>
+    [ObservableProperty]
+    public partial int ParatranzProjectId { get; set; }
 
     public AppConfig()
     {

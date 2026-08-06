@@ -61,7 +61,10 @@ public partial class ModGameDataTabsView
         SharedDataGrid.MergeStore = mergeStore;
         SharedDataGrid.EditStore = editStore;
         WorkspaceSession.SetActiveStores(mergeStore, editStore);
-        SharedDataGrid.EditedEntityIds = new HashSet<string>(WorkspaceSession.DirtyEntities);
+        // Docs/41 P1.2: highlight source is the edit store (session-scoped "not yet exported"
+        // set), NOT DirtyEntities — auto-save clears the dirty set but highlights must
+        // survive until Save & Export.
+        SharedDataGrid.EditedEntityIds = new HashSet<string>(editStore.EditedCells.Select(c => c.EntityId));
         SharedDataGrid.OverriddenEntityIds = new HashSet<string>(overridden);
         SharedDataGrid.NewEntityIds = new HashSet<string>(newIds);
         // Immediately refresh visible row backgrounds so dirty/overridden/new indicators

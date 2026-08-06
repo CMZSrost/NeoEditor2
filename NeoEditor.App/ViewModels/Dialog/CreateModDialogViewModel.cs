@@ -7,6 +7,7 @@ using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using NeoEditor.Core.Abstractions;
 using NeoEditor.Data.Context;
 using NeoEditor.Data.Messages;
 using NeoEditor.Data.Model;

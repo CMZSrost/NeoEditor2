@@ -112,6 +112,8 @@ public partial class DataTableViewModel : ObservableObject
     // ── Auto-save ────────────────────────────────────────────────────────
     private Avalonia.Threading.DispatcherTimer? _autoSaveTimer;
     public event Func<SaveScope, Task>? SaveRequested;
+    /// <summary>Docs/41 P1.4: raised when SaveAndExportRequestedMessage arrives.</summary>
+    public event Func<Task>? SaveAndExportRequested;
 
     public DataTableViewModel(
         IWorkspacePersistenceService workspacePersistence,
@@ -148,6 +150,16 @@ public partial class DataTableViewModel : ObservableObject
             if (IsReadOnly?.Invoke() == true || !_isDirty) return;
             Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(
                 () => SaveRequested?.Invoke(m.Scope));
+        });
+
+        // Docs/41 P1.4: Ctrl+Shift+S / Save & Export button → full save + XML export preview.
+        // No !_isDirty guard: auto-save clears the dirty set while highlights ("not yet
+        // exported") may still be pending — export must stay reachable.
+        _messenger.Register<SaveAndExportRequestedMessage>(this, (_, _) =>
+        {
+            if (IsReadOnly?.Invoke() == true) return;
+            Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(
+                () => SaveAndExportRequested?.Invoke());
         });
     }
 

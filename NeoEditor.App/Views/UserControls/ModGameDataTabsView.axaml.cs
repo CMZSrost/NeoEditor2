@@ -18,8 +18,10 @@ using Avalonia.VisualTree;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using IConfigService = NeoEditor.Core.Abstractions.IConfigService;
 using NeoEditor.Data;
 using IXmlParser = NeoEditor.Core.Abstractions.IXmlParser;
+using IEditorCommand = NeoEditor.Core.Abstractions.IEditorCommand;
 using NeoEditor.Data.Context;
 using NeoEditor.Data.Model;
 using NeoEditor.Data.Model.Game;
@@ -50,6 +52,8 @@ public partial class ModGameDataTabsView : UserControl, Helper.INavigationTarget
     private readonly IXmlParser _xmlParser;
     private int _loadVersion;
     private bool _isSavePreviewOpen;
+    private DispatcherTimer? _autoSaveDebounceTimer;
+    private readonly IOnboardingHintService _hintService;
     private readonly Dictionary<IEntity, List<(string ModName, int Id)>> _overlayChains = new();
     private HashSet<string> _overriddenEntityIds = new();
     private Dictionary<IEntity, int> _entityLoadIndex = new();
@@ -309,10 +313,17 @@ public partial class ModGameDataTabsView : UserControl, Helper.INavigationTarget
         _dataGridCellInteraction = ViewServices.Get<IDataGridCellInteractionService>();
         _dataGridNavigationService = ViewServices.Get<IDataGridNavigationService>();
         _hostService = ViewServices.HostService;
+        _hintService = ViewServices.Get<IOnboardingHintService>();
         _scopeId = $"mgdt_{Guid.NewGuid():N}";
 
         // ── Dirty state: subscribe to the single source of truth ──
         _workspaceSession.DirtyStateChanged += (_, _) => SyncDirtyViewState();
+
+        // ── Auto-save (Docs/41 P1.1): debounced persist-to-DB on every dirty change.
+        // Semantics: edits are cached to game.db automatically ("invisible"); yellow/green
+        // highlights express "not yet exported to the game"; only Save & Export clears them.
+        _autoSaveDebounceTimer = new DispatcherTimer(
+            TimeSpan.FromMilliseconds(800), DispatcherPriority.Background, OnAutoSaveDebounceTick);
 
         // ── Create ViewModel (N03 fix: owns CommandHistory + WAL + dirty state) ──
         _vm = new DataTableViewModel(_workspacePersistence, _configService, _logger, _messenger);
@@ -340,6 +351,8 @@ public partial class ModGameDataTabsView : UserControl, Helper.INavigationTarget
         };
         _vm.OnMarkSessionEntitiesDirty = ids => WorkspaceSession.MarkEntitiesDirty(ids);
         _vm.SaveRequested += async scope => await QuickSaveAsync(scope);
+        // Docs/41 P1.4: Ctrl+Shift+S → full save + XML export preview.
+        _vm.SaveAndExportRequested += () => ShowMergeSavePreviewAsync();
         // Bridge VM CanUndo/CanRedo → View StyledProperties
         _vm.PropertyChanged += (_, e) =>
         {
@@ -415,9 +428,11 @@ public partial class ModGameDataTabsView : UserControl, Helper.INavigationTarget
         // Also set dirty state so SaveRequestedMessage actually triggers persistence (R09/R11).
         // NOTE: Must be synchronous — Background dispatch causes race condition where
         // _isDirty is still false when SaveRequestedMessage checks it, skipping the save.
+        // Docs/41 fix: NO ReadOnly guard — KV/XML edits are allowed in ReadOnly mode
+        // (OnEntityFieldEditsFromXml), so the DataGrid refresh/highlight must follow suit;
+        // ReadOnly only gates UI-triggered CRUD, never display refreshes.
         _messenger.Register<RefreshEntityEditorMessage>(this, (_, m) =>
         {
-            if (ReadOnly) return;
             MarkTabDirty(m.Entity.GetType());
             RefreshActiveDataGrid();
         });
@@ -453,6 +468,10 @@ public partial class ModGameDataTabsView : UserControl, Helper.INavigationTarget
             ViewServices.Notification.ShowInfo(
                 Loc["GameDataReadOnlyMessage"],
                 Loc["GameDataReadOnly"]);
+            // Docs/41 P3: one-shot guidance — the real path is Copy into the user's mod.
+            if (_hintService.TryShow("first-game-entity-edit"))
+                ViewServices.Notification.ShowInfo(
+                    Loc["OnboardingGameEntityEdit"], Loc["GameDataReadOnly"]);
             return;
         }
 
@@ -492,8 +511,10 @@ public partial class ModGameDataTabsView : UserControl, Helper.INavigationTarget
 
         // Populate per-view EditStore so PushEditStateToGrid (called by MarkTabDirty)
         // can see the affected entities and create correct EditedEntityIds for row highlighting.
-        foreach (var eid in cmd.GetAffectedEntityIds())
-            EditStore.EditedCells.Add((eid, "*"));
+        // Docs/41 追修: record the EXACT edited columns (not a "*" wildcard) so field-level
+        // highlights mark only the fields that actually changed.
+        foreach (var edit in m.Edits)
+            EditStore.EditedCells.Add((edit.Entity.EntityId, edit.ColumnName));
 
         MarkTabDirty(m.Entity.GetType());
         // R06: refresh DataGrid cells so edited values are visible immediately.
@@ -502,14 +523,31 @@ public partial class ModGameDataTabsView : UserControl, Helper.INavigationTarget
 
     private async void OnUndoClick(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
     {
-        await _hostService.UndoAsync(_scopeId);
-        RefreshActiveDataGrid();
+        await UndoRedoAsync(redo: false);
     }
 
     private async void OnRedoClick(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
     {
-        await _hostService.RedoAsync(_scopeId);
+        await UndoRedoAsync(redo: true);
+    }
+
+    /// <summary>Docs/41: undo/redo through HostService, then synchronize all four regions.
+    /// Commands mutate the SAME entity instances (R06), but EF entities don't implement
+    /// INotifyPropertyChanged — so DataGrid, KV, XML tab and visualization all need an
+    /// explicit refresh. RefreshEntityEditorMessage drives DataGrid + EntityEditorDocument
+    /// (XML/visual) refresh; ActiveEntityChangedMessage forces the KV reload.</summary>
+    private async Task UndoRedoAsync(bool redo)
+    {
+        if (redo)
+            await _hostService.RedoAsync(_scopeId);
+        else
+            await _hostService.UndoAsync(_scopeId);
+
         RefreshActiveDataGrid();
+        var entity = ViewServices.SelectionService.CurrentEntity;
+        if (entity is null) return;
+        _messenger.Send(new RefreshEntityEditorMessage(entity));
+        _messenger.Send(new ActiveEntityChangedMessage(entity));
     }
 
     /// <summary>Force the active DataGrid to re-read all cell values after undo/redo.</summary>
@@ -571,6 +609,25 @@ public partial class ModGameDataTabsView : UserControl, Helper.INavigationTarget
             editedEntityIds.Count, _dirtyTabs.Count);
     }
 
+    /// <summary>Record a replayed WAL command's edits in the EditStore at FIELD level.
+    /// Field commands (EditCell/BatchEdit) carry the exact column names — restore per-column
+    /// markers so only the actually-changed fields highlight. Structural commands (Add/Delete)
+    /// have no column info; fall back to the entity-level "*" marker so the dirty state survives.</summary>
+    private void RecordCommandEditedCells(IEditorCommand cmd)
+    {
+        var cells = cmd.GetEditedCells().ToList();
+        if (cells.Count > 0)
+        {
+            foreach (var (eid, col) in cells)
+                EditStore.EditedCells.Add((eid, col));
+        }
+        else
+        {
+            foreach (var eid in cmd.GetAffectedEntityIds())
+                EditStore.EditedCells.Add((eid, "*"));
+        }
+    }
+
     /// <summary>
     /// Re-derive ALL dirty UI state from IWorkspaceSession.DirtyEntities (the single source of truth).
     /// Called when DirtyStateChanged fires, ensuring tab titles, DataGrid rows, and VM dirty flag
@@ -608,6 +665,102 @@ public partial class ModGameDataTabsView : UserControl, Helper.INavigationTarget
 
         // ── Sync DataGrid row highlighting ──
         PushEditStateToGrid(MergeStore, EditStore);
+
+        // ── Schedule debounced auto-save (Docs/41 P1.1) ──
+        ScheduleAutoSave();
+    }
+
+    // ── Auto-save (Docs/41 P1.1) ─────────────────────────────────────────
+
+    private void ScheduleAutoSave()
+    {
+        // Suppressed while a profile/mod is still loading: WAL restore inside IsLoading
+        // re-marks DirtyEntities — persisting those before the user has seen them would be wrong.
+        if (IsLoading || _isSavePreviewOpen) return;
+        if (WorkspaceSession.DirtyEntities.Count == 0) return;
+        _autoSaveDebounceTimer.Stop();
+        _autoSaveDebounceTimer.Start();
+    }
+
+    private async void OnAutoSaveDebounceTick(object? sender, EventArgs e)
+    {
+        _autoSaveDebounceTimer.Stop();
+        if (IsLoading || _isSavePreviewOpen) return;
+        if (WorkspaceSession.DirtyEntities.Count == 0) return;
+        await AutoSaveAsync();
+    }
+
+    /// <summary>Docs/41 P1: lightweight persist-to-DB — no UI preparing state, and no
+    /// highlight clearing (highlights are cleared only by Save & Export).</summary>
+    private async Task AutoSaveAsync()
+    {
+        try
+        {
+            // Flush any in-flight WAL persists so the captured entity state is current.
+            await _commandHistory.FlushAsync();
+
+            var save = await _hostService.SaveAllAsync();
+            var savedEntityIds = save.SavedEntityIds;
+            if (savedEntityIds.Count == 0) return;
+
+            // WAL is redundant after SaveAllAsync persisted the ENTIRE per-profile dirty set —
+            // clear it so stale commands cannot replay and re-dirty on restart (same rationale
+            // as QuickSaveAsync).
+            var savedModIds = savedEntityIds
+                .Select(id => _hostService.GetCachedEntity(id)?.ModId)
+                .Where(id => id is >= 0)
+                .Select(id => id!.Value)
+                .Distinct()
+                .ToList();
+            await ClearWorkspaceAsync();
+            await UpdateLastModifiedAsync(savedModIds);
+            // Docs/41: persist the "edited, not yet exported" markers — the ⚠ badge and
+            // row/cell highlights survive restart (EditStore is session-scoped).
+            await PersistPendingExportsAsync(savedEntityIds);
+            _logger.LogInformation("[AutoSave] persisted {Count} entities to DB", savedEntityIds.Count);
+
+            // EntityEditorDocuments clear their title dirty indicators (UI thread).
+            await Dispatcher.UIThread.InvokeAsync(() => _messenger.Send(new SaveCompletedMessage()));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Auto-save failed");
+        }
+    }
+
+    /// <summary>Docs/41: record which saved entities are "in DB but not yet in the game XML".
+    /// Grouped by mod; isNew comes from EditStore.NewEntityIds (created this session).</summary>
+    private async Task PersistPendingExportsAsync(IReadOnlyCollection<string> savedEntityIds)
+    {
+        foreach (var group in savedEntityIds
+                     .GroupBy(id => _hostService.GetCachedEntity(id)?.ModId)
+                     .Where(g => g.Key is >= 0))
+        {
+            await _workspacePersistence.UpsertPendingExportsAsync(
+                group.Key!.Value, BuildPendingExportEntries(group));
+        }
+    }
+
+    /// <summary>Pending-export entries for saved entities: one row per EDITED COLUMN (so
+    /// field-level highlights survive restart); rows without cell-level info (e.g. entities
+    /// created this session) get a single NULL-column entity marker.</summary>
+    private IEnumerable<(string EntityId, string? ColumnName, bool IsNew)> BuildPendingExportEntries(
+        IEnumerable<string> entityIds)
+    {
+        foreach (var id in entityIds)
+        {
+            var cols = EditStore.EditedCells
+                .Where(c => c.EntityId == id)
+                .Select(c => c.ColumnName)
+                .Distinct()
+                .ToList();
+            var isNew = EditStore.NewEntityIds.Contains(id);
+            if (cols.Count == 0)
+                yield return (id, null, isNew);
+            else
+                foreach (var col in cols)
+                    yield return (id, col, isNew);
+        }
     }
 
 
@@ -877,31 +1030,37 @@ public partial class ModGameDataTabsView : UserControl, Helper.INavigationTarget
                     ShowFindPanel(replaceMode: true);
                     break;
                 case Avalonia.Input.Key.Z:
+                    // Docs/41: Ctrl+Z = undo, Ctrl+Shift+Z = redo. Both must refresh all
+                    // four regions afterwards (UndoRedoAsync).
                     if (!IsEditingTextBoxFocused(sender))
                     {
-                        AsyncHelper.FireAndForget(_hostService.UndoAsync(_scopeId));
                         e.Handled = true;
+                        AsyncHelper.FireAndForget(UndoRedoAsync(
+                            e.KeyModifiers.HasFlag(Avalonia.Input.KeyModifiers.Shift)));
                     }
 
                     break;
                 case Avalonia.Input.Key.Y:
                     if (!IsEditingTextBoxFocused(sender))
                     {
-                        AsyncHelper.FireAndForget(_hostService.RedoAsync(_scopeId));
                         e.Handled = true;
+                        AsyncHelper.FireAndForget(UndoRedoAsync(redo: true));
                     }
 
                     break;
                 case Avalonia.Input.Key.S:
+                    // Docs/41 P1.4: route through messages so Ctrl+S keeps its R11
+                    // current-tab semantics (and auto-save's cleared dirty set stays
+                    // silent), while Ctrl+Shift+S opens the Save & Export preview.
                     if (e.KeyModifiers.HasFlag(Avalonia.Input.KeyModifiers.Shift))
                     {
                         e.Handled = true;
-                        AsyncHelper.FireAndForget(OnSaveAndLaunchClickAsync(null, null!));
+                        _messenger.Send(new SaveAndExportRequestedMessage());
                     }
                     else
                     {
                         e.Handled = true;
-                        AsyncHelper.FireAndForget(QuickSaveAsync());
+                        _messenger.Send(new SaveRequestedMessage(SaveScope.CurrentTab));
                     }
 
                     break;
@@ -1051,6 +1210,9 @@ public partial class ModGameDataTabsView : UserControl, Helper.INavigationTarget
         FindPanel.InjectedLoc = Loc;
         FindPanel.InjectedNotification = ViewServices.Notification;
         FindPanel.CommandHistory = _commandHistory;
+        // R24: route find/replace edits through the unified HostService pipeline.
+        FindPanel.HostService = ViewServices.HostService;
+        FindPanel.ScopeId = _scopeId;
         FindPanel.OnDirtyChanged = () => SetDirty(true);
         FindPanel.Show(dataGrid, replaceMode);
     }
@@ -1070,10 +1232,29 @@ public partial class ModGameDataTabsView : UserControl, Helper.INavigationTarget
         private set => SetValue(IsEmptyModProperty, value);
     }
 
+    /// <summary>Docs/41 P2: IsEmptyMod && the user has not dismissed the banner.</summary>
+    public static readonly StyledProperty<bool> ShowEmptyModBannerProperty =
+        AvaloniaProperty.Register<ModGameDataTabsView, bool>(nameof(ShowEmptyModBanner));
+
+    public bool ShowEmptyModBanner
+    {
+        get => GetValue(ShowEmptyModBannerProperty);
+        private set => SetValue(ShowEmptyModBannerProperty, value);
+    }
+
     private void RefreshIsEmptyMod()
     {
         IsEmptyMod = !IsLoading && Tabs.Count > 0
                                 && Tabs.All(t => t.SourceCollection.Count == 0);
+        // Docs/41 P2: banner stays hidden once dismissed (config-persisted).
+        ShowEmptyModBanner = IsEmptyMod && !_configService.Config.EmptyModHintDismissed;
+    }
+
+    private async void OnDismissEmptyModHintClick(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        _configService.Config.EmptyModHintDismissed = true;
+        await _configService.SaveAsync();
+        ShowEmptyModBanner = false;
     }
 
     private async void OnCreateModFromBrowseClick(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
@@ -1272,9 +1453,11 @@ public partial class ModGameDataTabsView : UserControl, Helper.INavigationTarget
 
     private (string targetType, int targetId) GetPersistenceTarget()
     {
-        // B4: single-mod profiles persist WAL per-mod (("mod", modId)) so edits survive restart.
-        if (ProfileInfo is not null && ProfileInfo.SingleModId is int singleModId)
-            return ("mod", singleModId);
+        // 追修(C/B): EVERY profile persists its WAL under ("profile", profileId) — including
+        // single-mod profiles. Two profiles containing the same mod previously shared the
+        // ("mod", modId) log, so profile B replayed profile A's commands on open (cross-
+        // profile dirty leakage / edit leakage). The merge editor (ProfileId=-1) is the
+        // exception: its commands fall back to per-mod targets (see OnCommandPersistAsync).
         if (ProfileInfo is not null)
             return ("profile", ProfileInfo.ProfileId);
         return ("", -1);
@@ -1297,6 +1480,22 @@ public partial class ModGameDataTabsView : UserControl, Helper.INavigationTarget
 
         try
         {
+            // 追修(C/B): migrate legacy per-mod WAL rows to this profile's target so another
+            // profile sharing the same mod never replays this profile's commands. Merge editor
+            // (ProfileId=-1) keeps its per-mod aggregation and is excluded above.
+            foreach (var mli in ProfileInfo!.ModLoadInfos)
+            {
+                if (mli.Info is not null && mli.Info.ModId >= 0)
+                {
+                    var migrated = await _workspacePersistence.MigrateWalTargetAsync(
+                        "mod", mli.Info.ModId, "profile", ProfileInfo.ProfileId);
+                    if (migrated > 0)
+                        _logger.LogInformation(
+                            "[MigrateWal] moved {Count} legacy command(s) from mod:{ModId} to profile:{ProfileId}",
+                            migrated, mli.Info.ModId, ProfileInfo.ProfileId);
+                }
+            }
+
             var snapshotSeq = await _workspacePersistence.GetSnapshotSequenceAsync(targetType, targetId);
             _logger.LogInformation("[Restore] snapshot seq={SnapshotSeq} for {TargetType}:{TargetId}",
                 snapshotSeq, targetType, targetId);
@@ -1349,11 +1548,8 @@ public partial class ModGameDataTabsView : UserControl, Helper.INavigationTarget
             var walEntityCount = 0;
             foreach (var (_, cmd) in commands)
             {
-                foreach (var eid in cmd.GetAffectedEntityIds())
-                {
-                    EditStore.EditedCells.Add((eid, "*"));
-                    walEntityCount++;
-                }
+                RecordCommandEditedCells(cmd);
+                walEntityCount += cmd.GetAffectedEntityIds().Count;
             }
 
             _logger.LogInformation("[Restore] populated EditStore with {Count} entity entries from WAL commands",
@@ -1467,8 +1663,7 @@ public partial class ModGameDataTabsView : UserControl, Helper.INavigationTarget
                         _persistSequence = Math.Max(_persistSequence, seq);
                         // Populate EditStore during replay so MarkTabsDirtyFromEditedCells
                         // can find the restored entities (EditStore was cleared before reload).
-                        foreach (var eid in cmd.GetAffectedEntityIds())
-                            EditStore.EditedCells.Add((eid, "*"));
+                        RecordCommandEditedCells(cmd);
                     }
                     catch (Exception ex)
                     {
@@ -1507,8 +1702,7 @@ public partial class ModGameDataTabsView : UserControl, Helper.INavigationTarget
                         cmd.Execute();
                         _commandHistory.RestoreFromLog(cmd);
                         _persistSequence = Math.Max(_persistSequence, seq);
-                        foreach (var eid in cmd.GetAffectedEntityIds())
-                            EditStore.EditedCells.Add((eid, "*"));
+                        RecordCommandEditedCells(cmd);
                     }
                     catch (Exception ex)
                     {

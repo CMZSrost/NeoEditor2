@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Avalonia.Threading;
 using Microsoft.EntityFrameworkCore;
+using IConfigService = NeoEditor.Core.Abstractions.IConfigService;
 using NeoEditor.Data.Context;
 using NeoEditor.Data.DTO;
 using NeoEditor.Data.Model.Game;

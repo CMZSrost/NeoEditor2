@@ -53,6 +53,13 @@ public class CliCommandParser
                     if (int.TryParse(GetNextArg(remaining, ref i), out var limit))
                         cmd.Limit = limit;
                     break;
+                case "--mod-id":
+                    if (int.TryParse(GetNextArg(remaining, ref i), out var modId))
+                        cmd.ModId = modId;
+                    break;
+                case "--commit":
+                    cmd.Commit = true;
+                    break;
                 default:
                     // Treat unrecognized args as positional fallback
                     if (cmd.EntityType is null) cmd.EntityType = remaining[i];
@@ -81,6 +88,10 @@ public class CliCommandParser
             "save" or "commit" => CliCommandType.Save,
             "diff" or "changes" => CliCommandType.Diff,
             "query-references" or "refs" or "references" => CliCommandType.QueryReferences,
+            "undo" => CliCommandType.Undo,
+            "redo" => CliCommandType.Redo,
+            "publish" => CliCommandType.Publish,
+            "export-mod" or "export" => CliCommandType.ExportMod,
             _ => CliCommandType.Unknown
         };
     }
@@ -148,6 +159,14 @@ public class CliCommandParser
                 {
                     cmd.HasError = true;
                     cmd.ErrorMessage = "add-entity requires --entity-type and --entity-id.";
+                }
+                break;
+
+            case CliCommandType.ExportMod:
+                if (cmd.ModId is null)
+                {
+                    cmd.HasError = true;
+                    cmd.ErrorMessage = "export-mod requires --mod-id <number>.";
                 }
                 break;
         }

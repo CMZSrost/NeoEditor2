@@ -1,0 +1,172 @@
+<Window
+    x:Class="NeoEditor.Player.Views.StorageManagerWindow"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:vm="clr-namespace:NeoEditor.Player.Core.ViewModels;assembly=NeoEditor.Player.Core"
+    xmlns:svc="clr-namespace:NeoEditor.Player.Core.Services;assembly=NeoEditor.Player.Core"
+    xmlns:loc="clr-namespace:NeoEditor.Player.Services"
+    x:Name="Root"
+    x:DataType="vm:StorageManagerViewModel"
+    Title="{Binding [Storage.Title], Source={x:Static loc:LocalizationManager.Instance}}"
+    ShowInTaskbar="False"
+    Width="620" Height="460"
+    WindowStartupLocation="CenterOwner">
+
+    <DockPanel>
+        <Border
+            DockPanel.Dock="Top"
+            Padding="10,6"
+            Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}">
+            <StackPanel Orientation="Horizontal" Spacing="10">
+                <TextBlock
+                    VerticalAlignment="Center"
+                    Text="{Binding [Storage.Hint], Source={x:Static loc:LocalizationManager.Instance}}"
+                    FontSize="11"
+                    Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}" />
+                <Button
+                    Content="{Binding [Storage.Refresh], Source={x:Static loc:LocalizationManager.Instance}}"
+                    Command="{Binding RefreshCommand}"
+                    Background="#E8E8E8"
+                    Foreground="Black" />
+                <Button
+                    Content="{Binding [Storage.ClearAll], Source={x:Static loc:LocalizationManager.Instance}}"
+                    Click="OnClearAllClick"
+                    Background="#E8E8E8"
+                    Foreground="Black" />
+            </StackPanel>
+        </Border>
+
+        <Border
+            DockPanel.Dock="Bottom"
+            Padding="10,4"
+            Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}">
+            <TextBlock
+                Text="{Binding StatusText}"
+                FontSize="12"
+                Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"
+                TextTrimming="CharacterEllipsis" />
+        </Border>
+
+        <TabControl Margin="8" SelectionChanged="OnTabChanged">
+            <!--  Saves tab  -->
+            <TabItem Header="{Binding [Storage.Tabs.Saves], Source={x:Static loc:LocalizationManager.Instance}}">
+                <ScrollViewer>
+                    <ItemsControl ItemsSource="{Binding Entries}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate DataType="vm:SaveEntry">
+                                <Border
+                                    Padding="6,3"
+                                    BorderThickness="0,0,0,1"
+                                    BorderBrush="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}">
+                                    <Grid ColumnDefinitions="*,80,64,64">
+                                        <TextBlock
+                                            Text="{Binding Key}"
+                                            FontSize="12"
+                                            VerticalAlignment="Center"
+                                            TextTrimming="CharacterEllipsis"
+                                            ToolTip.Tip="{Binding Key}"
+                                            Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}" />
+                                        <TextBlock
+                                            Grid.Column="1"
+                                            Text="{Binding SizeText}"
+                                            FontSize="11"
+                                            VerticalAlignment="Center"
+                                            Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}" />
+                                        <Button
+                                            Grid.Column="2"
+                                            Content="{Binding [Storage.Backup], Source={x:Static loc:LocalizationManager.Instance}}"
+                                            Tag="{Binding}"
+                                            Click="OnBackupClick"
+                                            FontSize="11"
+                                            Background="#E8E8E8"
+                                            Foreground="Black" />
+                                        <Button
+                                            Grid.Column="3"
+                                            Content="{Binding [Storage.Delete], Source={x:Static loc:LocalizationManager.Instance}}"
+                                            Tag="{Binding}"
+                                            Click="OnDeleteClick"
+                                            FontSize="11"
+                                            Background="#E8E8E8"
+                                            Foreground="Black" />
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+            </TabItem>
+
+            <!--  Backups tab (v2.37): write-before-overwrite on-disk backups, newest 5 kept  -->
+            <TabItem x:Name="BackupTab" Header="{Binding [Storage.Tabs.Backups], Source={x:Static loc:LocalizationManager.Instance}}">
+                <DockPanel>
+                    <Border DockPanel.Dock="Bottom" Padding="2,4">
+                        <Button
+                            HorizontalAlignment="Left"
+                            Content="{Binding [Storage.Refresh], Source={x:Static loc:LocalizationManager.Instance}}"
+                            Command="{Binding RefreshBackupsCommand}"
+                            FontSize="11"
+                            Background="#E8E8E8"
+                            Foreground="Black" />
+                    </Border>
+                    <ScrollViewer>
+                        <ItemsControl ItemsSource="{Binding Backups}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate DataType="svc:SaveBackup">
+                                    <Border
+                                        Padding="6,3"
+                                        BorderThickness="0,0,0,1"
+                                        BorderBrush="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}">
+                                        <Grid ColumnDefinitions="*,90,64,64,64">
+                                            <StackPanel Orientation="Vertical" Spacing="1">
+                                                <TextBlock
+                                                    Text="{Binding DisplayName}"
+                                                    FontSize="12"
+                                                    TextTrimming="CharacterEllipsis"
+                                                    ToolTip.Tip="{Binding Key}"
+                                                    Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}" />
+                                                <TextBlock
+                                                    Text="{Binding SavedAt, StringFormat={}{0:yyyy-MM-dd HH:mm:ss}}"
+                                                    FontSize="10"
+                                                    Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}" />
+                                            </StackPanel>
+                                            <TextBlock
+                                                Grid.Column="1"
+                                                Text="{Binding SizeText}"
+                                                FontSize="11"
+                                                VerticalAlignment="Center"
+                                                Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}" />
+                                            <Button
+                                                Grid.Column="2"
+                                                Content="{Binding [Storage.Restore], Source={x:Static loc:LocalizationManager.Instance}}"
+                                                Tag="{Binding}"
+                                                Click="OnRestoreClick"
+                                                FontSize="11"
+                                                Background="#E8E8E8"
+                                                Foreground="Black" />
+                                            <Button
+                                                Grid.Column="3"
+                                                Content="{Binding [Storage.Rename], Source={x:Static loc:LocalizationManager.Instance}}"
+                                                Tag="{Binding}"
+                                                Click="OnRenameBackupClick"
+                                                FontSize="11"
+                                                Background="#E8E8E8"
+                                                Foreground="Black" />
+                                            <Button
+                                                Grid.Column="4"
+                                                Content="{Binding [Storage.Delete], Source={x:Static loc:LocalizationManager.Instance}}"
+                                                Tag="{Binding}"
+                                                Click="OnDeleteBackupClick"
+                                                FontSize="11"
+                                                Background="#E8E8E8"
+                                                Foreground="Black" />
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+                </DockPanel>
+            </TabItem>
+        </TabControl>
+    </DockPanel>
+</Window>

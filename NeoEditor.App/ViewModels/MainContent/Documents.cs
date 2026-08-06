@@ -14,6 +14,7 @@ using LiveMarkdown.Avalonia;
 using Microsoft.EntityFrameworkCore;
 using NeoEditor.Data.Model;
 using NeoEditor.Helper;
+using NeoEditor.Core.Abstractions;
 using NeoEditor.Infra.Services;
 using NeoEditor.Plugins.DataViewer.ViewModels;
 using NeoEditor.Plugins.AiChat.ViewModels;

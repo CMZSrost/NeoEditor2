@@ -20,6 +20,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using MsBox.Avalonia;
 using MsBox.Avalonia.Enums;
+using NeoEditor.Core.Abstractions;
 using NeoEditor.Data;
 using NeoEditor.Data.Context;
 using NeoEditor.Data.Messages;
@@ -45,9 +46,13 @@ public partial class ModIndexViewModel : ViewModelBase, IRecipient<LoadProfileMe
     public ObservableCollection<ProfileInfo> Profiles { get; set; } = [];
     [ObservableProperty] public partial ProfileInfo? SelectedProfile { get; set; }
 
+    /// <summary>Docs/41 追修: total number of edited (not-yet-exported) ENTITIES across
+    /// profiles — counting profiles collapsed N edited rows into "1 dirty".</summary>
     [ObservableProperty] private int _dirtyProfileCount;
     public bool HasDirtyProfiles => DirtyProfileCount > 0;
-    public string DirtyProfileCountText => HasDirtyProfiles ? $"⚠ {DirtyProfileCount} profile(s) with unsaved edits" : string.Empty;
+    public string DirtyProfileCountText => HasDirtyProfiles
+        ? $"⚠ {DirtyProfileCount} unsaved edit{(DirtyProfileCount == 1 ? "" : "s")}"
+        : string.Empty;
 
     partial void OnSelectedProfileChanged(ProfileInfo? value)
     {
@@ -169,16 +174,15 @@ public partial class ModIndexViewModel : ViewModelBase, IRecipient<LoadProfileMe
             }
 
             profile.HasUnsavedEdits = false;
+            var dirtyCount = 0;
             foreach (var mli in profile.ModLoadInfos)
             {
-                if (mli.Info?.ModId is > 0 or -1 &&
-                    await _persistenceSvc.HasUnsavedCommandsAsync("mod", mli.Info.ModId))
-                {
-                    profile.HasUnsavedEdits = true;
-                    break;
-                }
+                // Docs/41 追修: entity-level count (see ModDatabaseViewModel.RefreshDirtyCountAsync).
+                if (mli.Info?.ModId is > 0 or -1)
+                    dirtyCount += (await _persistenceSvc.GetDirtyEntityIdsAsync(mli.Info.ModId)).Count;
             }
-            if (profile.HasUnsavedEdits) count++;
+            profile.HasUnsavedEdits = dirtyCount > 0;
+            if (profile.HasUnsavedEdits) count += dirtyCount;
         }
         DirtyProfileCount = count;
         OnPropertyChanged(nameof(HasDirtyProfiles));

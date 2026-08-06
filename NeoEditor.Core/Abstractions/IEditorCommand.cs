@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using NeoEditor.Data.Model.Game;
 
@@ -19,6 +20,15 @@ public interface IEditorCommand
     /// Used by HostService for dirty tracking and event firing.
     /// </summary>
     IReadOnlySet<string> GetAffectedEntityIds() => new HashSet<string>();
+
+    /// <summary>
+    /// Edited cell keys (entityId, columnName) — the field-level complement to
+    /// <see cref="GetAffectedEntityIds"/>. Used to restore per-field "edited, not yet
+    /// exported" highlights from the WAL after restart. Empty for structural commands
+    /// (Add/Delete) that have no cell-level info.
+    /// </summary>
+    IEnumerable<(string EntityId, string ColumnName)> GetEditedCells()
+        => Array.Empty<(string, string)>();
 
     /// <summary>
     /// Working-set cache deltas applied by HostService after <see cref="Execute"/>:

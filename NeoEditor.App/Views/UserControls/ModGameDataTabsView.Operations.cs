@@ -50,12 +50,6 @@ public partial class ModGameDataTabsView
         }
     }
 
-    /// <summary>Quick save: persist to DB only. No XML export, no diff preview.</summary>
-    private async void OnQuickSaveClick(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
-    {
-        await QuickSaveAsync(SaveScope.All);
-    }
-
     private async Task QuickSaveAsync(SaveScope saveScope = SaveScope.All)
     {
         if (_isSavePreviewOpen || IsPreparingSavePreview) return;
@@ -76,10 +70,21 @@ public partial class ModGameDataTabsView
 
             if (savedEntityIds.Count == 0)
             {
-                if (ProfileInfo is not null)
-                    ViewServices.Notification.ShowInfo("No mod entities to save. Ensure mods are loaded in the profile.", "Quick Save");
+                // Docs/41: auto-save already persisted everything — "nothing to save" is the
+                // NORMAL state now (Ctrl+S after auto-save), not an error. Surface a warning
+                // only when dirty entities exist but could not be persisted (cache miss,
+                // see HostService R30 fix: dirty id → cache miss → silently dropped).
+                if (WorkspaceSession.DirtyEntities.Count > 0)
+                {
+                    ViewServices.Notification.ShowInfo(
+                        "Entities are dirty but could not be saved to the database — see the log for cache-miss warnings.",
+                        Loc["Save"]);
+                }
                 else
-                    ViewServices.Notification.ShowInfo("No entities to save.", "Quick Save");
+                {
+                    _logger.LogDebug("[QuickSave] nothing to save — all edits already auto-saved");
+                }
+
                 return;
             }
 
@@ -105,12 +110,9 @@ public partial class ModGameDataTabsView
                     SetDirty(false);
                     ClearDirtyTabs();
                 }
-                EditStore.EditedCells.RemoveWhere(c => savedEntityIds.Contains(c.EntityId));
-                EditStore.NewEntityIds.Clear();
-                // Rebuild DataGrid-local EditedEntityIds from the now-empty EditStore
-                // so OnLoadingRow won't keep showing yellow background for saved entities.
-                PushEditStateToGrid(MergeStore, EditStore);
-                RefreshActiveDataGrid();
+                // Docs/41 P1: auto/quick save is a DB-only cache write — highlights are
+                // NOT cleared here. Yellow/green express "not yet exported to the game";
+                // only Save & Export (ShowMergeSavePreviewAsync) clears them.
                 _commandsSinceSnapshot = 0;
             });
 
@@ -128,6 +130,8 @@ public partial class ModGameDataTabsView
                 .ToList();
             await ClearWorkspaceAsync();
             await UpdateLastModifiedAsync(savedModIds);
+            // Docs/41: persist "edited, not yet exported" markers (survive restart).
+            await PersistPendingExportsAsync(savedEntityIds);
             _logger.LogInformation("[QuickSave] cleared WAL, saved {Count} entities to DB", savedEntityIds.Count);
             UpdatePersistenceDebugInfo();
 
@@ -197,6 +201,25 @@ public partial class ModGameDataTabsView
             _logger.LogError(ex, "[Launch] failed to start {ExePath}", exePath);
             ViewServices.Notification.ShowError($"Failed to launch game: {ex.Message}", Loc["Launch"]);
         }
+    }
+
+    /// <summary>
+    /// In-app SWF preview (Docs/42 §3.7): resolves the game SWF and asks the shell to open
+    /// the WebView panel, which runs it through the live reverse proxy (no export needed).
+    /// Scenario split: preview = dev state, Launch = released disk state.
+    /// </summary>
+    private void OnSwfPreviewClick(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        var gameRoot = _configService.Config.GameRootDir;
+        var swfPath = NeoEditor.Core.Services.RuffleOptionsBuilder.FindSwfPath(gameRoot);
+        if (swfPath is null)
+        {
+            ViewServices.Notification.ShowWarning(Loc["SwfPreviewSwfNotFound"], Loc["SwfPreviewButton"]);
+            return;
+        }
+
+        CommunityToolkit.Mvvm.Messaging.WeakReferenceMessenger.Default.Send(
+            new SwfPreviewRequestedMessage(swfPath));
     }
 
     /// <summary>Save & Export: full DB save + XML diff preview + write to disk.</summary>

@@ -1,0 +1,236 @@
+<Window
+    x:Class="NeoEditor.Player.Views.DataBrowserWindow"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:vm="clr-namespace:NeoEditor.Player.ViewModels"
+    xmlns:loc="clr-namespace:NeoEditor.Player.Services"
+    xmlns:data="clr-namespace:NeoEditor.Player.Core.Data;assembly=NeoEditor.Player.Core"
+    xmlns:lm="clr-namespace:LiveMarkdown.Avalonia;assembly=LiveMarkdown.Avalonia"
+    x:Name="Root"
+    x:DataType="vm:DataBrowserViewModel"
+    Title="{Binding [DataBrowser.Title], Source={x:Static loc:LocalizationManager.Instance}}"
+    ShowInTaskbar="False"
+    Width="1000" Height="640"
+    MinWidth="700" MinHeight="420"
+    WindowStartupLocation="CenterOwner">
+
+    <DockPanel>
+        <Border DockPanel.Dock="Bottom" Padding="10,4" Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}">
+            <TextBlock
+                Text="{Binding StatusText}"
+                Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"
+                FontSize="12"
+                TextTrimming="CharacterEllipsis" />
+        </Border>
+
+        <!--  master-master-detail: tables → rows → wiki detail (Docs/42 v2.22)  -->
+        <Grid ColumnDefinitions="150,230,*">
+            <!--  Pane 1: entity tables (the 24 data classes, merged base + mods)  -->
+            <ListBox
+                Grid.Column="0"
+                Margin="6,6,2,6"
+                ItemsSource="{Binding Tables}"
+                SelectedItem="{Binding SelectedTable}"
+                FontSize="12" />
+
+            <!--  Pane 2: merged rows of the selected table  -->
+            <ListBox
+                Grid.Column="1"
+                Margin="2,6,2,6"
+                ItemsSource="{Binding Rows}"
+                SelectedItem="{Binding SelectedRow}"
+                FontSize="12">
+                <ListBox.ItemTemplate>
+                    <DataTemplate DataType="data:GameDataRow">
+                        <StackPanel Margin="2,1" Spacing="1">
+                            <!--  v2.30: theme colors — the old hard-coded light palette was
+                                  invisible on the light theme after the forced-Dark removal  -->
+                            <TextBlock Text="{Binding RowKey}" Foreground="{DynamicResource SystemControlHighlightAccentBrush}" FontSize="11" />
+                            <TextBlock Text="{Binding Summary}" TextWrapping="Wrap" Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}" />
+                        </StackPanel>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+
+            <!--  Pane 3: wiki detail — two equal columns INSIDE the detail (v2.28):
+                 left = body markdown, right = image gallery + incoming references  -->
+            <Grid Grid.Column="2" Margin="2,6,6,6">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <Border
+                    Grid.Column="0"
+                    CornerRadius="4"
+                    Background="{DynamicResource MarkdownBackgroundBrush}">
+                    <ScrollViewer>
+                        <StackPanel>
+                            <lm:MarkdownRenderer
+                                Margin="12,10,12,8"
+                                CodeBlockColorTheme="DarkPlus"
+                                LinkCommand="{Binding LinkCommand}"
+                                MarkdownBuilder="{Binding DetailMarkdown}" />
+                            <!--  Field grid (v2.34): native controls — markdown tables broke
+                                  on multi-line values; raw values wrap, reference columns
+                                  render as clickable links  -->
+                            <StackPanel Margin="12,6,12,16" Spacing="6" IsVisible="{Binding HasFields}">
+                                <TextBlock
+                                    Text="{Binding [Field.Title], Source={x:Static loc:LocalizationManager.Instance}}"
+                                    FontSize="13"
+                                    FontWeight="SemiBold"
+                                    Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}" />
+                                <ItemsControl ItemsSource="{Binding Fields}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate DataType="data:FieldItem">
+                                            <Border
+                                                Padding="0,3"
+                                                BorderThickness="0,0,0,1"
+                                                BorderBrush="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}">
+                                                <Grid ColumnDefinitions="140,*">
+                                                    <TextBlock
+                                                        Text="{Binding Column}"
+                                                        FontSize="12"
+                                                        FontWeight="SemiBold"
+                                                        Margin="0,0,8,0"
+                                                        TextTrimming="CharacterEllipsis"
+                                                        Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}" />
+                                                    <Grid Grid.Column="1">
+                                                        <TextBlock
+                                                            Text="{Binding Value}"
+                                                            FontSize="12"
+                                                            TextWrapping="Wrap"
+                                                            IsVisible="{Binding ShowRawValue}"
+                                                            Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}" />
+                                                        <ItemsControl
+                                                            ItemsSource="{Binding Links}"
+                                                            IsVisible="{Binding !ShowRawValue}">
+                                                            <ItemsControl.ItemTemplate>
+                                                                <DataTemplate DataType="data:FieldLink">
+                                                                    <TextBlock
+                                                                        Text="{Binding Display}"
+                                                                        FontSize="12"
+                                                                        TextWrapping="Wrap"
+                                                                        Cursor="Hand"
+                                                                        Foreground="{DynamicResource SystemControlHighlightAccentBrush}"
+                                                                        PointerPressed="OnFieldLinkClick" />
+                                                                </DataTemplate>
+                                                            </ItemsControl.ItemTemplate>
+                                                        </ItemsControl>
+                                                    </Grid>
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </StackPanel>
+                    </ScrollViewer>
+                </Border>
+
+                <Border
+                    Grid.Column="1"
+                    Margin="2,0,0,0"
+                    CornerRadius="4"
+                    Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}">
+                    <ScrollViewer>
+                        <StackPanel Margin="10,8" Spacing="14">
+                            <!--  Image carousel (v2.32): large preview + ◀▶ + thumbnail strip.
+                                  Markdown table-cell images were unreliable (v2.26) → native
+                                  controls; missing files show as text  -->
+                            <StackPanel Spacing="6" IsVisible="{Binding HasImages}">
+                                <TextBlock
+                                    Text="{Binding [Gallery.Title], Source={x:Static loc:LocalizationManager.Instance}}"
+                                    FontSize="13"
+                                    FontWeight="SemiBold"
+                                    Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}" />
+                                <Border
+                                    Height="180"
+                                    CornerRadius="4"
+                                    Background="{DynamicResource SystemControlBackgroundBaseLowBrush}">
+                                    <!--  v2.35: Avalonia's built-in Carousel (zero deps)
+                                          with a slide transition — SelectedIndex drives
+                                          CurrentImageIndex (thumbnail clicks + arrow keys)  -->
+                                    <Carousel
+                                        Margin="4"
+                                        ItemsSource="{Binding Images}"
+                                        SelectedIndex="{Binding CurrentImageIndex}">
+                                        <Carousel.PageTransition>
+                                            <PageSlide Duration="0:0:0.25" Orientation="Horizontal" />
+                                        </Carousel.PageTransition>
+                                        <Carousel.ItemTemplate>
+                                            <DataTemplate DataType="vm:ImageItem">
+                                                <Image Stretch="Uniform" Source="{Binding Image}" />
+                                            </DataTemplate>
+                                        </Carousel.ItemTemplate>
+                                    </Carousel>
+                                </Border>
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <TextBlock
+                                        Text="{Binding CurrentImage.DisplayText}"
+                                        FontSize="10"
+                                        MaxWidth="150"
+                                        TextTrimming="CharacterEllipsis"
+                                        Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}" />
+                                    <TextBlock
+                                        Text="{Binding ImageCounter}"
+                                        FontSize="10"
+                                        Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}" />
+                                </StackPanel>
+                                <!--  Thumbnail strip = built-in ListBox (v2.39): selection
+                                      highlights the active thumbnail, clicks and arrow keys
+                                      drive SelectedIndex → CurrentImageIndex → Carousel  -->
+                                <ListBox
+                                    ItemsSource="{Binding Images}"
+                                    SelectedIndex="{Binding CurrentImageIndex, Mode=TwoWay}"
+                                    ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                                    Background="Transparent"
+                                    BorderThickness="0">
+                                    <ListBox.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <WrapPanel />
+                                        </ItemsPanelTemplate>
+                                    </ListBox.ItemsPanel>
+                                    <ListBox.ItemTemplate>
+                                        <DataTemplate DataType="vm:ImageItem">
+                                            <Image
+                                                Margin="2"
+                                                Width="40"
+                                                Height="40"
+                                                Stretch="Uniform"
+                                                Source="{Binding Image}" />
+                                        </DataTemplate>
+                                    </ListBox.ItemTemplate>
+                                </ListBox>
+                            </StackPanel>
+
+                            <!--  Incoming references: one tab per source table (v2.32);
+                                  each tab's markdown keeps db:// link navigation  -->
+                            <TabControl
+                                ItemsSource="{Binding ReferenceTabs}"
+                                IsVisible="{Binding HasReferences}"
+                                MinHeight="140">
+                                <TabControl.ItemTemplate>
+                                    <DataTemplate DataType="vm:ReferenceTab">
+                                        <TextBlock Text="{Binding TableName}" />
+                                    </DataTemplate>
+                                </TabControl.ItemTemplate>
+                                <TabControl.ContentTemplate>
+                                    <DataTemplate DataType="vm:ReferenceTab">
+                                        <ScrollViewer>
+                                            <lm:MarkdownRenderer
+                                                Margin="8,6,8,10"
+                                                CodeBlockColorTheme="DarkPlus"
+                                                LinkCommand="{Binding LinkCommand}"
+                                                MarkdownBuilder="{Binding Markdown}" />
+                                        </ScrollViewer>
+                                    </DataTemplate>
+                                </TabControl.ContentTemplate>
+                            </TabControl>
+                        </StackPanel>
+                    </ScrollViewer>
+                </Border>
+            </Grid>
+        </Grid>
+    </DockPanel>
+</Window>

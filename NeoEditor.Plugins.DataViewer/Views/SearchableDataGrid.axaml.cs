@@ -16,6 +16,7 @@ using Avalonia.VisualTree;
 using Avalonia.Interactivity;
 using CommunityToolkit.Mvvm.Messaging;
 using Microsoft.Extensions.Logging;
+using NeoEditor.Core.Abstractions;
 using NeoEditor.Data.Messages;
 using NeoEditor.Data.Model.Game;
 using NeoEditor.Helper;
@@ -419,10 +420,15 @@ public partial class SearchableDataGrid : UserControl
                     entity, _pendingPropertyName, _pendingOldValue, newValue);
                 // Add to this DataGrid's own EditStore (not the global session,
                 // which may point to a different view's store in multi-view layouts).
+                // Use the [Column] name — the header shows the C# property name, which can
+                // differ from the XML column key the highlight converter compares against.
+                var prop = entity.GetType().GetProperty(propName,
+                    System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public);
+                var colName = prop?.GetCustomAttribute<ColumnAttribute>()?.Name ?? propName;
                 if (EditStore is not null)
-                    EditStore.EditedCells.Add((entity.EntityId, e.Column.Header?.ToString() ?? ""));
+                    EditStore.EditedCells.Add((entity.EntityId, colName));
                 else if (DataTable is not null)
-                    DataTable.EditedCells.Add((entity.EntityId, e.Column.Header?.ToString() ?? ""));
+                    DataTable.EditedCells.Add((entity.EntityId, colName));
                 // Also update local property so LoadingRow sees the edit after tab switch
                 if (_editedEntityIds is not null)
                     _editedEntityIds.Add(entity.EntityId);
@@ -431,7 +437,9 @@ public partial class SearchableDataGrid : UserControl
                     entity.EntityId[..Math.Min(8, entity.EntityId.Length)], e.Column.Header, totalEdits);
                 (Messenger ?? WeakReferenceMessenger.Default)
                     .Send(new CellEditedMessage(entity.GetType()));
-                e.Row.Background = new SolidColorBrush(Color.FromRgb(255, 255, 220));
+                // No whole-row paint here: field-level highlights are applied by the cell
+                // converter (re-evaluated on commit re-render) and RefreshRowBackgrounds
+                // (called by PushEditStateToGrid) — a row wash would mark every field dirty.
             }
         }
 
@@ -460,18 +468,11 @@ public partial class SearchableDataGrid : UserControl
                     editedIds?.Count ?? -1);
             _loadingRowCount++;
 
-            if (isOv)
-                e.Row.Background = new SolidColorBrush(Color.FromRgb(200, 200, 200));
-            else if (isNew)
-                e.Row.Background = new SolidColorBrush(Color.FromRgb(220, 255, 220));
-            else if (hasEd)
-                e.Row.Background = new SolidColorBrush(Color.FromRgb(255, 255, 220));
-            else
-                e.Row.Background = null;
+            ApplyCellHighlights(e.Row, entity, isOv, isNew, hasEd);
         }
     }
 
-    /// <summary>Force-refresh all visible row backgrounds from the current local properties.</summary>
+    /// <summary>Force-refresh all visible row/cell highlights from the current local properties.</summary>
     public void RefreshRowBackgrounds()
     {
         var overridden = OverriddenEntityIds;
@@ -483,15 +484,39 @@ public partial class SearchableDataGrid : UserControl
         foreach (var row in rows)
         {
             if (row.DataContext is not IEntity entity) continue;
-            if (overridden is not null && overridden.Contains(entity.EntityId))
-                row.Background = new SolidColorBrush(Color.FromRgb(200, 200, 200));
-            else if (newIds is not null && newIds.Contains(entity.EntityId))
-                row.Background = new SolidColorBrush(Color.FromRgb(220, 255, 220));
-            else if (editedIds is not null && editedIds.Contains(entity.EntityId))
-                row.Background = new SolidColorBrush(Color.FromRgb(255, 255, 220));
-            else
-                row.Background = null;
+            var isOv = overridden is not null && overridden.Contains(entity.EntityId);
+            var isNew = newIds is not null && newIds.Contains(entity.EntityId);
+            var hasEd = editedIds is not null && editedIds.Contains(entity.EntityId);
+            ApplyCellHighlights(row, entity, isOv, isNew, hasEd);
         }
+    }
+
+    /// <summary>
+    /// Docs/41 需求: field-level diff on the DataGrid — edited CELLS are highlighted yellow
+    /// (not the whole row), and the PRIMARY-KEY cell of any edited row is always highlighted
+    /// as an anchor (keys are immutable, so they would otherwise never light up and the row
+    /// becomes hard to find). Cell backgrounds come from CellEditedHighlightConverter on the
+    /// column templates (re-evaluated on every row load / grid refresh); here we only decide
+    /// the ROW-level wash: overridden rows keep their grey wash, new rows their green wash,
+    /// edited rows get NO row background (field-level only).
+    /// </summary>
+    private void ApplyCellHighlights(DataGridRow row, IEntity entity,
+        bool isOverridden, bool isNew, bool hasEdits)
+    {
+        if (isOverridden)
+        {
+            row.Background = new SolidColorBrush(Color.FromRgb(200, 200, 200));
+            return;
+        }
+
+        if (isNew)
+        {
+            row.Background = new SolidColorBrush(Color.FromRgb(220, 255, 220));
+            return;
+        }
+
+        // Edited rows: no row background — cell-level highlights (converter) only.
+        row.Background = null;
     }
 
     private void OnAutoGeneratingColumn(object sender, DataGridAutoGeneratingColumnEventArgs e)

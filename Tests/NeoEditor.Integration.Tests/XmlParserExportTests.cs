@@ -2,6 +2,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using NeoEditor.Data.Model;
 using NeoEditor.Data.Model.Game;
 using NeoEditor.Helper;
+using NeoEditor.Infra.Services;
 using Xunit;
 
 namespace NeoEditor.Integration.Tests;

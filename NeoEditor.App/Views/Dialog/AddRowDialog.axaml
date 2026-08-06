@@ -43,11 +43,17 @@
             Grid.Row="1" Grid.Column="0"
             VerticalAlignment="Center"
             Text="{Binding Loc[AddRowTargetXml]}" />
-        <ComboBox
-            Grid.Row="1" Grid.Column="1"
-            x:Name="FilePathComboBox"
-            HorizontalAlignment="Stretch"
-            IsEditable="True" />
+        <StackPanel Grid.Row="1" Grid.Column="1" Spacing="2">
+            <ComboBox
+                x:Name="FilePathComboBox"
+                HorizontalAlignment="Stretch"
+                IsEditable="True" />
+            <!-- Docs/41 P4: explain why a file is required, at the point of choice. -->
+            <TextBlock
+                FontSize="10"
+                Foreground="Gray"
+                Text="{Binding Loc[AddRowTargetXmlHint]}" />
+        </StackPanel>
 
         <!-- Row 2: Copy From (hidden for simple add) -->
         <TextBlock

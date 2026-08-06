@@ -14,6 +14,8 @@ public class CliParsedCommand
     public string? PropertyValue { get; set; }
     public string? Filter { get; set; }
     public int? Limit { get; set; }
+    public int? ModId { get; set; }
+    public bool Commit { get; set; }
     public string Format { get; set; } = "text";
     public bool HasError { get; set; }
     public string? ErrorMessage { get; set; }
@@ -30,5 +32,9 @@ public enum CliCommandType
     ListEntities,
     Save,
     Diff,
-    QueryReferences
+    QueryReferences,
+    Undo,
+    Redo,
+    Publish,
+    ExportMod
 }

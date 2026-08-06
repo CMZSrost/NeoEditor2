@@ -2,6 +2,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Messaging;
 using Microsoft.Extensions.Logging;
+using NeoEditor.Core.Abstractions;
 using NeoEditor.Infra.Services;
 using NeoEditor.Helper;
 using Newtonsoft.Json;

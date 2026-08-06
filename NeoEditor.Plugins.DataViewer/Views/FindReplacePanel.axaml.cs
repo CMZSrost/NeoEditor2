@@ -12,6 +12,7 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Media;
 using Avalonia.VisualTree;
+using NeoEditor.Core.Abstractions;
 using NeoEditor.Data.Command;
 using NeoEditor.Data.Model.Game;
 using NeoEditor.Infra.Services;
@@ -49,6 +50,15 @@ public partial class FindReplacePanel : UserControl
     private int _lastSearchVersion;
     public CommandHistory? CommandHistory { get; set; }
     public Action? OnDirtyChanged { get; set; }
+
+    /// <summary>
+    /// R24: when set, replace edits execute through the unified HostService pipeline
+    /// (hooks, dirty tracking, cache, events) instead of raw CommandHistory.
+    /// </summary>
+    public IHostService? HostService { get; set; }
+
+    /// <summary>Command scope to route <see cref="HostService"/> executions into.</summary>
+    public string? ScopeId { get; set; }
 
     public FindReplacePanel()
     {
@@ -284,7 +294,7 @@ public partial class FindReplacePanel : UserControl
         var colAttr = match.Property.GetCustomAttribute<ColumnAttribute>();
         var displayColName = colAttr?.Name ?? match.ColumnName;
         var cmd = new EditCellCommand(match.Entity, match.Property, displayColName, oldValue, newValue, OnDirtyChanged);
-        CommandHistory.Execute(cmd);
+        Execute(cmd);
         RefreshGrid();
         PerformSearch();
         if (_matches.Count > 0 && _currentMatch >= _matches.Count)
@@ -310,10 +320,28 @@ public partial class FindReplacePanel : UserControl
         if (edits.Count == 0) return;
 
         var batch = new BatchEditCommand(edits, OnDirtyChanged);
-        CommandHistory.Execute(batch);
+        Execute(batch);
         RefreshGrid();
         Hide();
         Notification.ShowSuccess(string.Format(Loc["FindReplaceSuccess"], edits.Count), Loc["FindReplaceTitle"]);
+    }
+
+    /// <summary>
+    /// Execute a command through the HostService pipeline when available (R24);
+    /// fall back to the raw CommandHistory otherwise (e.g. embedded tool contexts
+    /// that never registered a HostService scope).
+    /// </summary>
+    private void Execute(IEditorCommand cmd)
+    {
+        if (HostService is not null)
+        {
+            // ExecuteAsync captures failures in CommandResult — safe to fire-and-forget.
+            _ = HostService.ExecuteAsync(cmd, ScopeId);
+        }
+        else
+        {
+            CommandHistory?.Execute(cmd);
+        }
     }
 
     private string? ComputeReplaceText(MatchInfo match)

@@ -63,24 +63,17 @@ public class McpServerHost
             ToolCollection = new McpServerPrimitiveCollection<McpServerTool>(StringComparer.OrdinalIgnoreCase)
         };
 
-        // Register all tools from EditorTools
+        // Register all tools from EditorTools via the shared registry
         var tools = _serviceProvider.GetRequiredService<EditorTools>();
-        var toolMethods = typeof(EditorTools).GetMethods()
-            .Where(m => m.GetCustomAttributes(typeof(McpServerToolAttribute), false).Length > 0);
-
-        foreach (var method in toolMethods)
+        foreach (var method in EditorToolRegistry.EnumerateToolMethods())
         {
-            var descAttr = method.GetCustomAttributes(false)
-                .OfType<System.ComponentModel.DescriptionAttribute>()
-                .FirstOrDefault();
-
             var tool = McpServerTool.Create(
                 method,
                 tools,
                 new McpServerToolCreateOptions
                 {
                     Name = method.Name,
-                    Description = descAttr?.Description ?? method.Name
+                    Description = EditorToolRegistry.GetDescription(method)
                 });
 
             options.ToolCollection.Add(tool);

@@ -5,6 +5,7 @@
     xmlns:avaloniaEdit="https://github.com/avaloniaui/avaloniaedit"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:vm="clr-namespace:NeoEditor.Plugins.EntityEditor.ViewModels"
+    xmlns:views="clr-namespace:NeoEditor.Plugins.EntityEditor.Views"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     x:Name="Root"
     x:DataType="vm:EntityEditorDocument"
@@ -29,13 +30,38 @@
                     <TabItem.Header>
                         <TextBlock Text="{Binding Loc[EV.XmlEdit]}" FontSize="11" />
                     </TabItem.Header>
-                    <avaloniaEdit:TextEditor
-                        Name="XmlEditor"
-                        Document="{Binding XmlContent, Mode=TwoWay}"
-                        IsReadOnly="{Binding IsReadOnly}"
-                        ShowLineNumbers="True"
-                        SyntaxHighlighting="XML"
-                        />
+                    <Grid RowDefinitions="Auto,*">
+                        <!-- Docs/41 需求1: toggle between direct XML editing and the line-level
+                             diff view (session-start snapshot vs current).
+                             追修: IsChecked (TwoWay) 已驱动 IsDiffView —— 再绑 Command 会被
+                             Avalonia ToggleButton 先 Toggle 后执行 Command 双重翻转（打不开）。
+                             追修: Grid 而非 DockPanel —— DockPanel 只有最后一个子元素填满，
+                             可见的 XmlEditor 宽度取 Auto，导致"下半部分 width 小、像放缩"。 -->
+                        <ToggleButton
+                            DockPanel.Dock="Top"
+                            HorizontalAlignment="Left"
+                            Margin="0,2,0,4"
+                            Padding="10,2"
+                            FontSize="11"
+                            IsChecked="{Binding IsDiffView}">
+                            <TextBlock Text="{Binding Loc[EV.XmlDiffToggle]}" />
+                        </ToggleButton>
+                        <Grid Grid.Row="1">
+                            <avaloniaEdit:TextEditor
+                                Name="XmlEditor"
+                                Document="{Binding XmlContent, Mode=TwoWay}"
+                                IsReadOnly="{Binding IsReadOnly}"
+                                ShowLineNumbers="True"
+                                SyntaxHighlighting="XML"
+                                WordWrap="True"
+                                IsVisible="{Binding IsDiffView, Converter={x:Static BoolConverters.Not}}" />
+                            <views:XmlDiffView
+                                OldXml="{Binding DiffOldDocument}"
+                                NewXml="{Binding DiffNewDocument}"
+                                ReadOnly="True"
+                                IsVisible="{Binding IsDiffView}" />
+                        </Grid>
+                    </Grid>
                 </TabItem>
             </TabControl.Items>
         </TabControl>

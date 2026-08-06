@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using CommunityToolkit.Mvvm.Messaging;
+using NeoEditor.Core.Abstractions;
 using NeoEditor.Data.Messages;
 using NeoEditor.Data.Model;
 

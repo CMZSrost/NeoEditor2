@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using NeoEditor.Core.Model;
 using NeoEditor.Data.Model;
 
 namespace NeoEditor.Data.Context;
@@ -14,10 +15,29 @@ public class EditorDbContext : DbContext
     public DbSet<ProfileInfo> ProfileInfos { get; set; }
     public DbSet<CommandLog> CommandLogs { get; set; }
     public DbSet<WorkspaceSnapshot> WorkspaceSnapshots { get; set; }
+    public DbSet<PendingExport> PendingExports { get; set; } // Docs/41: "edited, not yet exported" set
+    public DbSet<ProfileEdit> ProfileEdits { get; set; } // Docs/41 追修(C): per-profile edit overlay
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+
+        // Docs/41: pending-export markers — one row per (ModId, EntityId, ColumnName);
+        // a mod entity may have several edited columns, each its own marker row.
+        modelBuilder.Entity<PendingExport>(e =>
+        {
+            e.HasIndex(p => new { p.ModId, p.EntityId, p.ColumnName })
+                .HasDatabaseName("IX_pending_export_ModId_EntityId_ColumnName")
+                .IsUnique();
+            e.ToTable("pending_export");
+        });
+
+        // Docs/41 追修(C): per-profile edit overlay — one row per (ProfileId, EntityId, ColumnName).
+        modelBuilder.Entity<ProfileEdit>(e =>
+        {
+            e.HasIndex(p => new { p.ProfileId, p.EntityId, p.ColumnName }).IsUnique();
+            e.ToTable("profile_edits");
+        });
 
         // 单独配置 ModInfo
         modelBuilder.Entity<ModInfo>(e =>

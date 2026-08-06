@@ -3,6 +3,7 @@ using Avalonia;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using IConfigService = NeoEditor.Core.Abstractions.IConfigService;
 using NeoEditor.Data;
 using IXmlParser = NeoEditor.Core.Abstractions.IXmlParser;
 using NeoEditor.Data.Context;

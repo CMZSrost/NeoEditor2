@@ -58,7 +58,13 @@ public class EntityResourceProvider : IMcpResourceProvider
 
         await task.ConfigureAwait(false);
         var resultProp = task.GetType().GetProperty("Result");
-        var entity = resultProp?.GetValue(task) as IEntity;
+        var baseline = resultProp?.GetValue(task) as IEntity;
+        // 追修(C): the tables are the baseline — merge the current profile's overlay so
+        // entity:// reads see this profile's edits (IsDeleted resolves to null).
+        var merged = baseline is null
+            ? _hostService.MergeProfileOverlay([])
+            : _hostService.MergeProfileOverlay([baseline]);
+        var entity = merged.FirstOrDefault(e => e.EntityId == entityId);
         if (entity is null) return null;
 
         // Serialize to JSON. R30: reference columns must serialize as their raw text

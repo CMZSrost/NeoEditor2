@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <LangVersion>preview</LangVersion>
+        <RootNamespace>NeoEditor.Plugins.WebView</RootNamespace>
+        <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+        <NoWarn>CS8618;CS9264</NoWarn>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\NeoEditor.Core\NeoEditor.Core.csproj" />
+        <ProjectReference Include="..\NeoEditor.Infra\NeoEditor.Infra.csproj" />
+        <ProjectReference Include="..\NeoEditor.UI.Common\NeoEditor.UI.Common.csproj" />
+        <!-- Shared player core: GameContentServer / proxy / logs / ruffle assets (Docs/42 §3.8) -->
+        <ProjectReference Include="..\NeoEditor.Player.Core\NeoEditor.Player.Core.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <Using Include="NeoEditor.Infra.Services" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Avalonia" Version="12.1.1" />
+        <!-- Avalonia 12 official WebView (re-open-sourced); WebView2 on Windows (Docs/42 §2.1) -->
+        <PackageReference Include="Avalonia.Controls.WebView" Version="12.0.1" />
+        <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
+        <PackageReference Include="FluentIcons.Avalonia" Version="2.1.333" />
+        <PackageReference Include="Serilog" Version="4.3.1" />
+    </ItemGroup>
+</Project>

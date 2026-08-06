@@ -28,6 +28,10 @@ public class EditCellCommand : ISerializableCommand
     /// <inheritdoc cref="IEditorCommand.GetAffectedEntityIds"/>
     public IReadOnlySet<string> GetAffectedEntityIds() => new HashSet<string> { _entity.EntityId };
 
+    /// <inheritdoc cref="IEditorCommand.GetEditedCells"/>
+    public IEnumerable<(string EntityId, string ColumnName)> GetEditedCells()
+        => new[] { (_entity.EntityId, _columnName) };
+
     /// <inheritdoc cref="IEditorCommand.GetCacheDelta"/>
     /// <remarks>R30 (追修 6): the edited entity mutates in place — upsert it into the
     /// HostService working-set cache or SaveAllAsync silently drops it (cache miss →

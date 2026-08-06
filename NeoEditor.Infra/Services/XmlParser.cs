@@ -12,8 +12,9 @@ using NeoEditor.Core.Abstractions;
 using NeoEditor.Data.Model;
 using NeoEditor.Data.Model.Game;
 using NeoEditor.Helper;
+using ValueConverter = NeoEditor.Helper.Converter.ValueConverter;
 
-namespace NeoEditor.Helper;
+namespace NeoEditor.Infra.Services;
 
 public class XmlParser : IXmlParser
 {
@@ -161,7 +162,7 @@ public class XmlParser : IXmlParser
 
         try
         {
-            return Converter.ValueConverter.Convert(str, targetType);
+            return ValueConverter.Convert(str, targetType);
         }
         catch (Exception)
         {

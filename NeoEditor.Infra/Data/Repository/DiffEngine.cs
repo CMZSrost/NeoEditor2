@@ -3,6 +3,9 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Reflection;
 using NeoEditor.Core.Abstractions;
+using NeoEditor.Data.Model;
+using NeoEditor.Data.Model.Game;
+using NeoEditor.Helper;
 
 namespace NeoEditor.Data.Repository;
 
@@ -32,15 +35,26 @@ public static class DiffEngine
             if (colAttr == null) continue;
             if (prop.GetCustomAttribute<NotMappedAttribute>() != null) continue;
 
+            // Reference fields must compare/serialize as their canonical raw text
+            // (ReferenceText.GetRawString) — never ReferenceList.ToString(), which
+            // emits the damaged "[a, b]" format and misreports unchanged references.
+            var refAttr = prop.GetCustomAttribute<ReferenceFieldAttribute>();
             var oldVal = before != null ? prop.GetValue(before) : null;
             var newVal = after != null ? prop.GetValue(after) : null;
 
-            if (ValuesEqual(oldVal, newVal)) continue;
+            var oldText = oldVal is ReferenceList<IReferenceEntry>
+                ? ReferenceText.GetRawString(oldVal, refAttr)
+                : SerializeValue(oldVal);
+            var newText = newVal is ReferenceList<IReferenceEntry>
+                ? ReferenceText.GetRawString(newVal, refAttr)
+                : SerializeValue(newVal);
+
+            if (ValuesEqual(oldText, newText)) continue;
 
             results.Add(new DiffEntry(
                 prop.Name,
-                SerializeValue(oldVal),
-                SerializeValue(newVal),
+                oldText,
+                newText,
                 before == null ? DiffKind.Added
                 : after == null ? DiffKind.Removed
                 : DiffKind.Modified
@@ -50,12 +64,30 @@ public static class DiffEngine
         return results;
     }
 
+    /// <summary>
+    /// Column names (XML keys, i.e. <c>[Column(Name=...)] ?? property name</c>) that differ
+    /// between two versions of the same entity. Used to upgrade legacy entity-level
+    /// pending-export markers to per-column markers by diffing the game XML original
+    /// against the current (DB) value.
+    /// </summary>
+    public static List<string> ComputeChangedColumns(IEntity before, IEntity after)
+    {
+        var columns = new List<string>();
+        foreach (var diff in ComputeDiff(before, after))
+        {
+            var prop = after.GetType().GetProperty(diff.PropertyName);
+            var colAttr = prop?.GetCustomAttribute<ColumnAttribute>();
+            columns.Add(colAttr?.Name ?? diff.PropertyName);
+        }
+        return columns;
+    }
+
     private static bool ValuesEqual(object? a, object? b)
     {
         if (ReferenceEquals(a, b)) return true;
         if (a == null || b == null) return false;
 
-        // String comparison
+        // Reference fields arrive here as canonical raw text (string).
         if (a is string sa && b is string sb)
             return string.Equals(sa, sb, StringComparison.Ordinal);
 

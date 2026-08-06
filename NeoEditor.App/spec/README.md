@@ -9,6 +9,7 @@
 |------|------|:--:|------|
 | [D01](D01-core-plugin-architecture.md) | Core / Plugin 架构方向 — 项目本质、边界定义、插件化依据 | ✅ | 用户决策 2026-07-24 |
 | [D02](D02-dynamic-dock-layout.md) | 动态 Dock 布局 — Tool/Document/Service Plugin 分类 + IToolPlugin 动态构建（1:1） | ✅ | 用户决策 2026-08-01 |
+| [D03](D03-paratranz-integration.md) | ParaTranz 集成 — 数据转换 / 同步工作流 / UI 设计（v1.2 已定案，M2 实施中） | ⏳ | 用户决策 2026-08-05 |
 
 > **D01 是项目根本架构决策**，高于所有 R/N 规则。R17-R22 是其执行细则。
 > **D02 是 Dock 布局的根本决策**，取代手写 XAML Tool 元素。Phase 9E 实现。

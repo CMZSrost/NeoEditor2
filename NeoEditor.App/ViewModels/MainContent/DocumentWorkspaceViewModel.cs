@@ -20,6 +20,8 @@ using Microsoft.EntityFrameworkCore;
 using MsBox.Avalonia;
 using MsBox.Avalonia.Dto;
 using MsBox.Avalonia.Enums;
+using IConfigService = NeoEditor.Core.Abstractions.IConfigService;
+using NeoEditor.Core.Abstractions;
 using NeoEditor.Data;
 using NeoEditor.Data.Context;
 using NeoEditor.Data.DTO;
@@ -34,7 +36,6 @@ using NeoEditor.Plugins.ImageTools.Helper;
 using NeoEditor.Plugins.ImageTools.Services;
 using NeoEditor.Plugins.ImageTools.ViewModels;
 using NeoEditor.Services;
-using NeoEditor.Core.Abstractions;
 using NeoEditor.Views.UserControls;
 
 namespace NeoEditor.ViewModels.MainContent;
@@ -284,6 +285,10 @@ public partial class DocumentWorkspaceViewModel : ViewModelBase,
         Loc.PropertyChanged += OnLocalizationPropertyChanged;
         Messenger.Register<MergeViewDirtyChangedMessage>(this, (_, m) => OnMergeViewDirtyChanged(m.IsDirty));
 
+        // Docs/42 §3.7: toolbar "内置预览" → activate the WebView tool (the plugin's own
+        // VM subscribes to the same message to load the SWF through the reverse proxy).
+        Messenger.Register<SwfPreviewRequestedMessage>(this, (_, _) => ActivateWebViewPreviewTool());
+
         // ── QuickSave completed → MarkClean all EntityEditorDocument instances ──
         Messenger.Register<SaveCompletedMessage>(this, (_, _) =>
         {
@@ -427,6 +432,21 @@ public partial class DocumentWorkspaceViewModel : ViewModelBase,
         // Note: Dock.Avalonia 12.1.0 does NOT sync ToolDock.ItemsSource into the layout, so the
         // tools are added to the dock panes manually once the DockControl has loaded — the view's
         // code-behind calls SyncToolDockIntoLayout(MainDockControl) (see DocumentWorkspaceView).
+    }
+
+    /// <summary>
+    /// Docs/42 §3.7: bring the WebView preview tool to the front of its dock pane when the
+    /// toolbar's "内置预览" entry is used. The tool itself is registered by the WebView plugin
+    /// (Id = plugin type name, stable for layout persistence).
+    /// </summary>
+    private void ActivateWebViewPreviewTool()
+    {
+        var tool = LeftToolItems.Concat(RightToolItems).Concat(BottomToolItems)
+            .OfType<PluginTool>()
+            .FirstOrDefault(t => t.Id == nameof(NeoEditor.Plugins.WebView.WebViewPlugin));
+        if (tool is null) return;
+
+        DockFactory.SetActiveDockable(tool);
     }
 
     // ── Entity selection coordination ──
@@ -678,6 +698,8 @@ public partial class DocumentWorkspaceViewModel : ViewModelBase,
     {
         foreach (var d in Documents.OfType<SessionWelcomeDocument>().ToList()) Documents.Remove(d);
         var welcome = new SessionWelcomeDocument();
+        // Docs/41 需求5: localized usage + shortcuts.
+        welcome.UsageTips = Loc["Welcome.Shortcuts"];
         // Data loads async in background — show ready state immediately
         welcome.StatusText = "Ready — select an entity below to begin editing.";
         welcome.IsLoading = false;

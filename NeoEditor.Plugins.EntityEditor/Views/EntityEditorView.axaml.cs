@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
+using Avalonia.Interactivity;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.Messaging;
 using Microsoft.Extensions.DependencyInjection;
@@ -28,6 +29,17 @@ public partial class EntityEditorView : UserControl
     {
         InitializeComponent();
         DataContextChanged += OnDataContextChanged;
+
+        // 追修: AvaloniaEdit 内置 Ctrl+滚轮 / 触控板捏合 的文本缩放（"滚轮导致整个页面放缩"）。
+        // Tunnel 阶段先于 TextEditor 的 class handler 执行——设置 Handled=true 即阻止缩放，
+        // 普通滚轮滚动不受影响；不更换控件类型，零渲染风险。
+        AddHandler(InputElement.PointerWheelChangedEvent, (_, e) =>
+        {
+            if (e.KeyModifiers.HasFlag(KeyModifiers.Control))
+                e.Handled = true;
+        }, RoutingStrategies.Tunnel, handledEventsToo: true);
+        AddHandler(InputElement.PointerTouchPadGestureMagnifyEvent, (_, e) => e.Handled = true,
+            RoutingStrategies.Tunnel, handledEventsToo: true);
 
         XmlEditor.TextChanged += (_, _) =>
         {

@@ -5,6 +5,8 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
+using System.IO;
+using System.Xml.Linq;
 using Avalonia.Threading;
 using AvaloniaEdit.Document;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -22,6 +24,9 @@ using NeoEditor.Services;
 using Serilog;
 
 // Aliases to avoid IWorkspaceSession/IHostService ambiguity with NeoEditor.Services.
+using IConfigService = NeoEditor.Core.Abstractions.IConfigService;
+using IHostService = NeoEditor.Core.Abstractions.IHostService;
+using IXmlParser = NeoEditor.Core.Abstractions.IXmlParser;
 using IReferenceEntry = NeoEditor.Core.Abstractions.IReferenceEntry;
 using IReferenceListSerializer = NeoEditor.Core.Abstractions.IReferenceListSerializer;
 
@@ -45,6 +50,8 @@ public partial class EntityEditorDocument : PluginDocumentBase
             var subject = value.Subject ?? $"{value.GetType().Name}#{value.EntityId}";
             SetStaticTitle($"{value.GetType().Name}: {subject}");
             XmlContent.Text = EntityXmlHelper.GenerateXmlFragment(value);
+            _originalXml = ResolveOriginalXml(value);
+            if (IsDiffView) RefreshDiff();
         }
     }
 
@@ -59,6 +66,17 @@ public partial class EntityEditorDocument : PluginDocumentBase
     /// <summary>R11: true when entity has unsaved edits. Cleared on successful save.</summary>
     [ObservableProperty]
     public partial bool IsDirty { get; set; }
+
+    /// <summary>XML diff view: left = original (disk) snapshot, right = current edits.</summary>
+    [ObservableProperty] public partial bool IsDiffView { get; set; }
+
+    [ObservableProperty] public partial TextDocument? DiffOldDocument { get; set; }
+    [ObservableProperty] public partial TextDocument? DiffNewDocument { get; set; }
+
+    partial void OnIsDiffViewChanged(bool value)
+    {
+        if (value) RefreshDiff();
+    }
 
     /// <summary>Set by the View when XmlEditor has focus. When true, RefreshXml skips
     /// updating the text so the user's undo stack is preserved.</summary>
@@ -91,46 +109,20 @@ public partial class EntityEditorDocument : PluginDocumentBase
         if (Entity == null || !IsDirty) return;
         try
         {
-            await using var db = await _dbFactory.CreateDbContextAsync();
+            // R24: all entity persistence flows through the host pipeline — the editor
+            // never touches GameDbContext directly from the document.
             var entity = Entity;
-            var type = entity.GetType();
-
-            var method = typeof(GameDbContext).GetMethod(nameof(GameDbContext.Set), Type.EmptyTypes)!
-                .MakeGenericMethod(type);
-            var dbSet = (System.Collections.IList)method.Invoke(db, null)!;
-
-            IEntity? existing = null;
-            foreach (var item in dbSet)
+            _hostService.AddEntityToCache(entity);
+            var saved = await _hostService.SaveAsync(entity.EntityId);
+            if (!saved.SavedEntityIds.Contains(entity.EntityId))
             {
-                if (item is IEntity e && e.EntityId == entity.EntityId)
-                {
-                    existing = e;
-                    break;
-                }
+                _notification.ShowInfo(
+                    "Save skipped: '" + entity.EntityId + "' was not in the dirty set — discard and re-edit, or save again.",
+                    "Entity Not Saved");
+                return;
             }
 
-            if (existing != null)
-            {
-                foreach (var prop in type.GetProperties()
-                             .Where(p => p.GetCustomAttribute<ColumnAttribute>() != null && p.CanWrite))
-                {
-                    var newValue = prop.GetValue(entity);
-                    prop.SetValue(existing, newValue);
-                }
-
-                db.Update(existing);
-            }
-            else
-            {
-                db.Add(entity);
-            }
-
-            await db.SaveChangesAsync();
             MarkClean();
-
-            var entityId = Entity.EntityId;
-            _dataTable.EditedCells.RemoveWhere(c => c.EntityId == entityId);
-
             WeakReferenceMessenger.Default.Send(new SaveCompletedMessage());
             // Exclude only game base (ModId=-1); ModId=0 is a valid mod id and its WAL snapshot
             // must advance too, or its commands replay (and re-dirty) on restart.
@@ -138,7 +130,7 @@ public partial class EntityEditorDocument : PluginDocumentBase
                 WeakReferenceMessenger.Default.Send(new EntityDbSavedMessage(entity.ModId));
 
             _notification.ShowInfo(
-                $"Saved: {Entity.GetType().Name} — {Entity.Subject ?? Entity.EntityId}",
+                $"Saved: {entity.GetType().Name} — {entity.Subject ?? entity.EntityId}",
                 "Entity Saved");
         }
         catch (Exception ex)
@@ -148,27 +140,34 @@ public partial class EntityEditorDocument : PluginDocumentBase
     }
 
     private readonly IWorkspaceSession _session;
-    private readonly IDbContextFactory<GameDbContext> _dbFactory;
+    private readonly IHostService _hostService;
     private readonly IEntityLookupService _dataTable;
     private readonly INotificationService _notification;
     private readonly IReferenceListSerializer _serializer;
+    private readonly IXmlParser _xmlParser;
+    private readonly IConfigService _configService;
+    private string _originalXml = "";
 
     public EntityEditorDocument(
         IEntity entity,
         IWorkspaceSession session,
-        IDbContextFactory<GameDbContext> dbFactory,
+        IHostService hostService,
         IEntityLookupService dataTable,
         ILocalizationService loc,
         INotificationService notification,
         IReferenceListSerializer serializer,
+        IXmlParser xmlParser,
+        IConfigService configService,
         bool isReadOnly = false)
         : base(loc)
     {
         _session = session;
-        _dbFactory = dbFactory;
+        _hostService = hostService;
         _dataTable = dataTable;
         _notification = notification;
         _serializer = serializer;
+        _xmlParser = xmlParser;
+        _configService = configService;
         Entity = entity;
         IsReadOnly = isReadOnly;
 
@@ -201,11 +200,83 @@ public partial class EntityEditorDocument : PluginDocumentBase
         return type.Name;
     }
 
+    private static bool IsPrimaryKeyColumn(PropertyInfo prop)
+    {
+        var column = prop.GetCustomAttribute<ColumnAttribute>()?.Name;
+        return column is "id" or "nID";
+    }
+
     public void RefreshXml()
     {
         if (IsXmlFocused) return;
         if (Entity != null)
+        {
             XmlContent.Text = EntityXmlHelper.GenerateXmlFragment(Entity);
+            if (IsDiffView) RefreshDiff();
+        }
+    }
+
+    /// <summary>Rebuild the diff documents (original disk snapshot vs current edits).</summary>
+    public void RefreshDiff()
+    {
+        DiffOldDocument = new TextDocument(_originalXml);
+        DiffNewDocument = new TextDocument(XmlContent.Text);
+    }
+
+    /// <summary>XML diff: load the entity's original (disk) snapshot for side-by-side compare.</summary>
+    private string ResolveOriginalXml(IEntity entity)
+    {
+        try
+        {
+            var path = ResolveXmlPath(entity.FilePath);
+            if (path is null || !File.Exists(path))
+                return EntityXmlHelper.GenerateXmlFragment(entity);
+
+            var original = FindOriginalEntity(entity, path);
+            if (original is null)
+                return EntityXmlHelper.GenerateXmlFragment(entity);
+
+            var originalXml = EntityXmlHelper.GenerateXmlFragment(original);
+            var currentXml = EntityXmlHelper.GenerateXmlFragment(entity);
+            return string.Equals(originalXml, currentXml, StringComparison.Ordinal) ? currentXml : originalXml;
+        }
+        catch (Exception ex)
+        {
+            Log.Warning(ex, "[XML-Diff] failed to load original for {Eid} — falling back to current snapshot", entity.EntityId);
+            return EntityXmlHelper.GenerateXmlFragment(entity);
+        }
+    }
+
+    private string? ResolveXmlPath(string? filePath)
+    {
+        if (string.IsNullOrWhiteSpace(filePath)) return null;
+        if (Path.IsPathRooted(filePath)) return filePath;
+
+        var gameRoot = _configService.Config.GameRootDir;
+        return string.IsNullOrWhiteSpace(gameRoot) ? null : Path.GetFullPath(Path.Combine(gameRoot, filePath));
+    }
+
+    /// <summary>
+    /// Re-import the disk XML through the shared parser pipeline to find the original
+    /// entity (same EntityId) — the current snapshot may have unexported edits.
+    /// </summary>
+    private IEntity? FindOriginalEntity(IEntity current, string fullPath)
+    {
+        var text = File.ReadAllText(fullPath);
+        // Same utf8-declaration tolerance as the player's data browser (Docs/42 v2.18).
+        if (text.Contains("encoding=\"utf8\"", StringComparison.OrdinalIgnoreCase))
+            text = text.Replace("encoding=\"utf8\"", "encoding=\"utf-8\"", StringComparison.OrdinalIgnoreCase);
+        var doc = XDocument.Parse(text);
+
+        var method = typeof(IXmlParser).GetMethod(nameof(IXmlParser.ImportEntities))!
+            .MakeGenericMethod(current.GetType());
+        var imported = (System.Collections.IList)method.Invoke(_xmlParser, new object[] { doc, current.ModId, fullPath })!;
+        foreach (var item in imported)
+        {
+            if (item is IEntity e && e.EntityId == current.EntityId)
+                return e;
+        }
+        return null;
     }
 
     [RelayCommand]
@@ -231,6 +302,7 @@ public partial class EntityEditorDocument : PluginDocumentBase
             var edits = new List<EditRecord>();
 
             var xmlValues = new Dictionary<string, (PropertyInfo Prop, object? NewValue)>();
+            var primaryKeyChanges = new List<string>();
             foreach (var colEl in tableEl.Elements("column"))
             {
                 var name = colEl.Attribute("name")?.Value;
@@ -243,7 +315,17 @@ public partial class EntityEditorDocument : PluginDocumentBase
                     return ca?.Name == name;
                 }) ?? type.GetProperty(name);
 
-                if (prop == null || !prop.CanWrite) continue;
+                if (prop == null || !prop.CanWrite || prop.DeclaringType == typeof(IEntity)) continue;
+
+                if (IsPrimaryKeyColumn(prop))
+                {
+                    // R30: primary key columns are identity anchors — XML edits to them are
+                    // rejected (original value kept) instead of silently corrupting the row key.
+                    var rawCurrent = ReferenceText.GetRawString(prop.GetValue(Entity),
+                        prop.GetCustomAttribute<ReferenceFieldAttribute>());
+                    if (rawCurrent != val) primaryKeyChanges.Add(name);
+                    continue;
+                }
 
                 try
                 {
@@ -269,6 +351,11 @@ public partial class EntityEditorDocument : PluginDocumentBase
                     /* skip unparseable values */
                 }
             }
+
+            if (primaryKeyChanges.Count > 0)
+                _notification.ShowWarning(
+                    "Primary key cannot be changed (original value kept): " + string.Join(", ", primaryKeyChanges),
+                    "XML Apply");
 
             foreach (var (colName, (prop, newValue)) in xmlValues)
             {
@@ -332,7 +419,8 @@ public static class EntityXmlHelper
         sb.AppendLine($"<table name=\"{tableName}\">");
 
         var props = type.GetProperties()
-            .Where(p => p.GetCustomAttribute<ColumnAttribute>() != null)
+            .Where(p => p.GetCustomAttribute<ColumnAttribute>() != null
+                        && p.DeclaringType != typeof(IEntity))
             .OrderBy(p => IsKeyProperty(p) ? 0 : 1)
             .ThenBy(p => p.Name);
 

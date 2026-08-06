@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="Menu.File" xml:space="preserve"><value>File</value></data>
+  <data name="Menu.OpenSwf" xml:space="preserve"><value>Open SWF…</value></data>
+  <data name="Menu.Reload" xml:space="preserve"><value>Reload</value></data>
+  <data name="Menu.Exit" xml:space="preserve"><value>Exit</value></data>
+  <data name="Menu.View" xml:space="preserve"><value>View</value></data>
+  <data name="Menu.FullScreen" xml:space="preserve"><value>Fullscreen (F11)</value></data>
+  <data name="Menu.Log" xml:space="preserve"><value>Logs (Shift+Tab)</value></data>
+  <data name="Menu.BackgroundRun" xml:space="preserve"><value>Run in background</value></data>
+  <data name="Menu.BackgroundRunTip" xml:space="preserve"><value>Keep the game running (with sound) when the window loses focus</value></data>
+  <data name="Menu.Theme" xml:space="preserve"><value>Theme</value></data>
+  <data name="Menu.Theme.System" xml:space="preserve"><value>Follow system</value></data>
+  <data name="Menu.Theme.Light" xml:space="preserve"><value>Light</value></data>
+  <data name="Menu.Theme.Dark" xml:space="preserve"><value>Dark</value></data>
+  <data name="Menu.Language" xml:space="preserve"><value>Language</value></data>
+  <data name="Menu.Language.Zh" xml:space="preserve"><value>中文</value></data>
+  <data name="Menu.Language.En" xml:space="preserve"><value>English</value></data>
+  <data name="Menu.DataBrowser" xml:space="preserve"><value>Data Browser</value></data>
+  <data name="Placeholder.Drop" xml:space="preserve"><value>Drop the SWF file here</value></data>
+  <data name="Placeholder.Click" xml:space="preserve"><value>or click to browse… (NEOScavenger.swf)</value></data>
+  <data name="Placeholder.MenuHint" xml:space="preserve"><value>Menu: File → Open SWF (Ctrl+O) / Reload (F5)&#x0a;View → Fullscreen (F11) / Logs (Shift+Tab) / Data Browser / Background run&#x0a;View → Theme / Language</value></data>
+  <data name="Log.OverlayTitle" xml:space="preserve"><value>Run log — Shift+Tab closes</value></data>
+  <data name="Log.Level" xml:space="preserve"><value>Level:</value></data>
+  <data name="Log.Clear" xml:space="preserve"><value>Clear</value></data>
+  <data name="Log.Close" xml:space="preserve"><value>Close (Shift+Tab)</value></data>
+  <data name="Log.FilePrefix" xml:space="preserve"><value>Log file: </value></data>
+  <data name="DataBrowser.Title" xml:space="preserve"><value>Data Browser</value></data>
+  <data name="Db.Status.NotLoaded" xml:space="preserve"><value>Not loaded</value></data>
+  <data name="Db.Status.QuitReset" xml:space="preserve"><value>Game quit — data reset</value></data>
+  <data name="Db.Status.NoData" xml:space="preserve"><value>No data found (data/ or Mods/*/neogame.xml)</value></data>
+  <data name="Db.Status.Summary" xml:space="preserve"><value>{0} data classes, {1} rows (mods merged)</value></data>
+  <data name="Db.Status.Rows" xml:space="preserve"><value>{0} — {1} rows</value></data>
+  <data name="Db.Status.NotFound" xml:space="preserve"><value>{0} — {1} not found</value></data>
+  <data name="Status.NotLoaded" xml:space="preserve"><value>Not loaded — click "Open SWF" to choose the game file (NEOScavenger.swf)</value></data>
+  <data name="Status.ResourcesMissing" xml:space="preserve"><value>Ruffle Web assets missing (Web/ruffle not deployed).</value></data>
+  <data name="Status.RootUnknown" xml:space="preserve"><value>Cannot determine the game root directory.</value></data>
+  <data name="Status.ServerFailed" xml:space="preserve"><value>Local preview server failed to start (loopback port bind).</value></data>
+  <data name="Status.Loading" xml:space="preserve"><value>Loading {0} ({1}) — disk mode</value></data>
+  <data name="Status.Quit" xml:space="preserve"><value>Game quit.</value></data>
+  <data name="Status.Blocked" xml:space="preserve"><value>The game tried to open an external link (blocked).</value></data>
+  <data name="Status.Stopped" xml:space="preserve"><value>Stopped</value></data>
+  <data name="Gallery.Title" xml:space="preserve"><value>Images</value></data>
+  <data name="Gallery.Missing" xml:space="preserve"><value>{0} (missing)</value></data>
+  <data name="Field.Title" xml:space="preserve"><value>Fields</value></data>
+  <data name="Menu.Storage" xml:space="preserve"><value>Saves</value></data>
+  <data name="Storage.Title" xml:space="preserve"><value>Save Manager</value></data>
+  <data name="Storage.Hint" xml:space="preserve"><value>Saves live in the page localStorage (Ruffle SharedObject); the fixed loopback port keeps them across launches</value></data>
+  <data name="Storage.Refresh" xml:space="preserve"><value>Refresh</value></data>
+  <data name="Storage.ClearAll" xml:space="preserve"><value>Clear all</value></data>
+  <data name="Storage.Delete" xml:space="preserve"><value>Delete</value></data>
+  <data name="Storage.Empty" xml:space="preserve"><value>(no saves)</value></data>
+  <data name="Storage.ReadFailed" xml:space="preserve"><value>Cannot read saves (load the game first)</value></data>
+  <data name="Storage.ParseFailed" xml:space="preserve"><value>Failed to parse save data</value></data>
+  <data name="Storage.Summary" xml:space="preserve"><value>{0} saves · {1} KB total</value></data>
+  <data name="Storage.Tabs.Saves" xml:space="preserve"><value>Saves</value></data>
+  <data name="Storage.Tabs.Backups" xml:space="preserve"><value>Backups</value></data>
+  <data name="Storage.Restore" xml:space="preserve"><value>Restore</value></data>
+  <data name="Storage.Restored" xml:space="preserve"><value>{0} restored</value></data>
+  <data name="Storage.RestoreFailed" xml:space="preserve"><value>Restore failed (backup unreadable)</value></data>
+  <data name="Common.Ok" xml:space="preserve"><value>OK</value></data>
+  <data name="Common.Cancel" xml:space="preserve"><value>Cancel</value></data>
+  <data name="Storage.Backup" xml:space="preserve"><value>Backup</value></data>
+  <data name="Storage.BackupPromptTitle" xml:space="preserve"><value>Backup Save</value></data>
+  <data name="Storage.BackupDone" xml:space="preserve"><value>Backed up: {0}</value></data>
+  <data name="Storage.Rename" xml:space="preserve"><value>Rename</value></data>
+  <data name="Storage.RenamePromptTitle" xml:space="preserve"><value>Rename Backup</value></data>
+  <data name="Storage.ConfirmDeleteTitle" xml:space="preserve"><value>Confirm Delete</value></data>
+  <data name="Storage.ConfirmDelete" xml:space="preserve"><value>Delete save "{0}"? This cannot be undone.</value></data>
+  <data name="Storage.ConfirmDeleteBackup" xml:space="preserve"><value>Delete backup "{0}"?</value></data>
+  <data name="Storage.ConfirmClearAllTitle" xml:space="preserve"><value>Confirm Clear</value></data>
+  <data name="Storage.ConfirmClearAll" xml:space="preserve"><value>Clear all saves? This cannot be undone.</value></data>
+</root>

@@ -63,6 +63,8 @@ M8 完成，M9 DataViewer Plugin 迁移完成，**M10 EntityEditor Plugin 全部
 **M13+ 领域驱动服务架构**——Phase 1-8 全部完成，Agent 编排 A1-A4 全部完成，像素图像 G1-G3 全部完成，ProDataGrid 迁移完成。详见 [Docs/30-post-m12-development-plan.md](NeoEditor.App/Docs/30-post-m12-development-plan.md)。
 
 **当前 (M13+ Phase 1-8 + A1-A4 + G1-G3 + ProDataGrid + Phase 9A-9E + 遗留清理全部完成，11 src + 11 test = 22 项目)**:
+- ✅ **MCP 薄弱点完善 + Search 结构化搜索 (2026-08-03)**：①`GetDiffAsync` 占位 → 经 `DiffEngine` 的真实字段级 diff（顺带修 `FindEntityInDbSet` 反射——EF `FindAsync` 返回 `ValueTask<T>`、反射不补可选参数，旧代码静默失败）；②`DiffEngine` 引用字段按 `ReferenceText.GetRawString` 比较（消除 "[a, b]" 误报）；③修命令双重执行（`CommandHistory.Execute` 内部再执行一次）；④`Save` 工具回传真实 `SaveResult`；⑤新增 4 个 MCP 工具（Undo/Redo/Publish/ExportMod，12→16）+ CLI 同步 `undo/redo/publish/export-mod`；⑥`SearchEntitiesAsync` 结构化搜索（`EntitySearchRequest`：多表选择 + 类型化过滤 + 分页 offset + 排序，默认接口实现使测试桩零改动），MCP `SearchAllTypes` 新增 `entityTypesJson`/`filtersJson`/`offset`；⑦`EditorToolRegistry` 反射去重。**617/617 测试**（+36）。详见 [CHANGELOG](NeoEditor.App/Docs/CHANGELOG.md)。
+- ✅ **CRUD 全路径收束 HostService (2026-08-03)**：审计发现并修复 4 条绕过 `IHostService` 的实体数据写路径——①`EntityEditorDocument.SaveDocument` 直接 `GameDbContext` 写库 → 改 `AddEntityToCache` + `SaveAsync`（插件/工厂不再注入 DbContextFactory）；②`ModDatabaseViewModel.ImportCsv` 直接 DbSet upsert → 改 `BatchEditCommand`/`AddEntityCommand` 经 `ExecuteBatchAsync` + `SaveAsync`；③`FindReplacePanel` 直连 `CommandHistory.Execute` → 改 `IHostService.ExecuteAsync`；④XML 导出双轨 → `IHostService` 新增 `CommitExportAsync`（唯一 mod XML 写入口），`ModGameDataTabsView` 两处 `File.WriteAllTextAsync` 改走该 API。**581/581 测试**（+4）。详见 [CHANGELOG](NeoEditor.App/Docs/CHANGELOG.md)。
 - ✅ **Phase 1 (HostService) 完成**：IHostService 统一写路径，IEditorCommand 提升到 Core，Scope 隔离保留 per-tab undo
 - ✅ **Phase 2 (引用类型系统) 完成**：IReferenceEntry + IReferenceFormat + EntityRef + 7 Format 类（PureRef/NegatedRef/IdXMult/MultXId/Assign/Bracket/MultiIngredientRecipe）+ ReferenceList<T> + IReferenceListSerializer + EF Core ValueConverter，15 实体 ~48 引用属性从 string → ReferenceList<IReferenceEntry>
 - ✅ **Phase 3 (KV 引用弹窗) 完成**：ReferencePickerViewModel + ReferencePickerDialog（搜索/单选多选/装饰编辑）+ ReferenceFieldEditor（内联徽章控件）替代纯 TextBox；ControlTypeVisibilityConverter 拆分 refpicker；17 个新测试
@@ -241,3 +243,10 @@ dotnet test Tests/NeoEditor.Messaging.Tests   # 运行指定测试项目
 - 改动后确认编译通过；涉及核心服务/数据的改动补充测试。
 - XAML 引用跨程序集类型时必须加 `;assembly=` 前缀（如 `clr-namespace:NeoEditor.Data.Model;assembly=NeoEditor.Core`）。
 - `ConfigService.SaveAsync()` 已有 `SemaphoreSlim` 写锁保护，并发调用安全；设置页绑定请用 ViewModel 层的 `DisplayXxx` 包装属性（而非直接绑 `Config.Xxx`），确保 `OnPropertyChanged` + `SaveAsync` 正常触发。
+- **用户贴图识别（ZCode deepseek-vision MCP，2026-08-05 接入）**：当前会话模型不支持多模态，聊天中的图片会被过滤（模型看不到内容），但已可通过 ZCode 图像识别 MCP（MiMo v2.5）识别：
+  1. **定位附件**：`C:\Users\Cromzst\.zcode\cli\artifacts\<会话ID>\prompt-attachment-upload-*.txt`（内容为 base64 data URI，用**修改时间**确认是刚发的那张）
+  2. **解码**：去掉 `data:image/xxx;base64,` 前缀，解码保存为 `.png` 到工作目录
+  3. **识别**：`node C:\Users\Cromzst\.zcode\workspace\default\deepseek-vision\analyze.js <图片路径> [识别提示词]`（默认提示词=详细描述，含文字/数据/表格/图表；识别结果整理成中文分区块回答用户）
+  4. **凭据**：`DEEPVISION_API_KEY` / `DEEPVISION_BASE_URL` / `DEEPVISION_MODEL` 从 `C:\Users\Cromzst\.zcode\cli\config.json` 的 `mcp.servers["deepseek-vision"].env` 读取，**不硬编码密钥**
+  5. 大图报错先缩小再发；解码出的图片保留在工作目录便于追问；备选：会话内 `analyze_image` MCP 工具（剪贴板/路径/URL 三模式，`analyze.js` 更可靠）
+  - 完整流程见全局 `C:\Users\Cromzst\.zcode\AGENTS.md`（用户级指令，随会话加载）。

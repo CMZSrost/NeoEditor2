@@ -1,9 +1,5 @@
 using System;
-using System.Threading;
-using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
 using NeoEditor.Core.Abstractions;
-using NeoEditor.Data.Context;
 using NeoEditor.Data.Model;
 using NeoEditor.Data.Model.Game;
 using NeoEditor.Helper;
@@ -21,25 +17,18 @@ namespace NeoEditor.Plugins.EntityEditor.Tests;
 /// </summary>
 public class EntityEditorDocumentXmlApplyTests
 {
-    private sealed class StubDbContextFactory : IDbContextFactory<GameDbContext>
-    {
-        public GameDbContext CreateDbContext()
-            => throw new NotSupportedException("DB not used in XML apply tests");
-
-        public Task<GameDbContext> CreateDbContextAsync(CancellationToken cancellationToken = default)
-            => throw new NotSupportedException("DB not used in XML apply tests");
-    }
-
     private static EntityEditorDocument CreateDoc(Creature creature, StubWorkspaceSession session)
     {
         var serializer = new ReferenceListSerializer();
         return new EntityEditorDocument(
             creature, session,
-            new StubDbContextFactory(),
+            null!, // HostService not exercised by XML-apply tests (no SaveDocument call)
             new StubEntityLookupService(),
             new StubLocalizationService(),
             new StubNotificationService(),
-            serializer);
+            serializer,
+            new StubXmlParser(),
+            new StubConfigService());
     }
 
     private static Creature MakeCreature()

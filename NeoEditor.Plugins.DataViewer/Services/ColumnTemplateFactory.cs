@@ -25,15 +25,20 @@ public class ColumnTemplateFactory
     private readonly DataTableService _data;
     private readonly IDataGridCellInteractionService _cellInteraction;
     private readonly DataGridInteractionState _state;
+    private readonly Converters.CellEditedHighlightConverter _cellHighlightConverter;
 
     public ColumnTemplateFactory(
         DataTableService data,
         IDataGridCellInteractionService cellInteraction,
-        DataGridInteractionState state)
+        DataGridInteractionState state,
+        NeoEditor.Services.IWorkspaceSession session)
     {
         _data = data;
         _cellInteraction = cellInteraction;
         _state = state;
+        // Docs/41: field-level diff — edited cells (and the primary-key anchor) get a
+        // yellow background via this converter bound in every column's CellTemplate.
+        _cellHighlightConverter = new Converters.CellEditedHighlightConverter(session);
     }
 
     /// <summary>
@@ -69,6 +74,8 @@ public class ColumnTemplateFactory
         string headerText = property.Name;
 
         // 2. Tooltip: prefer .docx field description, then *Desc resource, fall back to display name
+        // (Docs/41: the field MEANING lives in the header TOOLTIP — the header itself keeps
+        // the technical column name; only small enums append their value domain).
         var displayAttr = property.GetCustomAttribute<DisplayAttribute>();
         string comment = "";
 
@@ -101,6 +108,8 @@ public class ColumnTemplateFactory
         if (refAttr != null)
         {
             BuildReferenceColumn(e, property, refAttr, headerPanel);
+            WrapCellHighlight(e.Column, columnAttr.Name ?? property.Name,
+                isKey: DataLoaderService.ResolveEntityKeyProperty(modelType)?.Name == property.Name);
             return;
         }
 
@@ -109,6 +118,8 @@ public class ColumnTemplateFactory
             columnAttr.TypeName.Contains("longtext", StringComparison.OrdinalIgnoreCase))
         {
             BuildLongTextColumn(e, property, headerPanel);
+            WrapCellHighlight(e.Column, columnAttr.Name ?? property.Name,
+                isKey: DataLoaderService.ResolveEntityKeyProperty(modelType)?.Name == property.Name);
             return;
         }
 
@@ -122,6 +133,8 @@ public class ColumnTemplateFactory
                 Width = new DataGridLength(70),
                 Binding = new Binding(property.Name),
             };
+            WrapCellHighlight(e.Column, columnAttr.Name ?? property.Name,
+                isKey: DataLoaderService.ResolveEntityKeyProperty(modelType)?.Name == property.Name);
             return;
         }
 
@@ -129,11 +142,42 @@ public class ColumnTemplateFactory
         if (property.PropertyType.IsEnum)
         {
             BuildEnumColumn(e, property, headerPanel);
+            WrapCellHighlight(e.Column, columnAttr.Name ?? property.Name,
+                isKey: DataLoaderService.ResolveEntityKeyProperty(modelType)?.Name == property.Name);
             return;
         }
 
         // 8. Default: retain original column type + header
         BuildDefaultColumn(e, property, headerPanel);
+        WrapCellHighlight(e.Column, columnAttr.Name ?? property.Name,
+            isKey: DataLoaderService.ResolveEntityKeyProperty(modelType)?.Name == property.Name);
+    }
+
+    /// <summary>
+    /// Docs/41 需求: field-level diff — wrap the column's CellTemplate so every cell's
+    /// Background binds the EditStore-derived highlight (edited cells yellow + the
+    /// primary-key anchor cell of any edited row). Re-evaluated whenever the DataGrid
+    /// reloads rows (RefreshActiveDataGrid / scrolling).
+    /// </summary>
+    private void WrapCellHighlight(DataGridColumn column, string colName, bool isKey)
+    {
+        // CellTemplate exists only on DataGridTemplateColumn (checkboxes etc. skip).
+        if (column is not DataGridTemplateColumn templateColumn) return;
+        var template = templateColumn.CellTemplate;
+        if (template is null) return;
+        var param = (isKey ? "key:" : "") + colName;
+        templateColumn.CellTemplate = new Avalonia.Controls.Templates.FuncDataTemplate<object>((item, _) =>
+        {
+            var host = new Grid();
+            if (template.Build(item) is Control content)
+                host.Children.Add(content);
+            host.Bind(Grid.BackgroundProperty, new Binding("EntityId")
+            {
+                Converter = _cellHighlightConverter,
+                ConverterParameter = param
+            });
+            return host;
+        });
     }
 
     // ── Reference column builder ────────────────────────────────────────
@@ -476,6 +520,16 @@ public class ColumnTemplateFactory
         PropertyInfo property, StackPanel headerPanel)
     {
         var enumValues = Enum.GetValues(property.PropertyType);
+        // Docs/41 需求4: the value domain is only meaningful for small enums — append it to
+        // the header tooltip (header itself shows the field meaning).
+        if (enumValues.Length <= 6)
+        {
+            var baseTip = (string?)ToolTip.GetTip(headerPanel);
+            var domain = string.Join(" / ", enumValues.Cast<object>());
+            ToolTip.SetTip(headerPanel,
+                string.IsNullOrEmpty(baseTip) ? $"可选值: {domain}" : $"{baseTip}\n可选值: {domain}");
+        }
+
         e.Column = new DataGridTemplateColumn
         {
             Header = headerPanel,

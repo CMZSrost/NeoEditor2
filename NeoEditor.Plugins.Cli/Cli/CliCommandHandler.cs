@@ -48,6 +48,10 @@ public class CliCommandHandler
             CliCommandType.Save => await SaveAsync(cmd),
             CliCommandType.Diff => await DiffAsync(cmd),
             CliCommandType.QueryReferences => await ResolveReferencesAsync(cmd),
+            CliCommandType.Undo => await UndoAsync(cmd),
+            CliCommandType.Redo => await RedoAsync(cmd),
+            CliCommandType.Publish => await PublishAsync(cmd),
+            CliCommandType.ExportMod => await ExportModAsync(cmd),
             _ => new { error = true, message = $"Unknown command: {cmd.Command}" }
         };
 
@@ -223,6 +227,71 @@ public class CliCommandHandler
         return new { rawValue, segmentCount = segments.Length, resolvedCount = resolved.Count(r => r.resolved), targets = resolved };
     }
 
+    private async Task<object> UndoAsync(CliParsedCommand cmd)
+    {
+        await _hostService.UndoAsync("cli");
+        return new { success = true, dirtyEntityCount = _hostService.DirtyEntities.Count };
+    }
+
+    private async Task<object> RedoAsync(CliParsedCommand cmd)
+    {
+        await _hostService.RedoAsync("cli");
+        return new { success = true, dirtyEntityCount = _hostService.DirtyEntities.Count };
+    }
+
+    private async Task<object> PublishAsync(CliParsedCommand cmd)
+    {
+        var result = await _hostService.PublishAsync();
+
+        var exports = result.Exports.Select(export => new
+        {
+            modId = export.ModId,
+            fileCount = export.Files.Count,
+            committed = cmd.Commit,
+            files = export.Files.Select(f => new
+            {
+                targetId = f.TargetId,
+                kind = f.Kind.ToString()
+            })
+        }).ToList();
+
+        if (cmd.Commit)
+            foreach (var export in result.Exports)
+                if (export.Files.Count > 0)
+                    await _hostService.CommitExportAsync(export.Files);
+
+        return new
+        {
+            success = true,
+            savedCount = result.Save.SavedEntityIds.Count,
+            savedEntityIds = result.Save.SavedEntityIds,
+            committed = cmd.Commit,
+            exports
+        };
+    }
+
+    private async Task<object> ExportModAsync(CliParsedCommand cmd)
+    {
+        var results = await _hostService.ExportModAsync(cmd.ModId!.Value);
+
+        var files = results.SelectMany(result =>
+            result.Files.Select(f => new { targetId = f.TargetId, kind = f.Kind.ToString() })).ToList();
+
+        if (cmd.Commit)
+            foreach (var result in results)
+                if (result.Files.Count > 0)
+                    await _hostService.CommitExportAsync(result.Files);
+
+        return new
+        {
+            success = true,
+            modId = cmd.ModId,
+            committed = cmd.Commit,
+            fileCount = files.Count,
+            files
+        };
+    }
+
     // ── Shared Helpers ──
 
     private async Task<IEntity?> GetEntityByTypeAsync(string entityType, string entityId)
@@ -234,7 +303,13 @@ public class CliCommandHandler
         var task = (Task?)method?.Invoke(repo, new object[] { entityId });
         if (task is null) return null;
         await task.ConfigureAwait(false);
-        return task.GetType().GetProperty("Result")?.GetValue(task) as IEntity;
+        var baseline = task.GetType().GetProperty("Result")?.GetValue(task) as IEntity;
+        // 追修(C): the tables are the baseline — merge the current profile's overlay so
+        // reads see this profile's edits (and IsDeleted entities resolve to null).
+        var merged = baseline is null
+            ? _hostService.MergeProfileOverlay([])
+            : _hostService.MergeProfileOverlay([baseline]);
+        return merged.FirstOrDefault(e => e.EntityId == entityId);
     }
 
     private async Task<IReadOnlyList<IEntity>> GetAllByTypeAsync(string entityType)
@@ -248,7 +323,10 @@ public class CliCommandHandler
         await task.ConfigureAwait(false);
         var result = task.GetType().GetProperty("Result")?.GetValue(task)
             as System.Collections.IEnumerable;
-        return result?.Cast<IEntity>().ToList() ?? (IReadOnlyList<IEntity>)Array.Empty<IEntity>();
+        // 追修(C): merge the current profile's overlay (see GetEntityByTypeAsync).
+        return result?.Cast<IEntity>() is { } baseline
+            ? _hostService.MergeProfileOverlay(baseline)
+            : (IReadOnlyList<IEntity>)Array.Empty<IEntity>();
     }
 
     private object? GetRepository(Type entityType)

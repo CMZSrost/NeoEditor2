@@ -9,6 +9,7 @@ using Xunit;
 
 namespace NeoEditor.Infra.Tests.Data.Repository;
 
+[Collection("GameDbReferenceSerializer")]
 public class DbRepositoryTests
 {
     private static IDbContextFactory<GameDbContext> CreateGameDb()

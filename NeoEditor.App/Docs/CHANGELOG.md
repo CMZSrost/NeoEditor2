@@ -2,6 +2,295 @@
 
 ---
 
+## 播放器 v2.44：受伤存档重启必崩修复（接管序列化——LSO 引用全展开） | 2026-08-05
+
+**问题**：角色受伤后存档，重启必崩（`m_fDate not found on Number`，Ruffle issue #1069）。
+**根因**：Ruffle（nightly 0.6.0-nightly.2026.8.4）反序列化 AMF3 引用有 bug——`deserialize_value`
+把对象/向量/字典/数组的引用解析为 `Amf3ObjectReference` 后落入 `_ => Value::Undefined`；
+ECMAArray 分支只遍历 associative、dense 元素被丢弃。受伤后存档大量对象被引用序列化 →
+Ruffle 读回 undefined/Number → 游戏访问 `.m_fDate` → 崩溃。
+
+**方案**：SWF 加载前**接管序列化**——`localStorage.getItem` 拦截，存档 LSO 解析 → 引用全部
+展开为内联 → 重编码为无引用字节流，Ruffle 读取时无引用可崩。
+
+- 新增 `NeoEditor.Player.Core/Web/lso-expand-web.js`：无依赖浏览器版 AMF3/LSO 解析+重编码器
+  （u29/traits、ECMAArray/StrictArray、Vector*/Dictionary、字符串/对象/traits 引用、环检测），
+  与 `player-tools/lso-expand.js`（node 原型）逐字节一致
+- `host.html`：getItem 包装（key 含 `nsSGv1` 返回展开版本，失败回退原始值，/__log 诊断）
+- 解析器自查修复：Integer 解码误用字符串奇偶规则；Dictionary 编码漏写独立 weak 字节
+  （len>0 dict 被解析成引用 → 42KB 累计错位）
+- 验证：崩溃档 + 3 备份档往返成功，4312 叶子值逐叶子对比零不一致；沙箱端到端测试 6/6；
+  `Player.Core` 构建 0 错误。**待用户实机验证**
+
+---
+
+## 追修：dirty 计数 / 字段级高亮 / 旧标记升级 / .php 格式 / XML 差异对比 | 2026-08-04
+
+✅ **五项验收缺陷修复**（构建 0 错误、645/645 测试通过）：
+
+### 1. 外部 "N dirty" 显示 1（Home / Mod 数据库 / Profile / 工作区历史）
+- **根因**：四处外部视图按"mod 布尔"计数（`HasUnsavedCommandsAsync`/`HasPendingExportsAsync` 按 mod 判一次），一个 mod 内改 N 行永远显示 "1 dirty"
+- **方案**：按**实体数**计数——新增 `GetDirtyEntityIdsAsync(modId)`（pending_export ∪ WAL 窗口，ModId=-1 追加 `("game",0)` 目标）与 `CountPendingExportsAsync`（distinct EntityId）；HomePage / ModDatabase / ModIndex / WorkspaceHistory 全部改走实体计数，文案改 "N unsaved edit(s)"（"⚠ 3 dirty" = 改了 3 个实体）
+
+### 2. 字段级 dirty 全部字段都亮（DataTable + Value Editor）
+- **根因**：KV/XML 编辑路径、WAL 恢复、pending_export 恢复一律写 `(eid, "*")` 通配 → 转换器/KV `IsEditedField` 把该实体所有可改字段都标"已修改未导出"
+- **方案**：
+  - `IEditorCommand` 新增 `GetEditedCells()`（EditCell/BatchEdit 携带精确列名），KV/XML 消息按 `EditRecord.ColumnName`、WAL 恢复按命令逐列写入 `EditStore.EditedCells`（Add/Delete 等无列名命令保留 `"*"` 兜底）
+  - `pending_export` 增加 `ColumnName` 列（唯一索引改为 ModId+EntityId+ColumnName；`RunEditorDbMigrations` 老库 ALTER + 换索引），自动保存按列持久化、重启按列恢复——字段级高亮跨重启成立
+  - `SearchableDataGrid`：提交时按 `[Column]` 名入栈（原用 Header=属性名，与转换器列名不一致），并删除整行黄底（与字段级设计冲突，提交重渲染时单元格级高亮即时生效）
+  - 主键锚点改为"行有任意编辑即亮"（原仅 `"*"` 通配行生效）；KV `ApplyChanges` 立即置 `IsEdited`
+
+### 3. 旧标记一次性自动升级（无列名的历史 pending_export 行 → 字段级）
+- **背景**：修复前写入的 `pending_export` 行没有 `ColumnName`（迁移补列后为 NULL），恢复时整行黄；列信息在库里已不可恢复
+- **方案**：打开工作区时对旧行做一次性升级——实体未导出过，游戏 XML 仍持有原始值，用 `ImportEntities` 解析源 XML → `DiffEngine.ComputeChangedColumns(原始值, DB 当前值)` 还原精确列名，写回 per-column 标记并删除 NULL 行（自愈：下次打开无旧行）。文件缺失 / 解析失败 / 实体缺失一律回退保留 `"*"` 整行标记，绝不丢脏状态
+- 真实数据验证：3 个旧实体全部匹配并还原为 `[fDamageBlunt]`（与实际修改列一致）；新增 `RemovePendingExportEntityAsync` + `DiffEngine.ComputeChangedColumns` 测试
+
+### 4. .php 保存格式：单行、无空格、无回车
+- **根因**：`GenerateModsPhp`/`GenerateImagePhp` 用 `AppendLine` 输出带 `\r\n` 的多行内容；而游戏按 URL query-string 解析 .php，`getimages.php` 旧备份里 2325 个空格曾导致整份图片清单加载失败（游戏根目录能用的 `getimages.php` = 单行、CR=0/LF=0/SP=0）
+- **方案**：两个生成器改为**单行纯 `&` 连接**（`nRows=N&strModName0=X&strModURL0=path&...` / `nRows=N&nCols=2&strImageURL0=...`），mod 名/路径 trim 首尾空白；写盘（`ImageOrchestrationViewModel.SaveAsync` 的 `File.WriteAllTextAsync`）默认 UTF-8 无 BOM 保持不变
+- 验证：生成内容 CR=0 LF=0 SP=0，且 App 自身 `ParseModsContent` 往返解析无损
+
+### 5. XML 编辑"差异对比"对 dirty 项无变化
+- **根因（四处）**：① diff "旧侧"取文档打开时的内存快照——实体在打开文档**之前**已被编辑（或重启恢复的 pending 标记），快照=编辑后状态 → old==new；② 追修初版把 `XmlContent`（XML 编辑内容）也初始化成磁盘原始值；③ ToggleButton 同时绑 `IsChecked`(TwoWay) 与 `Command`——Avalonia 先 Toggle 再执行 Command，`IsDiffView` 被双重翻转回 false，差异视图根本打不开；④ `ResolveOriginalXml` 的 hasEdits 门控依赖 `DirtyEntities`/`ActiveEditStore` 运行时状态（auto-save 清空 dirty 后若 EditStore 未命中 → 直接 fallback 当前值 → 无差异），且**切换实体时 diff 文档不刷新**（`IsDiffView` 残留 + `OnEntityChanged` 不重算 → 显示上一个实体的对比）
+- **方案**：① diff 旧侧从磁盘游戏 XML 解析原始实体（`IXmlParser.ImportEntities` + EntityId 匹配）重建片段；② `XmlContent` 始终=当前实体值；③ ToggleButton 去掉 Command，改 `partial void OnIsDiffViewChanged` 驱动 `RefreshDiff`（单一数据源）；④ **去掉 hasEdits 门控**——无条件磁盘对比（磁盘原始==当前则短路返回当前=空差异；解析失败回退当前），并在 `OnEntityChanged`/`RefreshXml` 时重算 `_originalXml` 并同步 `RefreshDiff`
+- 真实数据验证（用户 DB 4 个 pending 实体）：2 个磁盘==DB（编辑已撤销，空差异正确）、2 个 `[fDamageBlunt]` 差异可还原；`EntityEditorDocumentDiffTests` 锁定（dirty：XML 内容=当前、diff 旧侧=磁盘原始；clean：空差异；开关 hook 刷新文档）
+
+### 6. XML 编辑滚轮导致页面放缩
+- **根因（追修订正）**：**并非缩放**——AvaloniaEdit 12.0.0 源码确认无任何滚轮缩放逻辑（`Ctrl+Wheel`/捏合缩放不存在）。真实原因是 **DockPanel 布局**：XML tab 的 `DockPanel` 只有**最后一个子元素**（XmlDiffView）填满剩余空间，可见的 XmlEditor（倒数第二个）宽度取 Auto → "下半部分 width 小、看起来像放缩"
+- **方案**：XML tab 改用 `Grid RowDefinitions="Auto,*"` + 内层 Grid——两个编辑器（XmlEditor / XmlDiffView）都默认填满、按 `IsDiffView` 切换可见性；保留 Tunnel 事件拦截（防御性，AvaloniaEdit 当前无缩放但未来版本可能有）
+
+### 7. 加载时 DB vs XML 对比，校正 pending 标记（用户建议）
+- **背景**：实体编辑后又撤销/改回 → pending_export 标记残留 → 重启后仍显示 dirty，但 DB 与磁盘 XML 实际相同
+- **方案**：`RestorePendingExportsAsync` 恢复后新增 `ValidatePendingMarkersAsync`——对**所有** pending 实体（按文件缓存解析一次）做磁盘 XML 原始值 vs DB 当前值 diff：
+  - 有差异 → 按**精确列**重建标记（同时完成 legacy NULL 行升级，替换原 `UpgradeLegacyPendingMarkersAsync`）
+  - **无差异 → 清除失效标记**（内存 EditStore + DB `RemovePendingExportEntityAsync`）
+  - 解析失败 / 新建实体（不在 XML）/ isNew → 保守保留
+- 真实数据验证：用户 4 个 pending 实体 → 2 个 `DIFF-EMPTY` 将被清除、2 个 `[fDamageBlunt]` 保留为列级
+
+### 8. 已知限制（上升讨论）：跨 profile 保存覆盖
+- **现象**：dirty 按 profile 隔离（`_dirtyByProfile`，切换 profile 时 `ClearDirtyEntities` + WAL 兜底恢复，**不泄露**）；但 `SaveAllAsync` 保存当前 profile 的 dirty 集合到**同一个 game.db**——同一实体在两个 profile 分别编辑时，**后保存者覆盖先保存者**（"最后编辑者生效"）
+- **结论**：涉及架构设计（DB 单份实体 vs 多 profile 工作区），**上升讨论**，本期不改代码；方案讨论见 Docs/41 增补 I（冲突检测 / WAL 隔离 / 编辑层三方案）
+
+### 9. XML 编辑器 WordWrap（用户反馈）
+- 三处 XML 编辑器（`EntityEditorView` 的 XmlEditor、`XmlDiffView` 的 Old/NewEditor）加 `WordWrap="True"`——长行自动换行、不再横向滚动（配合第 6 项的 Grid 布局修复，"放缩"视觉问题彻底消除）
+
+### 10. 多 profile 隔离（B+C 实施，2026-08-04）
+- **B：WAL 按 profile 隔离**——`GetPersistenceTarget` 对单 mod profile 从 `("mod", modId)` 改为 `("profile", profileId)`（两个单 mod profile 含同一 mod 时命令日志不再串扰）；`MigrateWalTargetAsync` 迁移遗留命令（未保存的移动到新 target 并重排序号，已保存的丢弃——值已在实体表）
+- **C：per-profile 编辑覆盖层**——新表 `profile_edits`（ProfileId/EntityId/ColumnName/RawValue/IsNew/IsDeleted/EntityType/ModId）：
+  - **保存**：`PersistEntitiesAsync` 不再写共享实体表——对每个 dirty 实体读实体表基线（`LoadBaselineAsync`）→ `DiffEngine.ComputeChangedColumns` 逐列 diff → 写覆盖层（新建→IsNew 标记+全列；删除→IsDeleted 标记）；**两个 profile 编辑同一实体互不覆盖**
+  - **加载**：`ApplyProfileOverlayAsync`（ComputeMergeAsync 后）——列覆盖应用、IsNew 重建入视图（绿）、IsDeleted 移除
+  - **导出**：视图 Save & Export 后 `AdvanceBaselineAsync`（实体表=导出状态 + 删除实体移除）+ `ClearProfileEditsAsync`（清本 profile 覆盖）；`ExportModAsync`（MCP/CLI）合并当前 profile 覆盖（`ApplyProfileOverlay`）
+  - 实体表成为**共享基线**（导入/导出写入）；覆盖层=各 profile 的编辑
+- 测试：`SaveAll_NewEntity_WritesIsNewOverlay_NotEntityTable` / `SaveAll_ExistingEntity_WritesOnlyChangedColumns` / `SaveAll_DeletedEntity_WritesIsDeletedOverlay` / `DiscardAsync_ClearsOverlay_And_Dirty`；全量 **653/653 通过**
+- 已知边界：游戏基础数据（ModId=-1）编辑仍走 `("game", 0)` 共享 WAL（merge editor 聚合场景为主）；CSV 导入经 HostService 命令 → 自动进覆盖层
+
+### 11. 关联组件修复（覆盖层语义贯通，2026-08-04）
+- **读路径合并覆盖**：新增 `IHostService.MergeProfileOverlay`（列覆盖应用 + IsNew 重建 + IsDeleted 移除），接入四处直接读实体表（=基线）的路径——`SearchEntitiesAsync`（搜索/MCP SearchAllTypes）、MCP `EditorTools.GetEntityByTypeAsync/GetAllByTypeAsync`、CLI `CliCommandHandler` 同两方法、MCP `EntityResourceProvider`（entity:// 资源）——否则看不到当前 profile 的编辑
+- **DiscardAsync 清覆盖层**：原只清内存 dirty → 覆盖层残留导致编辑重启复活；现同时 `ClearProfileEditsAsync`
+- **ExportModAsync 统一合并**：删除专用 `ApplyProfileOverlay`/`IsOverlayRelevant`，改用通用 `MergeProfileOverlay` + mod 过滤
+- `GetDiffAsync`（cache vs 基线）语义天然正确，无需改；`ModEntityStats`（HomePage 实体计数）读基线统计，IsNew 未计入（可接受）
+
+---
+
+## 字段级 diff / AI Chat 渲染 / MCP 评审实施 / 验收修复 | 2026-08-04
+
+✅ **四块落地**（构建 0 错误、全量测试通过）：
+
+### 1. DataTable 字段级 diff（含主键锚点）
+- 行级黄 → **单元格级**：`CellEditedHighlightConverter` 统一包装各列 CellTemplate（`EntityId + Converter + 列名` → 查 `EditStore.EditedCells`，含 `"*"` 通配；DataGrid 重载/滚动时重算）
+- **主键锚点**：`key:` 前缀参数——行有编辑 → 主键单元格同步亮黄（主键不可改、不会自己亮，作行定位锚点）
+- 行级保留：覆盖灰 / 新建绿；编辑行行背景 null
+- 取舍：CheckBox 列（bool）不参与单元格高亮（主键锚点仍可定位）
+
+### 2. AI Chat
+- **默认 Markdown 渲染**：assistant 气泡 → `MarkdownRenderer`（LiveMarkdown 1.9.2 新包引用；`MarkdownBuilder` 随 Content 流式同步）
+- **MD 主题修复**：`MarkdownTheme.axaml` 无条件 Dark+ → **ThemeDictionaries**（Light 白底深字 / Dark 原样）——白主题黑底灰字消除
+- **复制按钮**：气泡头部 📋 → `CopyCommand`
+
+### 3. MCP 工具评审实施（AI 评审建议，16 → 19 工具）
+- `BatchEditEntity`：多字段一次编辑（原子 undo、校验前置）
+- `FindReferencingEntities`：反向引用（删除前查"谁引用了我"）
+- `SearchAllTypes` query 改可选（空 query + filtersJson 纯过滤）
+- `DiscardChanges`：清除单个实体暂存标记
+- 测试：MCP +5（3 个 BatchEdit 错误路径 + DiscardChanges + 工具数断言更新）
+
+### 4. 验收修复
+- **KV 编辑后 DataTable 不刷新/无高亮根因**：`RefreshEntityEditorMessage` 接收的 `if (ReadOnly) return;` 移除（ReadOnly 只 gate CRUD 不 gate 刷新；底部 DataTable 实例 ReadOnly=true）
+- **Debug 工具语义**：Command Log 空时提示"自动保存已清 WAL（正常）"；Session Dirty 新增 pending_export 摘要
+- **只读值 wrap**：KV 只读 TextBlock 加 `TextWrapping="Wrap"`
+
+---
+
+## Docs/41 增补：pending_export 持久化 + 验收四修 | 2026-08-04
+
+✅ **"未导出"状态持久化 + 四项验收修复**（653/653 测试通过）：
+
+### pending_export 表（新语义闭环）
+- **问题**：新语义下 dirty = "已存 DB 未导 XML"，但自动保存清 WAL 后重启无任何"未导出"指示（EditStore 会话级）
+- **方案**：新表 `pending_export`（ModId/EntityId/IsNew，唯一索引）——自动/Quick 保存后 upsert（IsNew 取 EditStore），Save & Export 确认后清除，重启加载时恢复进 EditStore（黄/绿高亮 + ⚠ 徽章），老库经 `RunEditorDbMigrations` 自动建表
+- ⚠ 徽章四处（ModDatabase / HomePage / ModIndex / WorkspaceHistory）= `HasUnsavedCommandsAsync || HasPendingExportsAsync`
+- 恢复**不标 dirty**（已落库；dirty 仅表 WAL 窗口）
+- 测试：`WorkspacePendingExportTests` +2
+
+### 验收四修
+1. **KV 只读重影**：`IsKey || IsMeta` 字段 CtrlType 强制 ReadOnly → 只渲染 TextBlock
+2. **XML 精简**：隐藏 entity_id/file_path/mod_id 列与 `<?xml...?>` 声明行；主键保留显示，修改后 alert「Primary key cannot be changed」且不生效（其余字段正常应用）
+3. **列头回退**：技术名 + 说明 tooltip（枚举 ≤6 时 tooltip 追加值域）
+4. **Debug Dock 移位**：Command Log / Session Dirty 两工具 Left → Bottom（DataTable 旁）
+
+---
+
+## Docs/41 增补：字段级 diff / 只读保护 / Debug Dock / 列头说明 / Welcome 本地化 | 2026-08-04
+
+✅ **五需求落地**（635/635 测试通过）：
+
+### 1. Value Editor 字段级 diff（替代"未保存"alert）
+- 删除 R09 黄横幅（自动保存后"unsaved changes / Press Ctrl+S"纯属误导）
+- 每字段名旁新增 **黄色 ● 标记** = "本会话已修改、尚未导出"（数据源与 DataGrid 单元格高亮一致：`EditStore.EditedCells`，含 KV/XML 路径的 `"*"` 通配）；自动保存不清除，仅 Save & Export 后清除（订阅 `SaveCompletedMessage` 重算）
+
+### 2. 只读保护（KV + XML）
+- KV：编辑器元数据（EntityId/ModId/FilePath，`IsMeta`）与主键（`IsKey`）均只读显示（`IsReadOnly`）
+- XML：`ApplyXmlToEntity` 跳过受保护列（`IsProtectedColumn`：IEntity 元数据 + `id`/`nID` 主键）
+
+### 3. XML Diff 视图
+- EntityEditor XML Tab 顶部新增 **Diff 切换按钮**（`EV.XmlDiffToggle`）：编辑模式 ↔ 行级 diff 视图（`XmlDiffView`，左旧右新 + DiffPreviewTrack）；旧侧 = 会话开始快照（`_originalXml`），新侧 = 当前 XML
+
+### 4. Debug Tool Dock（仅 DEBUG 构建）
+- `#if DEBUG` 注册两个 Left Dock 工具：**Debug: Command Log**（WAL `command_log` 表最近 200 条 + Refresh）与 **Debug: Session Dirty**（DirtyEntities + EditStore 实时，订阅 `DirtyStateChanged`）
+
+### 5. DataTable 列头显示字段说明
+- 列头主文本 = 字段说明（Docs/38 描述）优先，技术名兜底；`MaxWidth=180` + 省略号（完整文本在 tooltip）
+- 枚举且选项 ≤6 时，tooltip 追加"可选值: A / B / C"（值域仅在少量枚举时有意义）
+
+### 6. Welcome 页快捷键订正 + 中文本地化
+- 快捷键表更新为新语义（Ctrl+Shift+S 导出 / Ctrl+S 当前 tab / Ctrl+Z·Ctrl+Shift+Z·Ctrl+Y / Ctrl+E 等）
+- `Welcome.Title` / `Welcome.Loading` / `Welcome.Shortcuts` 三语言 resx；"NeoEditor Session"/"Usage"/"Loading…" 硬编码文本一并本地化
+
+---
+
+## 保存工作流收敛 + 非侵入式新手引导（Docs/41） | 2026-08-03
+
+✅ **消除"保存"概念**：编辑/增删自动落 DB（无感缓存），黄/绿高亮表达"未导出"，用户唯一显式动作 = Save & Export。架构零改动（R24/R26 契约不变），全部落在 UI 层。
+
+### 自动保存（P1，强度 0）
+
+- 事件驱动：监听 `WorkspaceSession.DirtyStateChanged`（所有编辑入口的收敛点：KV / XML / Add / Delete / Undo / Redo / CSV 导入）→ 800ms 防抖 → `SaveAllAsync` 落库；`IsLoading` 作 WAL 恢复期抑制（防恢复命令被立即落库）
+- 高亮语义改为"已缓存、未导出"：行高亮数据源 `DirtyEntities` → `EditStore` 派生（自动保存清 dirty 后高亮保留）；修改淡黄 / 新建淡绿（颜色原有，`SearchableDataGrid`）
+- 高亮清除只发生在 Save & Export 确认写盘后（原 `ShowMergeSavePreviewAsync` 清理块）；`QuickSaveAsync` 与 `EntityEditorDocument.SaveDocument` 不再清高亮
+- 工具栏删除 Quick Save 按钮；`AutoSaveTimer` 定时器降为兜底（`AutoSaveInterval` 默认 60s）
+
+### 快捷键
+
+- `Ctrl+S`：保持原语义（当前 tab 落库，R11）
+- `Ctrl+Shift+S`：新增 `SaveAndExportRequestedMessage` → 完整 Save & Export 预览（`DataTableViewModel` 注册，无 dirty 守卫——自动保存清 dirty 后导出仍可达）
+
+### 新手引导（P2/P3，强度 1+2，全部一次性/可关闭/可重置）
+
+- 空状态横幅 → **三步卡片**（① 添加实体 ② 左侧编辑字段 ③ Save & Export）+ 自动保存/高亮图例 + `[不再显示]`（持久化 `AppConfig.EmptyModHintDismissed`）
+- `IOnboardingHintService`（DI 注入，状态存 `AppConfig.DismissedHints`）：首次导出成功 toast；首次尝试编辑 Game 基础数据时引导"Copy Row 复制到你的 Mod"（挂在 cell 编辑只读拦截分支）
+- Settings 新增「重置新手提示」按钮
+
+### 字段级文档可见化（P4）
+
+- KV 编辑器每行新增 `?` 图标（有描述时显示），ToolTip 挂图标（描述数据源为 Docs/38 生成的 `field_descriptions.json`）
+- AddRowDialog XML 路径选择下新增说明行（实体按 XML 文件分组、游戏按文件名叠加）
+
+### 测试
+
+**648/648 通过**（无新增单测——App 层无测试项目，HintService 语义简单，由手工验证覆盖）
+
+---
+
+## Ruffle 游戏运行器 P1（Docs/40） | 2026-08-03
+
+✅ **新增「用 Ruffle 启动」**：编辑器以进程方式通过 Ruffle（用户自装）运行游戏 SWF，并捕获运行日志——第三方扩展模式，未检测到 Ruffle 时不显示任何新 UI。
+
+### 检测（Core）
+
+- `RuffleLocator`（纯静态）：优先级 配置路径（P2 预留）→ `RUFFLE_PATH` 环境变量 → PATH 中的 `ruffle`/`ruffle.exe`；找不到即功能禁用
+- `RuffleOptionsBuilder`（纯静态）：SWF 定位（`NEOScavenger.swf` 优先，仅一个 `*.swf` 兜底）+ 命令行构建：`--player-runtime air`（AIR 模拟）、`--base file:///游戏根目录`（SWF 相对路径解析）、`--cache-directory`（重定向 Ruffle 日志文件到编辑器 logs）、`--filesystem-access-mode allow`、`RUST_LOG` 环境变量
+
+### 运行 + 日志捕获（Infra）
+
+- `RuffleRunnerService`：进程管道重定向 stdout/stderr → 逐行写入 `logs/ruffle-<时间戳>.log` + Serilog 主日志 + `LogLineReceived` 事件；`Exited` 事件上报退出码与日志路径；单实例锁（运行中拒绝二次启动）；`Stop()` 杀进程树
+- 日志双通道：stdout 管道（实时）+ `{logs}/ruffle-cache/log/ruffle.log`（Ruffle 官方日志文件，兜底）
+
+### UI（App）
+
+- 工具栏「用 Ruffle 启动」按钮（PlayCircle 图标），`RuffleLaunchVisible`（`!ReadOnly && Ruffle 已检测`）控制显隐；点击 = 启动 / 再次点击 = 停止
+- 退出通知「Ruffle 已退出（代码 N）。日志文件：…」（用户主动停止不弹）
+- resx 三语言 5 个新键（RuffleLaunch / RuffleNotInstalled / RuffleStarted / RuffleLaunchFailed / RuffleExited）
+
+### 测试
+
+**635/635 通过**（+18）：`RuffleLocatorTests` 7（env 变量/优先级/PATH/空值）+ `RuffleOptionsBuilderTests` 6（SWF 定位/参数/URL 编码/无 SWF）+ `RuffleRunnerServiceTests` 5（管道捕获/退出码/单实例拒绝/Stop/无 SWF 拒启，用 cmd/powershell 桩进程驱动，无需安装 Ruffle）。
+
+### 附带修复
+
+- `HostServiceSearchTests.cs` 恢复被误删的 `using NeoEditor.Data.Model;`（R31 结构化搜索测试编译错误，`AttackType` 仍在该命名空间）
+
+---
+
+## MCP 薄弱点完善 + Search 结构化搜索（R31） | 2026-08-03
+
+✅ **修复 3 个薄弱点并增强搜索**：MCP GetDiff 变为真实字段级 diff、Save 工具如实回传结果、修复命令双重执行 bug；新增 Undo / Redo / Publish / ExportMod 四个 MCP 工具；`SearchEntitiesAsync` 新增结构化请求（多表选择 + 类型化字段过滤 + 分页 + 排序）；CLI 同步 4 个命令；工具注册反射去重。
+
+### 基础修复（薄弱点）
+
+- **`HostService.GetDiffAsync` 字段级**：从占位（单条 `EntityState/Modified`）改为经 `DiffEngine.ComputeDiff(dbVersion, cachedVersion)` 的真实字段级 diff（Modified / Added / Removed 按 `[Column]` 属性逐项）。顺带修复 `FindEntityInDbSet` 反射调用——EF `FindAsync` 返回 `ValueTask<T>` 且反射不填充可选参数（CancellationToken），旧代码静默抛异常被吞，DB 版本始终查不到
+- **`DiffEngine.ComputeDiff`**：引用字段按 `ReferenceText.GetRawString` 规范化比较 / 序列化，不再走损坏的 `ReferenceList.ToString()` "[a, b]" 格式——未变的引用字段不再误报
+- **双重执行 bug**：`HostService.ExecuteAsync/ExecuteBatchAsync` 曾先 `command.Execute()` 再 `scope.Execute(command)`（内部又执行一次）。现在 scope 存在时只走 `scope.Execute`，集合回调只触发一次
+- **MCP `Save` 工具**：回传真实 `SaveResult`（savedCount / savedEntityIds / remainingDirty / note），不再无条件假报 `{saved:true}`
+
+### Search 结构化搜索
+
+- Core 新增 `EntitySearchRequest` / `EntityFilter` / `FilterOperator` / `EntitySearchResult`；`IHostService.SearchEntitiesAsync(EntitySearchRequest)` 带默认接口实现（委托旧 4 参方法），6 个测试桩零改动
+- `HostService` 实现：多表选择（`EntityTypes`）、类型化过滤（字符串 contains/equals/前缀/后缀、数值大小比较、布尔、枚举名或数值、引用字段 raw text，AND 语义）、列排序（含 `IEntity` 基类属性如 Subject，null 排后）、分页（offset + total + truncated）
+- MCP `SearchAllTypes` 新增 `entityTypesJson` / `filtersJson` / `offset` 参数，返回 `total` / `truncated`
+
+### 新增 MCP 工具（12 → 16）
+
+- `Undo` / `Redo`：操作 MCP 专属 scope 撤销栈（机制早已注册，只缺协议面）
+- `Publish(commit)`：SaveAll + Export 一步到位（commit=true 时直接写 XML 文件）
+- `ExportMod(modId, commit)`：单 mod 导出预览 / 提交，对齐 UI"预览 → 确认 → 写文件"流程
+
+### CLI 同步
+
+- 新增 `undo` / `redo` / `publish [--commit]` / `export-mod <modId> [--commit]` 命令，走 `_hostService`（scope "cli"）
+
+### 反射去重
+
+- 新增 `EditorToolRegistry`（工具枚举 + schema 构建单一来源），`McpServerHost` 与 `McpToolExecutor` 共用，消除双份反射实现
+
+### 测试
+
+**617/617 通过**（+36）：`HostServiceSearchTests` +11（多表/类型化过滤/分页/排序）、`HostServiceGetDiffTests` +3（字段级 Modified/Added/Removed）、`HostServiceCommandTests` +2（双执行回归 + 无 scope 单次执行）、`DiffEngineTests` +3（引用 raw text 比较/防误报/分隔符）、MCP 测试 +8（4 新工具 + SearchAllTypes 新参数）、CLI 测试 +12（parser + handler）。新增 `GameDbReferenceSerializerCollection` 将设置静态序列化器的测试类串行化。
+
+---
+
+## CRUD 全路径收束到 HostService（R24 合规审计 + 修复） | 2026-08-03
+
+✅ **审计 + 修复**：增删改查数据操作全部收束到 `IHostService` 单一管道，清除 4 条绕过 HostService 的实体数据写路径（CSV 导入、EntityEditor 文档保存、查找替换、XML 导出写入）。
+
+### 修复的旁路
+
+- **`EntityEditorDocument.SaveDocument`**（EntityEditor 插件）：删除直接 `GameDbContext` 写库（`db.Update/Add` + `SaveChangesAsync`），改为 `IHostService.AddEntityToCache` + `SaveAsync`——走 pre-save hooks → DbRepository upsert → 脏清理的完整管道；并校验 `SaveResult.SavedEntityIds`，未真正保存时如实报告并保留脏状态。插件 / 工厂改注入 `IHostService`（不再注入 `IDbContextFactory<GameDbContext>`）
+- **`ModDatabaseViewModel.ImportCsv`**：删除直接 DbSet `Add` / `SaveChangesAsync` 批量 upsert，改为按字段 diff 构造 `BatchEditCommand` / `AddEntityCommand`，经 `_hostService.ExecuteBatchAsync(commands, "csv-import")` + 逐实体 `_hostService.SaveAsync()`（未注册 scope → 无 undo/WAL，但 hooks / 脏标记 / 缓存 / 事件全部生效）
+- **`FindReplacePanel`**（DataViewer）：查找替换不再直连 `CommandHistory.Execute`，新增 `HostService`/`ScopeId` 注入点改走 `IHostService.ExecuteAsync`（无 HostService 上下文时回退原路径）；`ModGameDataTabsView.ShowFindPanel` 注入 `ViewServices.HostService` + `_scopeId`
+- **XML 导出双轨**：`IHostService` 新增 `CommitExportAsync(IEnumerable<RowDiff>)` 作为**唯一 mod XML 写入口**；`ModGameDataTabsView` 两处 `File.WriteAllTextAsync`（合并保存导出 / XML 导出确认）全部改走该 API
+
+### 测试
+
+**581/581 通过**（+4）：`CommitExportAsync_Writes_Confirmed_Xml_Files`（Infra）+ `EntityEditorDocumentSaveTests` 3 个（走 HostService 缓存 + SaveAsync / 非脏 no-op / 脏集合缺失时如实报告跳过）。
+
+### 有意保留（未收束，非 R24 实体数据契约范围）
+
+- `WorkspacePersistenceService.TakeSnapshotAsync` WAL 快照直写 game.db（旧 WAL 机制固有，随旧管线退役）
+- WAL 回放 `cmd.Execute()`（重启恢复机制）
+- 读路径直连 `IDbContextFactory<GameDbContext>`（BrowserIndex / DataExport / Search / DataLoader 等）与 EditorDbContext 元数据（ModInfos / ProfileInfos）
+
+---
+
 ## AI 配置 Provider 列表 + 每模型可选 Provider | 2026-08-01
 
 ✅ **AI 配置从单一扁平结构改为 Provider 列表**：Endpoint + ApiKey 按供应商分组，对话 / 嵌入 / 图片三个模型各自选择 Provider（原因：一个 API 供应商不一定能提供所有模型）。

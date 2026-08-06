@@ -2,6 +2,7 @@
     x:Class="NeoEditor.Plugins.AiChat.Views.AiChatView"
     xmlns="https://github.com/avaloniaui"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:lm="clr-namespace:LiveMarkdown.Avalonia;assembly=LiveMarkdown.Avalonia"
     xmlns:vm="clr-namespace:NeoEditor.Plugins.AiChat.ViewModels;assembly=NeoEditor.Plugins.AiChat"
     x:DataType="vm:AiChatViewModel">
     <UserControl.Resources>
@@ -194,11 +195,21 @@
                                             Foreground="Gray"
                                             IsVisible="{Binding IsThinking}"
                                             Text="…" />
+                                        <!-- Docs/41: copy the generated content -->
+                                        <Button
+                                            Margin="8,0,0,0"
+                                            Padding="4,0"
+                                            FontSize="9"
+                                            Command="{Binding CopyCommand}"
+                                            ToolTip.Tip="Copy">
+                                            <TextBlock Text="📋" FontSize="10" />
+                                        </Button>
                                     </StackPanel>
-                                    <SelectableTextBlock
+                                    <!-- Docs/41: AI output renders as Markdown by default -->
+                                    <lm:MarkdownRenderer
                                         Margin="0,2,0,0"
-                                        Text="{Binding Content}"
-                                        TextWrapping="Wrap" />
+                                        CodeBlockColorTheme="DarkPlus"
+                                        MarkdownBuilder="{Binding MarkdownBuilder}" />
                                 </StackPanel>
                             </Border>
                         </Grid>

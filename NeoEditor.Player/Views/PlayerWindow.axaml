@@ -1,0 +1,129 @@
+<Window
+    x:Class="NeoEditor.Player.Views.PlayerWindow"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:vm="clr-namespace:NeoEditor.Player.ViewModels"
+    xmlns:loc="clr-namespace:NeoEditor.Player.Services"
+    xmlns:log="clr-namespace:NeoEditor.Player.Core.Logging;assembly=NeoEditor.Player.Core"
+    x:Name="Root"
+    x:DataType="vm:PlayerViewModel"
+    Title="NeoScavenger Player (Ruffle Web)"
+    Icon="avares://NeoScavengerPlayer/Assets/nsLogo.png"
+    Width="1100" Height="760"
+    WindowStartupLocation="CenterScreen">
+
+    <DockPanel>
+        <!--  Menu bar (compact)  -->
+        <Border
+            DockPanel.Dock="Top"
+            Padding="4,2"
+            BorderBrush="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}"
+            BorderThickness="0,0,0,1">
+            <Grid ColumnDefinitions="Auto,*">
+                <Menu Grid.Column="0">
+                    <MenuItem Header="{Binding [Menu.File], Source={x:Static loc:LocalizationManager.Instance}}">
+                        <MenuItem Header="{Binding [Menu.OpenSwf], Source={x:Static loc:LocalizationManager.Instance}}" HotKey="Ctrl+O" Click="OnOpenSwfClick" />
+                        <MenuItem Header="{Binding [Menu.Reload], Source={x:Static loc:LocalizationManager.Instance}}" HotKey="F5" Click="OnReloadClick" />
+                        <Separator />
+                        <MenuItem Header="{Binding [Menu.Exit], Source={x:Static loc:LocalizationManager.Instance}}" Click="OnExitMenuClick" />
+                    </MenuItem>
+                    <MenuItem Header="{Binding [Menu.View], Source={x:Static loc:LocalizationManager.Instance}}">
+                        <MenuItem Header="{Binding [Menu.FullScreen], Source={x:Static loc:LocalizationManager.Instance}}" HotKey="F11" Click="OnFullScreenClick" />
+                        <MenuItem Header="{Binding [Menu.Log], Source={x:Static loc:LocalizationManager.Instance}}" Click="OnLogClick" />
+                        <Separator />
+                        <!--  Theme: System / Light / Dark (v2.28)  -->
+                        <MenuItem Header="{Binding [Menu.Theme], Source={x:Static loc:LocalizationManager.Instance}}">
+                            <MenuItem x:Name="ThemeSystemItem"
+                                      Header="{Binding [Menu.Theme.System], Source={x:Static loc:LocalizationManager.Instance}}"
+                                      ToggleType="Radio"
+                                      Tag="System"
+                                      IsChecked="{Binding Theme, Converter={x:Static vm:StringEqualsConverter.Instance}}"
+                                      Click="OnThemeClick" />
+                            <MenuItem x:Name="ThemeLightItem"
+                                      Header="{Binding [Menu.Theme.Light], Source={x:Static loc:LocalizationManager.Instance}}"
+                                      ToggleType="Radio"
+                                      Tag="Light"
+                                      IsChecked="{Binding Theme, Converter={x:Static vm:StringEqualsConverter.Instance}}"
+                                      Click="OnThemeClick" />
+                            <MenuItem x:Name="ThemeDarkItem"
+                                      Header="{Binding [Menu.Theme.Dark], Source={x:Static loc:LocalizationManager.Instance}}"
+                                      ToggleType="Radio"
+                                      Tag="Dark"
+                                      IsChecked="{Binding Theme, Converter={x:Static vm:StringEqualsConverter.Instance}}"
+                                      Click="OnThemeClick" />
+                        </MenuItem>
+                        <!--  Language: zh / en (v2.28)  -->
+                        <MenuItem Header="{Binding [Menu.Language], Source={x:Static loc:LocalizationManager.Instance}}">
+                            <MenuItem x:Name="LangZhItem"
+                                      Header="{Binding [Menu.Language.Zh], Source={x:Static loc:LocalizationManager.Instance}}"
+                                      ToggleType="Radio"
+                                      Tag="zh"
+                                      IsChecked="{Binding Language, Converter={x:Static vm:StringEqualsConverter.Instance}}"
+                                      Click="OnLanguageClick" />
+                            <MenuItem x:Name="LangEnItem"
+                                      Header="{Binding [Menu.Language.En], Source={x:Static loc:LocalizationManager.Instance}}"
+                                      ToggleType="Radio"
+                                      Tag="en"
+                                      IsChecked="{Binding Language, Converter={x:Static vm:StringEqualsConverter.Instance}}"
+                                      Click="OnLanguageClick" />
+                        </MenuItem>
+                        <Separator />
+                        <MenuItem
+                            Header="{Binding [Menu.BackgroundRun], Source={x:Static loc:LocalizationManager.Instance}}"
+                            ToolTip.Tip="{Binding [Menu.BackgroundRunTip], Source={x:Static loc:LocalizationManager.Instance}}"
+                            IsChecked="{Binding BackgroundMode, Mode=TwoWay}"
+                            ToggleType="CheckBox" />
+                    </MenuItem>
+                    <MenuItem Header="{Binding [Menu.DataBrowser], Source={x:Static loc:LocalizationManager.Instance}}"
+                              IsEnabled="{Binding IsSwfLoaded}"
+                              Click="OnDataBrowserClick" />
+                    <MenuItem Header="{Binding [Menu.Storage], Source={x:Static loc:LocalizationManager.Instance}}"
+                              IsEnabled="{Binding IsSwfLoaded}"
+                              Click="OnStorageClick" />
+                </Menu>
+                <TextBlock
+                    Grid.Column="1"
+                    Margin="8,0,4,0"
+                    VerticalAlignment="Center"
+                    HorizontalAlignment="Right"
+                    Text="{Binding StatusText}"
+                    TextTrimming="CharacterEllipsis"
+                    Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}" />
+            </Grid>
+        </Border>
+
+        <!--  Player surface: placeholder until the first SWF loads (lazy WebView creation —
+             a native child window cannot be covered by Avalonia controls, so the drag
+             target must live in the empty host BEFORE the webview exists)  -->
+        <Grid x:Name="WebViewHost">
+            <Border
+                x:Name="DropPlaceholder"
+                Margin="24"
+                Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}"
+                BorderBrush="{DynamicResource SystemControlForegroundBaseMediumBrush}"
+                BorderThickness="2"
+                CornerRadius="8"
+                PointerPressed="OnPlaceholderClick">
+                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="8">
+                    <TextBlock
+                        HorizontalAlignment="Center"
+                        FontSize="20"
+                        Text="{Binding [Placeholder.Drop], Source={x:Static loc:LocalizationManager.Instance}}"
+                        Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}" />
+                    <TextBlock
+                        HorizontalAlignment="Center"
+                        FontSize="13"
+                        Text="{Binding [Placeholder.Click], Source={x:Static loc:LocalizationManager.Instance}}"
+                        Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}" />
+                    <TextBlock
+                        HorizontalAlignment="Center"
+                        FontSize="12"
+                        Margin="0,12,0,0"
+                        Text="{Binding [Placeholder.MenuHint], Source={x:Static loc:LocalizationManager.Instance}}"
+                        TextAlignment="Center"
+                        Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}" />
+                </StackPanel>
+            </Border>
+        </Grid>
+    </DockPanel>
+</Window>

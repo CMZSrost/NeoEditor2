@@ -1,4 +1,10 @@
+using System.Threading.Tasks;
+using Avalonia;
+using Avalonia.Controls;
+using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Input.Platform;
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 
 namespace NeoEditor.Plugins.AiChat.ViewModels;
 
@@ -35,6 +41,20 @@ public partial class ChatMessageItem : ObservableObject
     public bool IsTool => Kind == ChatMessageKind.Tool;
     public bool IsSystem => Kind == ChatMessageKind.System;
 
+    /// <summary>Markdown source for the assistant bubble renderer (Docs/41: render AI
+    /// output as Markdown by default). Kept in sync with <see cref="Content"/>.</summary>
+    public LiveMarkdown.Avalonia.ObservableStringBuilder MarkdownBuilder { get; } = new();
+
+    /// <summary>Docs/41: copy the message content to the clipboard.</summary>
+    [RelayCommand]
+    private async Task Copy()
+    {
+        if (Application.Current?.ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime
+            { MainWindow: { } mainWindow }) return;
+        if (mainWindow.Clipboard is { } clipboard)
+            await clipboard.SetTextAsync(Content);
+    }
+
     public ChatMessageItem() : this("assistant", "")
     {
     }
@@ -50,5 +70,13 @@ public partial class ChatMessageItem : ObservableObject
             "system" => ChatMessageKind.System,
             _ => ChatMessageKind.Assistant
         };
+    }
+
+    partial void OnContentChanged(string value)
+    {
+        // Docs/41: keep the MarkdownRenderer source in sync (streaming updates included).
+        MarkdownBuilder.Clear();
+        if (!string.IsNullOrEmpty(value))
+            MarkdownBuilder.Append(value);
     }
 }

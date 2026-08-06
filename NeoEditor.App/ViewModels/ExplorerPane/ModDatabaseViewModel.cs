@@ -27,7 +27,9 @@ using Microsoft.Extensions.Logging;
 using MsBox.Avalonia;
 using MsBox.Avalonia.Dto;
 using MsBox.Avalonia.Enums;
+using NeoEditor.Core.Abstractions;
 using NeoEditor.Data;
+using NeoEditor.Data.Command;
 using NeoEditor.Data.Context;
 using NeoEditor.Data.Messages;
 using NeoEditor.Data.Model;
@@ -56,6 +58,7 @@ public partial class ModDatabaseViewModel : ViewModelBase, IRecipient<GameRootDi
     private readonly EditorDbContext _editorDbContext;
     private readonly IModManager _modManager;
     private readonly IServiceProvider _serviceProvider;
+    private readonly NeoEditor.Core.Abstractions.IHostService _hostService;
 
     private readonly ILogger<ModDatabaseViewModel> _logger;
     public ObservableCollection<ModInfo> Mods { get; set; } = [];
@@ -64,9 +67,13 @@ public partial class ModDatabaseViewModel : ViewModelBase, IRecipient<GameRootDi
     [ObservableProperty] public partial string Filter { get; set; } = "";
     [ObservableProperty] public partial ModInfo? SelectedItem { get; set; }
 
+    /// <summary>Docs/41 追修: total number of edited (not-yet-exported) ENTITIES across mods —
+    /// counting mods collapsed N edited rows in one mod to "1 dirty".</summary>
     [ObservableProperty] private int _dirtyModCount;
     public bool HasDirtyMods => DirtyModCount > 0;
-    public string DirtyModCountText => HasDirtyMods ? $"⚠ {DirtyModCount} mod(s) with unsaved edits" : string.Empty;
+    public string DirtyModCountText => HasDirtyMods
+        ? $"⚠ {DirtyModCount} unsaved edit{(DirtyModCount == 1 ? "" : "s")}"
+        : string.Empty;
 
     public ModDatabaseViewModel(ProjectDbContextFactory gameContextFactory, ILogger<ModDatabaseViewModel> logger,
         IDbContextFactory<EditorDbContext> editorContextFactory, EditorDbContext editorDbContext,
@@ -77,7 +84,8 @@ public partial class ModDatabaseViewModel : ViewModelBase, IRecipient<GameRootDi
         IWorkspacePersistenceService persistenceSvc,
         IServiceProvider serviceProvider,
         ILocalizationService localizationService,
-        INotificationService notificationService)
+        INotificationService notificationService,
+        NeoEditor.Core.Abstractions.IHostService hostService)
         : base(localizationService, notificationService, logger)
     {
         _config = configService;
@@ -90,6 +98,7 @@ public partial class ModDatabaseViewModel : ViewModelBase, IRecipient<GameRootDi
         _dataExportService = dataExportService;
         _persistenceSvc = persistenceSvc;
         _serviceProvider = serviceProvider;
+        _hostService = hostService;
         _phpParser = serviceProvider.GetRequiredService<PhpParser>();
         ShowImageMenuCommand = new RelayCommand<ModInfo?>(ShowImage);
         // Quick DB scan — no XML parsing
@@ -155,9 +164,12 @@ public partial class ModDatabaseViewModel : ViewModelBase, IRecipient<GameRootDi
         var count = 0;
         foreach (var mod in Mods)
         {
-            mod.HasUnsavedEdits = await _persistenceSvc.HasUnsavedCommandsAsync("mod", mod.ModId);
-            if (mod.HasUnsavedEdits)
-                count++;
+            // Docs/41 追修: count EDITED ENTITIES, not mods — N edited rows in one mod used
+            // to show "1 dirty" everywhere. Dirty = pending-export markers (in DB, not yet
+            // in game XML; survive restart) ∪ WAL-window edits (crash window).
+            var dirty = (await _persistenceSvc.GetDirtyEntityIdsAsync(mod.ModId)).Count;
+            mod.HasUnsavedEdits = dirty > 0;
+            count += dirty;
         }
         DirtyModCount = count;
         OnPropertyChanged(nameof(HasDirtyMods));
@@ -617,32 +629,49 @@ public partial class ModDatabaseViewModel : ViewModelBase, IRecipient<GameRootDi
             var confirmed = await CsvImportDiffDialog.ShowAsync(mainWindow, diffs);
             if (!confirmed) return;
 
-            // Upsert imported entities using the DbSet
-            var dbSetType = typeof(Microsoft.EntityFrameworkCore.DbSet<>).MakeGenericType(entityType);
-            var addMethod = dbSetType.GetMethod("Add", [entityType]);
-            if (addMethod is null) return;
-
+            // R24: route the import through the unified HostService pipeline — commands first
+            // (hooks, dirty tracking, cache, events), then persist each imported entity via
+            // SaveAsync. No direct DbContext writes.
+            var commands = new List<IEditorCommand>();
             foreach (var entity in entities.Cast<IEntity>())
             {
                 var existingEntity = existing.FirstOrDefault(e =>
                     ResolveEntityKeyValue(e) == ResolveEntityKeyValue(entity));
                 if (existingEntity is not null)
                 {
-                    // Copy values from imported entity to existing tracked entity
+                    // Diff imported values onto the existing entity as a BatchEditCommand.
+                    var edits = new List<EditRecord>();
                     foreach (var prop in entityType.GetProperties())
                     {
                         if (prop.DeclaringType == typeof(IEntity)) continue;
-                        if (prop.GetCustomAttribute<System.ComponentModel.DataAnnotations.Schema.ColumnAttribute>() is null) continue;
+                        if (prop.GetCustomAttribute<ColumnAttribute>() is null) continue;
                         if (!prop.CanWrite) continue;
-                        prop.SetValue(existingEntity, prop.GetValue(entity));
+                        var oldValue = prop.GetValue(existingEntity);
+                        var newValue = prop.GetValue(entity);
+                        if (Equals(oldValue, newValue)) continue;
+                        edits.Add(new EditRecord(existingEntity, prop, prop.Name, oldValue, newValue));
                     }
+
+                    if (edits.Count > 0)
+                        commands.Add(new BatchEditCommand(edits, () => { }));
                 }
                 else
                 {
-                    addMethod.Invoke(dbSet, [entity]);
+                    commands.Add(new AddEntityCommand(entityType.Name, entity));
                 }
             }
-            await gameDb.SaveChangesAsync();
+
+            if (commands.Count == 0)
+            {
+                Notification.ShowInfo("No field differences to import.", "Import CSV");
+                return;
+            }
+
+            // "csv-import" is an unregistered scope: commands execute without an undo stack
+            // or WAL rows, but still flow through HostService (hooks → cache → dirty → events).
+            await _hostService.ExecuteBatchAsync(commands, "csv-import");
+            foreach (var entity in entities.Cast<IEntity>())
+                await _hostService.SaveAsync(entity.EntityId);
 
             Notification.ShowSuccess($"Imported {entities.Count} rows into {entityType.Name} for {modInfo.Name}.", "Import CSV");
         }

@@ -11,6 +11,7 @@ using Avalonia.Media.Imaging;
 using Avalonia.Platform.Storage;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using NeoEditor.Core.Abstractions;
 using NeoEditor.Data.Model;
 using NeoEditor.Infra.Services;
 using NeoEditor.Plugins.ImageTools.Helper;

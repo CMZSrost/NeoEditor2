@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
+using NeoEditor.Core.Abstractions;
 using NeoEditor.Data.Context;
 using NeoEditor.Helper;
 using NeoEditor.Infra.Services;
@@ -40,8 +41,8 @@ public class EntityEditorDocumentFactoryTests
         {
             if (serviceType == typeof(NeoEditor.Services.IWorkspaceSession))
                 return new StubWorkspaceSession();
-            if (serviceType == typeof(IDbContextFactory<GameDbContext>))
-                return new StubDbContextFactory();
+            if (serviceType == typeof(NeoEditor.Core.Abstractions.IHostService))
+                return new StubHostService();
             if (serviceType == typeof(IEntityLookupService))
                 return new StubEntityLookupService();
             if (serviceType == typeof(NeoEditor.Infra.Services.ILocalizationService))
@@ -50,13 +51,11 @@ public class EntityEditorDocumentFactoryTests
                 return new StubNotificationService();
             if (serviceType == typeof(NeoEditor.Core.Abstractions.IReferenceListSerializer))
                 return new ReferenceListSerializer();
+            if (serviceType == typeof(NeoEditor.Core.Abstractions.IXmlParser))
+                return new StubXmlParser();
+            if (serviceType == typeof(IConfigService))
+                return new StubConfigService();
             throw new InvalidOperationException($"Unexpected service request: {serviceType}");
         }
-    }
-
-    private sealed class StubDbContextFactory : IDbContextFactory<GameDbContext>
-    {
-        public GameDbContext CreateDbContext()
-            => throw new NotSupportedException("DB context creation not supported in unit tests");
     }
 }

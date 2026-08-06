@@ -29,25 +29,8 @@
     </UserControl.Styles>
 
     <DockPanel>
-        <!-- R09: WAL unsaved changes banner -->
-        <Border DockPanel.Dock="Top"
-                Background="#FFF3CD"
-                BorderBrush="#FFC107"
-                BorderThickness="0,0,0,1"
-                Padding="8,4"
-                IsVisible="{Binding IsCurrentEntityDirty}">
-            <StackPanel>
-                <TextBlock Text="{Binding IsCurrentEntityDirty, StringFormat='IsCurrentEntityDirty={0}'}"
-                           FontSize="9"
-                           Foreground="#856404" />
-                <TextBlock Text="{Binding CurrentEntity.EntityId, StringFormat='EntityId={0}'}"
-                           FontSize="9"
-                           Foreground="#856404" />
-                <TextBlock Text="⚠ This entity has unsaved changes. Press Ctrl+S to save."
-                           FontSize="11"
-                           Foreground="#856404" />
-            </StackPanel>
-        </Border>
+        <!-- Docs/41 需求1: the "unsaved changes" banner is gone — edits auto-save now.
+             Per-field "edited (not yet exported)" markers live on each row instead. -->
         <ScrollViewer HorizontalScrollBarVisibility="Disabled">
             <ItemsControl ItemsSource="{Binding Sections}" Name="FieldSectionsControl">
                 <ItemsControl.ItemsPanel>
@@ -69,38 +52,62 @@
                                         <Border Padding="4,2"
                                                 BorderBrush="{DynamicResource SystemControlForegroundChromeDisabledLowBrush}"
                                                 BorderThickness="0,0,0,1">
-                                            <Grid ColumnDefinitions="100,*" Margin="0,2">
+                                            <Grid ColumnDefinitions="14,100,*" Margin="0,2">
+                                                <!-- Docs/41 P4: visible '?' affordance — hover for the
+                                                     field meaning (embedded Docs/38 description). -->
                                                 <TextBlock Grid.Column="0"
-                                                           Text="{Binding DisplayName}"
-                                                           VerticalAlignment="Center"
+                                                           Text="?"
                                                            FontSize="10"
-                                                           TextWrapping="NoWrap"
+                                                           Foreground="Gray"
+                                                           VerticalAlignment="Center"
+                                                           HorizontalAlignment="Right"
+                                                           Margin="0,0,3,0"
+                                                           IsVisible="{Binding HasDescription}"
                                                            ToolTip.Tip="{Binding Description, Converter={StaticResource EmptyToNull}}"
                                                            ToolTip.ShowDelay="300" />
-                                                <!-- ReadOnly: TextBlock -->
-                                                <TextBlock Grid.Column="1"
+                                                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="3">
+                                                    <TextBlock Text="{Binding DisplayName}"
+                                                               VerticalAlignment="Center"
+                                                               FontSize="10"
+                                                               TextWrapping="NoWrap"
+                                                               ToolTip.Tip="{Binding Description, Converter={StaticResource EmptyToNull}}"
+                                                               ToolTip.ShowDelay="300" />
+                                                    <!-- Docs/41 需求1: per-field "edited, not yet exported"
+                                                         marker (yellow dot) — survives auto-save, cleared
+                                                         only by Save & Export. -->
+                                                    <TextBlock Text="●"
+                                                               FontSize="8"
+                                                               Foreground="#E6A700"
+                                                               VerticalAlignment="Center"
+                                                               IsVisible="{Binding IsEdited}"
+                                                               ToolTip.Tip="已修改，尚未导出（Save &amp; Export 后清除）"
+                                                               ToolTip.ShowDelay="300" />
+                                                </StackPanel>
+                                                <!-- ReadOnly: TextBlock (primary key + metadata) -->
+                                                <TextBlock Grid.Column="2"
                                                            Text="{Binding CurrentValue}"
-                                                           IsVisible="{Binding IsKey}"
+                                                           IsVisible="{Binding IsReadOnly}"
                                                            VerticalAlignment="Center"
-                                                           FontSize="10" />
+                                                           FontSize="10"
+                                                           TextWrapping="Wrap" />
                                                 <!-- CheckBox for bool -->
-                                                <CheckBox Grid.Column="1"
+                                                <CheckBox Grid.Column="2"
                                                            IsChecked="{Binding CurrentValue, Converter={StaticResource BoolStringConverter}, Mode=TwoWay}"
                                                            IsVisible="{Binding ControlType, Converter={StaticResource CtrlTypeVis}, ConverterParameter=toggle}"
                                                            VerticalAlignment="Center"
                                                            LostFocus="OnValueBoxLostFocus" />
                                                 <!-- ComboBox for enums -->
-                                                <ComboBox Grid.Column="1"
+                                                <ComboBox Grid.Column="2"
                                                           SelectedItem="{Binding CurrentValue, Mode=TwoWay}"
                                                           ItemsSource="{Binding EnumValues}"
                                                           IsVisible="{Binding ControlType, Converter={StaticResource CtrlTypeVis}, ConverterParameter=combo}"
                                                           FontSize="10"
                                                           LostFocus="OnValueBoxLostFocus" />
                                                 <!-- Default TextBox (string, numeric) -->
-                                                <TextBox Grid.Column="1"
+                                                <TextBox Grid.Column="2"
                                                          Text="{Binding CurrentValue, Mode=TwoWay}"
                                                          IsVisible="{Binding ControlType, Converter={StaticResource CtrlTypeVis}, ConverterParameter=textbox}"
-                                                         IsReadOnly="{Binding IsKey}"
+                                                         IsReadOnly="{Binding IsReadOnly}"
                                                          FontSize="10"
                                                          Padding="4,2"
                                                          Classes.Dirty="{Binding IsDirty}"
@@ -109,7 +116,7 @@
                                                          LostFocus="OnValueBoxLostFocus"
                                                          KeyDown="OnValueBoxKeyDown" />
                                                 <!-- Reference picker control -->
-                                                <views:ReferenceFieldEditor Grid.Column="1"
+                                                <views:ReferenceFieldEditor Grid.Column="2"
                                                          IsVisible="{Binding ControlType, Converter={StaticResource CtrlTypeVis}, ConverterParameter=refpicker}"
                                                          VerticalAlignment="Center" />
                                             </Grid>

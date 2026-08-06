@@ -2012,6 +2012,7 @@ Double-click to navigate directly.</value></data>
   <data name="AddRowTitle" xml:space="preserve"><value>Add New Row</value></data>
   <data name="AddRowTargetMod" xml:space="preserve"><value>Target Mod</value></data>
   <data name="AddRowTargetXml" xml:space="preserve"><value>Target XML *</value></data>
+  <data name="AddRowTargetXmlHint" xml:space="preserve"><value>Entities are grouped per XML file — the game overlays data by file name.</value></data>
   <data name="AddRowCopyFrom" xml:space="preserve"><value>Copy From</value></data>
   <data name="CsvImportTitle" xml:space="preserve"><value>CSV Import Preview</value></data>
   <data name="DependencyCheckTitle" xml:space="preserve"><value>Dependency Check</value></data>
@@ -2043,6 +2044,16 @@ Double-click to navigate directly.</value></data>
   <data name="MergeEditorTitleFormat" xml:space="preserve"><value>{0} - Merge Editor</value></data>
   <data name="NewDocumentTitleFormat" xml:space="preserve"><value>Document {0}</value></data>
 
+  <data name="EmptyModStep1" xml:space="preserve"><value>Add your first entity (pick a type + target XML file)</value></data>
+  <data name="EmptyModStep1Tip" xml:space="preserve"><value>Entities are stored per XML file — the game overlays data by file name.</value></data>
+  <data name="EmptyModStep2" xml:space="preserve"><value>Edit fields in the left panel — hover a field name for its meaning</value></data>
+  <data name="EmptyModStep3" xml:space="preserve"><value>Click Save &amp; Export (Ctrl+Shift+S) to write the mod into the game</value></data>
+  <data name="EmptyModAutoSaveHint" xml:space="preserve"><value>Edits auto-save; yellow = modified, green = created, grey = overridden. Everything is undoable.</value></data>
+  <data name="EmptyModDismiss" xml:space="preserve"><value>Don't show again</value></data>
+  <data name="OnboardingFirstExport" xml:space="preserve"><value>Exported to game XML ✅ Click ▶ to launch the game and verify.</value></data>
+  <data name="OnboardingGameEntityEdit" xml:space="preserve"><value>Game base data is read-only here. Use the Copy Row button to copy it into your mod, then edit the copy.</value></data>
+  <data name="Settings.ResetOnboardingHints" xml:space="preserve"><value>Reset onboarding hints</value></data>
+  <data name="SettingsOnboardingHintsReset" xml:space="preserve"><value>Onboarding hints have been reset. They will show again on their next trigger.</value></data>
   <data name="EmptyModMessage" xml:space="preserve"><value>This mod has no entities yet.</value></data>
   <data name="EmptyModHint" xml:space="preserve"><value>Click the + button below to add items, recipes, or creatures.</value></data>
   <data name="AddFirstEntity" xml:space="preserve"><value>Add Your First Entity</value></data>
@@ -2052,7 +2063,7 @@ Double-click to navigate directly.</value></data>
   <data name="GameDataReadOnlyMessage" xml:space="preserve"><value>Game base data cannot be edited directly. To modify game data, add a Merge-mode mod (strModName=0) to the profile, or create one via "New Mod" with namespace 0.</value></data>
   <data name="QuickSaveTooltip" xml:space="preserve"><value>Save to database only (Ctrl+S)</value></data>
   <data name="SaveAndExport" xml:space="preserve"><value>Export</value></data>
-  <data name="SaveAndExportTooltip" xml:space="preserve"><value>Save and export to XML files with diff preview</value></data>
+  <data name="SaveAndExportTooltip" xml:space="preserve"><value>Save &amp; export to game XML files with diff preview (Ctrl+Shift+S)</value></data>
   <data name="Saving" xml:space="preserve"><value>Saving...</value></data>
   <data name="SaveTooltip" xml:space="preserve"><value>Save (Ctrl+S)</value></data>
   <data name="SaveAndLaunchTooltip" xml:space="preserve"><value>Save &amp; Launch Game (Ctrl+Shift+S)</value></data>
@@ -2109,4 +2120,34 @@ Double-click to navigate directly.</value></data>
   <data name="NoPreview" xml:space="preserve"><value>Select a pending item or candidate to preview.</value></data>
   <data name="AiGenerating" xml:space="preserve"><value>Generating...</value></data>
   <data name="AiGalleryEmpty" xml:space="preserve"><value>Generate candidates to preview them here.</value></data>
+
+  <data name="SwfPreviewButton" xml:space="preserve"><value>In-App Preview</value></data>
+  <data name="SwfPreviewTooltip" xml:space="preserve"><value>Preview the game SWF in the WebView panel with live editor data (no export needed)</value></data>
+  <data name="SwfPreviewRuffleMissing" xml:space="preserve"><value>Ruffle Web assets not found (Web/ruffle missing) - in-app preview unavailable, use "Launch with Ruffle" instead.</value></data>
+  <data name="SwfPreviewServerFailed" xml:space="preserve"><value>Could not start the local preview server (loopback port bind failed).</value></data>
+  <data name="SwfPreviewNoGameRoot" xml:space="preserve"><value>No valid Game Root Dir configured. Set it in Settings to preview.</value></data>
+  <data name="SwfPreviewSwfNotFound" xml:space="preserve"><value>No SWF found in the game root. Expected NEOScavenger.swf.</value></data>
+  <data name="Settings.Paratranz" xml:space="preserve"><value>ParaTranz</value></data>
+  <data name="Settings.ParatranzNote" xml:space="preserve"><value>API Token for translation sync (channels A/B/C). The web workbench (Tab 2) needs a separate web login.</value></data>
+  <data name="Settings.ParatranzToken" xml:space="preserve"><value>API Token</value></data>
+  <data name="Settings.ParatranzProject" xml:space="preserve"><value>Project</value></data>
+  <data name="Settings.TestParatranzConnection" xml:space="preserve"><value>Test Connection</value></data>
+  <data name="Settings.TestingParatranzConnection" xml:space="preserve"><value>Testing connection…</value></data>
+  <data name="Settings.ParatranzTestNoToken" xml:space="preserve"><value>Please enter an API Token first.</value></data>
+  <data name="Settings.ParatranzTestNoProjects" xml:space="preserve"><value>Token is valid, but no projects were found for this account.</value></data>
+  <data name="Settings.ParatranzTestOk" xml:space="preserve"><value>Connection OK: {0} project(s) found.</value></data>
+  <data name="Settings.ParatranzTestFailed" xml:space="preserve"><value>Connection failed: {0}</value></data>
+  <data name="Settings.ParatranzTestError" xml:space="preserve"><value>Error: {0}</value></data>
+  <data name="Paratranz.TabSync" xml:space="preserve"><value>Sync</value></data>
+  <data name="Paratranz.TabWorkbench" xml:space="preserve"><value>Translation Workbench</value></data>
+  <data name="Paratranz.UploadOriginals" xml:space="preserve"><value>Upload Originals</value></data>
+  <data name="Paratranz.Refresh" xml:space="preserve"><value>Refresh</value></data>
+  <data name="Paratranz.ModLabel" xml:space="preserve"><value>Mod:</value></data>
+  <data name="Paratranz.ApplyFile" xml:space="preserve"><value>Apply</value></data>
+  <data name="Paratranz.OpenBrowser" xml:space="preserve"><value>Open in Browser</value></data>
+  <data name="Paratranz.NoProjectHint" xml:space="preserve"><value>After testing the connection and selecting a project in Settings → ParaTranz, the translation workbench will open here.</value></data>
+  <data name="Paratranz.DiffTitle" xml:space="preserve"><value>Translation Diff Preview</value></data>
+  <data name="Paratranz.DiffNote" xml:space="preserve"><value>Applying runs editor commands (undoable); XML files are not modified directly.</value></data>
+  <data name="Paratranz.ConfirmApply" xml:space="preserve"><value>Apply Translations</value></data>
+  <data name="Paratranz.Cancel" xml:space="preserve"><value>Cancel</value></data>
 </root>

@@ -14,6 +14,7 @@ using Microsoft.Extensions.Logging;
 using MsBox.Avalonia;
 using MsBox.Avalonia.Dto;
 using MsBox.Avalonia.Enums;
+using NeoEditor.Core.Abstractions;
 using NeoEditor.Data.Messages;
 using NeoEditor.Services;
 using Serilog;

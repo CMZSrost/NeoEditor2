@@ -1,0 +1,64 @@
+<UserControl
+    x:Class="NeoEditor.Plugins.WebView.Views.WebViewToolView"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:avalonia="clr-namespace:FluentIcons.Avalonia;assembly=FluentIcons.Avalonia"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:vm="clr-namespace:NeoEditor.Plugins.WebView.ViewModels"
+    x:Name="Root"
+    x:DataType="vm:WebViewToolViewModel"
+    d:DesignWidth="420" d:DesignHeight="360"
+    mc:Ignorable="d">
+    <DockPanel>
+        <!--  Navigation bar (Docs/42 §3.3)  -->
+        <Border
+            DockPanel.Dock="Top"
+            Padding="4,3"
+            BorderBrush="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}"
+            BorderThickness="0,0,0,1">
+            <StackPanel Orientation="Horizontal" Spacing="4">
+                <Button
+                    Width="26" Height="26"
+                    Click="OnBackClick"
+                    IsEnabled="{Binding CanGoBack}"
+                    ToolTip.Tip="Back">
+                    <avalonia:SymbolIcon FontSize="12" Symbol="ArrowLeft" />
+                </Button>
+                <Button
+                    Width="26" Height="26"
+                    Click="OnForwardClick"
+                    IsEnabled="{Binding CanGoForward}"
+                    ToolTip.Tip="Forward">
+                    <avalonia:SymbolIcon FontSize="12" Symbol="ArrowRight" />
+                </Button>
+                <Button
+                    Width="26" Height="26"
+                    Click="OnRefreshClick"
+                    ToolTip.Tip="Refresh">
+                    <avalonia:SymbolIcon FontSize="12" Symbol="ArrowClockwise" />
+                </Button>
+                <TextBox
+                    x:Name="AddressBox"
+                    MinWidth="160"
+                    VerticalContentAlignment="Center"
+                    Text="{Binding AddressText}"
+                    KeyDown="OnAddressKeyDown" />
+                <Button Content="Go" Click="OnGoClick" />
+                <Button
+                    Click="OnOpenFileClick"
+                    ToolTip.Tip="Open local HTML file">
+                    <avalonia:SymbolIcon FontSize="12" Symbol="FolderOpen" />
+                </Button>
+                <Button
+                    Click="OnPreviewSwfClick"
+                    ToolTip.Tip="SWF preview (live editor data)">
+                    <avalonia:SymbolIcon FontSize="12" Symbol="PlayCircle" />
+                </Button>
+            </StackPanel>
+        </Border>
+
+        <!--  NativeWebView hosted here once Loaded (Windows: WebView2)  -->
+        <Grid x:Name="WebViewHost" />
+    </DockPanel>
+</UserControl>

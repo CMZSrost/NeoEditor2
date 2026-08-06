@@ -37,7 +37,8 @@
                 Document="{Binding OldXml, ElementName=Root}"
                 IsReadOnly="{Binding ReadOnly, ElementName=Root}"
                 ShowLineNumbers="True"
-                SyntaxHighlighting="{Binding DocSyntax, ElementName=Root}" />
+                SyntaxHighlighting="{Binding DocSyntax, ElementName=Root}"
+                WordWrap="True" />
             <Grid Grid.Column="1">
                 <views:DiffPreviewTrack
                     x:Name="OldPreviewTrack"
@@ -70,7 +71,8 @@
                 Document="{Binding NewXml, ElementName=Root}"
                 IsReadOnly="{Binding ReadOnly, ElementName=Root}"
                 ShowLineNumbers="True"
-                SyntaxHighlighting="{Binding DocSyntax, ElementName=Root}" />
+                SyntaxHighlighting="{Binding DocSyntax, ElementName=Root}"
+                WordWrap="True" />
             <Grid Grid.Column="1">
                 <views:DiffPreviewTrack
                     x:Name="NewPreviewTrack"

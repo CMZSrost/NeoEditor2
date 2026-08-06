@@ -20,6 +20,9 @@ public enum SaveScope { All, CurrentTab }
 /// <summary>Request save operation.</summary>
 public record SaveRequestedMessage(SaveScope Scope = SaveScope.All);
 
+/// <summary>Docs/41 P1.4: request full save + XML export preview (Ctrl+Shift+S).</summary>
+public record SaveAndExportRequestedMessage;
+
 /// <summary>Fired after QuickSaveAsync completes successfully.
 /// EntityEditorDocuments listen for this to MarkClean() their dirty state.</summary>
 public record SaveCompletedMessage;

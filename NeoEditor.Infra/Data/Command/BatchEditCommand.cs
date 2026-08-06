@@ -29,6 +29,10 @@ public class BatchEditCommand : ISerializableCommand
     public IReadOnlySet<string> GetAffectedEntityIds() =>
         new HashSet<string>(_edits.Select(e => e.Entity.EntityId));
 
+    /// <inheritdoc cref="IEditorCommand.GetEditedCells"/>
+    public IEnumerable<(string EntityId, string ColumnName)> GetEditedCells() =>
+        _edits.Select(e => (e.Entity.EntityId, e.ColumnName));
+
     /// <inheritdoc cref="IEditorCommand.GetCacheDelta"/>
     /// <remarks>R30 (追修 6): edits mutate entities in place — upsert them into the
     /// HostService working-set cache. An empty delta left edited entities outside the

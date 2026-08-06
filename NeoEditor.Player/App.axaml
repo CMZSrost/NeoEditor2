@@ -1,0 +1,21 @@
+<Application
+    x:Class="NeoEditor.Player.App"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    RequestedThemeVariant="Default">
+
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <!--  LiveMarkdown.Avalonia defaults; MarkdownTheme.axaml loaded after → wins  -->
+                <ResourceInclude Source="avares://LiveMarkdown.Avalonia/Defaults.axaml" />
+                <ResourceInclude Source="avares://NeoScavengerPlayer/Assets/MarkdownTheme.axaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Application.Resources>
+
+    <Application.Styles>
+        <FluentTheme />
+        <StyleInclude Source="avares://LiveMarkdown.Avalonia/Styles.axaml" />
+    </Application.Styles>
+</Application>

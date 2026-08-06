@@ -1,10 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using NeoEditor.Core.Abstractions;
-using NeoEditor.Data.Context;
 using NeoEditor.Data.Model.Game;
 using NeoEditor.Infra.Services;
 using NeoEditor.Plugins.EntityEditor.ViewModels;
@@ -41,10 +39,12 @@ public class EntityEditorPlugin : IDocumentPlugin
         return new EntityEditorDocument(
             entity,
             services.GetRequiredService<NeoEditor.Services.IWorkspaceSession>(),
-            services.GetRequiredService<IDbContextFactory<GameDbContext>>(),
+            services.GetRequiredService<IHostService>(),
             services.GetRequiredService<IEntityLookupService>(),
             services.GetRequiredService<ILocalizationService>(),
             services.GetRequiredService<INotificationService>(),
-            services.GetRequiredService<IReferenceListSerializer>());
+            services.GetRequiredService<IReferenceListSerializer>(),
+            services.GetRequiredService<IXmlParser>(),
+            services.GetRequiredService<IConfigService>());
     }
 }

@@ -19,6 +19,7 @@ public class HostServiceTests
             new RepositoryTestHelpers.StubXmlParser(),
             new RepositoryTestHelpers.StubConfigService(Path.GetTempPath()),
             null!,
+            null!,
             null!);
     }
 
@@ -203,6 +204,7 @@ public class HostServiceTests
         var host = new HostService(session, null!,
             new RepositoryTestHelpers.StubXmlParser(),
             new RepositoryTestHelpers.StubConfigService(Path.GetTempPath()),
+            null!,
             null!,
             null!);
 

@@ -13,6 +13,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using Microsoft.EntityFrameworkCore;
+using NeoEditor.Core.Abstractions;
 using NeoEditor.Data.Context;
 using NeoEditor.Data.Messages;
 using NeoEditor.Data.Model;

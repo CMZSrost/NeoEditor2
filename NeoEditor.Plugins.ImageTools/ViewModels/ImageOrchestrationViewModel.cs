@@ -13,6 +13,7 @@ using Avalonia.Platform.Storage;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
+using NeoEditor.Core.Abstractions;
 using NeoEditor.Data.Messages;
 using NeoEditor.Plugins.ImageTools.Services;
 

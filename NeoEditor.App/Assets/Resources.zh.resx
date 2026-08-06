@@ -2014,6 +2014,7 @@ Ctrl+右键点击引用 = 仅预览不跳转。
     <data name="AddRowTitle" xml:space="preserve"><value>添加新行</value></data>
     <data name="AddRowTargetMod" xml:space="preserve"><value>目标模组</value></data>
     <data name="AddRowTargetXml" xml:space="preserve"><value>目标 XML *</value></data>
+    <data name="AddRowTargetXmlHint" xml:space="preserve"><value>实体按 XML 文件分组存储，游戏按文件名叠加数据。</value></data>
     <data name="AddRowCopyFrom" xml:space="preserve"><value>从...复制</value></data>
     <data name="CsvImportTitle" xml:space="preserve"><value>CSV 导入预览</value></data>
     <data name="DependencyCheckTitle" xml:space="preserve"><value>依赖检查</value></data>
@@ -2045,6 +2046,32 @@ Ctrl+右键点击引用 = 仅预览不跳转。
     <data name="MergeEditorTitleFormat" xml:space="preserve"><value>{0} - 合并视图</value></data>
     <data name="NewDocumentTitleFormat" xml:space="preserve"><value>文档 {0}</value></data>
 
+    <data name="EmptyModStep1" xml:space="preserve"><value>添加第一个实体（选择类型和目标 XML 文件）</value></data>
+    <data name="EmptyModStep1Tip" xml:space="preserve"><value>实体按 XML 文件分组存储，游戏按文件名叠加数据。</value></data>
+    <data name="EmptyModStep2" xml:space="preserve"><value>在左侧面板编辑字段——悬停字段名可查看含义</value></data>
+    <data name="EmptyModStep3" xml:space="preserve"><value>点击右上角 Save &amp; Export（Ctrl+Shift+S）写入游戏</value></data>
+    <data name="EmptyModAutoSaveHint" xml:space="preserve"><value>编辑自动保存；黄色 = 已修改，绿色 = 已创建，灰色 = 被覆盖。所有操作均可撤销。</value></data>
+    <data name="EmptyModDismiss" xml:space="preserve"><value>不再显示</value></data>
+    <data name="OnboardingFirstExport" xml:space="preserve"><value>已写入游戏 XML ✅ 可点 ▶ 直接进游戏验证。</value></data>
+    <data name="OnboardingGameEntityEdit" xml:space="preserve"><value>游戏基础数据在此为只读。可用工具栏 Copy Row 复制到你的 Mod 后再编辑。</value></data>
+    <data name="Welcome.Title" xml:space="preserve"><value>NeoEditor 会话</value></data>
+    <data name="Welcome.Loading" xml:space="preserve"><value>正在从数据库加载实体数据…</value></data>
+    <data name="Welcome.Shortcuts" xml:space="preserve"><value>在底部数据表中点击一行即可查看实体。
+左侧面板：编辑字段值。
+编辑自动保存；黄色 = 已修改，绿色 = 已创建，灰色 = 被覆盖。
+右侧面板：所选实体概览。
+底部标签页：引用索引、搜索、冲突。
+
+快捷键：
+  Ctrl+Shift+S — 保存并导出（写入游戏 XML）
+  Ctrl+S — 保存当前标签页到数据库（通常自动进行）
+  Ctrl+Z / Ctrl+Shift+Z — 撤销 / 重做
+  Ctrl+Y — 重做
+  Ctrl+F — 在数据表中查找
+  Ctrl+C/V — 复制/粘贴单元格
+  Ctrl+E — 切换值编辑器</value></data>
+    <data name="Settings.ResetOnboardingHints" xml:space="preserve"><value>重置新手提示</value></data>
+    <data name="SettingsOnboardingHintsReset" xml:space="preserve"><value>新手提示已重置，将在下次触发时再次显示。</value></data>
     <data name="EmptyModMessage" xml:space="preserve"><value>此模组还没有实体。</value></data>
     <data name="EmptyModHint" xml:space="preserve"><value>点击下方 + 按钮添加物品、配方或生物。</value></data>
     <data name="AddFirstEntity" xml:space="preserve"><value>添加第一个实体</value></data>
@@ -2054,7 +2081,7 @@ Ctrl+右键点击引用 = 仅预览不跳转。
     <data name="GameDataReadOnlyMessage" xml:space="preserve"><value>游戏基础数据不能直接修改。要修改游戏数据，请在 Profile 中添加一个 Merge 模式 Mod（strModName=0），或通过"新建 Mod"创建一个 namespace 为 0 的 Mod。对游戏数据的修改将被写入该覆盖 Mod。</value></data>
     <data name="QuickSaveTooltip" xml:space="preserve"><value>仅保存到数据库 (Ctrl+S)</value></data>
     <data name="SaveAndExport" xml:space="preserve"><value>导出</value></data>
-    <data name="SaveAndExportTooltip" xml:space="preserve"><value>保存并导出到XML文件（含差异预览）</value></data>
+    <data name="SaveAndExportTooltip" xml:space="preserve"><value>保存并导出到游戏 XML 文件（含差异预览）Ctrl+Shift+S</value></data>
     <data name="Saving" xml:space="preserve"><value>保存中...</value></data>
     <data name="SaveTooltip" xml:space="preserve"><value>保存 (Ctrl+S)</value></data>
     <data name="SaveAndLaunchTooltip" xml:space="preserve"><value>保存并启动游戏 (Ctrl+Shift+S)</value></data>
@@ -2333,6 +2360,7 @@ Ctrl+右键点击引用 = 仅预览不跳转。
     <data name="EP.EmptyHint" xml:space="preserve"><value>点击引用以预览</value></data>
     <data name="EV.Visualization" xml:space="preserve"><value>可视化</value></data>
     <data name="EV.XmlEdit" xml:space="preserve"><value>XML 编辑</value></data>
+    <data name="EV.XmlDiffToggle" xml:space="preserve"><value>差异对比</value></data>
     <data name="EV.Refresh" xml:space="preserve"><value>刷新</value></data>
     <data name="DT.EmptyHint" xml:space="preserve"><value>选择一个实体以查看数据表</value></data>
     <data name="ToggleLeftPanel" xml:space="preserve"><value>切换左侧面板</value></data>
@@ -2349,4 +2377,34 @@ Ctrl+右键点击引用 = 仅预览不跳转。
     <data name="AiPixelatedImage" xml:space="preserve"><value>AI 像素处理图</value></data>
     <data name="SaveImage" xml:space="preserve"><value>保存图片</value></data>
     <data name="PixelateAi" xml:space="preserve"><value>AI 像素化</value></data>
+
+    <data name="SwfPreviewButton" xml:space="preserve"><value>内置预览</value></data>
+    <data name="SwfPreviewTooltip" xml:space="preserve"><value>在 WebView 面板内用 Ruffle Web 预览游戏 SWF（实时数据，无需导出）</value></data>
+    <data name="SwfPreviewRuffleMissing" xml:space="preserve"><value>Ruffle Web 资源未部署（Web/ruffle 缺失），内置预览不可用，请使用「用 Ruffle 启动」。</value></data>
+    <data name="SwfPreviewServerFailed" xml:space="preserve"><value>无法启动本地预览服务器（回环端口绑定失败）。</value></data>
+    <data name="SwfPreviewNoGameRoot" xml:space="preserve"><value>未设置有效的游戏根目录，无法预览。请在设置中配置 Game Root Dir。</value></data>
+    <data name="SwfPreviewSwfNotFound" xml:space="preserve"><value>游戏根目录未找到 SWF 文件（预期 NEOScavenger.swf）。</value></data>
+  <data name="Settings.Paratranz" xml:space="preserve"><value>ParaTranz</value></data>
+  <data name="Settings.ParatranzNote" xml:space="preserve"><value>API Token 用于翻译同步（通道 A/B/C）；网页工作台（Tab 2）需单独网页登录。</value></data>
+  <data name="Settings.ParatranzToken" xml:space="preserve"><value>API Token</value></data>
+  <data name="Settings.ParatranzProject" xml:space="preserve"><value>项目</value></data>
+  <data name="Settings.TestParatranzConnection" xml:space="preserve"><value>测试连接</value></data>
+  <data name="Settings.TestingParatranzConnection" xml:space="preserve"><value>正在测试连接…</value></data>
+  <data name="Settings.ParatranzTestNoToken" xml:space="preserve"><value>请先填写 API Token。</value></data>
+  <data name="Settings.ParatranzTestNoProjects" xml:space="preserve"><value>Token 有效，但该账号下没有找到项目。</value></data>
+  <data name="Settings.ParatranzTestOk" xml:space="preserve"><value>连接成功：找到 {0} 个项目。</value></data>
+  <data name="Settings.ParatranzTestFailed" xml:space="preserve"><value>连接失败：{0}</value></data>
+  <data name="Settings.ParatranzTestError" xml:space="preserve"><value>错误：{0}</value></data>
+  <data name="Paratranz.TabSync" xml:space="preserve"><value>同步</value></data>
+  <data name="Paratranz.TabWorkbench" xml:space="preserve"><value>翻译工作台</value></data>
+  <data name="Paratranz.UploadOriginals" xml:space="preserve"><value>上传原文</value></data>
+  <data name="Paratranz.Refresh" xml:space="preserve"><value>刷新</value></data>
+  <data name="Paratranz.ModLabel" xml:space="preserve"><value>Mod:</value></data>
+  <data name="Paratranz.ApplyFile" xml:space="preserve"><value>应用译文</value></data>
+  <data name="Paratranz.OpenBrowser" xml:space="preserve"><value>浏览器打开</value></data>
+  <data name="Paratranz.NoProjectHint" xml:space="preserve"><value>在 设置 → ParaTranz 中测试连接并选择项目后，此处将打开翻译工作台。</value></data>
+  <data name="Paratranz.DiffTitle" xml:space="preserve"><value>译文差异预览</value></data>
+  <data name="Paratranz.DiffNote" xml:space="preserve"><value>确认后将通过编辑器命令应用（可撤销），不会直接修改 XML 文件。</value></data>
+  <data name="Paratranz.ConfirmApply" xml:space="preserve"><value>应用译文</value></data>
+  <data name="Paratranz.Cancel" xml:space="preserve"><value>取消</value></data>
 </root>

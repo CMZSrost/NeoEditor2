@@ -34,10 +34,13 @@ public partial class WorkspaceHistoryViewModel : ViewModelBase
     [ObservableProperty] public partial bool IsLoading { get; set; }
 
     public bool HasWorkspaces => Workspaces.Count > 0;
-    public int DirtyWorkspaceCount => Workspaces.Count(w => w.HasUnsavedEdits);
+
+    /// <summary>Docs/41 追修: total number of edited (not-yet-exported) ENTITIES across
+    /// workspaces — counting workspaces collapsed N edited rows into "1 dirty".</summary>
+    public int DirtyWorkspaceCount => Workspaces.Sum(w => w.DirtyModCount);
     public bool HasDirtyWorkspaces => DirtyWorkspaceCount > 0;
     public string DirtyWorkspaceCountText => HasDirtyWorkspaces
-        ? $"⚠ {DirtyWorkspaceCount} workspace(s) with unsaved edits"
+        ? $"⚠ {DirtyWorkspaceCount} unsaved edit{(DirtyWorkspaceCount == 1 ? "" : "s")}"
         : string.Empty;
 
     public WorkspaceHistoryViewModel(
@@ -72,12 +75,12 @@ public partial class WorkspaceHistoryViewModel : ViewModelBase
                     var dirtyCount = 0;
                     foreach (var mli in loadInfos)
                     {
+                        // Docs/41 追修: entity-level count (see ModDatabaseViewModel.RefreshDirtyCountAsync).
                         // Only persisted mods (Id>0, the autoincrement PK) carry WAL commands. The old
                         // ModId:>0 or -1 pattern excluded ModId=0, which is a valid business id for mods
                         // imported first (e.g. NSEaid), so their unsaved edits were never flagged dirty.
-                        if (mli.Info is { Id: > 0 } &&
-                            await _persistenceSvc.HasUnsavedCommandsAsync("mod", mli.Info.ModId))
-                            dirtyCount++;
+                        if (mli.Info is { Id: > 0 })
+                            dirtyCount += (await _persistenceSvc.GetDirtyEntityIdsAsync(mli.Info.ModId)).Count;
                     }
 
                     Workspaces.Add(new ProfileEntry(profile.ProfileId, profile.Name,

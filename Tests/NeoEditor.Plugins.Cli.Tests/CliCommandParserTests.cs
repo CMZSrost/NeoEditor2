@@ -270,4 +270,67 @@ public class CliCommandParserTests
         var cmd = _parser.Parse(new[] { "list", "-t", "ItemType", "-n", "not_a_number" });
         Assert.Null(cmd.Limit);
     }
+
+    // ── Undo / Redo / Publish / ExportMod (R31) ───────────────────────────
+
+    [Fact]
+    public void Parse_Undo_NoArgs()
+    {
+        var cmd = _parser.Parse(new[] { "undo" });
+        Assert.Equal(CliCommandType.Undo, cmd.Command);
+        Assert.False(cmd.HasError);
+    }
+
+    [Fact]
+    public void Parse_Redo_NoArgs()
+    {
+        var cmd = _parser.Parse(new[] { "redo" });
+        Assert.Equal(CliCommandType.Redo, cmd.Command);
+        Assert.False(cmd.HasError);
+    }
+
+    [Fact]
+    public void Parse_Publish_DefaultNoCommit()
+    {
+        var cmd = _parser.Parse(new[] { "publish" });
+        Assert.Equal(CliCommandType.Publish, cmd.Command);
+        Assert.False(cmd.Commit);
+        Assert.False(cmd.HasError);
+    }
+
+    [Fact]
+    public void Parse_Publish_WithCommit()
+    {
+        var cmd = _parser.Parse(new[] { "publish", "--commit" });
+        Assert.Equal(CliCommandType.Publish, cmd.Command);
+        Assert.True(cmd.Commit);
+    }
+
+    [Fact]
+    public void Parse_ExportMod_WithModId()
+    {
+        var cmd = _parser.Parse(new[] { "export-mod", "--mod-id", "7" });
+        Assert.Equal(CliCommandType.ExportMod, cmd.Command);
+        Assert.Equal(7, cmd.ModId);
+        Assert.False(cmd.Commit);
+        Assert.False(cmd.HasError);
+    }
+
+    [Fact]
+    public void Parse_ExportMod_WithCommit()
+    {
+        var cmd = _parser.Parse(new[] { "export", "--mod-id", "3", "--commit" });
+        Assert.Equal(CliCommandType.ExportMod, cmd.Command);
+        Assert.Equal(3, cmd.ModId);
+        Assert.True(cmd.Commit);
+    }
+
+    [Fact]
+    public void Parse_ExportMod_MissingModId_HasError()
+    {
+        var cmd = _parser.Parse(new[] { "export-mod" });
+        Assert.Equal(CliCommandType.ExportMod, cmd.Command);
+        Assert.True(cmd.HasError);
+        Assert.Contains("mod-id", cmd.ErrorMessage);
+    }
 }

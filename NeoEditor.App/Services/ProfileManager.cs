@@ -7,6 +7,7 @@ using AvaloniaEdit.Utils;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using NeoEditor.Core.Abstractions;
 using NeoEditor.Data.Context;
 using NeoEditor.Data.Model;
 using NeoEditor.Helper;

@@ -3,27 +3,54 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:sys="clr-namespace:System;assembly=System.Runtime">
 
-    <!--  VSCode Dark+ inspired Markdown theme (round22).
-          Overrides LiveMarkdown.Avalonia's default resource tokens — loaded AFTER
-          Defaults.axaml in App.axaml so these win. Code blocks keep the default
-          DarkPlus syntax theme (VSCode Dark+ equivalent).  -->
+    <!--  Docs/41: Markdown theme now follows the app theme variant (was hard-coded Dark+,
+          which made white themes show black-on-grey text). Loaded AFTER LiveMarkdown's
+          Defaults.axaml in App.axaml so these tokens win. Code blocks keep the DarkPlus
+          syntax theme in both variants (standard editor look).  -->
 
-    <SolidColorBrush x:Key="MarkdownBackgroundBrush" Color="#FF1E1E1E" />
-    <SolidColorBrush x:Key="MarkdownTextBrush" Color="#FFD4D4D4" />
-    <SolidColorBrush x:Key="MarkdownCodeBlockBrush" Color="#FF252526" />
-    <SolidColorBrush x:Key="MarkdownLinkBrush" Color="#FF4FC1FF" />
+    <ResourceDictionary.ThemeDictionaries>
+        <!--  Light: VSCode Light+ inspired  -->
+        <ResourceDictionary x:Key="Light">
+            <SolidColorBrush x:Key="MarkdownBackgroundBrush" Color="#FFFFFFFF" />
+            <SolidColorBrush x:Key="MarkdownTextBrush" Color="#FF1F1F1F" />
+            <SolidColorBrush x:Key="MarkdownCodeBlockBrush" Color="#FFF5F5F5" />
+            <SolidColorBrush x:Key="MarkdownLinkBrush" Color="#FF1A6FB0" />
 
-    <Color x:Key="BorderColor">#FF3C3C3C</Color>
-    <Color x:Key="ForegroundColor">#FFD4D4D4</Color>
-    <Color x:Key="CardBackgroundColor">#FF252526</Color>
-    <Color x:Key="SecondaryCardBackgroundColor">#FF1E1E1E</Color>
-    <Color x:Key="CodeInlineColor">#FFCE9178</Color>
-    <Color x:Key="QuoteBorderColor">#FF6A9955</Color>
+            <Color x:Key="BorderColor">#FFDADADA</Color>
+            <Color x:Key="ForegroundColor">#FF1F1F1F</Color>
+            <Color x:Key="CardBackgroundColor">#FFF5F5F5</Color>
+            <Color x:Key="SecondaryCardBackgroundColor">#FFEBEBEB</Color>
+            <Color x:Key="CodeInlineColor">#FFA31515</Color>
+            <Color x:Key="QuoteBorderColor">#FF6A9955</Color>
 
-    <sys:Double x:Key="FontSizeS">12</sys:Double>
-    <sys:Double x:Key="FontSizeM">13</sys:Double>
-    <sys:Double x:Key="FontSizeL">15</sys:Double>
-    <sys:Double x:Key="FontSizeXl">18</sys:Double>
-    <sys:Double x:Key="FontSize2Xl">22</sys:Double>
-    <sys:Double x:Key="FontSize3Xl">28</sys:Double>
+            <sys:Double x:Key="FontSizeS">12</sys:Double>
+            <sys:Double x:Key="FontSizeM">13</sys:Double>
+            <sys:Double x:Key="FontSizeL">15</sys:Double>
+            <sys:Double x:Key="FontSizeXl">18</sys:Double>
+            <sys:Double x:Key="FontSize2Xl">22</sys:Double>
+            <sys:Double x:Key="FontSize3Xl">28</sys:Double>
+        </ResourceDictionary>
+
+        <!--  Dark: VSCode Dark+ inspired (previous default)  -->
+        <ResourceDictionary x:Key="Dark">
+            <SolidColorBrush x:Key="MarkdownBackgroundBrush" Color="#FF1E1E1E" />
+            <SolidColorBrush x:Key="MarkdownTextBrush" Color="#FFD4D4D4" />
+            <SolidColorBrush x:Key="MarkdownCodeBlockBrush" Color="#FF252526" />
+            <SolidColorBrush x:Key="MarkdownLinkBrush" Color="#FF4FC1FF" />
+
+            <Color x:Key="BorderColor">#FF3C3C3C</Color>
+            <Color x:Key="ForegroundColor">#FFD4D4D4</Color>
+            <Color x:Key="CardBackgroundColor">#FF252526</Color>
+            <Color x:Key="SecondaryCardBackgroundColor">#FF1E1E1E</Color>
+            <Color x:Key="CodeInlineColor">#FFCE9178</Color>
+            <Color x:Key="QuoteBorderColor">#FF6A9955</Color>
+
+            <sys:Double x:Key="FontSizeS">12</sys:Double>
+            <sys:Double x:Key="FontSizeM">13</sys:Double>
+            <sys:Double x:Key="FontSizeL">15</sys:Double>
+            <sys:Double x:Key="FontSizeXl">18</sys:Double>
+            <sys:Double x:Key="FontSize2Xl">22</sys:Double>
+            <sys:Double x:Key="FontSize3Xl">28</sys:Double>
+        </ResourceDictionary>
+    </ResourceDictionary.ThemeDictionaries>
 </ResourceDictionary>

@@ -6,6 +6,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
 using ModelContextProtocol.Server;
 using NeoEditor.Core.Abstractions;
 using NeoEditor.Data;
@@ -91,6 +92,71 @@ public sealed class EditorTools
     }
 
     [McpServerTool, Description(
+         "Edit MULTIPLE properties on one entity in a single call (batch edit — the efficient " +
+         "way to fill a new entity or mass-update fields). Changes are STAGED in memory; call Save to persist. " +
+         "fieldsJson: JSON array of {\"name\": \"PropertyName\", \"value\": \"new value\"} — see GetEntitySchema " +
+         "for property names. All edits apply atomically (one undo step).")]
+    public async Task<string> BatchEditEntity(
+        [Description("Entity type name")] string entityType,
+        [Description("Entity ID string")] string entityId,
+        [Description("JSON array of field edits, e.g. [{\"name\":\"StrName\",\"value\":\"Bandage\"},{\"name\":\"Weight\",\"value\":\"0.1\"}]")]
+        string fieldsJson)
+    {
+        // Validate inputs FIRST (feedback: fail fast with clear messages before touching data).
+        List<FieldEditSpec>? fields;
+        try
+        {
+            fields = JsonConvert.DeserializeObject<List<FieldEditSpec>>(fieldsJson);
+        }
+        catch (Exception ex)
+        {
+            return JsonConvert.SerializeObject(new { error = $"Invalid fieldsJson: {ex.Message}" });
+        }
+
+        if (fields is not { Count: > 0 })
+            return JsonConvert.SerializeObject(new { error = "fieldsJson must contain at least one {name, value} entry" });
+
+        if (!Constants.GameTypes.TryGetValue(entityType, out var type))
+            return JsonConvert.SerializeObject(new { error = $"Unknown entity type: {entityType}" });
+
+        var entity = await GetEntityByTypeAsync(entityType, entityId);
+        if (entity is null)
+            return JsonConvert.SerializeObject(new { error = $"Entity not found: {entityType}/{entityId}" });
+
+        var edits = new List<EditRecord>();
+        var applied = new List<object>();
+        foreach (var f in fields)
+        {
+            var prop = FindProperty(entity, f.Name);
+            if (prop is null)
+                return JsonConvert.SerializeObject(new { error = $"Property '{f.Name}' not found on {entityType}" });
+            var oldValue = prop.GetValue(entity);
+            var converted = TryConvertValue(f.Value ?? "", prop.PropertyType);
+            edits.Add(new EditRecord(entity, prop, f.Name, oldValue, converted));
+            applied.Add(new { name = f.Name, oldValue = oldValue?.ToString(), newValue = converted?.ToString() });
+        }
+
+        var cmd = new BatchEditCommand(edits, () => { });
+        var result = await _hostService.ExecuteAsync(cmd, "mcp");
+
+        return JsonConvert.SerializeObject(new
+        {
+            success = result.Success,
+            entityId,
+            entityType,
+            appliedFields = applied.Count,
+            applied,
+            error = result.Error
+        });
+    }
+
+    private sealed class FieldEditSpec
+    {
+        public string? Name { get; set; }
+        public string? Value { get; set; }
+    }
+
+    [McpServerTool, Description(
          "Create a new entity with the given type and ID. The entity is created empty — " +
          "use EditEntity to set its properties. Changes are staged; call Save to persist. " +
          "Use ListEntities to check if an entity ID is already taken.")]
@@ -146,6 +212,74 @@ public sealed class EditorTools
     }
 
     [McpServerTool, Description(
+         "Find which entities REFERENCE the given entity (reverse references). " +
+         "Critical before deleting: e.g. deleting an ImageAsset without knowing which ItemType/Creature " +
+         "uses it would break those entities. Uses the active session's reverse index; returns source " +
+         "entity type/ID and the referencing property for each hit.")]
+    public async Task<string> FindReferencingEntities(
+        [Description("Entity type name of the target (e.g. ImageAsset, ItemType)")]
+        string entityType,
+        [Description("Entity ID string of the target (e.g. image_bandage)")]
+        string entityId)
+    {
+        if (!Constants.GameTypes.TryGetValue(entityType, out _))
+            return JsonConvert.SerializeObject(new { error = $"Unknown entity type: {entityType}" });
+
+        var session = _serviceProvider.GetRequiredService<NeoEditor.Services.IWorkspaceSession>();
+        var index = session.ReverseIndex;
+        if (index is null)
+            return JsonConvert.SerializeObject(new
+            {
+                error = "Reverse index is not built yet — open a mod/profile in the editor first"
+            });
+
+        var hits = index.ReverseLookup(entityId);
+        var items = new List<object>();
+        foreach (var (srcEid, propName, rawId) in hits)
+        {
+            var src = _hostService.GetCachedEntity(srcEid);
+            items.Add(new
+            {
+                sourceEntityId = srcEid,
+                sourceType = src?.GetType().Name,
+                sourceSubject = src?.Subject ?? srcEid,
+                property = propName,
+                rawValue = rawId
+            });
+        }
+
+        return JsonConvert.SerializeObject(new
+        {
+            targetEntityId = entityId,
+            referencingCount = items.Count,
+            referencing = items
+        });
+    }
+
+    [McpServerTool, Description(
+         "Discard the STAGED (unsaved) changes for one entity — removes it from the dirty set so " +
+         "a subsequent Save will NOT write it. Use when a batch of edits went wrong and Undo is " +
+         "insufficient (e.g. after the edits were already interleaved). The in-memory values remain; " +
+         "to revert values to their last-saved state, use Undo before this, or re-edit explicitly.")]
+    public async Task<string> DiscardChanges(
+        [Description("Entity type name")] string entityType,
+        [Description("Entity ID string whose staged changes should be discarded")]
+        string entityId)
+    {
+        if (!Constants.GameTypes.TryGetValue(entityType, out _))
+            return JsonConvert.SerializeObject(new { error = $"Unknown entity type: {entityType}" });
+
+        await _hostService.DiscardAsync(entityId);
+        return JsonConvert.SerializeObject(new
+        {
+            success = true,
+            entityId,
+            entityType,
+            staged = "cleared"
+        });
+    }
+
+    [McpServerTool, Description(
          "List entities of a given EXACT type. Use only when the entity type is already known " +
          "(e.g. ItemType, Creature); prefer SearchAllTypes when the type is unknown or the user " +
          "describes the entity by name. Supports optional substring filtering on entity subject/ID. " +
@@ -197,12 +331,25 @@ public sealed class EditorTools
         [Description("Optional: save only this entity ID instead of all dirty entities")]
         string? entityId = null)
     {
-        if (!string.IsNullOrWhiteSpace(entityId))
-            await _hostService.SaveAsync(entityId);
-        else
-            await _hostService.SaveAllAsync();
+        var dirtyBefore = _hostService.DirtyEntities.Count;
 
-        return JsonConvert.SerializeObject(new { saved = true, entityId = entityId ?? "(all)" });
+        SaveResult result;
+        if (!string.IsNullOrWhiteSpace(entityId))
+            result = await _hostService.SaveAsync(entityId);
+        else
+            result = await _hostService.SaveAllAsync();
+
+        return JsonConvert.SerializeObject(new
+        {
+            saved = result.SavedEntityIds.Count > 0,
+            savedCount = result.SavedEntityIds.Count,
+            savedEntityIds = result.SavedEntityIds,
+            dirtyBefore,
+            remainingDirty = _hostService.DirtyEntities.Count,
+            note = result.SavedEntityIds.Count == 0 && dirtyBefore > 0
+                ? "No entities were saved — dirty entities are missing from the working cache. Re-edit them to re-stage."
+                : null
+        });
     }
 
     [McpServerTool, Description(
@@ -335,20 +482,66 @@ public sealed class EditorTools
          "an exact type (e.g. \"find something about stone\", \"which entity is 独头弹?\"). " +
          "Narrow with entityType (e.g. AttackMode, ItemType) or modId (the numeric namespace shown " +
          "in search results / GetEntity) to reduce noise. Only use ListEntities when the entity " +
-         "type is already known.")]
+         "type is already known. For typed field filters pass filtersJson, e.g. " +
+         "[{\"field\":\"Weight\",\"op\":\">=\",\"value\":\"1.5\"}] — ops: contains, =, ==, !=, <>, " +
+         "startsWith, endsWith, >, >=, <, <=. Pass entityTypesJson to search several types at once.")]
     public async Task<string> SearchAllTypes(
-        [Description("Substring to search for in entity subject, ID, or any string property")]
-        string query,
+        [Description("Substring to search for in entity subject, ID, or any string property. " +
+                     "OPTIONAL — may be empty when searching purely by filtersJson or modId")]
+        string? query = "",
         [Description("Optional: restrict to one entity type (e.g. AttackMode, ItemType, Recipe)")]
         string? entityType = null,
         [Description("Optional: restrict to a mod's entities (its numeric modId, as shown in search results)")]
         int? modId = null,
         [Description("Maximum total results across all types (default 100)")]
-        int limit = 100)
+        int limit = 100,
+        [Description("Optional: JSON array of entity type names, e.g. [\"ItemType\",\"Creature\"] (overrides entityType)")]
+        string? entityTypesJson = null,
+        [Description("Optional: JSON array of typed field filters, e.g. [{\"field\":\"Weight\",\"op\":\">=\",\"value\":\"1.5\"}], AND semantics")]
+        string? filtersJson = null,
+        [Description("Optional: page offset for pagination (default 0)")]
+        int offset = 0)
     {
-        var matches = await _hostService.SearchEntitiesAsync(query, limit, entityType, modId);
+        // entityTypesJson → multi-type selection (overrides the single entityType)
+        List<string>? entityTypes = null;
+        if (!string.IsNullOrWhiteSpace(entityTypesJson))
+        {
+            try
+            {
+                entityTypes = JsonConvert.DeserializeObject<List<string>>(entityTypesJson);
+                if (entityTypes is { Count: 0 }) entityTypes = null;
+            }
+            catch (Exception ex)
+            {
+                return JsonConvert.SerializeObject(new { error = $"Invalid entityTypesJson: {ex.Message}" });
+            }
+        }
+        else if (!string.IsNullOrWhiteSpace(entityType))
+        {
+            entityTypes = new List<string> { entityType };
+        }
 
-        var items = matches.Select(e => new
+        // filtersJson → typed field filters
+        List<EntityFilter>? filters = null;
+        if (!string.IsNullOrWhiteSpace(filtersJson))
+        {
+            try
+            {
+                filters = JsonConvert.DeserializeObject<List<FilterSpec>>(filtersJson)?
+                    .Select(f => new EntityFilter(f.Field, ParseFilterOperator(f.Op), f.Value ?? ""))
+                    .ToList();
+                if (filters is { Count: 0 }) filters = null;
+            }
+            catch (Exception ex)
+            {
+                return JsonConvert.SerializeObject(new { error = $"Invalid filtersJson: {ex.Message}" });
+            }
+        }
+
+        var result = await _hostService.SearchEntitiesAsync(new EntitySearchRequest(
+            query ?? "", entityTypes, modId, filters, limit, offset));
+
+        var items = result.Items.Select(e => new
         {
             entityType = e.GetType().Name,
             entityId = e.EntityId ?? "",
@@ -359,7 +552,10 @@ public sealed class EditorTools
         return JsonConvert.SerializeObject(new
         {
             query,
-            totalMatches = matches.Count,
+            totalMatches = result.Total,
+            offset,
+            returned = result.Items.Count,
+            truncated = result.Truncated,
             items
         });
     }
@@ -383,7 +579,143 @@ public sealed class EditorTools
         });
     }
 
+    // ── Undo / Redo (MCP scope undo — R31) ──
+
+    [McpServerTool, Description(
+         "Undo the last MCP edit (EditEntity/AddEntity/DeleteEntity). Restores the entity's " +
+         "previous in-memory value and re-marks it dirty. Scoped to MCP commands only — UI edits " +
+         "are not affected. Call Save afterwards to persist the undone state.")]
+    public async Task<string> Undo()
+    {
+        await _hostService.UndoAsync("mcp");
+        return JsonConvert.SerializeObject(new
+        {
+            success = true,
+            dirtyEntityCount = _hostService.DirtyEntities.Count
+        });
+    }
+
+    [McpServerTool, Description(
+         "Redo the last undone MCP edit. Re-applies the command that was reverted by Undo. " +
+         "Call Save afterwards to persist.")]
+    public async Task<string> Redo()
+    {
+        await _hostService.RedoAsync("mcp");
+        return JsonConvert.SerializeObject(new
+        {
+            success = true,
+            dirtyEntityCount = _hostService.DirtyEntities.Count
+        });
+    }
+
+    // ── Publish / Export (R26 pipeline: memory → DB → XML) ──
+
+    [McpServerTool, Description(
+         "Run the full publish pipeline: save all staged changes to the DB, then export the " +
+         "affected mods back to their XML files. Set commit=true to write the exported XML files " +
+         "to disk immediately; otherwise a preview (file paths + change kinds) is returned and " +
+         "nothing is written to disk.")]
+    public async Task<string> Publish(
+        [Description("Optional: write the exported XML files to disk immediately (default false = preview only)")]
+        bool commit = false)
+    {
+        var result = await _hostService.PublishAsync();
+
+        var exports = new List<object>();
+        foreach (var export in result.Exports)
+        {
+            if (commit && export.Files.Count > 0)
+                await _hostService.CommitExportAsync(export.Files);
+            exports.Add(new
+            {
+                modId = export.ModId,
+                fileCount = export.Files.Count,
+                files = export.Files.Select(f => new
+                {
+                    targetId = f.TargetId,
+                    kind = f.Kind.ToString(),
+                    oldContentPreview = Truncate(f.OldContent, 200),
+                    newContentPreview = Truncate(f.NewContent, 200)
+                })
+            });
+        }
+
+        return JsonConvert.SerializeObject(new
+        {
+            success = true,
+            savedCount = result.Save.SavedEntityIds.Count,
+            savedEntityIds = result.Save.SavedEntityIds,
+            committed = commit,
+            exports
+        });
+    }
+
+    [McpServerTool, Description(
+         "Preview (or commit) the XML export of a single mod: converts the mod's DB entities back " +
+         "to their XML files and reports what would change. Use GetModInfo to list mods, or read " +
+         "modId from search results / GetEntity. Set commit=true to write the files to disk " +
+         "immediately — the final write step after you have reviewed the preview.")]
+    public async Task<string> ExportMod(
+        [Description("Numeric mod ID (shown as modId in GetModInfo / search results / GetEntity)")]
+        int modId,
+        [Description("Optional: write the exported XML files to disk immediately (default false = preview only)")]
+        bool commit = false)
+    {
+        var results = await _hostService.ExportModAsync(modId);
+
+        var files = new List<object>();
+        foreach (var result in results)
+        {
+            if (commit && result.Files.Count > 0)
+                await _hostService.CommitExportAsync(result.Files);
+            files.AddRange(result.Files.Select(f => new
+            {
+                targetId = f.TargetId,
+                kind = f.Kind.ToString(),
+                oldContentPreview = Truncate(f.OldContent, 200),
+                newContentPreview = Truncate(f.NewContent, 200)
+            }));
+        }
+
+        return JsonConvert.SerializeObject(new
+        {
+            success = true,
+            modId,
+            committed = commit,
+            fileCount = files.Count,
+            files
+        });
+    }
+
     // ── Helpers ──
+
+    /// <summary>Wire format for a typed filter in filtersJson.</summary>
+    private class FilterSpec
+    {
+        public string? Field { get; set; }
+        public string? Op { get; set; }
+        public string? Value { get; set; }
+    }
+
+    private static FilterOperator ParseFilterOperator(string op)
+    {
+        return op.Trim().ToLowerInvariant() switch
+        {
+            "contains" => FilterOperator.Contains,
+            "=" or "==" or "equals" => FilterOperator.Equals,
+            "!=" or "<>" or "notequals" => FilterOperator.NotEquals,
+            "startswith" or "prefix" => FilterOperator.StartsWith,
+            "endswith" or "suffix" => FilterOperator.EndsWith,
+            ">" => FilterOperator.GreaterThan,
+            ">=" => FilterOperator.GreaterThanOrEqual,
+            "<" => FilterOperator.LessThan,
+            "<=" => FilterOperator.LessThanOrEqual,
+            _ => FilterOperator.Contains
+        };
+    }
+
+    private static string? Truncate(string? s, int max)
+        => s is null || s.Length <= max ? s : s[..max] + "…";
 
     /// <summary>
     /// Serialize an object to JSON and truncate if it exceeds the character limit.
@@ -453,7 +785,13 @@ public sealed class EditorTools
         var task = (Task?)method?.Invoke(repo, new object[] { entityId });
         if (task is null) return null;
         await task.ConfigureAwait(false);
-        return task.GetType().GetProperty("Result")?.GetValue(task) as IEntity;
+        var baseline = task.GetType().GetProperty("Result")?.GetValue(task) as IEntity;
+        // 追修(C): the tables are the baseline — merge the current profile's overlay so
+        // reads see this profile's edits (and IsDeleted entities resolve to null).
+        var merged = baseline is null
+            ? _hostService.MergeProfileOverlay([])
+            : _hostService.MergeProfileOverlay([baseline]);
+        return merged.FirstOrDefault(e => e.EntityId == entityId);
     }
 
     internal async Task<IReadOnlyList<IEntity>> GetAllByTypeAsync(string entityType)
@@ -466,7 +804,10 @@ public sealed class EditorTools
         if (task is null) return Array.Empty<IEntity>();
         await task.ConfigureAwait(false);
         var result = task.GetType().GetProperty("Result")?.GetValue(task) as System.Collections.IEnumerable;
-        return result?.Cast<IEntity>().ToList() ?? (IReadOnlyList<IEntity>)Array.Empty<IEntity>();
+        // 追修(C): merge the current profile's overlay (see GetEntityByTypeAsync).
+        return result?.Cast<IEntity>() is { } baseline
+            ? _hostService.MergeProfileOverlay(baseline)
+            : (IReadOnlyList<IEntity>)Array.Empty<IEntity>();
     }
 
     internal object? GetRepository(Type entityType)

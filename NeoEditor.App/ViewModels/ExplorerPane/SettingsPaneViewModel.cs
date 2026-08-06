@@ -15,6 +15,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using Microsoft.Extensions.DependencyInjection;
+using NeoEditor.Core.Abstractions;
 using NeoEditor.Data.Messages;
 using Microsoft.Extensions.Logging;
 using NeoEditor.Helper;
@@ -28,6 +29,7 @@ public partial class SettingsPaneViewModel : ViewModelBase
     public AppConfig Config => _config.Config;
     private readonly ILogger<ResourceManagerViewModel> _logger;
     private readonly ILocalizationService _localizationService;
+    private readonly IOnboardingHintService _hintService;
 
     public string[] AvailableLanguages { get; } = ["zh", "en"];
     public string[] AvailableThemes { get; } = ["System", "Light", "Dark"];
@@ -123,6 +125,16 @@ public partial class SettingsPaneViewModel : ViewModelBase
 
     /// <summary>Auto entry standing for "use the first provider" (empty provider id).</summary>
     private readonly AiProviderRowViewModel _autoProviderChoice = null!;
+
+    /// <summary>Docs/41 P3: re-enable one-shot onboarding hints (empty-mod banner, first-export toast…).</summary>
+    [RelayCommand]
+    private async Task ResetOnboardingHints()
+    {
+        await _hintService.ResetAllAsync();
+        _config.Config.EmptyModHintDismissed = false;
+        await _config.SaveAsync();
+        Notification.ShowSuccess(Loc["SettingsOnboardingHintsReset"]);
+    }
 
     [RelayCommand]
     private void AddProvider()
@@ -356,6 +368,108 @@ public partial class SettingsPaneViewModel : ViewModelBase
         }
     }
 
+    // ═══════════════════════════════════════════════════════════════════════
+    //  ParaTranz translation platform (D03 §6.1)
+    //  Token is encrypted at rest by ConfigService; the API client singleton
+    //  (M4 panel / sync services) reads the same token via this VM at load time.
+    // ═══════════════════════════════════════════════════════════════════════
+
+    private readonly NeoEditor.Plugins.Paratranz.Services.IParatranzApiClient _paratranzClient;
+
+    /// <summary>ParaTranz API token (Settings text box; persisted encrypted).</summary>
+    public string DisplayParatranzToken
+    {
+        get => Config.ParatranzToken;
+        set
+        {
+            if (Config.ParatranzToken == value) return;
+            Config.ParatranzToken = value;
+            _paratranzClient.Token = value;
+            OnPropertyChanged();
+            Helper.AsyncHelper.FireAndForget(_config.SaveAsync());
+        }
+    }
+
+    /// <summary>Projects available to the token (filled after a successful connection test).</summary>
+    public ObservableCollection<ParatranzProjectChoice> ParatranzProjectChoices { get; } = new();
+
+    private ParatranzProjectChoice? _selectedParatranzProject;
+    public ParatranzProjectChoice? SelectedParatranzProject
+    {
+        get => _selectedParatranzProject;
+        set
+        {
+            if (_selectedParatranzProject == value) return;
+            _selectedParatranzProject = value;
+            Config.ParatranzProjectId = value?.Id ?? 0;
+            OnPropertyChanged();
+            Helper.AsyncHelper.FireAndForget(_config.SaveAsync());
+        }
+    }
+
+    [ObservableProperty]
+    public partial bool IsTestingParatranzConnection { get; set; }
+
+    [ObservableProperty]
+    public partial string ParatranzTestResult { get; set; } = string.Empty;
+
+    public bool HasParatranzTestResult => !string.IsNullOrWhiteSpace(ParatranzTestResult);
+
+    /// <summary>
+    /// Validate the token (GET /projects), then fill the project dropdown.
+    /// Mirrors TestImageConnection: real call + diagnosable result text.
+    /// </summary>
+    [RelayCommand]
+    private async Task TestParatranzConnection()
+    {
+        IsTestingParatranzConnection = true;
+        ParatranzTestResult = string.Empty;
+        OnPropertyChanged(nameof(HasParatranzTestResult));
+        try
+        {
+            if (string.IsNullOrWhiteSpace(DisplayParatranzToken))
+            {
+                ParatranzTestResult = _localizationService["Settings.ParatranzTestNoToken"];
+                OnPropertyChanged(nameof(HasParatranzTestResult));
+                return;
+            }
+
+            var projects = await _paratranzClient.GetProjectsAsync();
+            if (projects.Count == 0)
+            {
+                ParatranzTestResult = _localizationService["Settings.ParatranzTestNoProjects"];
+                OnPropertyChanged(nameof(HasParatranzTestResult));
+                return;
+            }
+
+            ParatranzProjectChoices.Clear();
+            foreach (var project in projects.OrderBy(p => p.Name))
+                ParatranzProjectChoices.Add(new ParatranzProjectChoice(project.Id ?? 0, project.Name ?? $"#{project.Id}"));
+            SelectedParatranzProject = ParatranzProjectChoices.FirstOrDefault(p => p.Id == Config.ParatranzProjectId)
+                                       ?? ParatranzProjectChoices.FirstOrDefault();
+
+            ParatranzTestResult = string.Format(
+                _localizationService["Settings.ParatranzTestOk"], projects.Count);
+            OnPropertyChanged(nameof(HasParatranzTestResult));
+        }
+        catch (NeoEditor.Plugins.Paratranz.Models.ParatranzApiException ex)
+        {
+            ParatranzTestResult = string.Format(
+                _localizationService["Settings.ParatranzTestFailed"], ex.Message);
+            OnPropertyChanged(nameof(HasParatranzTestResult));
+        }
+        catch (Exception ex)
+        {
+            ParatranzTestResult = string.Format(
+                _localizationService["Settings.ParatranzTestError"], ex.Message);
+            OnPropertyChanged(nameof(HasParatranzTestResult));
+        }
+        finally
+        {
+            IsTestingParatranzConnection = false;
+        }
+    }
+
     /// <summary>
     /// Wrapper for GameRootDir that triggers SaveAsync on change.
     /// Direct TextBox binding to Config.GameRootDir would update in-memory only;
@@ -416,11 +530,16 @@ public partial class SettingsPaneViewModel : ViewModelBase
     }
 
     public SettingsPaneViewModel(ILogger<ResourceManagerViewModel> logger, ILocalizationService localizationService,
-        IConfigService configService)
+        IConfigService configService, IOnboardingHintService onboardingHintService,
+        NeoEditor.Plugins.Paratranz.Services.IParatranzApiClient paratranzClient)
     {
         _config = configService;
         _logger = logger;
         _localizationService = localizationService;
+        _hintService = onboardingHintService;
+        _paratranzClient = paratranzClient;
+        // D03: keep the API client token in sync with config at load time (M4 panel reuses it).
+        _paratranzClient.Token = Config.ParatranzToken;
         _displayGameRootDir = Config.GameRootDir;
         LoadColumnVisibilityConfig();
 
@@ -555,4 +674,11 @@ public partial class ColumnOption : ObservableObject
         _isVisible = visible;
         OnPropertyChanged(nameof(IsVisible));
     }
+}
+/// <summary>ParaTranz project shown in the Settings dropdown (D03 §6.1).</summary>
+public sealed class ParatranzProjectChoice(int id, string name)
+{
+    public int Id { get; } = id;
+    public string Name { get; } = name;
+    public string DisplayLabel => string.IsNullOrWhiteSpace(Name) ? $"#{Id}" : $"{Name} (#{Id})";
 }

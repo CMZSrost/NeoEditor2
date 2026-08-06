@@ -14,6 +14,7 @@ namespace NeoEditor.Infra.Tests.Services;
 /// Exercises CreateModAsync / ImportModAsync / DeleteMod / ExportModToZipAsync with in-memory
 /// SQLite contexts + a temp game root.
 /// </summary>
+[Collection("GameDbReferenceSerializer")]
 public class HostServiceModManagerTests : IDisposable
 {
     private readonly string _gameRoot = Path.Combine(Path.GetTempPath(), $"neoeditor_modtest_{Guid.NewGuid():N}");
@@ -47,7 +48,8 @@ public class HostServiceModManagerTests : IDisposable
             new StubNotificationService());
 
         _host = new HostService(new StubWorkspaceSession(), _gameFactory,
-            new RepositoryTestHelpers.StubXmlParser(), config, _editorFactory, modManager);
+            new RepositoryTestHelpers.StubXmlParser(), config, _editorFactory, modManager,
+            null!);
     }
 
     public void Dispose()

@@ -1,0 +1,35 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <LangVersion>preview</LangVersion>
+        <RootNamespace>NeoEditor.Player.Core</RootNamespace>
+        <NoWarn>CS8618;CS9264</NoWarn>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\NeoEditor.Core\NeoEditor.Core.csproj" />
+        <!-- v2.27: NeoEditor.Infra (EF Core stack) removed — GameTableMap reflects the
+             entity model directly; the player must not ship EF Core/SQLite. -->
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
+        <!-- AddPlayerCore DI extensions (editor preview plugin host) — abstractions only,
+             no EF Core; the full container comes from the host -->
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.3" />
+        <PackageReference Include="Serilog" Version="4.3.1" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <!-- Ruffle self-hosted web build (MIT/Apache-2.0) + host page — shared by the editor
+             preview plugin and the standalone player (Docs/42 §3.8). Served by GameContentServer. -->
+        <Content Include="Web\**\*" CopyToOutputDirectory="PreserveNewest" ExcludeFromSingleFile="true" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <InternalsVisibleTo Include="NeoEditor.Plugins.WebView" />
+        <InternalsVisibleTo Include="NeoEditor.Player" />
+        <InternalsVisibleTo Include="NeoEditor.Player.Core.Tests" />
+    </ItemGroup>
+</Project>

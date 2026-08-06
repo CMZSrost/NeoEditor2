@@ -28,8 +28,13 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using MsBox.Avalonia;
 using MsBox.Avalonia.Enums;
+using IConfigService = NeoEditor.Core.Abstractions.IConfigService;
 using NeoEditor.Data;
 using IXmlParser = NeoEditor.Core.Abstractions.IXmlParser;
+// IToolPlugin lives in Core.Abstractions; IWorkspaceSession exists in BOTH Core.Abstractions
+// and NeoEditor.Services (the DI-registered one is NeoEditor.Services) — use an alias so the
+// existing AddSingleton<IWorkspaceSession, WorkspaceSession>() stays unambiguous.
+using IToolPlugin = NeoEditor.Core.Abstractions.IToolPlugin;
 using NeoEditor.Data.Context;
 using NeoEditor.Data.DTO;
 using NeoEditor.Data.Messages;
@@ -50,6 +55,8 @@ using NeoEditor.Plugins.ImageTools.Services;
 using NeoEditor.Plugins.Mcp;
 using NeoEditor.Plugins.Cli;
 using NeoEditor.Plugins.AiChat;
+using NeoEditor.Plugins.Paratranz;
+using NeoEditor.Plugins.WebView;
 using NeoEditor.UI.Common.Services;
 using NeoEditor.UI.Common.Visualizers;
 using NeoEditor.ViewModels.Dialog;
@@ -127,7 +134,11 @@ public partial class App : Application
                 services.AddSingleton<ILocalizationService, LocalizationService>();
                 services.AddSingleton<INotificationService, NotificationService>();
                 services.AddSingleton<PhpParser>();
-                services.AddSingleton<IXmlParser, XmlParser>();
+                // Docs/42 §3.6: PhpParser also implements IGamePhpGenerator so the WebView
+                // preview's ProxyHttpModule can generate getmods.php / getimages.php live.
+                services.AddSingleton<NeoEditor.Core.Abstractions.IGamePhpGenerator>(
+                    sp => sp.GetRequiredService<PhpParser>());
+                services.AddSingleton<IXmlParser, NeoEditor.Infra.Services.XmlParser>();
                 // B5: ModManager lives in Infra and is the HostService's internal collaborator.
                 // IModManager resolves to the HostService so all mod writes flow through IHostService (R24).
                 services.AddSingleton<ModManager>();
@@ -141,6 +152,16 @@ public partial class App : Application
                 services.AddSingleton<SearchService>();
                 services.AddSingleton<ISearchService>(sp => sp.GetRequiredService<SearchService>());
                 services.AddSingleton<FieldDescriptionService>();
+                // Docs/41 P3: one-shot onboarding hints (toast/banner), resettable in Settings.
+                services.AddSingleton<IOnboardingHintService, OnboardingHintService>();
+
+#if DEBUG
+                // Docs/41 需求3: debug-only tool docks — WAL command log + session dirty state.
+                services.AddSingleton<Debug.CommandLogDebugViewModel>();
+                services.AddSingleton<IToolPlugin, Debug.CommandLogDebugToolPlugin>();
+                services.AddSingleton<Debug.SessionDirtyDebugViewModel>();
+                services.AddSingleton<IToolPlugin, Debug.SessionDirtyDebugToolPlugin>();
+#endif
                 services.AddSingleton<IWorkspacePersistenceService, WorkspacePersistenceService>();
                 services.AddSingleton<IBrowserIndexService, BrowserIndexService>();
                 services.AddSingleton<IWorkspaceSession, WorkspaceSession>();
@@ -166,6 +187,8 @@ public partial class App : Application
                 services.AddMcpPlugin();
                 services.AddCliPlugin();
                 services.AddAiChatPlugin();
+                services.AddParatranzPlugin();
+                services.AddWebViewPlugin();
                 // D02: App-level tool plugins (Profile Tool). Registered with the other
                 // IToolPlugin instances so the dynamic dock build picks them up.
                 services.AddSingleton<ViewModels.MainContent.ProfileToolViewModel>();
@@ -259,19 +282,53 @@ public partial class App : Application
         db.Database.ExecuteSqlRaw(
             "CREATE UNIQUE INDEX IF NOT EXISTS IX_workspace_snapshot_TargetType_TargetId ON workspace_snapshot (TargetType, TargetId)");
 
+        // Docs/41: pending-export table ("edited, not yet exported" markers, survive restart).
+        // Per-column markers: one row per (ModId, EntityId, ColumnName) so field-level
+        // highlights survive restart; ColumnName NULL = entity-level marker (e.g. new rows).
+        db.Database.ExecuteSqlRaw(
+            "CREATE TABLE IF NOT EXISTS pending_export (" +
+            "Id INTEGER PRIMARY KEY AUTOINCREMENT, " +
+            "ModId INTEGER NOT NULL, " +
+            "EntityId TEXT NOT NULL, " +
+            "ColumnName TEXT NULL, " +
+            "IsNew INTEGER NOT NULL DEFAULT 0, " +
+            "UpdatedAt TEXT NOT NULL DEFAULT (datetime('now','localtime')))");
+        // Existing DBs: add the column, then swap the old (ModId, EntityId) unique index for
+        // the per-column one (the old constraint would reject a second column row for an entity).
+        AddColumnIfMissing(db, "SELECT name FROM pragma_table_info('pending_export')", "ColumnName",
+            "ALTER TABLE pending_export ADD COLUMN ColumnName TEXT NULL");
+        db.Database.ExecuteSqlRaw("DROP INDEX IF EXISTS IX_pending_export_ModId_EntityId");
+        db.Database.ExecuteSqlRaw(
+            "CREATE UNIQUE INDEX IF NOT EXISTS IX_pending_export_ModId_EntityId_ColumnName " +
+            "ON pending_export (ModId, EntityId, ColumnName)");
+
+        // Docs/41 追修(C): per-profile edit overlay (multi-profile isolation).
+        db.Database.ExecuteSqlRaw(
+            "CREATE TABLE IF NOT EXISTS profile_edits (" +
+            "Id INTEGER PRIMARY KEY AUTOINCREMENT, " +
+            "ProfileId INTEGER NOT NULL, " +
+            "EntityId TEXT NOT NULL, " +
+            "ColumnName TEXT NULL, " +
+            "RawValue TEXT NULL, " +
+            "IsNew INTEGER NOT NULL DEFAULT 0, " +
+            "IsDeleted INTEGER NOT NULL DEFAULT 0, " +
+            "UpdatedAt TEXT NOT NULL DEFAULT (datetime('now','localtime')))");
+        db.Database.ExecuteSqlRaw(
+            "CREATE UNIQUE INDEX IF NOT EXISTS IX_profile_edits_ProfileId_EntityId_ColumnName " +
+            "ON profile_edits (ProfileId, EntityId, ColumnName)");
+
         // R26/B4: add IncludeGame + SingleModId columns to existing profile_info tables.
         // SQLite ALTER TABLE has no IF NOT EXISTS, so check PRAGMA table_info first.
-        AddProfileInfoColumnIfMissing(db, "IncludeGame",
+        AddColumnIfMissing(db, "SELECT name FROM pragma_table_info('profile_info')", "IncludeGame",
             "ALTER TABLE profile_info ADD COLUMN IncludeGame INTEGER NOT NULL DEFAULT 1");
-        AddProfileInfoColumnIfMissing(db, "SingleModId",
+        AddColumnIfMissing(db, "SELECT name FROM pragma_table_info('profile_info')", "SingleModId",
             "ALTER TABLE profile_info ADD COLUMN SingleModId INTEGER NULL");
     }
 
-    /// <summary>Add a column to the profile_info table if it does not already exist (SQLite).</summary>
-    private static void AddProfileInfoColumnIfMissing(DbContext db, string column, string alterSql)
+    /// <summary>Add a column to a table if it does not already exist (SQLite).</summary>
+    private static void AddColumnIfMissing(DbContext db, string pragmaSql, string column, string alterSql)
     {
-        var columns = db.Database.SqlQueryRaw<string>(
-                "SELECT name FROM pragma_table_info('profile_info')")
+        var columns = db.Database.SqlQueryRaw<string>(pragmaSql)
             .ToList();
         if (columns.Contains(column, StringComparer.OrdinalIgnoreCase)) return;
         db.Database.ExecuteSqlRaw(alterSql);

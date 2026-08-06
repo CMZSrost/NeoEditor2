@@ -1,0 +1,80 @@
+<UserControl
+    x:Class="NeoEditor.Plugins.Paratranz.Views.ParatranzPaneView"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:vm="using:NeoEditor.Plugins.Paratranz.ViewModels"
+    x:DataType="vm:ParatranzPaneViewModel">
+
+    <Grid RowDefinitions="Auto,*">
+
+        <!-- 顶部工具栏：Mod 选择 + 上传原文 + 刷新 -->
+        <Grid ColumnDefinitions="Auto,*,Auto,Auto" Margin="8,8,8,4">
+            <TextBlock VerticalAlignment="Center" Text="{Binding Loc[Paratranz.ModLabel]}" Margin="0,0,4,0" />
+            <ComboBox Grid.Column="1"
+                      ItemsSource="{Binding ModChoices}"
+                      SelectedItem="{Binding SelectedMod}" />
+            <Button Grid.Column="2" Margin="6,0,0,0"
+                    Content="{Binding Loc[Paratranz.UploadOriginals]}"
+                    Command="{Binding UploadOriginalsCommand}"
+                    IsEnabled="{Binding !IsBusy}" />
+            <Button Grid.Column="3" Margin="6,0,0,0"
+                    Content="{Binding Loc[Paratranz.Refresh]}"
+                    Command="{Binding RefreshCommand}"
+                    IsEnabled="{Binding !IsBusy}" />
+        </Grid>
+
+        <TabControl Grid.Row="1">
+            <!-- Tab 1：同步 -->
+            <TabItem Header="{Binding Loc[Paratranz.TabSync]}">
+                <Grid RowDefinitions="Auto,Auto,*" Margin="8">
+                    <TextBlock Text="{Binding ProjectSummary}"
+                               FontWeight="SemiBold" Margin="0,0,0,6" />
+                    <TextBlock Grid.Row="1" Text="{Binding StatusText}"
+                               FontSize="11" Foreground="Gray" TextWrapping="Wrap"
+                               Margin="0,0,0,6" />
+                    <ScrollViewer Grid.Row="2">
+                        <ItemsControl ItemsSource="{Binding Files}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="vm:ParatranzFileRow">
+                                    <Grid ColumnDefinitions="2*,120,80,80" Margin="0,2">
+                                        <TextBlock Text="{Binding Name}" VerticalAlignment="Center"
+                                                   TextTrimming="CharacterEllipsis" />
+                                        <ProgressBar Grid.Column="1" Value="{Binding Progress}"
+                                                     Maximum="1" Height="10" VerticalAlignment="Center" />
+                                        <TextBlock Grid.Column="2" Text="{Binding ProgressText}"
+                                                   FontSize="11" VerticalAlignment="Center"
+                                                   HorizontalAlignment="Right" />
+                                        <Button Grid.Column="3" Margin="4,0,0,0" Padding="8,2"
+                                                Content="{Binding $parent[TabItem].((vm:ParatranzPaneViewModel)DataContext).Loc[Paratranz.ApplyFile]}"
+                                                IsEnabled="{Binding !IsApplying}"
+                                                Click="OnApplyFileClick" />
+                                    </Grid>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+                </Grid>
+            </TabItem>
+
+            <!-- Tab 2：翻译工作台（WebView 嵌入 paratranz.cn 项目页） -->
+            <TabItem Header="{Binding Loc[Paratranz.TabWorkbench]}">
+                <Grid RowDefinitions="Auto,*">
+                    <Grid ColumnDefinitions="*,Auto,Auto" Margin="8,6,8,2">
+                        <TextBlock x:Name="WorkbenchAddress" VerticalAlignment="Center"
+                                   FontSize="11" Foreground="Gray" TextTrimming="CharacterEllipsis" />
+                        <Button Grid.Column="1" Margin="4,0,0,0" Content="{Binding Loc[Paratranz.Refresh]}"
+                                Click="OnWorkbenchRefreshClick" />
+                        <Button Grid.Column="2" Margin="4,0,0,0" Content="{Binding Loc[Paratranz.OpenBrowser]}"
+                                Command="{Binding OpenInBrowserCommand}" />
+                    </Grid>
+                    <Panel x:Name="WorkbenchHost" Grid.Row="1">
+                        <TextBlock x:Name="WorkbenchPlaceholder" TextWrapping="Wrap"
+                                   Margin="12" VerticalAlignment="Center" HorizontalAlignment="Center"
+                                   FontSize="13" Foreground="Gray"
+                                   Text="{Binding Loc[Paratranz.NoProjectHint]}" />
+                    </Panel>
+                </Grid>
+            </TabItem>
+        </TabControl>
+    </Grid>
+</UserControl>

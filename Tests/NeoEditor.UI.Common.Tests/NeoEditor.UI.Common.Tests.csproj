@@ -20,5 +20,7 @@
 
     <ItemGroup>
         <ProjectReference Include="..\..\NeoEditor.UI.Common\NeoEditor.UI.Common.csproj" />
+        <!-- ValueConverter moved to Infra (v2.16) -->
+        <ProjectReference Include="..\..\NeoEditor.Infra\NeoEditor.Infra.csproj" />
     </ItemGroup>
 </Project>

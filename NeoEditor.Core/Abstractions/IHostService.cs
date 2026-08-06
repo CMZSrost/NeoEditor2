@@ -79,6 +79,20 @@ public interface IHostService
     /// <summary>Export all non-game mods of the current profile from DB to their XML files.</summary>
     Task<IReadOnlyList<ExportResult>> ExportProfileAsync();
 
+    /// <summary>
+    /// Write previously-previewed XML diffs to the mod files (R26 export commit).
+    /// The single write path for mod XML export — views must not write files directly.
+    /// </summary>
+    Task CommitExportAsync(IEnumerable<RowDiff> diffs);
+
+    /// <summary>
+    /// Docs/41 追修(C): advance the SHARED BASELINE (entity tables) to the exported state of
+    /// the given entities — called after an export commit, so the tables reflect what the
+    /// game now has. Deleted entities are removed from the tables. The view then clears the
+    /// profile overlay (ClearProfileEditsAsync).
+    /// </summary>
+    Task AdvanceBaselineAsync(IReadOnlyList<string> entityIds);
+
     /// <summary>Default action: Save (memory → DB) then Export (DB → XML) as one transaction (R26 Publish action).</summary>
     Task<PublishResult> PublishAsync();
 
@@ -89,6 +103,14 @@ public interface IHostService
 
     /// <summary>Get field-level diff between the in-memory and stored version of an entity.</summary>
     Task<IReadOnlyList<DiffEntry>> GetDiffAsync(string? entityId = null);
+
+    /// <summary>
+    /// Docs/41 追修(C): merge the CURRENT profile's edit overlay into baseline entities —
+    /// the read view used by search / MCP / CLI (shared tables are the baseline, the
+    /// overlay holds this profile's edits). Column overrides are applied in place, IsNew
+    /// entities are rebuilt, IsDeleted entities are dropped.
+    /// </summary>
+    IReadOnlyList<IEntity> MergeProfileOverlay(IEnumerable<IEntity> baselineEntities);
 
     // ── 事件 (可观察; Feature Plugin 订阅用) ──
 
@@ -113,6 +135,24 @@ public interface IHostService
     /// </summary>
     Task<IReadOnlyList<IEntity>> SearchEntitiesAsync(string query, int limit = 50,
         string? entityType = null, int? modId = null);
+
+    /// <summary>
+    /// Structured search: optional multi-table selection (<see cref="EntitySearchRequest.EntityTypes"/>),
+    /// typed field-level filters (AND), pagination (limit/offset) and column sorting.
+    /// Returns the filtered page plus the total match count before pagination.
+    /// Default implementation delegates to the legacy four-argument overload (first type only,
+    /// filters/sort ignored) so existing implementations keep compiling; HostService overrides it.
+    /// </summary>
+    Task<EntitySearchResult> SearchEntitiesAsync(EntitySearchRequest request)
+    {
+        return SearchEntitiesAsync(
+                request.Query,
+                request.Limit,
+                request.EntityTypes is { Count: > 0 } ? request.EntityTypes[0] : null,
+                request.ModId)
+            .ContinueWith(t => new EntitySearchResult(t.Result, t.Result.Count, t.Result.Count > 0),
+                TaskContinuationOptions.ExecuteSynchronously);
+    }
 
     // ── Entity 注册表 ──
 

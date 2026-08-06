@@ -1,7 +1,7 @@
 # NeoEditor 文档索引
 
 > 项目文档总入口。`spec/` 放**决策（规则）**，`Docs/` 放**文档（说明/设计/历史）**。
-> 项目背景与开发约定见根 [AGENT.md](../AGENT.md)。
+> 项目背景与开发约定见根 [CLAUDE.md](../CLAUDE.md)（工作区指令见 [AGENTS.md](../AGENTS.md)）。
 
 ---
 
@@ -31,13 +31,17 @@
 
 | 文件 | 含义 | 状态 |
 |------|------|------|
-| [Docs/35-tabstrip-listbox-filter-templates-plan.md](Docs/35-tabstrip-listbox-filter-templates-plan.md) | TabStrip → ListBox + ProDataGrid 内置 Filter 模板集成 | 📋 计划 |
+| [Docs/42-webview-ruffle-preview-plan.md](Docs/42-webview-ruffle-preview-plan.md) | **WebView + Ruffle Web 预览**（Avalonia 官方 WebView 工具面板 + 内置 SWF 快速预览，与 ruffle.exe 运行器并存互补） | 📋 计划（P0 验证前置，暂不实施） |
+| [Docs/40-ruffle-game-runner-plan.md](Docs/40-ruffle-game-runner-plan.md) | Ruffle 游戏运行器（环境变量检测 + 进程运行 SWF + 日志捕获） | ✅ P1 完成（P2/P3 待做） |
 
 ### 已完成里程碑
 
 | 文件 | 含义 | 状态 |
 |------|------|------|
+| [Docs/41-save-workflow-onboarding-plan.md](Docs/41-save-workflow-onboarding-plan.md) | **保存工作流收敛 + 非侵入式新手引导**（自动保存事件驱动化/黄绿高亮=未导出/单保存按钮/Ctrl+Shift+S/三步空状态卡片/一次性提示/字段 ? 图标） | ✅ 2026-08-03 |
+| [Docs/39-image-editor-workstation-refactor-plan.md](Docs/39-image-editor-workstation-refactor-plan.md) | **图像编辑工作站重构**（创建/编辑双 Document，瘦身解耦 · 统一管线 · 提升可测试性） | ✅ 2026-08-02 |
 | [Docs/38-full-field-reference.md](Docs/38-full-field-reference.md) | **全字段参考手册（整合版）**——24 表全部字段含义（非引用列实测值域+语义，引用列汇总 37） | ✅ 2026-08-02 |
+| [Docs/35-tabstrip-listbox-filter-templates-plan.md](Docs/35-tabstrip-listbox-filter-templates-plan.md) | TabStrip → ListBox + ProDataGrid 内置 Filter 模板集成 | ✅ 完成 2026-08-01 |
 | [Docs/30-post-m12-development-plan.md](Docs/30-post-m12-development-plan.md) | **M13+ 领域驱动服务架构开发计划**（Phase 1-8 + Agent A1-A4 + 像素 G1-G3） | ✅ 全部完成 |
 | [Docs/31-prodatagrid-migration-plan.md](Docs/31-prodatagrid-migration-plan.md) | ProDataGrid 迁移计划（Avalonia DataGrid → ProDataGrid 12.0.4） | ✅ 完成 |
 | [Docs/32-agent-orchestration-plan.md](Docs/32-agent-orchestration-plan.md) | Agent 编排增强计划（系统提示词 + RAG + MCP + Streaming） | ✅ A1-A4 完成 |
@@ -59,7 +63,7 @@
 | 文件 | 含义 |
 |------|------|
 | [Docs/27-compliance-test-checklist.md](Docs/27-compliance-test-checklist.md) | 合规性测试检查清单 |
-| [Docs/testround/](testround/) | 测试轮次记录（test_round13~23） |
+| [Docs/testround/](testround/) | 测试轮次记录（test_round13~32） |
 
 ### 参考资料
 
@@ -90,10 +94,10 @@
 
 ## 阅读顺序建议
 
-1. **先读** [spec/README.md](spec/README.md) — 知道硬约束（R/N 规则全表，25/25 落地）
+1. **先读** [spec/README.md](spec/README.md) — 知道硬约束（R/N 规则全表，R00-R28 + D01-D02 + N01-N06 全部落地）
 2. **再读** [Docs/25](Docs/25-architecture-decisions.md) + [Docs/26](Docs/26-refactor-roadmap.md) — 理解架构决策与重构路线
 3. **当前** [Docs/30](Docs/30-post-m12-development-plan.md) — M13+ 全部完成内容一览
-4. **进行中** [Docs/35](Docs/35-tabstrip-listbox-filter-templates-plan.md) — 下一个任务
+4. **进行中** [Docs/40](Docs/40-ruffle-game-runner-plan.md)（P2/P3 待做）+ [Docs/42](Docs/42-webview-ruffle-preview-plan.md)（P0 验证先行）— 下一个任务
 5. **按需深入**：
    - ProDataGrid → [Docs/31](Docs/31-prodatagrid-migration-plan.md) + [Docs/34](Docs/34-prodatagrid-column-filter-plan.md) + [外部文档镜像](Docs/third-party/prodatagrid/)
    - Agent/AI → [Docs/32](Docs/32-agent-orchestration-plan.md)
