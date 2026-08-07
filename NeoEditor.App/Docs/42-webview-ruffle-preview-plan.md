@@ -641,11 +641,13 @@ ruffle/ 静态资源 + LICENSE*）
 
 ### 发布方式（v2.33 起：GitHub Actions 自动 release + 本地脚本）
 
-**方式 A — GitHub Actions 自动 release（推荐，v2.33）**：`.github/workflows/release.yml`
-在推送 `v*` tag 时触发，windows-latest 上构建并上传两个 zip 到 Release：
-`NeoEditor-{tag}-win-x64.zip`（编辑器）+ `NeoScavengerPlayer-{tag}-win-x64.zip`（播放器）。
+**方式 A — GitHub Actions 自动 release（推荐，v2.33；R59 起两条发布线分开）**：
+播放器与编辑器**独立 workflow、独立 tag 前缀**——发播放器只发播放器包，不混发：
+- 播放器：`.github/workflows/release-player.yml`，打 `player-vX.Y.Z` tag → 只发 `NeoScavengerPlayer-{X.Y.Z}-win-x64.zip`
+- 编辑器：`.github/workflows/release-editor.yml`，打 `editor-vX.Y.Z` tag → 只发 `NeoEditor-{X.Y.Z}-win-x64.zip`
 ```bash
-git tag v1.0.0 && git push origin v1.0.0
+git tag player-v1.0.1 && git push origin player-v1.0.1   # 只发播放器
+git tag editor-v1.0.0 && git push origin editor-v1.0.0   # 只发编辑器
 ```
 
 **方式 B — 本地交互脚本 `publish.ps1`（仓库根，v2.33）**：

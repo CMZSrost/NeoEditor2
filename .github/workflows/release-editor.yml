@@ -1,0 +1,53 @@
+name: Release Editor
+
+# 编辑器独立发布线（R59）：打 editor-vX.Y.Z tag 时只发编辑器包，不与播放器混发。
+on:
+  push:
+    tags:
+      - 'editor-v*'
+
+permissions:
+  contents: write # 创建 Release 所需
+
+jobs:
+  build-and-release:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      # ── 编辑器（NeoEditor.App）──
+      - name: Publish editor (win-x64, self-contained single-file)
+        shell: pwsh
+        run: |
+          dotnet publish NeoEditor.App/NeoEditor.App.csproj `
+            -c Release -r win-x64 --self-contained true `
+            -p:PublishSingleFile=true `
+            -p:IncludeNativeLibrariesForSelfExtract=true `
+            -p:DebugType=None -p:DebugSymbols=false `
+            -o publish/win-x64
+
+      - name: Package zip
+        shell: pwsh
+        run: |
+          $version = $env:GITHUB_REF_NAME -replace '^editor-', ''
+          Remove-Item publish/win-x64/*.pdb -ErrorAction SilentlyContinue
+          Compress-Archive -Path publish/win-x64/* -DestinationPath "NeoEditor-$version-win-x64.zip"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: NeoEditor ${{ github.ref_name }}
+          body: |
+            NeoEditor（NeoScavenger Mod 编辑器）Windows x64 自包含单文件版，无需安装 .NET 运行时。
+
+            - **NeoEditor-${{ github.ref_name }}-win-x64.zip** — 解压运行 `NeoEditor.exe`
+          generate_release_notes: true
+          files: |
+            NeoEditor-*-win-x64.zip

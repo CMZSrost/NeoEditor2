@@ -1,10 +1,11 @@
-name: Release Windows
+name: Release Player
 
-# 手动打 tag（如 v1.0.0）时触发：打包 Windows 版（编辑器 + 播放器）并发布到 GitHub Releases
+# 播放器独立发布线（R59）：打 player-vX.Y.Z tag 时只发播放器包，不与编辑器混发。
+# zip 命名取 tag 去掉前缀（player-v1.0.1 → NeoScavengerPlayer-1.0.1-win-x64.zip）。
 on:
   push:
     tags:
-      - 'v*'
+      - 'player-v*'
 
 permissions:
   contents: write # 创建 Release 所需
@@ -21,17 +22,6 @@ jobs:
         with:
           dotnet-version: '10.0.x'
 
-      # ── 编辑器（NeoEditor.App）──
-      - name: Publish editor (win-x64, self-contained single-file)
-        shell: pwsh
-        run: |
-          dotnet publish NeoEditor.App/NeoEditor.App.csproj `
-            -c Release -r win-x64 --self-contained true `
-            -p:PublishSingleFile=true `
-            -p:IncludeNativeLibrariesForSelfExtract=true `
-            -p:DebugType=None -p:DebugSymbols=false `
-            -o publish/win-x64
-
       # ── 播放器（NeoEditor.Player / NeoScavengerPlayer，Docs/42 §八）──
       # csproj 已内置：RuntimeIdentifier=win-x64、SelfContained、Release DebugType=None、
       # StripPublishedSymbols（清 NuGet 原生 PDB）；IncludeNativeLibrariesForSelfExtract
@@ -45,27 +35,27 @@ jobs:
             -p:IncludeNativeLibrariesForSelfExtract=true `
             -o publish/player-win-x64
 
-      - name: Package zips
+      - name: Package zip
         shell: pwsh
         run: |
-          $tag = $env:GITHUB_REF_NAME
-          Remove-Item publish/win-x64/*.pdb -ErrorAction SilentlyContinue
+          $version = $env:GITHUB_REF_NAME -replace '^player-', ''
           Remove-Item publish/player-win-x64/*.pdb -ErrorAction SilentlyContinue
           Copy-Item NeoEditor.Player/README.txt publish/player-win-x64/README.txt
-          Compress-Archive -Path publish/win-x64/* -DestinationPath "NeoEditor-$tag-win-x64.zip"
-          Compress-Archive -Path publish/player-win-x64/* -DestinationPath "NeoScavengerPlayer-$tag-win-x64.zip"
+          Compress-Archive -Path publish/player-win-x64/* -DestinationPath "NeoScavengerPlayer-$version-win-x64.zip"
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.ref_name }}
-          name: NeoEditor ${{ github.ref_name }}
+          name: NeoScavenger Player ${{ github.ref_name }}
           body: |
-            Windows (x64) 自包含单文件版，无需安装 .NET 运行时。
+            NeoScavenger Player（Ruffle 独立播放器）Windows x64 自包含单文件版，无需安装 .NET 运行时。
 
-            - **NeoEditor-${{ github.ref_name }}-win-x64.zip** — 编辑器（解压运行 `NeoEditor.exe`）
-            - **NeoScavengerPlayer-${{ github.ref_name }}-win-x64.zip** — 独立播放器（解压运行 `NeoScavengerPlayer.exe`，拖入 SWF 即玩；需系统自带 WebView2 Runtime；运行时数据落盘于 `%LocalAppData%/NeoScavengerPlayer/`）
+            - **NeoScavengerPlayer-${{ github.ref_name }}-win-x64.zip** — 解压运行 `NeoScavengerPlayer.exe`，把 NEOScavenger.swf 拖入窗口即玩（自备游戏文件，SWF 与 data/ 同目录）
+            - 需系统自带 WebView2 Runtime；运行时数据落盘于 `%LocalAppData%/NeoScavengerPlayer/`
+            - zip 内含 README.txt（要求/使用/数据位置/已知限制）
+
+            **反馈 bug**：请提供窗口标题栏版本号 + 「文件 → 导出存档+日志 (zip)」生成的 zip（GitHub Issues）。
           generate_release_notes: true
           files: |
-            NeoEditor-*-win-x64.zip
             NeoScavengerPlayer-*-win-x64.zip
