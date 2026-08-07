@@ -2398,6 +2398,12 @@ Keyboard Shortcuts:
   <data name="Vis.PrevEncounter" xml:space="preserve"><value>Prev Encounter</value></data>
   <data name="Vis.RootEncounter" xml:space="preserve"><value>Root Event (origin)</value></data>
   <data name="Vis.EncounterChain" xml:space="preserve"><value>Encounter Chain</value></data>
+  <data name="Vis.TypeStory" xml:space="preserve"><value>Story</value></data>
+  <data name="Vis.TypeScavenge" xml:space="preserve"><value>Scavenge</value></data>
+  <data name="Vis.TypeCombat" xml:space="preserve"><value>Combat</value></data>
+  <data name="Vis.TypeHack" xml:space="preserve"><value>Hack</value></data>
+  <data name="Vis.TypeUnknown" xml:space="preserve"><value>Type {0}</value></data>
+  <data name="Vis.Probability" xml:space="preserve"><value>Probability</value></data>
   <data name="Vis.SpawnCreature" xml:space="preserve"><value>Spawn Creature</value></data>
   <data name="Vis.Accidents" xml:space="preserve"><value>Accidents</value></data>
   <data name="Vis.TriggeredBy" xml:space="preserve"><value>Triggered By</value></data>

@@ -12,6 +12,7 @@
 | [D03](D03-paratranz-integration.md) | ParaTranz 集成 — 数据转换 / 同步工作流 / UI 设计（v1.6，M1-M4 已完成，M5 可选） | ✅ | 用户决策 2026-08-05 |
 | [D04](D04-itemtype-visualization-design.md) | ItemType 可视化设计 — 全字段语义 / 设计原因与目的 / 心理模型布局（其余实体类型的可视化设计模板） | ✅ | 用户决策 2026-08-08 |
 | [D05](D05-creature-visualization-design.md) | Creature 可视化设计 — 13 字段全覆盖 / 战斗三层 / 出场状态概率 / 战利品双池 / 遭遇链（实现中） | ✅ | 用户决策 2026-08-08 |
+| [D06](D06-encounter-storybranch-design.md) | Encounter 剧情分支重构 — 节点单组件（图片/标题/概率）+ tooltip 信息卡 + Mermaid 同源对齐（v1.1） | ✅ | 用户决策 2026-08-08 | | Creature 可视化设计 — 13 字段全覆盖 / 战斗三层 / 出场状态概率 / 战利品双池 / 遭遇链（实现中） | ✅ | 用户决策 2026-08-08 |
 
 > **D01 是项目根本架构决策**，高于所有 R/N 规则。R17-R22 是其执行细则。
 > **D02 是 Dock 布局的根本决策**，取代手写 XAML Tool 元素。Phase 9E 实现。

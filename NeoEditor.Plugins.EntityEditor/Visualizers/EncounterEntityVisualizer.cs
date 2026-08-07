@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -45,11 +46,10 @@ public class EncounterEntityVisualizer : IEntityVisualizer
         root.Children.Add(BuildHeroHeader(enc));
         if (!string.IsNullOrWhiteSpace(enc.Description))
             root.Children.Add(BuildStoryPanel(enc));
+        // D06 §六: the standalone ResponsesPanel is merged into the story-branch
+        // diagram — one render of the response data instead of two.
         if (!string.IsNullOrWhiteSpace(enc.Responses))
-        {
             root.Children.Add(BuildStoryBranchDiagram(enc));
-            root.Children.Add(BuildResponsesPanel(enc));
-        }
 
         root.Children.Add(BuildRefsPanel(enc));
         var triggers = FindTriggers(enc.Id);
@@ -105,9 +105,8 @@ public class EncounterEntityVisualizer : IEntityVisualizer
         identity.Children.Add(idRow);
 
         var infoRow = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 6 };
-        var typeLabel = enc.Type == EncounterType.Scavenge ? "Scavenge" : "Normal";
-        var typeBg = enc.Type == EncounterType.Scavenge ? "#FFF3E0" : "#E3F2FD";
-        var typeFg = enc.Type == EncounterType.Scavenge ? "#E65100" : "#1565C0";
+        // D06 §4.2: shared type-chip mapping (raw value 0-3, grey fallback).
+        var (typeLabel, typeBg, typeFg) = TypeChip((int)enc.Type);
         infoRow.Children.Add(new Border
         {
             CornerRadius = new CornerRadius(4), Background = Brush.Parse(typeBg), Padding = new Thickness(8, 2),
@@ -169,126 +168,6 @@ public class EncounterEntityVisualizer : IEntityVisualizer
     private sealed record ResponseEntry(
         string? ItemId, double ItemMult, ItemType? Item,
         int TargetId, double Weight, double Probability, Encounter? TargetEncounter);
-
-    private Control BuildResponsesPanel(Encounter enc)
-    {
-        var sp = new StackPanel();
-        var responseList = ParseResponseEntries(enc.Responses, enc);
-        sp.Children.Add(_vis.SectionLabel(
-            $"{_vis.Loc("Vis.Responses")} ({responseList.Count} {(responseList.Count > 1 ? _vis.Loc("Vis.Options") : _vis.Loc("Vis.Option"))})"));
-
-        // Response format hint (from Comment attribute)
-        sp.Children.Add(new TextBlock
-        {
-            Text = "格式: [物品ID]x[数量]=[剧情ID]x[权重]  ·  空物品(=开头)=无需物品的选项  ·  概率=权重/权重和",
-            FontSize = 9, Foreground = Brush.Parse("#AAA"), TextWrapping = TextWrapping.Wrap,
-            Margin = new Thickness(0, -4, 0, 4)
-        });
-
-        if (responseList.Count == 0)
-        {
-            sp.Children.Add(_vis.Card(new TextBlock
-                { Text = _vis.Loc("Vis.NoResponses"), FontSize = 11, Foreground = Brush.Parse("#999") }));
-            return sp;
-        }
-
-        var cardStack = new StackPanel { Spacing = 8 };
-        foreach (var resp in responseList)
-        {
-            var row = new StackPanel { Spacing = 4 };
-
-            // Row 1: item usage hint (if applicable)
-            if (resp.Item is not null)
-            {
-                var itemRow = new StackPanel
-                    { Orientation = Orientation.Horizontal, Spacing = 6, VerticalAlignment = VerticalAlignment.Center };
-                itemRow.Children.Add(new TextBlock
-                {
-                    Text = "使用物品:", FontSize = 9, Foreground = Brush.Parse("#888"),
-                    VerticalAlignment = VerticalAlignment.Center
-                });
-                var qtyText = resp.ItemMult > 1 ? $" ×{resp.ItemMult}" : "";
-                itemRow.Children.Add(_refNode.BadgeForEntity(enc, resp.Item,
-                    $"{resp.Item.Description}{qtyText}", "#E3F2FD", "#1565C0"));
-                itemRow.Children.Add(new TextBlock
-                {
-                    Text = "→ 触发:", FontSize = 9, Foreground = Brush.Parse("#888"),
-                    VerticalAlignment = VerticalAlignment.Center
-                });
-                row.Children.Add(itemRow);
-            }
-            else if (resp.ItemId is not null)
-            {
-                var itemRow = new StackPanel
-                    { Orientation = Orientation.Horizontal, Spacing = 6, VerticalAlignment = VerticalAlignment.Center };
-                itemRow.Children.Add(new TextBlock
-                {
-                    Text = $"使用物品 #{resp.ItemId}", FontSize = 9, Foreground = Brush.Parse("#999"),
-                    VerticalAlignment = VerticalAlignment.Center
-                });
-                if (resp.ItemMult > 1)
-                    itemRow.Children.Add(new TextBlock
-                    {
-                        Text = $"×{resp.ItemMult}", FontSize = 9, Foreground = Brush.Parse("#999"),
-                        VerticalAlignment = VerticalAlignment.Center
-                    });
-                itemRow.Children.Add(new TextBlock
-                {
-                    Text = "→", FontSize = 9, Foreground = Brush.Parse("#888"),
-                    VerticalAlignment = VerticalAlignment.Center
-                });
-                row.Children.Add(itemRow);
-            }
-
-            // Row 2: target encounter + probability bar
-            var targetRow = new Grid { ColumnDefinitions = { new(1, GridUnitType.Star), new(100, GridUnitType.Pixel) } };
-
-            var leftStack = new StackPanel
-                { Orientation = Orientation.Horizontal, Spacing = 6, VerticalAlignment = VerticalAlignment.Center };
-            if (resp.TargetEncounter is not null)
-            {
-                leftStack.Children.Add(_refNode.BadgeForEntity(enc, resp.TargetEncounter,
-                    resp.TargetEncounter.Subject!,
-                    "#E8F5E9", "#2E7D32"));
-                if (resp.TargetEncounter.Type == EncounterType.Scavenge)
-                    leftStack.Children.Add(_vis.MiniBadge("Scavenge", "#FFF3E0", "#E65100"));
-            }
-            else
-                leftStack.Children.Add(_vis.MiniBadge($"Enc #{resp.TargetId}", "#F5F5F5", "#999"));
-
-            Grid.SetColumn(leftStack, 0);
-            targetRow.Children.Add(leftStack);
-
-            // Right: probability bar from calculated probability
-            var probPct = Math.Clamp(resp.Probability, 0.0, 1.0);
-            var probColor = probPct >= 0.5 ? "#2E7D32" : probPct >= 0.1 ? "#E65100" : "#999";
-            var probBar = new Border
-            {
-                CornerRadius = new CornerRadius(5),
-                Background = Brush.Parse(probColor),
-                Height = 22,
-                VerticalAlignment = VerticalAlignment.Center,
-                Child = new TextBlock
-                {
-                    Text = $"{resp.Weight:F1}({resp.Probability:P2})",
-                    FontSize = 9,
-                    Foreground = Brushes.White,
-                    VerticalAlignment = VerticalAlignment.Center,
-                    HorizontalAlignment = HorizontalAlignment.Center,
-                    Margin = new Thickness(6, 0)
-                },
-                Width = Math.Max(probPct * 100, 50)
-            };
-            Grid.SetColumn(probBar, 1);
-            targetRow.Children.Add(probBar);
-
-            row.Children.Add(targetRow);
-            cardStack.Children.Add(row);
-        }
-
-        sp.Children.Add(_vis.Card(cardStack));
-        return sp;
-    }
 
     private List<ResponseEntry> ParseResponseEntries(string raw, Encounter sourceEnc)
     {
@@ -384,216 +263,528 @@ public class EncounterEntityVisualizer : IEntityVisualizer
         return result;
     }
 
-    // ═══════════════ Story Branch Diagram (Mermaid-style) ═══════════════
+    // ═══════════════ Story Branch Diagram (D06: single node card + shared data model) ═══════════════
+
+    /// <summary>
+    /// D06 §4.5: the single branch data model — both the node cards and the
+    /// Mermaid source are generated from it, so the two renderings cannot drift.
+    /// <c>EffectiveProb == 0</c> means the branch is filtered out by the active
+    /// pre-condition checkboxes. <c>PreConds</c> is the target encounter's
+    /// precondition list resolved for display (Raw preserves the ¬ prefix).
+    /// </summary>
+    internal sealed record BranchData(
+        int TargetId,
+        Encounter? Target,
+        string? ItemId,
+        double ItemMult,
+        ItemType? Item,
+        double Weight,
+        double EffectiveProb,
+        bool IsSatisfied,
+        List<(string Raw, bool IsNeg, Condition? Resolved)> PreConds);
+
+    /// <summary>
+    /// D06 §四 (revised): node-card options. The slim card = 52px image +
+    /// title + probability pill (+ ID/type chips); complex info (description,
+    /// pre-conditions, item) lives in the hover tooltip, never in the layout.
+    /// </summary>
+    private sealed record NodeCardOptions(
+        bool IsCurrent = false,
+        double Weight = 0,
+        double EffectiveProb = 0,
+        bool Filtered = false,
+        bool Resolved = true,
+        BranchData? Branch = null,
+        ISet<string>? ActivePreConds = null,
+        Encounter? Source = null);
+
+    /// <summary>
+    /// D06 §4.5: derive the branch model from the parsed responses (pure over
+    /// <see cref="ParseResponseEntries"/> output). ValidTotalWeight sums only the
+    /// branches whose pre-conditions are satisfied under <paramref name="activePreConds"/>.
+    /// </summary>
+    internal (List<BranchData> Branches, double ValidTotalWeight) PrepareBranches(Encounter enc, ISet<string> activePreConds)
+    {
+        var responses = ParseResponseEntries(enc.Responses, enc);
+        return PrepareBranches(responses, activePreConds);
+    }
+
+    private (List<BranchData> Branches, double ValidTotalWeight) PrepareBranches(
+        List<ResponseEntry> responses, ISet<string> activePreConds)
+    {
+        var branches = new List<BranchData>(responses.Count);
+        double validTotalWeight = 0;
+        foreach (var resp in responses)
+        {
+            var preConds = ResolvePreConds(resp.TargetEncounter);
+            var satisfied = AreAllPreCondsSatisfied(preConds, activePreConds);
+            if (satisfied) validTotalWeight += resp.Weight;
+            branches.Add(new BranchData(
+                resp.TargetId, resp.TargetEncounter, resp.ItemId, resp.ItemMult, resp.Item,
+                resp.Weight, 0.0, satisfied, preConds));
+        }
+
+        for (int i = 0; i < branches.Count; i++)
+        {
+            var b = branches[i];
+            var effective = validTotalWeight > 0 && b.IsSatisfied ? b.Weight / validTotalWeight : 0.0;
+            branches[i] = b with { EffectiveProb = effective };
+        }
+        return (branches, validTotalWeight);
+    }
+
+    /// <summary>Resolve the target's precondition list (¬ prefix preserved in Raw).</summary>
+    private List<(string Raw, bool IsNeg, Condition? Resolved)> ResolvePreConds(Encounter? target)
+    {
+        var result = new List<(string Raw, bool IsNeg, Condition? Resolved)>();
+        if (target is null || target.PreConditions.Count == 0) return result;
+        foreach (var raw in target.PreConditions.Select(e => e.ToRawString()).Where(s => s.Length > 0))
+        {
+            var isNeg = raw.StartsWith("-");
+            var cond = _vis.Resolver.LookupRef<Condition>(target, nameof(Encounter.PreConditions), raw);
+            result.Add((raw, isNeg, cond));
+        }
+        return result;
+    }
+
+    /// <summary>
+    /// Y/N polarity: a positive precondition "5" is satisfied when the checkbox IS
+    /// checked (player has the condition); a negated one "-5" when it is NOT checked.
+    /// No active filter → everything is considered satisfied (existing semantics).
+    /// </summary>
+    internal static bool IsPreCondSatisfied(string preStr, ISet<string> activeSet)
+    {
+        if (activeSet.Count == 0) return true;
+        var isNeg = preStr.StartsWith("-");
+        var rid = isNeg ? preStr[1..] : preStr;
+        return isNeg ? !activeSet.Contains(rid) : activeSet.Contains(rid);
+    }
+
+    private static bool AreAllPreCondsSatisfied(
+        List<(string Raw, bool IsNeg, Condition? Resolved)> preConds, ISet<string> activeSet)
+    {
+        if (preConds.Count == 0) return true;
+        return preConds.All(p => IsPreCondSatisfied(p.Raw, activeSet));
+    }
+
+    /// <summary>
+    /// Percent without the culture-dependent "50 %" space: the "P2" format inserts a
+    /// space between the digits and the % sign in several cultures; the custom
+    /// "0.##%" format does not (CreatureVisualizerTests lesson).
+    /// </summary>
+    internal static string FormatProbability(double p)
+        => Math.Clamp(p, 0.0, 1.0).ToString("0.##%", CultureInfo.InvariantCulture);
+
+    /// <summary>
+    /// D06 §4.2: shared type-chip mapping (Hero / branch card / chain tree).
+    /// EncounterType only models Normal/Scavenge; raw values 2/3 render by their
+    /// integer value (field_descriptions.json: 0=剧情 1=搜刮 2=战斗 3=破解).
+    /// </summary>
+    private (string Label, string Bg, string Fg) TypeChip(int rawType) => rawType switch
+    {
+        0 => (_vis.Loc("Vis.TypeStory"), "#E3F2FD", "#1565C0"),
+        1 => (_vis.Loc("Vis.TypeScavenge"), "#FFF3E0", "#E65100"),
+        2 => (_vis.Loc("Vis.TypeCombat"), "#FFEBEE", "#C62828"),
+        3 => (_vis.Loc("Vis.TypeHack"), "#F3E5F5", "#6A1B9A"),
+        _ => (_vis.Loc("Vis.TypeUnknown", rawType), "#F5F5F5", "#999"),
+    };
+
+    /// <summary>
+    /// D06 §四 (revised): the shared node component — one Encounter = one card.
+    /// Slim card: 52px thumbnail + title + probability pill (+ ID/type chips).
+    /// Branch cards carry navigation (Ctrl+Click / Ctrl+RMB peek) and a hover
+    /// info tooltip (description / pre-conditions / item); the current card is
+    /// highlighted and never navigates.
+    /// </summary>
+    private Control BuildEncounterNodeCard(Encounter e, NodeCardOptions opts)
+    {
+        var card = new Border
+        {
+            Width = 240,
+            CornerRadius = new CornerRadius(6),
+            Padding = new Thickness(10),
+            Background = Brush.Parse(opts.IsCurrent ? "#E3F2FD" : "#FAFAFA"),
+            BorderBrush = Brush.Parse(opts.IsCurrent ? "#1565C0" : "#E0E0E0"),
+            BorderThickness = new Thickness(opts.IsCurrent ? 2 : 1),
+            Opacity = opts.Filtered ? 0.5 : 1.0,
+            Child = new StackPanel { Spacing = 6 }
+        };
+        var body = (StackPanel)card.Child;
+
+        if (opts.IsCurrent)
+            body.Children.Add(new TextBlock
+            {
+                Text = _vis.Loc("Vis.CurrentEncounter"), FontSize = 8, Foreground = Brush.Parse("#1565C0")
+            });
+
+        // Row: 52px image | title (image and title on the same line)
+        var imageTitleGrid = new Grid
+        {
+            ColumnDefinitions = { new(52, GridUnitType.Pixel), new(1, GridUnitType.Star) }
+        };
+
+        var bmp = _vis.LoadImage(e.Image);
+        var imageArea = new Border
+        {
+            Width = 52, Height = 52, CornerRadius = new CornerRadius(6), ClipToBounds = true,
+            Background = Brush.Parse("#0A000000"), VerticalAlignment = VerticalAlignment.Top
+        };
+        if (bmp is not null)
+        {
+            imageArea.Child = new Image { Source = bmp, Stretch = Stretch.Uniform, Width = 52, Height = 52 };
+            var capturedBmp = bmp;
+            imageArea.Cursor = new Cursor(StandardCursorType.Hand);
+            imageArea.PointerPressed += (_, _) => _vis.OpenZoomableImage(capturedBmp, e.Subject ?? e.Name);
+        }
+        else
+            imageArea.Child = new SymbolIcon
+            {
+                Symbol = Symbol.BookOpen, FontSize = 24, Foreground = Brush.Parse("#999"),
+                HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center
+            };
+        Grid.SetColumn(imageArea, 0);
+        imageTitleGrid.Children.Add(imageArea);
+
+        var titleTb = new TextBlock
+        {
+            Text = e.Subject ?? $"Enc #{e.Id}", FontSize = 12, FontWeight = FontWeight.SemiBold,
+            Foreground = Brush.Parse("#333"), TextWrapping = TextWrapping.Wrap,
+            VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(8, 0, 0, 0)
+        };
+        Grid.SetColumn(titleTb, 1);
+        imageTitleGrid.Children.Add(titleTb);
+        body.Children.Add(imageTitleGrid);
+
+        // Row 1: ID chip + type chip (9px auxiliary info)
+        var chipsRow = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 4 };
+        chipsRow.Children.Add(new Border
+        {
+            CornerRadius = new CornerRadius(4), Background = Brush.Parse("#E3F2FD"), Padding = new Thickness(5, 1),
+            Child = new TextBlock
+            {
+                Text = $"ID: {e.Id}", FontSize = 9, FontWeight = FontWeight.Bold, Foreground = Brush.Parse("#1565C0")
+            }
+        });
+        if (opts.Resolved)
+        {
+            var (typeLabel, typeBg, typeFg) = TypeChip((int)e.Type);
+            chipsRow.Children.Add(new Border
+            {
+                CornerRadius = new CornerRadius(4), Background = Brush.Parse(typeBg), Padding = new Thickness(5, 1),
+                Child = new TextBlock
+                {
+                    Text = typeLabel, FontSize = 9, FontWeight = FontWeight.Bold, Foreground = Brush.Parse(typeFg)
+                }
+            });
+        }
+        body.Children.Add(chipsRow);
+
+        // Probability pill (branch cards only)
+        if (!opts.IsCurrent)
+        {
+            var probColor = opts.EffectiveProb >= 0.5 ? "#2E7D32" : opts.EffectiveProb >= 0.1 ? "#E65100" : "#999";
+            body.Children.Add(new Border
+            {
+                CornerRadius = new CornerRadius(10),
+                Background = Brush.Parse(probColor),
+                Padding = new Thickness(8, 2),
+                HorizontalAlignment = HorizontalAlignment.Center,
+                Child = new TextBlock
+                {
+                    Text = $"{opts.Weight.ToString("F1", CultureInfo.InvariantCulture)}({FormatProbability(opts.EffectiveProb)})",
+                    FontSize = 9, FontWeight = FontWeight.Bold, Foreground = Brushes.White
+                }
+            });
+        }
+
+        // Branch cards: navigation + hover info tooltip (complex info lives here, not in the card)
+        if (opts.Branch is { } branch)
+        {
+            if (branch.Target is not null)
+                _refNode.WireNavigation(card, typeof(Encounter), branch.Target.EntityId, opts.Source);
+            ToolTip.SetTip(card, BuildBranchTooltip(branch, opts.Source ?? e, opts.ActivePreConds ?? new HashSet<string>()));
+        }
+
+        return card;
+    }
+
+    /// <summary>
+    /// D06 §四 (revised): branch hover info card — description (truncated ~200 chars),
+    /// pre-condition satisfaction under the current filter (✓/✗, ¬ styling),
+    /// item trigger info and the probability.
+    /// </summary>
+    private Control BuildBranchTooltip(BranchData b, Encounter source, ISet<string> activePreConds)
+    {
+        var sp = new StackPanel { Spacing = 4, MaxWidth = 280 };
+        sp.Children.Add(new TextBlock
+        {
+            Text = b.Target?.Subject ?? $"Enc #{b.TargetId}",
+            FontSize = 11, FontWeight = FontWeight.SemiBold,
+            Foreground = Brush.Parse("#333"), TextWrapping = TextWrapping.Wrap
+        });
+
+        if (b.Target is not null && !string.IsNullOrWhiteSpace(b.Target.Description))
+        {
+            var desc = b.Target.Description.Length > 200 ? b.Target.Description[..200] + "…" : b.Target.Description;
+            sp.Children.Add(new TextBlock
+            {
+                Text = desc, FontSize = 10, Foreground = Brush.Parse("#555"), TextWrapping = TextWrapping.Wrap
+            });
+        }
+
+        if (b.PreConds.Count > 0)
+        {
+            sp.Children.Add(new TextBlock
+            {
+                Text = _vis.Loc("Vis.PreConditions"), FontSize = 9, Foreground = Brush.Parse("#999"),
+                FontWeight = FontWeight.SemiBold
+            });
+            var wp = new WrapPanel();
+            foreach (var (raw, isNeg, cond) in b.PreConds)
+            {
+                var satisfied = IsPreCondSatisfied(raw, activePreConds);
+                var label = (isNeg ? "¬" : "") + (cond?.Subject ?? raw);
+                var bg = satisfied ? "#E8F5E9" : "#FFEBEE";
+                var fg = satisfied ? "#2E7D32" : "#C62828";
+                wp.Children.Add(new Border
+                {
+                    CornerRadius = new CornerRadius(3),
+                    Background = Brush.Parse(bg),
+                    Padding = new Thickness(4, 1),
+                    Margin = new Thickness(1),
+                    Child = new TextBlock
+                    {
+                        Text = $"{(satisfied ? "✓ " : "✗ ")}{label}", FontSize = 9, Foreground = Brush.Parse(fg),
+                        TextDecorations = isNeg ? TextDecorations.Strikethrough : null
+                    }
+                });
+            }
+            sp.Children.Add(wp);
+        }
+
+        if (b.Item is not null)
+        {
+            var qty = b.ItemMult > 1 ? $" ×{b.ItemMult}" : "";
+            sp.Children.Add(_refNode.BadgeForEntity(source, b.Item,
+                $"🛡 {b.Item.Description}{qty}", "#E3F2FD", "#1565C0"));
+        }
+        else if (b.ItemId is not null)
+        {
+            sp.Children.Add(_vis.MiniBadge($"Item #{b.ItemId}", "#F5F5F5", "#999"));
+        }
+
+        sp.Children.Add(new TextBlock
+        {
+            Text = $"{_vis.Loc("Vis.Probability")}: {b.Weight.ToString("F1", CultureInfo.InvariantCulture)}({FormatProbability(b.EffectiveProb)})",
+            FontSize = 10, Foreground = Brush.Parse("#555")
+        });
+
+        return new Border
+        {
+            Background = Brushes.White, CornerRadius = new CornerRadius(6),
+            Padding = new Thickness(8), Child = sp
+        };
+    }
+
+    /// <summary>
+    /// D06 §七: Mermaid text built from the same BranchData source as the node
+    /// cards. Nodes carry name+ID; edges carry item ×n | weight(effective%) with
+    /// conditional [📋×n] / [⚠m/t] suffixes. No reverse nodes, no ctx labels.
+    /// </summary>
+    internal static string BuildMermaidText(IReadOnlyList<BranchData> branches, Encounter current, ISet<string> activePreConds)
+    {
+        var sb = new System.Text.StringBuilder();
+        sb.AppendLine("flowchart LR");
+
+        var currentName = (current.Subject ?? $"Enc #{current.Id}").Replace("\"", "\\\"");
+        sb.AppendLine($"    A[\"📍 {currentName} (#{current.Id})\"]");
+
+        for (int i = 0; i < branches.Count; i++)
+        {
+            var b = branches[i];
+            var targetName = (b.Target?.Subject ?? $"Enc #{b.TargetId}").Replace("\"", "\\\"");
+            var edge = BuildMermaidEdgeLabel(b, activePreConds);
+            sb.AppendLine($"    A -->|\"{edge}\"| B{i}[\"{targetName} (#{b.TargetId})\"]");
+        }
+
+        return sb.ToString();
+    }
+
+    private static string BuildMermaidEdgeLabel(BranchData b, ISet<string> activePreConds)
+    {
+        var label = b.Item is not null
+            ? $"{b.Item.Description}{(b.ItemMult > 1 ? $" ×{b.ItemMult}" : "")}"
+            : b.ItemId is not null
+                ? $"#{b.ItemId}{(b.ItemMult > 1 ? $" ×{b.ItemMult}" : "")}"
+                : "";
+        if (label.Length > 0) label += " | ";
+        label += $"{b.Weight.ToString("F1", CultureInfo.InvariantCulture)}({FormatProbability(b.EffectiveProb)})";
+        if (b.PreConds.Count > 0)
+            label += $"[📋{b.PreConds.Count}]";
+        if (activePreConds.Count > 0 && b.PreConds.Count > 0)
+        {
+            var matched = b.PreConds.Count(p => IsPreCondSatisfied(p.Raw, activePreConds));
+            if (matched < b.PreConds.Count)
+                label += $"[⚠{matched}/{b.PreConds.Count}]";
+        }
+        return label.Replace("\"", "'");
+    }
 
     private Control BuildStoryBranchDiagram(Encounter enc)
     {
         var sp = new StackPanel();
         sp.Children.Add(_vis.SectionLabel(_vis.Loc("Vis.StoryBranch")));
 
-        var responseList = ParseResponseEntries(enc.Responses, enc);
-        if (responseList.Count == 0)
+        // Response format hint — moved here from the merged ResponsesPanel (D06 §六)
+        sp.Children.Add(new TextBlock
+        {
+            Text = "格式: [物品ID]x[数量]=[剧情ID]x[权重]  ·  空物品(=开头)=无需物品的选项  ·  概率=权重/权重和",
+            FontSize = 9, Foreground = Brush.Parse("#AAA"), TextWrapping = TextWrapping.Wrap,
+            Margin = new Thickness(0, -4, 0, 4)
+        });
+
+        var selectedPreConds = new HashSet<string>();
+
+        // D06 §4.5: single data model shared by the cards and the Mermaid tab.
+        var (branches, _) = PrepareBranches(enc, selectedPreConds);
+        if (branches.Count == 0)
         {
             sp.Children.Add(_vis.Card(new TextBlock
                 { Text = _vis.Loc("Vis.NoBranches"), FontSize = 11, Foreground = Brush.Parse("#999") }));
             return sp;
         }
 
-        // ── Collect all unique PreConditions for checkbox filtering ──
+        // ── Pre-condition filter checkboxes (union over branch targets) ──
         var allPreConds = new List<(string RawId, string Display, bool IsNeg)>();
         var seenPre = new HashSet<string>();
-        void AddPreConds(string? preStr, Encounter ctx)
+        foreach (var b in branches)
         {
-            if (string.IsNullOrWhiteSpace(preStr)) return;
-            foreach (var seg in preStr.Split(',').Select(s => s.Trim()).Where(s => s.Length > 0))
+            if (b.Target is null) continue;
+            foreach (var (raw, isNeg, cond) in b.PreConds)
             {
-                var isNeg = seg.StartsWith("-");
-                var rawId = isNeg ? seg[1..] : seg;
+                var rawId = isNeg ? raw[1..] : raw;
                 if (!seenPre.Add(rawId)) continue;
-                var cond = _vis.Resolver.LookupRef<Condition>(ctx, nameof(Encounter.PreConditions), seg);
                 allPreConds.Add((rawId, cond?.Subject ?? rawId, isNeg));
             }
         }
-        // Only collect pre-conditions of NEXT encounters (not current step)
-        foreach (var resp in responseList)
+
+        // ── Two-column diagram: current card | branch cards (one arrow per branch) ──
+        // Declared before the checkbox panel so its handlers can call Refresh().
+        var branchesPanel = new StackPanel
         {
-            if (resp.TargetEncounter is not null)
-                AddPreConds(resp.TargetEncounter.PreConditions, resp.TargetEncounter);
-        }
+            Spacing = 8, VerticalAlignment = VerticalAlignment.Center, HorizontalAlignment = HorizontalAlignment.Center
+        };
 
-        // ── Collect reverse references (previous encounters → current) ──
-        // Scan Encounter Responses directly (not indexed via ReferenceField)
-        var reverseRefs = new List<(Encounter Src, string? ItemDesc, double ItemMult, double Weight)>();
-        var revSeen = new HashSet<string>();
-        {
-            if ((_dataTable?.ReferenceLookups ?? []).TryGetValue(typeof(Encounter), out var allEncs) && allEncs is not null)
-            {
-                var itemTypes = new Dictionary<string, ItemType>();
-                try { itemTypes = _dataTable?.GetCompositeEntities<ItemType>(it => $"{it.GroupId}.{it.SubgroupId}", enc.ModId); }
-                catch (Exception ex) { Serilog.Log.Logger.Verbose(ex, "[EncounterVis] GetCompositeEntities<ItemType> failed"); }
-                foreach (var obj in allEncs)
-                {
-                    if (obj is not Encounter parentEnc || parentEnc.EntityId == enc.EntityId) continue;
-                    if (string.IsNullOrWhiteSpace(parentEnc.Responses)) continue;
-                    foreach (var seg in parentEnc.Responses.Split(','))
-                    {
-                        var s = seg.Trim();
-                        if (s.Length == 0) continue;
-                        var eqIdx = s.IndexOf('=');
-                        if (eqIdx < 0) continue;
-                        // Parse item part (before =)
-                        string? itemDesc = null;
-                        double itemMult = 1.0;
-                        if (eqIdx > 0)
-                        {
-                            var itemPart = s[..eqIdx].Trim();
-                            var itemParts = itemPart.Split('x');
-                            var itemIdRaw = itemParts[0].Trim();
-                            if (!string.IsNullOrEmpty(itemIdRaw) && !int.TryParse(itemIdRaw, out _))
-                            {
-                                if (itemParts.Length >= 2)
-                                    double.TryParse(itemParts[1], System.Globalization.NumberStyles.Float,
-                                        System.Globalization.CultureInfo.InvariantCulture, out itemMult);
-                                itemDesc = itemTypes.TryGetValue(itemIdRaw, out var fi) ? fi.Description : itemIdRaw;
-                            }
-                        }
-                        // Parse encounter target (after =)
-                        var encPart = s[(eqIdx + 1)..].Trim();
-                        var encParts = encPart.Split('x');
-                        if (encParts.Length < 2) continue;
-                        if (!int.TryParse(encParts[0], out var targetId) || targetId != enc.Id) continue;
-                        double weight = double.TryParse(encParts[1], System.Globalization.NumberStyles.Float,
-                            System.Globalization.CultureInfo.InvariantCulture, out var w) ? w : 1.0;
-                        var key = $"{parentEnc.EntityId}|{s}";
-                        if (!revSeen.Add(key)) continue;
-                        reverseRefs.Add((parentEnc, itemDesc, itemMult, weight));
-                    }
-                }
-            }
-        }
-
-        // Shared state for preCondition checkbox → Mermaid refresh
-        var selectedPreConds = new HashSet<string>();
-
-        // ── Helper: check if a single preCondition is satisfied (handles Y/N polarity) ──
-        bool IsPreCondSatisfied(string preStr, HashSet<string> activeSet)
-        {
-            if (activeSet.Count == 0) return true; // no active filter — all conditions considered satisfied
-            var isNeg = preStr.StartsWith("-");
-            var rid = isNeg ? preStr[1..] : preStr;
-            // Positive preCond "5": satisfied if checkbox IS checked (player has condition)
-            // Negative preCond "-5": satisfied if checkbox is NOT checked (player does NOT have condition)
-            return isNeg ? !activeSet.Contains(rid) : activeSet.Contains(rid);
-        }
-
-        // ── Helper: check if ALL target encounter's preConditions are satisfied ──
-        bool AreAllPreCondsSatisfied(Encounter? target, HashSet<string> activeSet)
-        {
-            if (target is null || string.IsNullOrWhiteSpace(target.PreConditions)) return true;
-            var pres = target.PreConditions.Split(',').Select(s => s.Trim()).Where(s => s.Length > 0);
-            return pres.All(p => IsPreCondSatisfied(p, activeSet));
-        }
-
-        // ── Helper: build context label (treasure, creature, pre) ──
-        string BuildCtxLabel(Encounter e)
-        {
-            var ctx = "";
-            if (!string.IsNullOrWhiteSpace(e.TreasureId) && e.TreasureId != "3")
-            {
-                var tt = _vis.Resolver.LookupRef<TreasureTable>(e, nameof(Encounter.TreasureId), e.TreasureId);
-                if (tt is not null) ctx += $"🎒{tt.Name} ";
-            }
-            if (e.CreatureId != "0") ctx += "🐾 ";
-            if (!string.IsNullOrWhiteSpace(e.PreConditions))
-            {
-                var preCount = e.PreConditions.Split(',').Length;
-                ctx += $"📋pre:{preCount} ";
-            }
-            return ctx;
-        }
-
-        // ── Mermaid text builder ──
-        string BuildMermaid()
-        {
-            var sb = new System.Text.StringBuilder();
-            sb.AppendLine("flowchart LR");
-
-            // ── Reverse refs: previous encounters → current ──
-            var seenRev = new HashSet<int>();
-            int revIdx = 0;
-            foreach (var (src, itemDesc, itemMult, weight) in reverseRefs)
-            {
-                if (!seenRev.Add(src.Id)) continue;
-                var revNodeId = $"R{revIdx}";
-                var revName = (src.Subject ?? $"Enc #{src.Id}").Replace("\"", "\\\"");
-                var viaLabel = itemDesc is not null
-                    ? $"{itemDesc}{(itemMult > 1 ? $" x{itemMult}" : "")} | {weight:F1}"
-                    : $"{weight:F1}";
-                sb.AppendLine($"    {revNodeId}[\"← {revName}\"]");
-                sb.AppendLine($"    {revNodeId} -->|\"{viaLabel}\"| A");
-                revIdx++;
-            }
-
-            // ── Current node ──
-            var currentCtx = BuildCtxLabel(enc);
-            var currentName = (enc.Subject ?? $"Enc #{enc.Id}").Replace("\"", "\\\"");
-            var currentLabel = string.IsNullOrEmpty(currentCtx)
-                ? $"📍 {currentName}"
-                : $"📍 {currentName}<br/>{currentCtx.Trim()}";
-            sb.AppendLine($"    A[\"{currentLabel}\"]");
-
-            // Calculate effective probability: only count valid branches (Y/N matching)
-            double validTotalWeight = 0;
-            foreach (var r in responseList)
-            {
-                if (AreAllPreCondsSatisfied(r.TargetEncounter, selectedPreConds))
-                    validTotalWeight += r.Weight;
-            }
-
-            // ── Forward edges ──
-            for (int i = 0; i < responseList.Count; i++)
-            {
-                var resp = responseList[i];
-                var nodeId = (char)('B' + i);
-                var targetCtx = resp.TargetEncounter is not null ? BuildCtxLabel(resp.TargetEncounter) : "";
-                var targetName = (resp.TargetEncounter?.Subject ?? $"Enc #{resp.TargetId}").Replace("\"", "\\\"");
-                var targetLabel = string.IsNullOrEmpty(targetCtx) ? targetName : $"{targetName}<br/>{targetCtx.Trim()}";
-
-                // PreCondition match info for edge label (respects Y/N polarity)
-                var matchInfo = "";
-                if (resp.TargetEncounter is not null && !string.IsNullOrWhiteSpace(resp.TargetEncounter.PreConditions) && selectedPreConds.Count > 0)
-                {
-                    var targetPres = resp.TargetEncounter.PreConditions.Split(',').Select(s => s.Trim()).Where(s => s.Length > 0).ToList();
-                    int matched = 0;
-                    foreach (var tp in targetPres)
-                    {
-                        if (IsPreCondSatisfied(tp, selectedPreConds)) matched++;
-                    }
-                    if (matched < targetPres.Count)
-                        matchInfo = $" ⚠{matched}/{targetPres.Count}";
-                }
-
-                var isBranchValid = AreAllPreCondsSatisfied(resp.TargetEncounter, selectedPreConds);
-                var effectiveProb = validTotalWeight > 0 && isBranchValid ? resp.Weight / validTotalWeight : 0.0;
-
-                var edgeLabel = resp.Item is not null
-                    ? $"{resp.Item.Description}{(resp.ItemMult > 1 ? $" x{resp.ItemMult}" : "")} | {resp.Weight:F1}({effectiveProb:P2}){matchInfo}"
-                    : resp.ItemId is not null
-                        ? $"#{resp.ItemId}{(resp.ItemMult > 1 ? $" x{resp.ItemMult}" : "")} | {resp.Weight:F1}({effectiveProb:P2}){matchInfo}"
-                        : $"{resp.Weight:F1}({effectiveProb:P2}){matchInfo}";
-                edgeLabel = edgeLabel.Replace("\"", "'");
-                sb.AppendLine($"    A -->|\"{edgeLabel}\"| {nodeId}[\"{targetLabel}\"]");
-            }
-
-            return sb.ToString();
-        }
-
-        // ── Mermaid display block ──
         var mermaidTextBlock = new TextBlock
         {
-            Text = BuildMermaid(), FontSize = 10, FontFamily = new FontFamily("Consolas, Menlo, monospace"),
+            Text = "", FontSize = 10, FontFamily = new FontFamily("Consolas, Menlo, monospace"),
             Foreground = Brush.Parse("#555"), TextWrapping = TextWrapping.NoWrap
         };
+
+        var preCondPanel = new StackPanel();
+        if (allPreConds.Count > 0)
+        {
+            preCondPanel.Children.Add(new TextBlock
+            {
+                Text = _vis.Loc("Vis.PreConditions"), FontSize = 9, Foreground = Brush.Parse("#999"),
+                FontWeight = FontWeight.SemiBold, Margin = new Thickness(0, 0, 0, 4)
+            });
+            var cbPanel = new WrapPanel();
+            foreach (var (rawId, display, isNeg) in allPreConds)
+            {
+                // Negated precond: ¬ prefix + strikethrough (existing style)
+                var cbContent = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 4 };
+                if (isNeg)
+                    cbContent.Children.Add(new TextBlock
+                    {
+                        Text = "¬", FontSize = 9, Foreground = Brush.Parse("#C62828"),
+                        VerticalAlignment = VerticalAlignment.Center
+                    });
+                cbContent.Children.Add(new TextBlock
+                {
+                    Text = display, FontSize = 10,
+                    TextDecorations = isNeg ? TextDecorations.Strikethrough : null,
+                    Foreground = isNeg ? Brush.Parse("#888") : Brush.Parse("#333")
+                });
+                var cb = new CheckBox
+                {
+                    Content = cbContent, FontSize = 10, IsChecked = false, Margin = new Thickness(0, 0, 8, 2)
+                };
+                cb.IsCheckedChanged += (_, _) =>
+                {
+                    if (cb.IsChecked == true) selectedPreConds.Add(rawId);
+                    else selectedPreConds.Remove(rawId);
+                    Refresh();
+                };
+                cbPanel.Children.Add(cb);
+            }
+            preCondPanel.Children.Add(cbPanel);
+        }
+
+        // Rebuild branch cards + Mermaid from the same data model (filter refresh)
+        void Refresh()
+        {
+            var (fresh, _) = PrepareBranches(enc, selectedPreConds);
+            mermaidTextBlock.Text = BuildMermaidText(fresh, enc, selectedPreConds);
+            branchesPanel.Children.Clear();
+            foreach (var b in fresh)
+            {
+                var row = new StackPanel
+                    { Orientation = Orientation.Horizontal, Spacing = 10, VerticalAlignment = VerticalAlignment.Center };
+                row.Children.Add(new TextBlock
+                {
+                    Text = "→", FontSize = 16, Foreground = Brush.Parse("#999"),
+                    VerticalAlignment = VerticalAlignment.Center
+                });
+                var cardEnc = b.Target ?? new Encounter { Id = b.TargetId, Name = $"Enc #{b.TargetId}" };
+                row.Children.Add(BuildEncounterNodeCard(cardEnc, new NodeCardOptions(
+                    IsCurrent: false,
+                    Weight: b.Weight,
+                    EffectiveProb: b.EffectiveProb,
+                    Filtered: !b.IsSatisfied && selectedPreConds.Count > 0,
+                    Resolved: b.Target is not null,
+                    Branch: b,
+                    ActivePreConds: selectedPreConds,
+                    Source: enc)));
+                branchesPanel.Children.Add(row);
+            }
+        }
+
+        var treePanel = new StackPanel
+            { Orientation = Orientation.Horizontal, Spacing = 12, VerticalAlignment = VerticalAlignment.Center };
+        var leftCol = new StackPanel { VerticalAlignment = VerticalAlignment.Center };
+        leftCol.Children.Add(BuildEncounterNodeCard(enc, new NodeCardOptions(IsCurrent: true)));
+        treePanel.Children.Add(leftCol);
+        treePanel.Children.Add(branchesPanel);
+
+        Refresh();
+
+        // ── Story branch content: filter panel + visual diagram ──
+        var storyBranchContent = new StackPanel();
+        if (preCondPanel.Children.Count > 0)
+            storyBranchContent.Children.Add(preCondPanel);
+        storyBranchContent.Children.Add(new ScrollViewer
+        {
+            HorizontalScrollBarVisibility = ScrollBarVisibility.Auto,
+            VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
+            MaxHeight = 500,
+            Content = _vis.Card(treePanel)
+        });
+
+        // ── TabControl: 剧情分支 | 剧情链 | Mermaid源码 ──
+        var tabControl = new TabControl { Margin = new Thickness(0, 4, 0, 0) };
+        var storyTab = new TabItem
+        {
+            Header = _vis.Loc("Vis.StoryBranch"),
+            Content = storyBranchContent
+        };
+        var chainTab = new TabItem
+        {
+            Header = _vis.Loc("Vis.EncounterChain"),
+            Content = BuildEncounterChainTree(enc, new HashSet<int>(), 0, 6)
+        };
+
+        // Mermaid tab: raw source only (refreshed together with the cards)
         var mermaidBlock = new Border
         {
             CornerRadius = new CornerRadius(6),
@@ -608,394 +799,10 @@ public class EncounterEntityVisualizer : IEntityVisualizer
                 Content = mermaidTextBlock
             }
         };
-
-        // ── PreCondition checkbox panel ──
-        var preCondPanel = new StackPanel();
-        var branchesPanel = new StackPanel
-            { Orientation = Orientation.Vertical, Spacing = 12, HorizontalAlignment = HorizontalAlignment.Center };
-        if (allPreConds.Count > 0)
-        {
-            preCondPanel.Children.Add(new TextBlock
-            {
-                Text = _vis.Loc("Vis.PreConditions"), FontSize = 9, Foreground = Brush.Parse("#999"),
-                FontWeight = FontWeight.SemiBold, Margin = new Thickness(0, 0, 0, 4)
-            });
-            var cbPanel = new WrapPanel();
-            foreach (var (rawId, display, isNeg) in allPreConds)
-            {
-                // Show negative precond with strikethrough style instead of "NOT " prefix
-                var cbContent = new StackPanel
-                    { Orientation = Orientation.Horizontal, Spacing = 4 };
-                if (isNeg)
-                {
-                    cbContent.Children.Add(new TextBlock
-                        { Text = "¬", FontSize = 9, Foreground = Brush.Parse("#C62828"),
-                          VerticalAlignment = VerticalAlignment.Center });
-                }
-                cbContent.Children.Add(new TextBlock
-                {
-                    Text = display, FontSize = 10,
-                    TextDecorations = isNeg ? TextDecorations.Strikethrough : null,
-                    Foreground = isNeg ? Brush.Parse("#888") : Brush.Parse("#333")
-                });
-                var cb = new CheckBox
-                {
-                    Content = cbContent,
-                    FontSize = 10, IsChecked = false, Margin = new Thickness(0, 0, 8, 2)
-                };
-                cb.IsCheckedChanged += (_, _) =>
-                {
-                    if (cb.IsChecked == true) selectedPreConds.Add(rawId);
-                    else selectedPreConds.Remove(rawId);
-                    mermaidTextBlock.Text = BuildMermaid();
-                    // Rebuild visual tree branches to reflect preCondition changes
-                    branchesPanel.Children.Clear();
-                    BuildBranchNodes(branchesPanel, selectedPreConds);
-                };
-                cbPanel.Children.Add(cb);
-            }
-            preCondPanel.Children.Add(cbPanel);
-        }
-
-        // ── Local function: build branch nodes reflecting preCondition selection ──
-        void BuildBranchNodes(StackPanel panel, HashSet<string> selPreConds)
-        {
-            // Recalculate valid-total weight based on Y/N condition matching
-            double validTotalWeight = 0;
-            foreach (var r in responseList)
-            {
-                if (AreAllPreCondsSatisfied(r.TargetEncounter, selPreConds))
-                    validTotalWeight += r.Weight;
-            }
-
-            foreach (var resp in responseList)
-            {
-                var isBranchValid = AreAllPreCondsSatisfied(resp.TargetEncounter, selPreConds);
-                // Effective probability: weight / validTotalWeight (or 0 if branch invalid)
-                var effectiveProb = validTotalWeight > 0 && isBranchValid ? resp.Weight / validTotalWeight : 0.0;
-                var probRatio = Math.Clamp(effectiveProb, 0.0, 1.0);
-                var branchColor = probRatio >= 0.5 ? "#2E7D32" : probRatio >= 0.1 ? "#E65100" : "#999";
-                var branchBg = probRatio >= 0.5 ? "#E8F5E9" : probRatio >= 0.1 ? "#FFF3E0" : "#F5F5F5";
-
-                var branchOpacity = (!isBranchValid && selPreConds.Count > 0) ? 0.5 : 1.0;
-
-                var branchNode = new StackPanel { Spacing = 4, HorizontalAlignment = HorizontalAlignment.Center, Opacity = branchOpacity };
-
-                // Item usage hint badge (if applicable)
-                if (resp.Item is not null)
-                {
-                    var qtyText = resp.ItemMult > 1 ? $" ×{resp.ItemMult}" : "";
-                    branchNode.Children.Add(_vis.MiniBadge(
-                        $"🛡 {resp.Item.Description}{qtyText}", "#E3F2FD", "#1565C0"));
-                }
-                else if (resp.ItemId is not null)
-                {
-                    branchNode.Children.Add(_vis.MiniBadge(
-                        $"Item #{resp.ItemId}", "#F5F5F5", "#999"));
-                }
-
-                // Probability badge: weight(effective%)
-                branchNode.Children.Add(new Border
-                {
-                    CornerRadius = new CornerRadius(10),
-                    Background = Brush.Parse(branchColor),
-                    Padding = new Thickness(8, 2),
-                    HorizontalAlignment = HorizontalAlignment.Center,
-                    Child = new TextBlock
-                    {
-                        Text = $"{resp.Weight:F1}({effectiveProb:P2})", FontSize = 9, FontWeight = FontWeight.Bold,
-                        Foreground = Brushes.White
-                    }
-                });
-
-                // PreCondition badges (always shown, expanded)
-                if (resp.TargetEncounter is not null && !string.IsNullOrWhiteSpace(resp.TargetEncounter.PreConditions))
-                {
-                    var targetPres = resp.TargetEncounter.PreConditions.Split(',').Select(s => s.Trim()).Where(s => s.Length > 0).ToList();
-                    if (targetPres.Count > 0)
-                    {
-                        var preBadgesPanel = new WrapPanel { HorizontalAlignment = HorizontalAlignment.Center };
-                        foreach (var tp in targetPres)
-                        {
-                            var isNeg = tp.StartsWith("-");
-                            var rid = isNeg ? tp[1..] : tp;
-                            var isOn = selPreConds.Count == 0 || IsPreCondSatisfied(tp, selPreConds);
-                            var cond = _vis.Resolver.LookupRef<Condition>(
-                                resp.TargetEncounter, nameof(Encounter.PreConditions), tp);
-                            var label = (isNeg ? "¬" : "") + (cond?.Subject ?? rid);
-                            var bg = isNeg ? "#FFF3E0" : "#E8F5E9";
-                            var fg = isNeg ? "#E65100" : "#2E7D32";
-                            if (selPreConds.Count > 0 && !isOn) { bg = "#F5F5F5"; fg = "#CCC"; }
-                            preBadgesPanel.Children.Add(new Border
-                            {
-                                CornerRadius = new CornerRadius(3),
-                                Background = Brush.Parse(bg),
-                                Padding = new Thickness(4, 1),
-                                Margin = new Thickness(1),
-                                Child = new TextBlock
-                                {
-                                    Text = label, FontSize = 7,
-                                    Foreground = Brush.Parse(fg),
-                                    TextDecorations = isNeg ? TextDecorations.Strikethrough : null
-                                }
-                            });
-                        }
-                        branchNode.Children.Add(preBadgesPanel);
-                    }
-                }
-
-                // Target encounter badge
-                var targetBadge = new Border
-                {
-                    CornerRadius = new CornerRadius(5),
-                    Background = Brush.Parse(branchBg),
-                    Padding = new Thickness(8, 4),
-                    Cursor = resp.TargetEncounter is not null
-                        ? new Cursor(StandardCursorType.Hand)
-                        : new Cursor(StandardCursorType.Arrow),
-                    Child = new TextBlock
-                    {
-                        Text = resp.TargetEncounter?.Subject ?? $"Enc #{resp.TargetId}",
-                        FontSize = 11,
-                        Foreground = Brush.Parse(branchColor),
-                        TextAlignment = TextAlignment.Center,
-                        FontWeight = FontWeight.Medium
-                    }
-                };
-                if (resp.TargetEncounter is not null)
-                {
-                    _refNode.WireNavigation(targetBadge, typeof(Encounter),
-                        resp.TargetEncounter.EntityId, enc);
-                }
-
-                branchNode.Children.Add(targetBadge);
-                panel.Children.Add(branchNode);
-            }
-        }
-
-        // ── Visual tree diagram (horizontal: reverse ← current → branches) ──
-        var treePanel = new StackPanel
-            { Orientation = Orientation.Horizontal, Spacing = 10, VerticalAlignment = VerticalAlignment.Center };
-
-        // LEFT column: Reverse refs (stacked vertically)
-        var leftColumn = new StackPanel { Spacing = 4, VerticalAlignment = VerticalAlignment.Center, MinWidth = 120 };
-
-        // Reverse refs: previous encounters → current (shown on the left)
-        {
-            if (reverseRefs.Count > 0)
-            {
-                foreach (var (src, itemDesc, itemMult, weight) in reverseRefs)
-                {
-                    var refInfo = itemDesc is not null
-                        ? $"{itemDesc}{(itemMult > 1 ? $" ×{itemMult}" : "")} （权重 {weight:F0}）"
-                        : $"权重 {weight:F0}";
-                    var revBadge = new Border
-                    {
-                        CornerRadius = new CornerRadius(4),
-                        Background = Brush.Parse("#FFF3E0"),
-                        BorderBrush = Brush.Parse("#E65100"),
-                        BorderThickness = new Thickness(1),
-                        Padding = new Thickness(8, 3),
-                        Cursor = new Cursor(StandardCursorType.Hand),
-                        Child = new StackPanel
-                        {
-                            Spacing = 1, Children =
-                            {
-                                new TextBlock
-                                {
-                                    Text = src.Subject ?? $"Enc #{src.Id}", FontSize = 10,
-                                    FontWeight = FontWeight.Medium,
-                                    Foreground = Brush.Parse("#BF360C"), TextAlignment = TextAlignment.Center
-                                },
-                                new TextBlock
-                                {
-                                    Text = refInfo, FontSize = 7,
-                                    Foreground = Brush.Parse("#E65100"), TextAlignment = TextAlignment.Center
-                                }
-                            }
-                        }
-                    };
-                    _refNode.WireNavigation(revBadge, typeof(Encounter),
-                        src.EntityId, enc);
-                    leftColumn.Children.Add(revBadge);
-                }
-            }
-            else
-            {
-                // No previous encounter — this is a root event
-                var rootIndicatorPanel = new StackPanel { Spacing = 4, HorizontalAlignment = HorizontalAlignment.Center };
-                rootIndicatorPanel.Children.Add(new Border
-                {
-                    CornerRadius = new CornerRadius(4),
-                    Background = Brush.Parse("#E8F5E9"),
-                    BorderBrush = Brush.Parse("#2E7D32"),
-                    BorderThickness = new Thickness(1),
-                    Padding = new Thickness(10, 3),
-                    Child = new TextBlock
-                    {
-                        Text = _vis.Loc("Vis.RootEncounter"), FontSize = 9,
-                        Foreground = Brush.Parse("#2E7D32"), TextAlignment = TextAlignment.Center,
-                        FontWeight = FontWeight.Medium
-                    }
-                });
-
-                // Show current encounter's preconditions for easy reference
-                if (enc.PreConditions.Count > 0)
-                {
-                    var preList = enc.PreConditions.Select(e => e.ToRawString()).Where(s => s.Length > 0).ToList();
-                    if (preList.Count > 0)
-                    {
-                        var preBadgesPanel = new WrapPanel { HorizontalAlignment = HorizontalAlignment.Center };
-                        foreach (var p in preList)
-                        {
-                            var isNeg = p.StartsWith("-");
-                            var rid = isNeg ? p[1..] : p;
-                            var cond = _vis.Resolver.LookupRef<Condition>(enc, nameof(Encounter.PreConditions), p);
-                            var label = (isNeg ? "¬" : "") + (cond?.Subject ?? rid);
-                            var bg = isNeg ? "#FFF3E0" : "#E8F5E9";
-                            var fg = isNeg ? "#E65100" : "#2E7D32";
-                            preBadgesPanel.Children.Add(new Border
-                            {
-                                CornerRadius = new CornerRadius(3),
-                                Background = Brush.Parse(bg),
-                                Padding = new Thickness(4, 1),
-                                Margin = new Thickness(1),
-                                Child = new TextBlock
-                                {
-                                    Text = label, FontSize = 7, Foreground = Brush.Parse(fg),
-                                    TextDecorations = isNeg ? TextDecorations.Strikethrough : null
-                                }
-                            });
-                        }
-                        rootIndicatorPanel.Children.Add(preBadgesPanel);
-                    }
-                }
-                leftColumn.Children.Add(rootIndicatorPanel);
-            }
-        }
-        treePanel.Children.Add(leftColumn);
-
-        // Arrow: left → center
-        treePanel.Children.Add(new TextBlock
-        {
-            Text = "→", FontSize = 16,
-            Foreground = Brush.Parse(reverseRefs.Count > 0 ? "#E65100" : "#2E7D32"),
-            VerticalAlignment = VerticalAlignment.Center
-        });
-
-        // CENTER column: Current encounter (highlighted)
-        var centerColumn = new StackPanel { VerticalAlignment = VerticalAlignment.Center };
-        {
-            var rootNode = new Border
-            {
-                CornerRadius = new CornerRadius(6),
-                Background = Brush.Parse("#E3F2FD"),
-                BorderBrush = Brush.Parse("#1565C0"),
-                BorderThickness = new Thickness(3),
-                Padding = new Thickness(12, 6),
-                HorizontalAlignment = HorizontalAlignment.Center,
-            };
-            var rootSp = new StackPanel { Spacing = 2 };
-            rootSp.Children.Add(new TextBlock
-            {
-                Text = _vis.Loc("Vis.CurrentEncounter"), FontSize = 8, Foreground = Brush.Parse("#1565C0"),
-                TextAlignment = TextAlignment.Center
-            });
-            rootSp.Children.Add(new TextBlock
-            {
-                Text = enc.Subject ?? $"Enc #{enc.Id}", FontSize = 13, FontWeight = FontWeight.Bold,
-                Foreground = Brush.Parse("#0D47A1"), TextAlignment = TextAlignment.Center
-            });
-
-            // Show current encounter's preconditions below the title
-            if (!string.IsNullOrWhiteSpace(enc.PreConditions))
-            {
-                var preList = enc.PreConditions.Split(',').Select(s => s.Trim()).Where(s => s.Length > 0).ToList();
-                if (preList.Count > 0)
-                {
-                    var preWrap = new WrapPanel { HorizontalAlignment = HorizontalAlignment.Center };
-                    foreach (var p in preList)
-                    {
-                        var isNeg = p.StartsWith("-");
-                        var rid = isNeg ? p[1..] : p;
-                        var cond = _vis.Resolver.LookupRef<Condition>(enc, nameof(Encounter.PreConditions), p);
-                        var label = (isNeg ? "¬" : "") + (cond?.Subject ?? rid);
-                        var bg = isNeg ? "#FFF3E0" : "#E8F5E9";
-                        var fg = isNeg ? "#E65100" : "#2E7D32";
-                        preWrap.Children.Add(new Border
-                        {
-                            CornerRadius = new CornerRadius(3),
-                            Background = Brush.Parse(bg),
-                            Padding = new Thickness(4, 1),
-                            Margin = new Thickness(1),
-                            Child = new TextBlock
-                            {
-                                Text = label, FontSize = 7, Foreground = Brush.Parse(fg),
-                                TextDecorations = isNeg ? TextDecorations.Strikethrough : null
-                            }
-                        });
-                    }
-                    rootSp.Children.Add(preWrap);
-                }
-            }
-
-            rootNode.Child = rootSp;
-            centerColumn.Children.Add(rootNode);
-        }
-        treePanel.Children.Add(centerColumn);
-
-        // Arrow: center → right
-        treePanel.Children.Add(new TextBlock
-        {
-            Text = "→", FontSize = 16, Foreground = Brush.Parse("#999"),
-            VerticalAlignment = VerticalAlignment.Center
-        });
-
-        // RIGHT column: Branch nodes (stacked vertically)
-        // Build initial branch nodes
-        BuildBranchNodes(branchesPanel, selectedPreConds);
-        treePanel.Children.Add(branchesPanel);
-
-        // ── Combine story branch content ──
-        var storyBranchContent = new StackPanel();
-
-        // PreCondition checkbox panel (at top of story branch tab)
-        if (preCondPanel.Children.Count > 0)
-            storyBranchContent.Children.Add(preCondPanel);
-
-        // Visual tree diagram (horizontally scrollable, left→right layout)
-        storyBranchContent.Children.Add(new ScrollViewer
-        {
-            HorizontalScrollBarVisibility = ScrollBarVisibility.Auto,
-            VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
-            MaxHeight = 400,
-            Content = _vis.Card(treePanel)
-        });
-
-        // ── Build recursive encounter chain (depth-limited, dedup) ──
-        var forwardChain = BuildEncounterChainTree(enc, new HashSet<int>(), 0, 6);
-        var reverseChain = BuildReverseChainPanel(enc);
-
-        // Reverse chain (previous encounters → current, with dedup and position mark)
-        if (reverseChain is not null)
-            storyBranchContent.Children.Add(reverseChain);
-
-        // ── TabControl: 剧情分支 | 剧情链 | Mermaid源码 ──
-        var tabControl = new TabControl { Margin = new Thickness(0, 4, 0, 0) };
-        var storyTab = new TabItem
-        {
-            Header = _vis.Loc("Vis.StoryBranch"),
-            Content = storyBranchContent
-        };
-        var chainTab = new TabItem { Header = _vis.Loc("Vis.EncounterChain"), Content = forwardChain };
-
-        // Mermaid tab: only raw source code
-        var mermaidTabContent = new StackPanel { Spacing = 6 };
-        mermaidTabContent.Children.Add(mermaidBlock);
         var mermaidTab = new TabItem
         {
             Header = _vis.Loc("Vis.MermaidSource"),
-            Content = mermaidTabContent
+            Content = new StackPanel { Spacing = 6, Children = { mermaidBlock } }
         };
         tabControl.Items.Add(storyTab);
         tabControl.Items.Add(chainTab);
@@ -1076,9 +883,10 @@ public class EncounterEntityVisualizer : IEntityVisualizer
                         Foreground = Brush.Parse(isCurrent ? "#0D47A1" : "#555"),
                         TextWrapping = TextWrapping.Wrap
                     },
+                    // D06 §4.2: chain tree uses the shared type-chip label too.
                     new TextBlock
                     {
-                        Text = $"ID: {root.Id} · Type: {(root.Type == EncounterType.Scavenge ? "Scavenge" : "Normal")}",
+                        Text = $"ID: {root.Id} · {TypeChip((int)root.Type).Label}",
                         FontSize = 8, Foreground = Brush.Parse("#999")
                     },
                     contextBadges.Children.Count > 0 ? contextBadges : new TextBlock()
@@ -1130,128 +938,6 @@ public class EncounterEntityVisualizer : IEntityVisualizer
                 Content = _vis.Card(sp)
             }
             : sp;
-    }
-
-    // ═══ Reverse encounter chain (who references me) ═══
-    private Control? BuildReverseChainPanel(Encounter enc)
-    {
-        var store = _dataTable?.ActiveMergeStore ?? _dataTable?.BrowserStore;
-        if (store == null) return null;
-
-        var rawRefs = store.IndexService?.ReverseLookup(enc.EntityId) ?? [];
-        var refs = new List<(Encounter Source, string ViaItem)>();
-
-        foreach (var (srcEid, propName, rawId) in rawRefs)
-        {
-            if (propName != nameof(Encounter.Responses)) continue;
-            if (!(_dataTable?.ReferenceLookups ?? []).TryGetValue(typeof(Encounter), out var list) || list is null)
-                continue;
-            var src = list.OfType<Encounter>().FirstOrDefault(e => e.EntityId == srcEid);
-            if (src is null) continue;
-            refs.Add((src, rawId));
-        }
-
-        if (refs.Count == 0) return null;
-
-        var sp = new StackPanel { Margin = new Thickness(0, 12, 0, 0) };
-        sp.Children.Add(_vis.SectionLabel($"👈 Referenced By ({refs.Count})"));
-        var tree = BuildReverseChainTree(enc, refs, new HashSet<int>(), 0, 4);
-        if (tree is StackPanel tsp && tsp.Children.Count > 0)
-            sp.Children.Add(_vis.Card(tree));
-        return sp;
-    }
-
-    private Control BuildReverseChainTree(Encounter target, List<(Encounter Source, string ViaItem)> refs,
-        HashSet<int> visited, int depth, int maxDepth)
-    {
-        if (depth > maxDepth) return new StackPanel();
-
-        var sp = new StackPanel { Spacing = 2 };
-        var marginLeft = depth * 24;
-
-        foreach (var (src, viaItem) in refs)
-        {
-            if (!visited.Add(src.Id)) continue;
-
-            // Edge label (above node)
-            sp.Children.Add(new TextBlock
-            {
-                Text = $"← {src.Subject ?? $"Enc #{src.Id}"} via Responses", FontSize = 9, Foreground = Brush.Parse("#888"),
-                Margin = new Thickness(marginLeft + 12, 2, 0, 2)
-            });
-
-            // Source node
-            var contextBadges = new StackPanel
-                { Orientation = Orientation.Horizontal, Spacing = 4, Margin = new Thickness(0, 2, 0, 0) };
-            if (!string.IsNullOrWhiteSpace(src.TreasureId) && src.TreasureId != "3")
-            {
-                var tt = _vis.Resolver.LookupRef<TreasureTable>(src, nameof(Encounter.TreasureId), src.TreasureId);
-                if (tt is not null)
-                    contextBadges.Children.Add(_vis.MiniBadge($"🎒{tt.Name}", "#E8F5E9", "#2E7D32"));
-            }
-            if (src.CreatureId != "0")
-            {
-                contextBadges.Children.Add(_vis.MiniBadge("🐾", "#E8EAF6", "#283593"));
-            }
-
-            var capturedSrc = src;
-            var nodeBorder = new Border
-            {
-                CornerRadius = new CornerRadius(6),
-                Background = Brush.Parse(depth == 0 ? "#FFF8E1" : "#F5F5F5"),
-                BorderBrush = Brush.Parse(depth == 0 ? "#F9A825" : "#E0E0E0"),
-                BorderThickness = new Thickness(depth == 0 ? 2 : 1),
-                Padding = new Thickness(10, 4),
-                Margin = new Thickness(marginLeft, 0, 0, 0),
-                Cursor = new Cursor(StandardCursorType.Hand),
-                Child = new StackPanel
-                {
-                    Spacing = 1,
-                    Children =
-                    {
-                        new TextBlock
-                        {
-                            Text = src.Subject ?? $"Enc #{src.Id}",
-                            FontSize = 11, FontWeight = FontWeight.Medium,
-                            Foreground = Brush.Parse("#555"), TextWrapping = TextWrapping.Wrap
-                        },
-                        new TextBlock
-                        {
-                            Text = $"ID: {src.Id} · {(src.Type == EncounterType.Scavenge ? "Scavenge" : "Normal")}",
-                            FontSize = 8, Foreground = Brush.Parse("#999")
-                        },
-                        contextBadges.Children.Count > 0 ? contextBadges : new TextBlock()
-                    }
-                }
-            };
-            _refNode.WireNavigation(nodeBorder, typeof(Encounter), src.EntityId, target);
-            sp.Children.Add(nodeBorder);
-
-            // Recursively find who references this source
-            var store = _dataTable?.ActiveMergeStore ?? _dataTable?.BrowserStore;
-            if (store is not null && depth < maxDepth)
-            {
-                var subRefs = new List<(Encounter Source, string ViaItem)>();
-                var rawSubRefs = store.IndexService?.ReverseLookup(src.EntityId) ?? [];
-                foreach (var (subSrcEid, subPropName, subRawId) in rawSubRefs)
-                {
-                    if (subPropName != nameof(Encounter.Responses)) continue;
-                    if (!(_dataTable?.ReferenceLookups ?? []).TryGetValue(typeof(Encounter), out var elist) || elist is null)
-                        continue;
-                    var subSrc = elist.OfType<Encounter>().FirstOrDefault(e => e.EntityId == subSrcEid);
-                    if (subSrc is null) continue;
-                    subRefs.Add((subSrc, subRawId));
-                }
-                if (subRefs.Count > 0)
-                {
-                    var childTree = BuildReverseChainTree(src, subRefs, visited, depth + 1, maxDepth);
-                    if (childTree is StackPanel csp && csp.Children.Count > 0)
-                        sp.Children.Add(childTree);
-                }
-            }
-        }
-
-        return sp;
     }
 
     private Control BuildRefsPanel(Encounter enc)

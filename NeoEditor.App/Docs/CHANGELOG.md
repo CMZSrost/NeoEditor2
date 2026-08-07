@@ -2,6 +2,21 @@
 
 ---
 
+## R59：Encounter 剧情分支重构（D06 v1.1：节点单组件 + tooltip 信息卡 + Mermaid 同源）| 2026-08-08
+
+**反馈**（用户）：① 多个组件定位重复没有区别（反向引用三处渲染、响应数据双渲染）；② Mermaid 信息量与图形变化很大（两套独立生成）；③ 剧情分支应做成图片+title 单组件，条件/目标散开很散乱；④（追加）较复杂的信息通过 tooltip 信息卡呈现，节点关注图片（记忆）、标题（目标）、概率（可能性）。
+
+**重构**（设计文档 `spec/D06-encounter-storybranch-design.md`，v1.1）：
+1. **节点单组件**（`BuildEncounterNodeCard`）：每节点 = 52px strImg 缩略图（可点击放大，无图 BookOpen 兜底）+ 标题 + 概率胶囊，最多 ID/类型两个 9px chip——卡片高度 ≤96px
+2. **tooltip 信息卡**（`BuildBranchTooltip`）：描述（截断 200 字）+ 前置条件及满足情况（✓/✗ 着色 + ¬ 样式，随过滤实时刷新）+ 物品触发 + 概率——复杂信息全部移出卡片
+3. **同页去重**：左列反向引用橙卡、Tab 内「👈 Referenced By」反向链面板、根剧情标识全部移除（反向统一收到底部被引用面板）；独立 `BuildResponsesPanel` 合并进分支图（同数据双渲染消除），格式提示行移入分支图节首
+4. **Mermaid 同源对齐**：`PrepareBranches` 纯函数产出 `BranchData`，节点卡渲染与 `BuildMermaidText` 共用同一数据源（结构性消除漂移）；移除反向 R 节点与 ctx 标签；分支节点 ID 改 `B{index}`（修复 >26 分支溢出）
+5. **顺带修正**：类型 chip 补齐实测值域 0-3（剧情/搜刮/战斗/破解四色，现状只区分 Normal/Scavenge），Hero/分支卡/链树三处统一共享映射；概率格式统一 `0.##%`（P2 在部分文化产生 "50 %" 空格）
+
+**测试**：EncounterVisualizerTests +15（纯函数数值断言 + Avalonia.Headless 输入模拟导航 + ToolTip.GetTip 断言 tooltip 内容）。**861/861**（13 项目全绿，EntityEditor 71→86）。
+
+---
+
 ## R58：mod 图片缺失真根因（getmods2.php 换行未 Trim）+ 图片诊断进日志 | 2026-08-08
 
 **反馈**（用户）：图片还是缺失（第三轮）。用户提供游戏目录 D:/Downloads/Neo Scavenger/。

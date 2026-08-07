@@ -58,7 +58,7 @@ internal class StubEntityLookupService : IEntityLookupService
     public Dictionary<string, int> EntityMergedIds { get; set; } = [];
 
     public Dictionary<int, T> GetEntities<T>() where T : IEntity => [];
-    public Dictionary<string, T> GetCompositeEntities<T>(Func<T, string> keySelector, int sourceModId = int.MaxValue) where T : IEntity => [];
+    public virtual Dictionary<string, T> GetCompositeEntities<T>(Func<T, string> keySelector, int sourceModId = int.MaxValue) where T : IEntity => [];
     public List<T> GetDedupedEntities<T>() where T : IEntity => [];
     public virtual IEntity? FindBestMatch(Type entityType, string rawId, string? targetKey,
         string sourceEntityId = "", string propertyName = "") => null;

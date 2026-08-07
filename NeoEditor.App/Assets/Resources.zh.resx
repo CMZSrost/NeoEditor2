@@ -2358,12 +2358,18 @@ Ctrl+右键点击引用 = 仅预览不跳转。
     <data name="Vis.GiveItem" xml:space="preserve"><value>给予物品</value></data>
     <data name="Vis.Conditions" xml:space="preserve"><value>获得状态</value></data>
     <data name="Vis.PreConditions" xml:space="preserve"><value>前置条件</value></data>
-    <data name="Vis.CurrentEncounter" xml:space="preserve"><value>📍 当前场景</value></data>
+    <data name="Vis.CurrentEncounter" xml:space="preserve"><value>📍 当前剧情</value></data>
     <data name="Vis.MermaidDiagram" xml:space="preserve"><value>Mermaid图</value></data>
     <data name="Vis.MermaidSource" xml:space="preserve"><value>Mermaid源码</value></data>
     <data name="Vis.PrevEncounter" xml:space="preserve"><value>上一场景</value></data>
     <data name="Vis.RootEncounter" xml:space="preserve"><value>根事件（起始）</value></data>
     <data name="Vis.EncounterChain" xml:space="preserve"><value>场景链</value></data>
+    <data name="Vis.TypeStory" xml:space="preserve"><value>剧情</value></data>
+    <data name="Vis.TypeScavenge" xml:space="preserve"><value>搜刮</value></data>
+    <data name="Vis.TypeCombat" xml:space="preserve"><value>战斗</value></data>
+    <data name="Vis.TypeHack" xml:space="preserve"><value>破解</value></data>
+    <data name="Vis.TypeUnknown" xml:space="preserve"><value>类型{0}</value></data>
+    <data name="Vis.Probability" xml:space="preserve"><value>概率</value></data>
     <data name="Vis.SpawnCreature" xml:space="preserve"><value>刷新生物</value></data>
     <data name="Vis.Accidents" xml:space="preserve"><value>意外事件</value></data>
     <data name="Vis.TriggeredBy" xml:space="preserve"><value>触发自</value></data>
