@@ -35,10 +35,7 @@ public class ForbiddenHexEntityVisualizer : IEntityVisualizer
         if (entity is not ForbiddenHex fh) return new TextBlock { Text = "Invalid" };
         var root = new StackPanel { Spacing = 16, Margin = new Thickness(16) };
 
-        var rawBody = new Border
-            { IsVisible = false, Child = _vis.BuildRawDataTable(fh), Padding = new Thickness(8) };
-        root.Children.Add(_vis.BuildExpander(_vis.Loc("Vis.RawData"), rawBody));
-        root.Children.Add(rawBody);
+        root.Children.Add(_vis.BuildRawData(fh));
 
         root.Children.Add(BuildHeroHeader(fh));
         root.Children.Add(BuildStatsPanel(fh));

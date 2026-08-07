@@ -27,6 +27,7 @@ public sealed partial class StorageManagerViewModel : ObservableObject
     private readonly Func<string, Task<string?>> _executeJs;
     private readonly Func<string, string> _localize;
     private readonly SaveBackupService _backups;
+    private readonly Action? _restartGame;
 
     public ObservableCollection<SaveEntry> Entries { get; } = [];
 
@@ -36,12 +37,21 @@ public sealed partial class StorageManagerViewModel : ObservableObject
     [ObservableProperty] private string _statusText = "";
 
     public StorageManagerViewModel(Func<string, Task<string?>> executeJs, Func<string, string> localize,
-        SaveBackupService? backups = null)
+        SaveBackupService? backups = null, Action? restartGame = null)
     {
         _executeJs = executeJs;
         _localize = localize;
         _backups = backups ?? new SaveBackupService();
+        _restartGame = restartGame;
     }
+
+    /// <summary>
+    /// v2.49: Ruffle keeps the SharedObject instance in memory (avm2_shared_objects cache) —
+    /// the running game never re-reads localStorage, so delete/clear/restore only take
+    /// effect after a page reload (which drops the cache). This reloads the game page.
+    /// </summary>
+    [RelayCommand]
+    private void RestartGame() => _restartGame?.Invoke();
 
     [RelayCommand]
     public async Task Refresh()
@@ -102,19 +112,36 @@ public sealed partial class StorageManagerViewModel : ObservableObject
         }
     }
 
+    /// <summary>
+    /// v2.49: after delete/clear/restore the running game would write the cached
+    /// SharedObject data back on its next autosave (PlayState turn-end → SaveGame),
+    /// undoing the change. Reload the page BEFORE the game gets a chance to save.
+    /// </summary>
+    private async Task RestartGameNow()
+    {
+        if (_restartGame is null) return;
+        await Task.Delay(300);   // let the ExecuteScript round-trip settle
+        _restartGame();
+    }
+
     [RelayCommand]
     public async Task Delete(SaveEntry? entry)
     {
         if (entry is null) return;
-        await _executeJs($"localStorage.removeItem({JsonSerializer.Serialize(entry.Key)}); 'ok'");
+        // v2.50: 先设 __blockSaves（阻止 Ruffle 卸载 flush 把缓存旧档写回），再删除
+        await _executeJs($"window.__blockSaves = true; localStorage.removeItem({JsonSerializer.Serialize(entry.Key)}); 'ok'");
         await Refresh();
+        StatusText = _localize("Storage.NeedRestart");
+        await RestartGameNow();
     }
 
     [RelayCommand]
     public async Task ClearAll()
     {
-        await _executeJs("localStorage.clear(); 'ok'");
+        await _executeJs("window.__blockSaves = true; localStorage.clear(); 'ok'");
         await Refresh();
+        StatusText = _localize("Storage.NeedRestart");
+        await RestartGameNow();
     }
 
     // ── on-disk backups (v2.37) ──
@@ -140,9 +167,11 @@ public sealed partial class StorageManagerViewModel : ObservableObject
             return;
         }
 
-        await _executeJs($"localStorage.setItem({JsonSerializer.Serialize(backup.Key)}, {JsonSerializer.Serialize(value)}); 'ok'");
+        // 先写入恢复值（setItem 须放行），再设 __blockSaves 阻止后续写回
+        await _executeJs($"localStorage.setItem({JsonSerializer.Serialize(backup.Key)}, {JsonSerializer.Serialize(value)}); window.__blockSaves = true; 'ok'");
         await Refresh();
-        StatusText = string.Format(_localize("Storage.Restored"), backup.Key);
+        StatusText = string.Format(_localize("Storage.Restored"), backup.Key) + " — " + _localize("Storage.NeedRestart");
+        await RestartGameNow();
     }
 
     [RelayCommand]

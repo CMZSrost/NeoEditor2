@@ -208,6 +208,11 @@ public partial class App : Application
                         sp.GetRequiredService<NeoEditor.Plugins.EntityEditor.Services.VisHelperService>()
                             .BuildRefTooltip));
 
+                // R42: game sound playback (winmm MCI + extracted sounds index).
+                services.AddSingleton<Core.Abstractions.IAudioPlaybackService, Services.AudioPlaybackService>();
+                services.AddSingleton<ViewModels.ExplorerPane.SoundsToolViewModel>();
+                services.AddSingleton<Core.Abstractions.IToolPlugin, Plugins.SoundsToolPlugin>();
+
                 services.AddAutoMapper((expression => { }));
 
                 // window

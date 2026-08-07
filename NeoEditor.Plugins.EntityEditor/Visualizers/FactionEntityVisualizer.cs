@@ -43,10 +43,7 @@ public class FactionEntityVisualizer : IEntityVisualizer
         if (entity is not Faction f) return new TextBlock { Text = "Invalid" };
         var root = new StackPanel { Spacing = 16, Margin = new Thickness(16) };
 
-        var rawBody = new Border
-            { IsVisible = false, Child = _vis.BuildRawDataTable(f), Padding = new Thickness(8) };
-        root.Children.Add(_vis.BuildExpander(_vis.Loc("Vis.RawData"), rawBody));
-        root.Children.Add(rawBody);
+        root.Children.Add(_vis.BuildRawData(f));
 
         root.Children.Add(BuildHeroHeader(f));
         if (!string.IsNullOrWhiteSpace(f.DictFactions))

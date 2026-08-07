@@ -9,9 +9,14 @@
         <ApplicationManifest>app.manifest</ApplicationManifest>
         <ApplicationIcon>Assets\nsLogo.ico</ApplicationIcon>
         <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
-        <NoWarn>CS8618;CS9264</NoWarn>
+        <!-- CA1416: Windows-only build (WinExe win-x64, see distribution policy below) —
+             platform-availability analysis adds noise without targets to guard against. -->
+        <NoWarn>CS8618;CS9264;CA1416</NoWarn>
         <Title>NeoPlayer</Title>
         <Authors>Cromzst</Authors>
+        <!-- R43: 试用版版本号——窗口标题/About/启动日志/导出 zip 均取自此（publish.ps1
+             也用它作为 zip 默认命名）。发布新试用版时只改这里 + git tag vX.Y.Z。 -->
+        <Version>1.0.0</Version>
         <PackageIcon>Assets\nsLogo.png</PackageIcon>
         <Company>Cromzst</Company>
         <SignAssembly>true</SignAssembly>
@@ -72,6 +77,8 @@
         <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
         <!-- Markdown wiki detail pages in the data browser (Docs/42 v2.22; same package the editor uses) -->
         <PackageReference Include="LiveMarkdown.Avalonia" Version="2.2.2" />
+        <!-- R46: About/提示弹窗（编辑器同款 MessageBox.Avalonia） -->
+        <PackageReference Include="MessageBox.Avalonia" Version="12.0.0" />
         <PackageReference Include="Serilog" Version="4.3.1" />
         <PackageReference Include="Serilog.Sinks.Console" Version="6.1.1" />
     </ItemGroup>

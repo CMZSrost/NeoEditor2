@@ -57,3 +57,6 @@ CodeCoverage/
 *.VisualState.xml
 TestResult.xml
 nunit-*.xml
+# 发布产物（dist/ 与 zip 不入库——单文件 exe 超 GitHub 100MB 限制）
+dist/
+*.zip

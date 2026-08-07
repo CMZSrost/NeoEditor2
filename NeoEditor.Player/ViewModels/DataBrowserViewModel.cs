@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Windows.Input;
@@ -52,6 +53,9 @@ public sealed partial class DataBrowserViewModel : ObservableObject
     private readonly DataBrowserService _service;
     private GameDataCatalog? _catalog;
     private WikiDetailBuilder? _wiki;
+
+    /// <summary>R56: 图片诊断输出（宿主接 RunLogStore → 日志文件，便于定位缺失）。</summary>
+    public Action<string>? LogAction { get; set; }
 
     public ObservableCollection<string> Tables { get; } = [];
 
@@ -161,30 +165,60 @@ public sealed partial class DataBrowserViewModel : ObservableObject
         HasFields = false;
         if (value is null || _wiki is null) return;
 
-        DetailMarkdown.Append(_wiki.BuildDetail(value));
+        try
+        {
+            // R55: 整段构建包 try/catch——任何一条数据/一张图异常都不让播放器崩，
+            // 状态行提示（浏览数据时闪退的防御；具体错误待实机定位）。
+            DetailMarkdown.Append(_wiki.BuildDetail(value));
 
-        foreach (var field in _wiki.GetFields(value))
-            Fields.Add(field);
-        HasFields = Fields.Count > 0;
+            foreach (var field in _wiki.GetFields(value))
+                Fields.Add(field);
+            HasFields = Fields.Count > 0;
 
-        foreach (var group in _wiki.BuildReferenceGroups(value))
-            ReferenceTabs.Add(new ReferenceTab(group.TableName, group.Markdown, LinkCommand));
-        HasReferences = ReferenceTabs.Count > 0;
+            foreach (var group in _wiki.BuildReferenceGroups(value))
+                ReferenceTabs.Add(new ReferenceTab(group.TableName, group.Markdown, LinkCommand));
+            HasReferences = ReferenceTabs.Count > 0;
 
-        foreach (var image in _wiki.GetImageItems(value))
-            Images.Add(new ImageItem(Decode(image.FullPath), image.FileName));
-        HasImages = Images.Count > 0;
-        if (HasImages) CurrentImageIndex = 0;
+            foreach (var image in _wiki.GetImageItems(value))
+                Images.Add(new ImageItem(Decode(image.FullPath), image.FileName));
+            HasImages = Images.Count > 0;
+            if (HasImages) CurrentImageIndex = 0;
+
+            // R56 诊断：图片缺失时把文件名 + 游戏根目录 + getmods.php 内容 + 各目录存在性
+            // 写到状态行与日志文件（LogAction → RunLogStore），一次拿到定位所需全部信息。
+            var missing = Images.Where(i => !i.Exists).Select(i => i.FileName).Take(3).ToList();
+            if (missing.Count > 0)
+            {
+                var root = _service.GameRootDir ?? "";
+                var modsPhp = Path.Combine(root, "getmods.php");
+                var modsPhpHead = File.Exists(modsPhp)
+                    ? (File.ReadAllText(modsPhp).Length > 300 ? File.ReadAllText(modsPhp)[..300] : File.ReadAllText(modsPhp))
+                    : "(不存在)";
+                var detail = $"图片缺失: {string.Join(", ", missing)} | gameRoot={root}" +
+                    $" | img/={Directory.Exists(Path.Combine(root, "img"))}" +
+                    $" | Mods/={Directory.Exists(Path.Combine(root, "Mods"))}" +
+                    $" | getmods.php={modsPhpHead}";
+                StatusText = detail;
+                LogAction?.Invoke(detail);
+            }
+        }
+        catch (Exception ex)
+        {
+            StatusText = $"数据渲染失败: {ex.Message}";
+        }
     }
 
     /// <summary>Decode the image on the UI thread — Image.Source binds the Bitmap directly
-    /// (string path bindings to Image.Source were unreliable under compiled bindings).</summary>
+    /// (string path bindings to Image.Source were unreliable under compiled bindings).
+    /// R55: DecodeToWidth 限制解码尺寸——大图（mod 高清图可达数千像素）全尺寸解码
+    /// 内存爆炸会让进程直接退出（无托管异常可捕获）；512px 对预览/缩略图足够。</summary>
     private static Bitmap? Decode(string? path)
     {
         if (path is null) return null;
         try
         {
-            return new Bitmap(path);
+            using var stream = File.OpenRead(path);
+            return Bitmap.DecodeToWidth(stream, 512);
         }
         catch (Exception)
         {

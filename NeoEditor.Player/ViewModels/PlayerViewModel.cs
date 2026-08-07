@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Styling;
 using Avalonia.Threading;
@@ -45,6 +46,20 @@ public sealed partial class PlayerViewModel : ObservableObject, IDisposable
     /// <summary>「后台运行」toggle changed — the view applies window.__backgroundMode.</summary>
     public event Action<bool>? BackgroundModeChanged;
 
+    /// <summary>Fatal game error detected (R38) — the view shows the capture dialog.</summary>
+    public event Action<string>? GameErrorDetected;
+
+    /// <summary>Log export finished — the view opens the exported file in Explorer.</summary>
+    public event Action<string>? LogExportCompleted;
+
+    /// <summary>
+    /// C#→JS bridge (R38, export feature): wired by the view after the webview exists
+    /// (same InvokeScript pattern as the storage manager). Null while no page is loaded.
+    /// </summary>
+    public Func<string, Task<string?>>? ExecuteJs { get; set; }
+
+    private DateTime _lastErrorDialogAt = DateTime.MinValue;
+
     [ObservableProperty] private string _statusText = "";
     [ObservableProperty] private string _levelFilter = "全部";
     [ObservableProperty] private bool _backgroundMode = true;   // 默认后台运行（失焦不暂停）
@@ -52,6 +67,9 @@ public sealed partial class PlayerViewModel : ObservableObject, IDisposable
 
     /// <summary>Directory the file log sink writes to (surfaced in the log overlay).</summary>
     [ObservableProperty] private string? _fileLogDirectory;
+
+    /// <summary>当前游戏根目录（About/导出用；未加载时为空串）。</summary>
+    public string GameRootDir => _config.Config.GameRootDir;
 
     /// <summary>UI theme: "System" / "Light" / "Dark" (persisted via AppConfig, v2.28).</summary>
     [ObservableProperty] private string _theme = "System";
@@ -74,7 +92,11 @@ public sealed partial class PlayerViewModel : ObservableObject, IDisposable
         // rebuilt the whole VisibleLines collection on every batch, which made the log
         // overlay's scrollbar jump while a long game session streamed lines.
         _logStore.LineAppended += OnLineAppended;
-        DataBrowser = new DataBrowserViewModel(dataBrowserService);
+        DataBrowser = new DataBrowserViewModel(dataBrowserService)
+        {
+            // R56: 图片缺失诊断 → 日志文件（跑完直接读 logs/ 定位）
+            LogAction = msg => _logStore.Append("databrowser", "debug", msg),
+        };
         Theme = config.Config.Theme;          // persisted theme (v2.28)
         Language = config.Language;           // persisted language (v2.28)
         StatusText = L("Status.NotLoaded");
@@ -121,7 +143,8 @@ public sealed partial class PlayerViewModel : ObservableObject, IDisposable
                 case PlayerGameEventType.GameExit:
                     // Back to the idle "drop SWF" state — the host tears the player down
                     // and re-shows the placeholder (closing the app stays on window X).
-                    StatusText = L("Status.Quit");
+                    // R38: 若本 run 出现过 error 级行，判定为异常退出（AVM 崩溃后退出）。
+                    StatusText = LastRunHasErrors() ? L("Status.ErrorExit") : L("Status.Quit");
                     _currentUri = null;
                     _currentSwf = "";
                     ResetRequested?.Invoke();
@@ -132,6 +155,14 @@ public sealed partial class PlayerViewModel : ObservableObject, IDisposable
                 case PlayerGameEventType.ApiStub:
                     Log.Logger.ForContext("Source", "WebViewPreview")
                         .Information("[GameEvent] stub: {Detail}", e.Detail);
+                    break;
+                case PlayerGameEventType.GameError:
+                    // R38: 报错捕捉——状态栏警示 + 弹窗（宿主侧）。去抖 30s：崩溃后
+                    // 控制台持续刷错误行，不能让弹窗每 10s 弹一次。
+                    StatusText = L("Status.ErrorDetected");
+                    if (DateTime.UtcNow - _lastErrorDialogAt < TimeSpan.FromSeconds(30)) break;
+                    _lastErrorDialogAt = DateTime.UtcNow;
+                    GameErrorDetected?.Invoke(e.Detail.Length > 300 ? e.Detail[..300] + "…" : e.Detail);
                     break;
             }
         });
@@ -152,6 +183,12 @@ public sealed partial class PlayerViewModel : ObservableObject, IDisposable
         if (_currentSwf.Length > 0) RefreshRequested?.Invoke();
     }
 
+    /// <summary>
+    /// v2.49: storage-manager restart — reloads the game page so Ruffle drops its
+    /// SharedObject memory cache and re-reads localStorage (delete/restore take effect).
+    /// </summary>
+    public void RestartGame() => Reload();
+
     [RelayCommand]
     private void Stop()
     {
@@ -168,6 +205,111 @@ public sealed partial class PlayerViewModel : ObservableObject, IDisposable
         _logStore.Clear();
         VisibleLines.Clear();   // LineAppended does not fire on Clear (v2.29)
     }
+
+    /// <summary>
+    /// R38: 导出日志——头部信息 + localStorage 快照 + 全部 run 日志行写入
+    /// player-log-export-*.txt（日志目录），完成后 LogExportCompleted 交给宿主
+    /// 在 Explorer 中定位文件。localStorage 快照走 __dumpLocalStorage()（webview
+    /// 未加载时跳过）；报告格式见 RunLogReport。
+    /// </summary>
+    [RelayCommand]
+    private async Task ExportLogs()
+    {
+        try
+        {
+            var dir = FileLogDirectory ?? FileRunLogWriter.ResolveDirectory(null);
+            Directory.CreateDirectory(dir);
+            var path = Path.Combine(dir, $"player-log-export-{DateTime.Now:yyyyMMdd-HHmmss}.txt");
+
+            string? ls = null;
+            if (ExecuteJs is not null)
+            {
+                try
+                {
+                    ls = await ExecuteJs("window.__dumpLocalStorage ? window.__dumpLocalStorage() : []");
+                }
+                catch (Exception)
+                {
+                    ls = "(localStorage 读取失败)";
+                }
+            }
+
+            var header = string.Join(Environment.NewLine,
+                $"导出时间: {DateTime.Now:yyyy-MM-dd HH:mm:ss}",
+                $"游戏 SWF: {_currentSwf}",
+                $"游戏根目录: {_config.Config.GameRootDir}",
+                $"日志目录: {dir}",
+                $"WebView2 数据目录: {Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "NeoScavengerPlayer", "WebView2")}");
+
+            await File.WriteAllTextAsync(path, RunLogReport.Build(header, _logStore.Runs, ls));
+            StatusText = string.Format(L("Log.Exported"), path);
+            LogExportCompleted?.Invoke(path);
+        }
+        catch (Exception ex)
+        {
+            StatusText = "导出失败: " + ex.Message;
+        }
+    }
+
+    /// <summary>
+    /// R43: 导出存档+日志 zip（试用反馈/存档迁移包）——localStorage 全量存档
+    /// （__exportSaves）+ 当前日志文件 + save_backup 备份 + info.txt，打包为
+    /// <c>NeoScavengerPlayer-export-{版本}-{时间戳}.zip</c>，完成后 LogExportCompleted
+    /// 交给宿主在 Explorer 定位。
+    /// </summary>
+    [RelayCommand]
+    private async Task ExportBundleZip()
+    {
+        try
+        {
+            var dir = FileLogDirectory ?? FileRunLogWriter.ResolveDirectory(null);
+            Directory.CreateDirectory(dir);
+            var path = Path.Combine(dir,
+                $"NeoScavengerPlayer-export-{AppInfo.Version}-{DateTime.Now:yyyyMMdd-HHmmss}.zip");
+
+            string? savesJson = null;
+            if (ExecuteJs is not null)
+            {
+                try
+                {
+                    savesJson = await ExecuteJs("window.__exportSaves ? window.__exportSaves() : []");
+                }
+                catch (Exception)
+                {
+                    savesJson = null;   // webview 不可用 → 包里没有存档部分
+                }
+            }
+
+            var logFiles = Directory.EnumerateFiles(dir, "player-run-*.log").ToList();
+            var backupDir = Path.Combine(_config.Config.GameRootDir, "save_backup");
+            var backupFiles = Directory.Exists(backupDir)
+                ? Directory.EnumerateFiles(backupDir, "*.json").ToList()
+                : [];
+
+            var info = string.Join(Environment.NewLine,
+                $"{AppInfo.ProductName} v{AppInfo.Version}",
+                $"导出时间: {DateTime.Now:yyyy-MM-dd HH:mm:ss}",
+                $"游戏根目录: {_config.Config.GameRootDir}",
+                $"日志目录: {dir}",
+                $"WebView2 数据目录: {Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "NeoScavengerPlayer", "WebView2")}",
+                $"localStorage 存档: {(savesJson is null ? "(webview 未加载, 未包含)" : "已包含")}",
+                $"日志文件: {logFiles.Count} 个",
+                $"存档备份 (save_backup): {backupFiles.Count} 个");
+
+            PlayerBundleExporter.Export(path, info, savesJson, logFiles, backupFiles);
+            StatusText = string.Format(L("Log.Exported"), path);
+            LogExportCompleted?.Invoke(path);
+        }
+        catch (Exception ex)
+        {
+            StatusText = "导出失败: " + ex.Message;
+        }
+    }
+
+    /// <summary>Current run had error-level lines (R38: 游戏异常退出判定)。</summary>
+    private bool LastRunHasErrors()
+        => _logStore.Runs.LastOrDefault()?.Lines
+            .Any(l => l.Level.Equals("error", StringComparison.OrdinalIgnoreCase)) ?? false;
 
     /// <summary>Start the loopback server (disk mode) and load the SWF through the host page.</summary>
     public async System.Threading.Tasks.Task StartAsync(string swfPath)

@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
@@ -15,6 +14,7 @@ using Avalonia.Threading;
 using CommunityToolkit.Mvvm.Messaging;
 using FluentIcons.Avalonia;
 using FluentIcons.Common;
+using NeoEditor.Core.Abstractions;
 using NeoEditor.Data.Messages;
 using NeoEditor.Data.Model;
 using NeoEditor.Data.Model.Game;
@@ -29,26 +29,29 @@ namespace NeoEditor.Plugins.EntityEditor.Services;
 /// M10: migrated from static VisHelper in App. Constructor-injected services replace
 /// SetServices() + DataTableService.Instance + ViewServices.Loc static access.
 /// </summary>
-public class VisHelperService
+public partial class VisHelperService
 {
     private readonly Func<string, string?> _findImage;
     private readonly IReferenceResolver _resolver;
     private readonly INavigationRouter _router;
     private readonly IEntityLookupService _dataTable;
     private readonly ILocalizationService _loc;
+    private readonly IAudioPlaybackService? _audio;
 
     public VisHelperService(
         Func<string, string?> findImage,
         IReferenceResolver resolver,
         INavigationRouter router,
         IEntityLookupService dataTable,
-        ILocalizationService localization)
+        ILocalizationService localization,
+        IAudioPlaybackService? audio = null)
     {
         _findImage = findImage;
         _resolver = resolver;
         _router = router;
         _dataTable = dataTable;
         _loc = localization;
+        _audio = audio;
     }
 
     public Func<string, string?> FindImageFunc => _findImage;
@@ -57,6 +60,30 @@ public class VisHelperService
 
     /// <summary>Localization shortcut.</summary>
     public string Loc(string key) => _loc[key];
+
+    /// <summary>Localization shortcut with format arguments.</summary>
+    public string Loc(string key, params object[] args) => _loc[key, args];
+
+    /// <summary>
+    /// R42: play button for a game cue name (aSounds / strSnd) — hidden when the
+    /// sound index is unavailable (sounds not extracted yet). Click plays the
+    /// matched asset via IAudioPlaybackService.
+    /// </summary>
+    public Control? PlaySoundButton(string cueName)
+    {
+        if (_audio is null || !_audio.IsAvailable || string.IsNullOrWhiteSpace(cueName)) return null;
+        var btn = new Button
+        {
+            Content = "▶", FontSize = 9, Padding = new Thickness(6, 1),
+            MinHeight = 0, VerticalAlignment = VerticalAlignment.Center,
+            Background = Brush.Parse("#ECEFF1"), BorderThickness = new Thickness(0),
+            CornerRadius = new CornerRadius(4)
+        };
+        ToolTip.SetTip(btn, $"{Loc("Vis.PlaySound")}: {cueName}");
+        var cue = cueName;
+        btn.Click += (_, _) => _audio.Play(cue);
+        return btn;
+    }
 
     public TreeViewItem Section(string text, IBrush? fg = null)
     {
@@ -261,6 +288,72 @@ public class VisHelperService
         Foreground = Brush.Parse("#888888"), Margin = new Thickness(0, 0, 0, 8)
     };
 
+    /// <summary>
+    /// R40: unified detail-section header — icon + accent bar + title (+ optional
+    /// count badge). One visual language for every detail block, replacing the
+    /// mixed Card(title)/SectionLabel/LabeledSection conventions.
+    /// </summary>
+    public Control SectionHeader(string title, Symbol? icon = null, string? badge = null, string? accent = null)
+    {
+        var row = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8 };
+        if (icon is { } ic)
+            row.Children.Add(new SymbolIcon { Symbol = ic, FontSize = 13, Foreground = Brush.Parse("#555555") });
+        row.Children.Add(new Border
+        {
+            Width = 3, Height = 15, CornerRadius = new CornerRadius(1.5),
+            Background = Brush.Parse(accent ?? "#1565C0"),
+            VerticalAlignment = VerticalAlignment.Center
+        });
+        row.Children.Add(new TextBlock
+        {
+            Text = title, FontSize = 13, FontWeight = FontWeight.SemiBold,
+            Foreground = Brush.Parse("#333333"), VerticalAlignment = VerticalAlignment.Center
+        });
+        if (!string.IsNullOrEmpty(badge))
+            row.Children.Add(new TextBlock
+            {
+                Text = badge, FontSize = 10, Foreground = Brush.Parse("#888888"),
+                VerticalAlignment = VerticalAlignment.Center
+            });
+        return new Border
+        {
+            BorderBrush = Brush.Parse("#18000000"),
+            BorderThickness = new Thickness(0, 0, 0, 1),
+            Padding = new Thickness(2, 0, 2, 6),
+            Child = row
+        };
+    }
+
+    /// <summary>
+    /// R39: one-line key/value row (90px label + value) — single visual language
+    /// for scalar stats across all detail cards.
+    /// </summary>
+    public Control ValueRow(string label, string value, string? color = null)
+    {
+        var grid = new Grid
+        {
+            ColumnDefinitions = { new(90, GridUnitType.Pixel), new(1, GridUnitType.Star) },
+            Margin = new Thickness(4, 1)
+        };
+        var lbl = new TextBlock
+        {
+            Text = label, FontSize = 11, Foreground = Brush.Parse("#999999"),
+            VerticalAlignment = VerticalAlignment.Center, HorizontalAlignment = HorizontalAlignment.Right,
+            Margin = new Thickness(0, 0, 8, 0)
+        };
+        var val = new TextBlock
+        {
+            Text = value, FontSize = 11, FontWeight = FontWeight.Medium,
+            Foreground = Brush.Parse(color ?? "#333333"),
+            VerticalAlignment = VerticalAlignment.Center, TextWrapping = TextWrapping.Wrap
+        };
+        Grid.SetColumn(lbl, 0);
+        Grid.SetColumn(val, 1);
+        grid.Children.Add(lbl);
+        grid.Children.Add(val);
+        return grid;
+    }
+
     public Border Separator() => new()
     {
         Height = 1, Background = Brush.Parse("#18000000"), Margin = new Thickness(4, 2)
@@ -321,6 +414,10 @@ public class VisHelperService
                 ("Fatal", c.Fatal ? "Yes" : "No"),
                 ("Stackable", c.Stackable ? "Yes" : "No"),
                 ("Color", c.Color.ToString()),
+                // R42: translate aFieldNames/aModifiers pairs — the actual game
+                // effect of the condition ("m_fMoveCost +0.5") — custom conditions
+                // are unreadable from the name alone.
+                ("Effect", BuildConditionEffectText(c)),
             ],
             ItemType it =>
             [
@@ -384,90 +481,114 @@ public class VisHelperService
         };
     }
 
-    public Control BuildRawDataTable(IEntity entity)
+    /// <summary>
+    /// R42: aFieldNames/aModifiers are comma-paired field→modifier pairs (Doc 38 §5).
+    /// Renders "m_fMoveCost +0.5 · m_fVisibility -0.2" — the condition's real effect.
+    /// </summary>
+    private static string BuildConditionEffectText(Condition c)
     {
-        var entityType = entity.GetType();
-        var props = entityType.GetProperties(BindingFlags.Public | BindingFlags.Instance)
-            .Where(p => p.GetCustomAttribute<System.ComponentModel.DataAnnotations.Schema.ColumnAttribute>() != null
-                        && p.DeclaringType != typeof(IEntity))
-            .OrderBy(p => p.MetadataToken)
-            .ToList();
+        var fields = c.FieldNames.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        var mods = c.Modifiers.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        if (fields.Length == 0) return "";
 
-        var grid = new Grid
+        var parts = new List<string>(fields.Length);
+        for (int i = 0; i < fields.Length; i++)
         {
-            ColumnDefinitions =
-            {
-                new(130, GridUnitType.Pixel),
-                new(1, GridUnitType.Star)
-            }
-        };
+            var mod = i < mods.Length && double.TryParse(mods[i],
+                System.Globalization.NumberStyles.Float,
+                System.Globalization.CultureInfo.InvariantCulture, out var m) ? m : 0;
+            parts.Add($"{fields[i]} {mod:+#0.###;-#0.###;0}");
+        }
+        var text = string.Join(" · ", parts);
+        return text.Length > 80 ? text[..80] + "…" : text;
+    }
 
-        int row = 0;
-        foreach (var p in props)
+    /// <summary>
+    /// R36 (Doc 21 §7 P3): stacked damage bar — Cut/Blunt share ONE bar so the
+    /// damage composition (slashing vs blunt weapon) is readable at a glance.
+    /// </summary>
+    public Control StackedDamageBar(string label, double cut, double blunt, string? rightText = null)
+    {
+        var total = cut + blunt;
+        var grid = new Grid { MinHeight = 24 };
+        if (!string.IsNullOrEmpty(label))
+            grid.ColumnDefinitions.Add(new(80, GridUnitType.Pixel));
+        grid.ColumnDefinitions.Add(new(1, GridUnitType.Star));
+        grid.ColumnDefinitions.Add(new(120, GridUnitType.Pixel));
+
+        if (!string.IsNullOrEmpty(label))
         {
-            grid.RowDefinitions.Add(new(GridLength.Auto));
-
-            var val = p.GetValue(entity);
-            var colName = p.GetCustomAttribute<System.ComponentModel.DataAnnotations.Schema.ColumnAttribute>()?.Name ?? p.Name;
-            var refAttr = p.GetCustomAttribute<ReferenceFieldAttribute>();
-            // R30: ReferenceList must render as its raw text ("3,14"), not "[3, 14]".
-            var strVal = val is bool b ? (b ? "1" : "0") : ReferenceText.GetRawString(val, refAttr);
-
-            var isRef = refAttr is not null && !string.IsNullOrWhiteSpace(strVal);
-            var display = strVal.Length > 100 ? strVal[..100] + "..." : strVal;
-            if (string.IsNullOrWhiteSpace(strVal)) display = "(empty)";
-
-            var keyTb = EditorUIFactory.SelectableText(colName, fontSize: 10, foreground: Brush.Parse("#888888"));
-            keyTb.Margin = new Thickness(4, 2, 8, 2);
-            keyTb.VerticalAlignment = VerticalAlignment.Top;
-            Grid.SetRow(keyTb, row);
-            Grid.SetColumn(keyTb, 0);
-            grid.Children.Add(keyTb);
-
-            // R30: field explanation tooltip (embedded Docs/38 authoritative meaning).
-            var desc = FieldDescriptions.GetDescription(entity.GetType(), p.Name);
-            if (desc is not null)
-                ToolTip.SetTip(keyTb, desc);
-
-            var valTb = EditorUIFactory.SelectableText(display, fontSize: 10,
-                foreground: isRef ? Brush.Parse("#00796B") :
-                    string.IsNullOrWhiteSpace(strVal) ? Brush.Parse("#CCC") : Brush.Parse("#333"),
-                fontWeight: isRef ? FontWeight.Medium : FontWeight.Normal);
-            valTb.Margin = new Thickness(0, 2, 4, 2);
-            valTb.VerticalAlignment = VerticalAlignment.Top;
-            Grid.SetRow(valTb, row);
-            Grid.SetColumn(valTb, 1);
-            grid.Children.Add(valTb);
-
-            // R30: for reference columns, hover the raw value to see each segment's resolved subject.
-            if (isRef && refAttr is not null)
+            var labelTb = new TextBlock
             {
-                var subjects = new List<string>();
-                var segSep = refAttr.Separator;
-                var segments = segSep is null
-                    ? new[] { strVal }
-                    : strVal.Split(segSep, StringSplitOptions.RemoveEmptyEntries);
-                foreach (var seg in segments)
-                {
-                    var rawId = ReferenceParser.ExtractRawId(seg, refAttr.Pattern);
-                    var subject = _resolver.LookupSubject(entity.EntityId, p.Name,
-                        refAttr.TargetEntityType, rawId);
-                    if (!string.IsNullOrEmpty(subject)) subjects.Add($"{subject} ({rawId})");
-                }
-
-                if (subjects.Count > 0)
-                    ToolTip.SetTip(valTb, string.Join("\n", subjects));
-            }
-
-            row++;
+                Text = label, FontSize = 11, Foreground = Brush.Parse("#999"),
+                VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(4, 0, 8, 0),
+                HorizontalAlignment = HorizontalAlignment.Right
+            };
+            Grid.SetColumn(labelTb, 0);
+            grid.Children.Add(labelTb);
         }
 
+        var barCol = string.IsNullOrEmpty(label) ? 0 : 1;
+        var valCol = string.IsNullOrEmpty(label) ? 1 : 2;
+
+        if (total <= 0)
+        {
+            var empty = new Border
+            {
+                CornerRadius = new CornerRadius(4), Background = Brush.Parse("#14000000"),
+                Margin = new Thickness(0, 2), Height = 14
+            };
+            Grid.SetColumn(empty, barCol);
+            grid.Children.Add(empty);
+        }
+        else
+        {
+            var cutStar = Math.Clamp((int)(cut / total * 100), 4, 96);
+            var bluntStar = 100 - cutStar;
+            var bar = new Grid
+            {
+                ColumnDefinitions =
+                {
+                    new(cutStar, GridUnitType.Star),
+                    new(bluntStar, GridUnitType.Star)
+                }
+            };
+            // R41: low-saturation segments (Material 300) — the raw #C62828/#1565C0
+            // were jarring against the grey UI; the bar's job is showing the
+            // CUT:BLUNT RATIO (a meaningful proportion), numbers carry the values.
+            var cutSeg = new Border
+            {
+                CornerRadius = new CornerRadius(4, 0, 0, 4),
+                Background = Brush.Parse("#E57373"), Margin = new Thickness(0, 2)
+            };
+            Grid.SetColumn(cutSeg, 0);
+            bar.Children.Add(cutSeg);
+            var bluntSeg = new Border
+            {
+                CornerRadius = new CornerRadius(0, 4, 4, 0),
+                Background = Brush.Parse("#64B5F6"), Margin = new Thickness(0, 2)
+            };
+            Grid.SetColumn(bluntSeg, 1);
+            bar.Children.Add(bluntSeg);
+            Grid.SetColumn(bar, barCol);
+            grid.Children.Add(bar);
+        }
+
+        var valTb = new TextBlock
+        {
+            Text = rightText ?? (total > 0
+                ? $"{total:F1} · {Loc("Vis.Cut")} {cut:F1} + {Loc("Vis.Blunt")} {blunt:F1}"
+                : "—"),
+            FontSize = 10, Foreground = Brush.Parse("#666"),
+            VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(8, 0, 0, 0)
+        };
+        Grid.SetColumn(valTb, valCol);
+        grid.Children.Add(valTb);
         return grid;
     }
 
     public Control StatBar(string label, string valueText, double fillRatio, string colorHex)
-    {
-        fillRatio = Math.Clamp(fillRatio, 0.05, 1.0);
+    {        fillRatio = Math.Clamp(fillRatio, 0.05, 1.0);
         var grid = new Grid { MinHeight = 26 };
         grid.ColumnDefinitions.Add(new(80, GridUnitType.Pixel));
         grid.ColumnDefinitions.Add(new(2, GridUnitType.Star));

@@ -10,7 +10,7 @@
   <data name="Menu.Exit" xml:space="preserve"><value>Exit</value></data>
   <data name="Menu.View" xml:space="preserve"><value>View</value></data>
   <data name="Menu.FullScreen" xml:space="preserve"><value>Fullscreen (F11)</value></data>
-  <data name="Menu.Log" xml:space="preserve"><value>Logs (Shift+Tab)</value></data>
+  <data name="Menu.Log" xml:space="preserve"><value>Logs (F10)</value></data>
   <data name="Menu.BackgroundRun" xml:space="preserve"><value>Run in background</value></data>
   <data name="Menu.BackgroundRunTip" xml:space="preserve"><value>Keep the game running (with sound) when the window loses focus</value></data>
   <data name="Menu.Theme" xml:space="preserve"><value>Theme</value></data>
@@ -23,11 +23,11 @@
   <data name="Menu.DataBrowser" xml:space="preserve"><value>Data Browser</value></data>
   <data name="Placeholder.Drop" xml:space="preserve"><value>Drop the SWF file here</value></data>
   <data name="Placeholder.Click" xml:space="preserve"><value>or click to browse… (NEOScavenger.swf)</value></data>
-  <data name="Placeholder.MenuHint" xml:space="preserve"><value>Menu: File → Open SWF (Ctrl+O) / Reload (F5)&#x0a;View → Fullscreen (F11) / Logs (Shift+Tab) / Data Browser / Background run&#x0a;View → Theme / Language</value></data>
-  <data name="Log.OverlayTitle" xml:space="preserve"><value>Run log — Shift+Tab closes</value></data>
+  <data name="Placeholder.MenuHint" xml:space="preserve"><value>Menu: File → Open SWF (Ctrl+O) / Reload (F5)&#x0a;View → Fullscreen (F11) / Logs (F10) / Data Browser / Background run&#x0a;View → Theme / Language</value></data>
+  <data name="Log.OverlayTitle" xml:space="preserve"><value>Run log — F10 closes</value></data>
   <data name="Log.Level" xml:space="preserve"><value>Level:</value></data>
   <data name="Log.Clear" xml:space="preserve"><value>Clear</value></data>
-  <data name="Log.Close" xml:space="preserve"><value>Close (Shift+Tab)</value></data>
+  <data name="Log.Close" xml:space="preserve"><value>Close (F10)</value></data>
   <data name="Log.FilePrefix" xml:space="preserve"><value>Log file: </value></data>
   <data name="DataBrowser.Title" xml:space="preserve"><value>Data Browser</value></data>
   <data name="Db.Status.NotLoaded" xml:space="preserve"><value>Not loaded</value></data>
@@ -48,11 +48,54 @@
   <data name="Gallery.Missing" xml:space="preserve"><value>{0} (missing)</value></data>
   <data name="Field.Title" xml:space="preserve"><value>Fields</value></data>
   <data name="Menu.Storage" xml:space="preserve"><value>Saves</value></data>
+  <data name="Menu.Debug" xml:space="preserve"><value>Debug</value></data>
+  <data name="Debug.DevTools" xml:space="preserve"><value>Developer Tools (F12)</value></data>
+  <data name="Debug.DevToolsUnavailable" xml:space="preserve"><value>Developer Tools unavailable (webview not ready)</value></data>
+  <data name="Log.OpenFolder" xml:space="preserve"><value>Open Log Folder</value></data>
+  <data name="Log.Export" xml:space="preserve"><value>Export Logs</value></data>
+  <data name="Log.Exported" xml:space="preserve"><value>Exported: {0}</value></data>
+  <data name="Log.ExportBundle" xml:space="preserve"><value>Export Saves   <data name="Log.ExportBundle" xml:space="preserve"><value>Export Saves &amp; Logs (zip)</value></data>amp; Logs (zip)</value></data>
+  <data name="Log.Clipboard" xml:space="preserve"><value>Clipboard</value></data>
+  <data name="Log.ClipboardTitle" xml:space="preserve"><value>System Clipboard</value></data>
+  <data name="Log.ClipboardEmpty" xml:space="preserve"><value>(system clipboard is empty)</value></data>
+  <data name="Menu.About" xml:space="preserve"><value>About</value></data>
+  <data name="Menu.SaveEditor" xml:space="preserve"><value>Save Editor</value></data>
+  <data name="SaveEditor.Title" xml:space="preserve"><value>Save Editor</value></data>
+  <data name="SaveEditor.Refresh" xml:space="preserve"><value>Refresh</value></data>
+  <data name="SaveEditor.Load" xml:space="preserve"><value>Load</value></data>
+  <data name="SaveEditor.Save" xml:space="preserve"><value>Save</value></data>
+  <data name="SaveEditor.SaveAs" xml:space="preserve"><value>Save As…</value></data>
+  <data name="SaveEditor.SaveAsTitle" xml:space="preserve"><value>Save As…</value></data>
+  <data name="SaveEditor.SaveAsHint" xml:space="preserve"><value>New save key (localStorage)</value></data>
+  <data name="SaveEditor.SaveAndLoad" xml:space="preserve"><value>Save &amp; Reload</value></data>
+  <data name="SaveEditor.Close" xml:space="preserve"><value>Close</value></data>
+  <data name="SaveEditor.Empty" xml:space="preserve"><value>(no saves)</value></data>
+  <data name="SaveEditor.NoSelection" xml:space="preserve"><value>Select a save first</value></data>
+  <data name="SaveEditor.EmptyJson" xml:space="preserve"><value>Load a save first</value></data>
+  <data name="SaveEditor.LoadFailed" xml:space="preserve"><value>Load failed: {0}</value></data>
+  <data name="SaveEditor.Loaded" xml:space="preserve"><value>Loaded ({0} KB) — edit then Save; use Save &amp; Reload to apply in-game</value></data>
+  <data name="SaveEditor.Saved" xml:space="preserve"><value>Saved ({0} bytes) — applies after Save &amp; Reload</value></data>
+  <data name="SaveEditor.SaveFailed" xml:space="preserve"><value>Save failed: {0}</value></data>
+  <data name="SaveEditor.Summary" xml:space="preserve"><value>LSO: {0} · format v{1} · {2} root entries</value></data>
+  <data name="SaveEditor.JsonHint" xml:space="preserve"><value>Save JSON (__amf marks AMF types; edit then Save)</value></data>
+  <data name="About.Title" xml:space="preserve"><value>About NeoScavenger Player</value></data>
+  <data name="About.Body" xml:space="preserve"><value>Version: {0}&#x0a;Ruffle: {1}&#x0a;Platform: {2}&#x0a;&#x0a;Log directory: {3}&#x0a;Game root: {4}&#x0a;WebView2 data folder: {5}</value></data>
+  <data name="Common.Close" xml:space="preserve"><value>Close</value></data>
+  <data name="Error.DialogTitle" xml:space="preserve"><value>Game Error Detected</value></data>
+  <data name="Error.DialogBody" xml:space="preserve"><value>The game may have hit an error:&#x0a;{0}&#x0a;&#x0a;Full details are recorded in the run log.</value></data>
+  <data name="Status.ErrorDetected" xml:space="preserve"><value>⚠ Game error detected (see logs)</value></data>
+  <data name="Status.ErrorExit" xml:space="preserve"><value>Game exited abnormally (see logs)</value></data>
   <data name="Storage.Title" xml:space="preserve"><value>Save Manager</value></data>
   <data name="Storage.Hint" xml:space="preserve"><value>Saves live in the page localStorage (Ruffle SharedObject); the fixed loopback port keeps them across launches</value></data>
   <data name="Storage.Refresh" xml:space="preserve"><value>Refresh</value></data>
   <data name="Storage.ClearAll" xml:space="preserve"><value>Clear all</value></data>
   <data name="Storage.Delete" xml:space="preserve"><value>Delete</value></data>
+  <data name="Storage.Edit" xml:space="preserve"><value>Edit</value></data>
+  <data name="Storage.RestartGame" xml:space="preserve"><value>Restart game</value></data>
+  <data name="Storage.NeedRestart" xml:space="preserve"><value>Change applied — restarting the game now (the running game caches the SharedObject and its autosave would write the old save back)</value></data>
+  <data name="Storage.RestartPromptTitle" xml:space="preserve"><value>Restart game</value></data>
+  <data name="Storage.RestartPrompt" xml:space="preserve"><value>Changes written to localStorage; the running game keeps the SharedObject in memory (Ruffle cache) — restart the game for them to take effect. Restart now?</value></data>
+  <data name="Storage.RestartNow" xml:space="preserve"><value>Restart game</value></data>
   <data name="Storage.Empty" xml:space="preserve"><value>(no saves)</value></data>
   <data name="Storage.ReadFailed" xml:space="preserve"><value>Cannot read saves (load the game first)</value></data>
   <data name="Storage.ParseFailed" xml:space="preserve"><value>Failed to parse save data</value></data>

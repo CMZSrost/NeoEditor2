@@ -194,16 +194,32 @@ public partial class ModIndexViewModel : ViewModelBase, IRecipient<LoadProfileMe
         var gameRoot = Config.GameRootDir;
         if (string.IsNullOrWhiteSpace(gameRoot)) return;
 
-        await using var db = await _factory.CreateDbContextAsync();
-        if (await db.ProfileInfos.FindAsync(-1) is not null) return;
-
         var profilePath = Path.Combine(gameRoot, "getmods.php");
         if (!File.Exists(profilePath)) return;
 
-        var profile = _profileManager.LoadProfile("Game", "", profilePath);
-        profile.ModLoadInfos.AddRange(_profileManager.LoadMods(profile.Content));
-        db.ProfileInfos.Add(profile);
-        await db.SaveChangesAsync();
+        await using var db = await _factory.CreateDbContextAsync();
+        // R35: after a game-root switch the Game (getmods.php) profile must be
+        // REFRESHED from the new directory — previously it was created once and
+        // kept serving the old directory's mod list forever. LoadProfile already
+        // fills ModLoadInfos, so don't re-AddRange (would duplicate entries).
+        var fresh = _profileManager.LoadProfile("Game", "", profilePath);
+
+        var existing = await db.ProfileInfos.FindAsync(-1);
+        if (existing is null)
+        {
+            db.ProfileInfos.Add(fresh);
+            await db.SaveChangesAsync();
+            return;
+        }
+
+        if (existing.Path != fresh.Path || existing.Content != fresh.Content)
+        {
+            existing.Path = fresh.Path;
+            existing.Content = fresh.Content;
+            existing.ModLoadInfos.Clear();
+            existing.ModLoadInfos.AddRange(fresh.ModLoadInfos);
+            await db.SaveChangesAsync();
+        }
     }
 
     #region Profile

@@ -14,12 +14,17 @@ namespace NeoEditor.Plugins.EntityEditor;
 public class OverlayChainPlugin : IToolPlugin
 {
     private readonly OverlayChainToolContent _content;
+    private readonly NeoEditor.Infra.Services.ILocalizationService _loc;
 
-    public OverlayChainPlugin(OverlayChainToolContent content) => _content = content;
+    public OverlayChainPlugin(OverlayChainToolContent content, NeoEditor.Infra.Services.ILocalizationService loc)
+    {
+        _loc = loc;
+        _content = content;
+    }
 
     public string Name => "EntityEditor.OverlayChain";
     public Version Version => new(1, 0, 0);
-    public string Title => "Overlay Chain";
+    public string Title => _loc["Tools.OverlayChain"];
     public ToolDock DefaultDock => ToolDock.Left;
     public int Order => 20;
 

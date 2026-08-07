@@ -17,5 +17,13 @@
     <Application.Styles>
         <FluentTheme />
         <StyleInclude Source="avares://LiveMarkdown.Avalonia/Styles.axaml" />
+
+        <!--  R53: 工具窗口按钮紧凑化——缩小内边距/字号/高度，别占大块地方
+             （存档管理 / 存档修改器 / 日志窗等；主窗口无 Button 不受影响）  -->
+        <Style Selector="Window Button">
+            <Setter Property="Padding" Value="10,4" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="MinHeight" Value="26" />
+        </Style>
     </Application.Styles>
 </Application>

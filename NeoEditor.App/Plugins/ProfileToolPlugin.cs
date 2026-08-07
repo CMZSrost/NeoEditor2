@@ -15,12 +15,17 @@ namespace NeoEditor;
 public class ProfileToolPlugin : IToolPlugin
 {
     private readonly ProfileToolViewModel _viewModel;
+    private readonly NeoEditor.Infra.Services.ILocalizationService _loc;
 
-    public ProfileToolPlugin(ProfileToolViewModel viewModel) => _viewModel = viewModel;
+    public ProfileToolPlugin(ProfileToolViewModel viewModel, NeoEditor.Infra.Services.ILocalizationService loc)
+    {
+        _loc = loc;
+        _viewModel = viewModel;
+    }
 
     public string Name => "ProfileTool";
     public Version Version => new(1, 0, 0);
-    public string Title => "Profile Tool";
+    public string Title => _loc["Tools.ProfileTool"];
     public ToolDock DefaultDock => ToolDock.Left;
     public int Order => 25;
 

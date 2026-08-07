@@ -42,10 +42,7 @@ public class MapEntityVisualizer : IEntityVisualizer
         if (entity is not Map m) return new TextBlock { Text = "Invalid" };
         var root = new StackPanel { Spacing = 16, Margin = new Thickness(16) };
 
-        var rawBody = new Border
-            { IsVisible = false, Child = _vis.BuildRawDataTable(m), Padding = new Thickness(8) };
-        root.Children.Add(_vis.BuildExpander(_vis.Loc("Vis.RawData"), rawBody));
-        root.Children.Add(rawBody);
+        root.Children.Add(_vis.BuildRawData(m));
 
         root.Children.Add(BuildHeroHeader(m));
         root.Children.Add(BuildMapImagePanel(m));

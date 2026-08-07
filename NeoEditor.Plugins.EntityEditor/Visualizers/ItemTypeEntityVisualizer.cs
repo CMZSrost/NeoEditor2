@@ -76,54 +76,57 @@ public class ItemTypeEntityVisualizer : IEntityVisualizer
     public Control BuildDetail(IEntity entity)
     {
         if (entity is not ItemType it) return new TextBlock { Text = "Invalid" };
-        var root = new StackPanel { Spacing = 12, Margin = new Thickness(16) };
+        // R40 layout: user mental model — "what it is" → "what I do with it
+        // (equip / use / fight → damage, effects, SOUNDS)" → "how long it lasts"
+        // → "what it holds / where it comes from". Blocks are grouped in a
+        // two-column grid (no endless single-column stacking), each with an icon.
+        var root = new StackPanel { Spacing = 14, Margin = new Thickness(16) };
 
-        var rawBody = new Border
-            { IsVisible = false, Child = _vis.BuildRawDataTable(it), Padding = new Thickness(8) };
-        root.Children.Add(_vis.BuildExpander(_vis.Loc("Vis.RawData"), rawBody));
-        root.Children.Add(rawBody);
-
+        root.Children.Add(_vis.BuildRawData(it));
         root.Children.Add(BuildHeroHeader(it));
 
-        // ═══ Card 1: 基础属性 (Stats + Durability + Break Parts) ═══
-        var hasBasic = it.Weight > 0 || it.StackLimit > 0 || it.MonetaryValue > 0
-            || it.Mirrored || it.SlotDepth > 0
-            || it.Durability > 0 || it.DegradePerHour > 0 || it.EquipDegradePerHour > 0 || it.DegradePerUse > 0
-            || (!string.IsNullOrWhiteSpace(it.DegradeTreasureIds) && it.DegradeTreasureIds != "3,3");
-        if (hasBasic)
-            root.Children.Add(BuildBasicCard(it));
+        // 情境 1（两列）：战斗 ⚔ | 装备 🧍
+        AddRow(root,
+            Section(_vis.Loc("Vis.Combat"), BuildCombatBody(it), Symbol.Flash, "#C62828"),
+            Section(_vis.Loc("Vis.Equipment"), BuildEquipmentBody(it), Symbol.Person, "#1565C0"));
 
-        // ═══ Card 2: 装备与状态 ═══
-        var hasEquip = !string.IsNullOrWhiteSpace(it.EquipSlots) || !string.IsNullOrWhiteSpace(it.UseSlots)
-            || it.SocketLocked || !string.IsNullOrWhiteSpace(it.EquipConditions)
-            || !string.IsNullOrWhiteSpace(it.UseConditions) || !string.IsNullOrWhiteSpace(it.PossessConditions);
-        if (hasEquip)
-            root.Children.Add(BuildEquipmentCardV2(it));
+        // 情境 2（两列）：使用效果 ✨ | 耐久与弹药 ⏳
+        AddRow(root,
+            Section(_vis.Loc("Vis.Effects"), BuildEffectsBody(it), Symbol.Beaker, "#E65100"),
+            Section(_vis.Loc("Vis.Lifecycle"), BuildLifecycleBody(it), Symbol.Timer, "#6A1B9A"));
 
-        // ═══ Card 3: 属性与战斗 (Properties + AttackModes + Charge) ═══
-        var hasCombat = !string.IsNullOrWhiteSpace(it.Properties)
-            || !string.IsNullOrWhiteSpace(it.AttackModes)
-            || !string.IsNullOrWhiteSpace(it.ChargeProfiles);
-        if (hasCombat)
-            root.Children.Add(BuildCombatCard(it));
+        // 情境 3（两列）：容器 📦 | 来源与产出 🔗
+        AddRow(root,
+            Section(_vis.Loc("Vis.Container"), BuildContainerBody(it), Symbol.Box, "#00695C"),
+            Section(_vis.Loc("Vis.Associations"), BuildAssociationsBody(it), Symbol.Link, "#283593"));
 
-        // ═══ Card 4: 容器 ═══
-        var hasContainer = !string.IsNullOrWhiteSpace(it.Capacities) || !string.IsNullOrWhiteSpace(it.ContentIds)
-            || (!string.IsNullOrWhiteSpace(it.FormatId) && it.FormatId != "3");
-        if (hasContainer)
-            root.Children.Add(BuildContainerCardV2(it));
-
-        // ═══ Card 5: 开关 ═══
-        if (!string.IsNullOrWhiteSpace(it.SwitchIds))
-            root.Children.Add(BuildSwitchesCard(it));
-
-        // ═══ Card 6: 关联数据 (TreasureTable, Component, CondId) ═══
-        root.Children.Add(BuildLinkedDataCard(it));
-
-        // ═══ Card 7: 被引用 ═══
+        // 被引用（横贯底部）
         root.Children.Add(BuildReverseRefsPanel(it));
 
         return new ScrollViewer { Content = root, HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled };
+    }
+
+    /// <summary>R40: one detail block = icon SectionHeader + Card body; null body skips the block.</summary>
+    private Control? Section(string title, Control? body, Symbol icon, string accent)
+        => body is null ? null
+            : new StackPanel { Spacing = 8, Children = { _vis.SectionHeader(title, icon, accent: accent), _vis.Card(body) } };
+
+    /// <summary>R40: place left/right blocks side by side; a missing block lets the other span the row.</summary>
+    private static void AddRow(StackPanel root, Control? left, Control? right)
+    {
+        if (left is null && right is null) return;
+        if (left is null) { root.Children.Add(right!); return; }
+        if (right is null) { root.Children.Add(left); return; }
+        var row = new Grid
+        {
+            ColumnDefinitions = { new(1, GridUnitType.Star), new(1, GridUnitType.Star) },
+            ColumnSpacing = 14
+        };
+        Grid.SetColumn(left, 0);
+        Grid.SetColumn(right, 1);
+        row.Children.Add(left);
+        row.Children.Add(right);
+        root.Children.Add(row);
     }
 
     // ═══════════════ Hero header: switchable image gallery (left) + identity (right) ═══════════════
@@ -241,6 +244,28 @@ public class ItemTypeEntityVisualizer : IEntityVisualizer
                     }
                 }
             });
+
+        // R40: key numbers live INSIDE the identity column (no cross-row placement,
+        // which misaligned under implicit grid rows) — weight / value / stack / flags.
+        var statRow = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 12, Margin = new Thickness(0, 8, 0, 0) };
+        if (it.Weight > 0)
+            statRow.Children.Add(StatChip($"{it.Weight:F1} kg", "#4CAF50"));
+        if (it.MonetaryValue > 0)
+        {
+            var vt = it.MonetaryValueAlt > 0 && it.MonetaryValueAlt != it.MonetaryValue
+                ? $"${it.MonetaryValue:F2} → ${it.MonetaryValueAlt:F2}"
+                : $"${it.MonetaryValue:F2}";
+            statRow.Children.Add(StatChip(vt, "#9C27B0"));
+        }
+        if (it.StackLimit > 0)
+            statRow.Children.Add(StatChip($"×{it.StackLimit}", "#2196F3"));
+        if (it.Mirrored)
+            statRow.Children.Add(StatChip(_vis.Loc("Vis.Mirrored"), "#607D8B"));
+        if (it.SlotDepth > 0)
+            statRow.Children.Add(StatChip($"{_vis.Loc("Vis.SlotDepth")} {it.SlotDepth}", "#546E7A"));
+        if (statRow.Children.Count > 0)
+            identity.Children.Add(statRow);
+
         Grid.SetColumn(identity, 1);
         Grid.SetRow(identity, 0);
         Grid.SetRowSpan(identity, 2);
@@ -248,6 +273,14 @@ public class ItemTypeEntityVisualizer : IEntityVisualizer
 
         return _vis.Card(grid);
     }
+
+    /// <summary>R39: compact stat chip for the hero key-number row.</summary>
+    private static Control StatChip(string text, string color)
+        => new TextBlock
+        {
+            Text = text, FontSize = 11, FontWeight = FontWeight.Medium,
+            Foreground = Brush.Parse(color), VerticalAlignment = VerticalAlignment.Center
+        };
 
     private Control BuildImageGallery(List<string> names)
     {
@@ -329,53 +362,49 @@ public class ItemTypeEntityVisualizer : IEntityVisualizer
         return gallery;
     }
 
-    // ═══════════════ Basic Card: Stats + Durability + Break Parts ═══════════════
+    // ═══════════════ Lifecycle body: durability + loss rates + break parts + ammo ═══════════════
+    // R39: merged from old BasicCard (durability/break parts) + CombatCard (charge profiles).
 
-    private Control BuildBasicCard(ItemType it)
+    private Control BuildLifecycleBody(ItemType it)
     {
         var body = new StackPanel { Spacing = 8 };
+        var hasAny = false;
 
-        // Stats: Weight | StackLimit | Value | Flags
-        var cells = new List<(string, string, string?)>();
-        if (it.Weight > 0)
-            cells.Add((_vis.Loc("Vis.Weight"), $"{it.Weight:F1} kg", "#4CAF50"));
-        if (it.StackLimit > 0)
-            cells.Add((_vis.Loc("Vis.StackLimit"), $"×{it.StackLimit}", "#2196F3"));
-        if (it.MonetaryValue > 0)
-        {
-            var vt = it.MonetaryValueAlt > 0 && it.MonetaryValueAlt != it.MonetaryValue
-                ? $"${it.MonetaryValue:F2} → ${it.MonetaryValueAlt:F2}"
-                : $"${it.MonetaryValue:F2}";
-            cells.Add((_vis.Loc("Vis.Value"), vt, "#9C27B0"));
-        }
-        if (it.Mirrored)
-            cells.Add(("", _vis.Loc("Vis.Mirrored"), "#607D8B"));
-        if (it.SlotDepth > 0)
-            cells.Add((_vis.Loc("Vis.SlotDepth"), $"{it.SlotDepth}", "#546E7A"));
-        if (cells.Count > 0)
-            body.Children.Add(_vis.CreatureStatGrid(cells));
-
-        // Durability
-        var durCells = new List<(string, string, string?)>();
+        // Durability — R36: bar first (how much is left), then loss rates.
+        // R41: low-saturation fills (Material 300-400) instead of jarring full reds/greens.
         if (it.Durability > 0)
         {
             var dt = it.Durability >= 999 ? "∞" : $"{it.Durability * 100:F0}%";
-            durCells.Add((_vis.Loc("Vis.Durability"), dt, it.Durability >= 999 ? "#607D8B" : "#FF9800"));
+            var ratio = it.Durability >= 999 ? 1.0 : Math.Clamp(it.Durability, 0.05, 1.0);
+            var color = it.Durability >= 999 ? "#90A4AE" : ratio > 0.5 ? "#66BB6A" : ratio > 0.25 ? "#FFB74D" : "#E57373";
+            body.Children.Add(_vis.StatBar(_vis.Loc("Vis.Durability"), dt, ratio, color));
+            hasAny = true;
         }
         if (it.DegradePerHour > 0)
-            durCells.Add((_vis.Loc("Vis.PerHour"), $"{it.DegradePerHour:F3}", "#E65100"));
+            body.Children.Add(_vis.ValueRow(_vis.Loc("Vis.PerHour"), $"{it.DegradePerHour:F3}", "#E65100"));
         if (it.EquipDegradePerHour > 0)
-            durCells.Add((_vis.Loc("Vis.PerHourEquipped"), $"{it.EquipDegradePerHour:F3}", "#C62828"));
+            body.Children.Add(_vis.ValueRow(_vis.Loc("Vis.PerHourEquipped"), $"{it.EquipDegradePerHour:F3}", "#C62828"));
         if (it.DegradePerUse > 0)
-            durCells.Add((_vis.Loc("Vis.PerUse"), $"{it.DegradePerUse:F3}", "#F57F17"));
-        if (durCells.Count > 0)
+            body.Children.Add(_vis.ValueRow(_vis.Loc("Vis.PerUse"), $"{it.DegradePerUse:F3}", "#F57F17"));
+
+        // R42: lifespan projection — translate loss RATES into "how long it lasts",
+        // the question a modder actually asks when balancing.
+        if (it.Durability > 0 && it.Durability < 999)
         {
-            body.Children.Add(new Border { Height = 1, Background = Brush.Parse("#10000000"), Margin = new Thickness(0, 2) });
-            body.Children.Add(_vis.CreatureStatGrid(durCells));
+            var spans = new List<string>();
+            if (it.DegradePerHour > 0)
+                spans.Add($"{_vis.Loc("Vis.PerHour")} ≈{(it.Durability / it.DegradePerHour):F0}h");
+            if (it.EquipDegradePerHour > 0)
+                spans.Add($"{_vis.Loc("Vis.PerHourEquipped")} ≈{(it.Durability / it.EquipDegradePerHour):F0}h");
+            if (it.DegradePerUse > 0)
+                spans.Add($"{_vis.Loc("Vis.PerUse")} ≈{(it.Durability / it.DegradePerUse):F0}×");
+            if (spans.Count > 0)
+                body.Children.Add(_vis.ValueRow(_vis.Loc("Vis.Lifespan"),
+                    string.Join(" · ", spans), "#546E7A"));
         }
 
-        // Break Parts — inline below durability
-        var ttIds = it.DegradeTreasureIds.Split(',').Select(s => s.Trim())
+        // Break parts — what falls out when the item breaks.
+        var ttIds = it.DegradeTreasureIds.ToRawString(",").Split(',').Select(s => s.Trim())
             .Where(s => s.Length > 0 && s != "3").ToList();
         if (ttIds.Count > 0)
         {
@@ -405,71 +434,361 @@ public class ItemTypeEntityVisualizer : IEntityVisualizer
                 breakBody.Children.Add(itemBody);
             }
             body.Children.Add(breakBody);
+            hasAny = true;
         }
 
-        return _vis.Card(body, _vis.Loc("Vis.BasicStats"));
-    }
-
-    // ═══════════════ Combat Card: Properties + AttackModes + Charge ═══════════════
-    // M1.4: uses RefNode for declarative reference rendering (R03/R04)
-
-    private Control BuildCombatCard(ItemType it)
-    {
-        var body = new StackPanel { Spacing = 8 };
-
-        // Properties → ItemProp badges (R04: RefNode declares "reference to ItemProp")
-        if (!string.IsNullOrWhiteSpace(it.Properties))
+        // Ammo — charge profiles the attack modes consume.
+        if (it.ChargeProfiles.Count > 0)
         {
+            body.Children.Add(new Border { Height = 1, Background = Brush.Parse("#10000000"), Margin = new Thickness(0, 2) });
             var wp = new WrapPanel();
-            foreach (var s in it.Properties.Split(',').Select(x => x.Trim()).Where(x => x.Length > 0))
-            {
-                wp.Children.Add(_refNode.Badge<ItemProp>(it, nameof(ItemType.Properties), s,
-                    "#E8F5E9", "#2E7D32"));
-            }
-            body.Children.Add(LabeledSection(_vis.Loc("Vis.Properties"), wp));
-        }
-
-        // AttackModes (R04: RefNode handles resolution + navigation + peek)
-        if (!string.IsNullOrWhiteSpace(it.AttackModes))
-        {
-            var wp = new WrapPanel();
-            foreach (var seg in it.AttackModes.Split(',').Select(s => s.Trim()).Where(s => s.Length > 0))
-            {
-                var eqIdx = seg.IndexOf('=');
-                var slotPart = eqIdx > 0 ? seg[..eqIdx].Trim() : "";
-                var slotName = int.TryParse(slotPart, out var sn) ? GetSlotName(sn) : slotPart;
-
-                if (!string.IsNullOrEmpty(slotName))
-                {
-                    // Has slot prefix: use BadgeWithSlot
-                    wp.Children.Add(_refNode.BadgeWithSlot<AttackMode>(it,
-                        nameof(ItemType.AttackModes), seg, slotName,
-                        "#FFEBEE", "#C62828", "#F5F5F5", "#999"));
-                }
-                else
-                {
-                    wp.Children.Add(_refNode.Badge<AttackMode>(it,
-                        nameof(ItemType.AttackModes), seg,
-                        "#FFEBEE", "#C62828", "#F5F5F5", "#999"));
-                }
-            }
-            body.Children.Add(LabeledSection(_vis.Loc("Vis.AttackModes"), wp));
-        }
-
-        // Charge profiles (R04: RefNode)
-        if (!string.IsNullOrWhiteSpace(it.ChargeProfiles))
-        {
-            var wp = new WrapPanel();
-            foreach (var seg in it.ChargeProfiles.Split(',').Select(s => s.Trim()).Where(s => s.Length > 0))
+            foreach (var seg in it.ChargeProfiles.ToRawString(",").Split(',').Select(s => s.Trim()).Where(s => s.Length > 0))
             {
                 wp.Children.Add(_refNode.Badge<ChargeProfile>(it,
                     nameof(ItemType.ChargeProfiles), seg,
                     "#E0F7FA", "#006064"));
             }
-            body.Children.Add(LabeledSection(_vis.Loc("Vis.ChargeAmmo"), wp));
+            body.Children.Add(wp);
+            hasAny = true;
         }
 
-        return _vis.Card(body, _vis.Loc("Vis.Combat"));
+        return hasAny ? body : new StackPanel();
+    }
+
+    // ═══════════════ Combat body: total damage stack + attack-mode rows ═══════════════
+    // R36: Doc 21 §7 P3 stacked damage bar + inline AttackMode expansion.
+    // R39: Properties → Effects block, ChargeProfiles → Lifecycle block.
+
+    private static bool HasCombat(ItemType it) => it.AttackModes.Count > 0;
+
+    private Control BuildCombatBody(ItemType it)
+    {
+        var body = new StackPanel { Spacing = 8 };
+
+        // AttackModes (R04: RefNode handles resolution + navigation + peek)
+        var modes = ParseAttackModes(it);
+        if (modes.Count > 0)
+        {
+            // R36: total damage composition first — "slashing or blunt weapon?"
+            // is answerable without opening any row. The bar shows the CUT:BLUNT
+            // RATIO (meaningful proportion); numbers carry the values.
+            var totalCut = modes.Sum(m => m.Mode.DamageCut);
+            var totalBlunt = modes.Sum(m => m.Mode.DamageBlunt);
+            body.Children.Add(_vis.StackedDamageBar(_vis.Loc("Vis.TotalDamage"), totalCut, totalBlunt));
+
+            // R41: morale-adjusted total as a METRIC VALUE (no bar — a fill ratio
+            // without a comparison baseline is meaningless).
+            var totalBase = totalCut + totalBlunt;
+            var totalEffective = modes.Sum(m => (m.Mode.DamageCut + m.Mode.DamageBlunt) * (1 + m.Mode.Morale));
+            if (totalEffective > totalBase + 0.001)
+            {
+                body.Children.Add(_vis.ValueRow(_vis.Loc("Vis.Effective"),
+                    $"{totalEffective:F1} (×{totalEffective / Math.Max(totalBase, 0.01):F2})", "#9575CD"));
+            }
+
+            foreach (var (slotName, am) in modes)
+                body.Children.Add(BuildAttackModeRow(it, slotName, am));
+        }
+
+        return body;
+    }
+
+    private sealed record AttackModeSlot(string SlotName, AttackMode Mode);
+
+    /// <summary>Parse aAttackModes segments like "20=14" or "14" → (slot name, AttackMode).</summary>
+    private List<AttackModeSlot> ParseAttackModes(ItemType it)
+    {
+        var result = new List<AttackModeSlot>();
+        if (it.AttackModes.Count == 0) return result;
+
+        foreach (var seg in it.AttackModes.ToRawString(",").Split(',').Select(s => s.Trim()).Where(s => s.Length > 0))
+        {
+            var eqIdx = seg.IndexOf('=');
+            var slotPart = eqIdx > 0 ? seg[..eqIdx].Trim() : "";
+            var slotName = int.TryParse(slotPart, out var sn) ? GetSlotName(sn) : slotPart;
+
+            var am = _vis.Resolver.LookupRef<AttackMode>(it, nameof(ItemType.AttackModes), seg);
+            if (am is null)
+            {
+                // unresolved — keep the raw segment visible (grey row, no expand)
+                result.Add(new AttackModeSlot(slotName, new AttackMode
+                {
+                    EntityId = $"__unresolved_{seg}",
+                    Name = seg,
+                    DamageCut = 0,
+                    DamageBlunt = 0
+                }));
+                continue;
+            }
+            result.Add(new AttackModeSlot(slotName, am));
+        }
+        return result;
+    }
+
+    /// <summary>One attack-mode row: name | stacked damage | range/pen/sound | expand toggle.</summary>
+    private Control BuildAttackModeRow(ItemType it, string slotName, AttackMode am)
+    {
+        var detail = BuildAttackModeExpanded(it, am);
+        detail.IsVisible = false;
+        var arrow = new TextBlock
+        {
+            Text = "▶", FontSize = 10, Foreground = Brush.Parse("#999"),
+            VerticalAlignment = VerticalAlignment.Center
+        };
+        var isUnresolved = am.EntityId.StartsWith("__unresolved_", StringComparison.Ordinal);
+
+        var nameTb = new TextBlock
+        {
+            Text = string.IsNullOrEmpty(slotName) ? (am.Subject ?? am.Name) : $"{slotName}: {am.Subject ?? am.Name}",
+            FontSize = 12,
+            FontWeight = isUnresolved ? FontWeight.Normal : FontWeight.Medium,
+            Foreground = Brush.Parse(isUnresolved ? "#999" : "#333"),
+            VerticalAlignment = VerticalAlignment.Center,
+            TextTrimming = TextTrimming.CharacterEllipsis,
+            MaxWidth = 220
+        };
+        if (!isUnresolved)
+        {
+            _refNode.WireNavigation(nameTb, typeof(AttackMode), am.EntityId, am);
+            ToolTip.SetTip(nameTb, _vis.BuildRefTooltip(am));
+        }
+
+        var meta = new TextBlock
+        {
+            FontSize = 10, Foreground = Brush.Parse("#777"), VerticalAlignment = VerticalAlignment.Center,
+            Text = string.Join(" · ",
+                new[]
+                {
+                    am.Range > 1 || am.Type == AttackType.Ranged ? $"{_vis.Loc("Vis.Range")} {am.Range}" : null,
+                    am.Penetration > 0 ? $"{_vis.Loc("Vis.Penetration")} {am.Penetration}" : null,
+                    // R37: weapon morale modifier — affects actual damage
+                    // ((1+士气+此值)×(1+加成)×武器伤害, Doc 38) — show it right on the row.
+                    am.Morale != 0 ? $"{_vis.Loc("Morale")} {am.Morale:+0%;-0%;0}" : null,
+                    !string.IsNullOrWhiteSpace(am.Sound) && am.Sound != "cueNone" ? $"{am.Sound}" : null
+                }.Where(s => s is not null))
+        };
+
+        // R42: play the attack sound right from the row (when extracted assets exist).
+        var playBtn = !string.IsNullOrWhiteSpace(am.Sound) && am.Sound != "cueNone"
+            ? _vis.PlaySoundButton(am.Sound)
+            : null;
+
+        var row = new Grid
+        {
+            ColumnDefinitions = { new(GridLength.Auto), new(1, GridUnitType.Star), new(GridLength.Auto) },
+            Margin = new Thickness(0, 1)
+        };
+        Grid.SetColumn(nameTb, 0);
+        row.Children.Add(nameTb);
+        var bar = _vis.StackedDamageBar("", am.DamageCut, am.DamageBlunt);
+        Grid.SetColumn(bar, 1);
+        row.Children.Add(bar);
+        var rightPanel = new StackPanel
+            { Orientation = Orientation.Horizontal, Spacing = 10, VerticalAlignment = VerticalAlignment.Center };
+        rightPanel.Children.Add(meta);
+        if (playBtn is not null)
+            rightPanel.Children.Add(playBtn);
+        rightPanel.Children.Add(arrow);
+        Grid.SetColumn(rightPanel, 2);
+        row.Children.Add(rightPanel);
+
+        var expanded = false;
+        var header = new Border
+        {
+            CornerRadius = new CornerRadius(6),
+            Background = Brush.Parse("#0A000000"),
+            Padding = new Thickness(10, 5),
+            Cursor = isUnresolved ? null : new Cursor(StandardCursorType.Hand),
+            Child = row
+        };
+        if (!isUnresolved)
+        {
+            header.PointerPressed += (_, e) =>
+            {
+                if ((e.KeyModifiers & KeyModifiers.Control) != 0) return; // Ctrl+Click = navigate (WireNavigation on name)
+                expanded = !expanded;
+                arrow.Text = expanded ? "▼" : "▶";
+                detail.IsVisible = expanded;
+            };
+        }
+
+        var sp = new StackPanel { Spacing = 2, Children = { header, detail } };
+        return sp;
+    }
+
+    /// <summary>Inline AttackMode detail: icon, damage (incl. morale), ammo, conditions, phrases, notes.</summary>
+    private Control BuildAttackModeExpanded(ItemType it, AttackMode am)
+    {
+        var sp = new StackPanel { Spacing = 8, Margin = new Thickness(14, 4, 4, 2) };
+
+        // ── R41: one compact top row — small icon (never a full row of its own) +
+        //     type + morale modifier + effective damage, all as METRIC VALUES
+        //     (fill-ratio bars without a comparison baseline are meaningless).
+        var topRow = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8 };
+        var imgRaw = am.Image.ToRawString(",");
+        if (!string.IsNullOrWhiteSpace(imgRaw))
+        {
+            var bmp = _vis.LoadImage(imgRaw);
+            if (bmp is not null)
+            {
+                topRow.Children.Add(new Border
+                {
+                    Width = 36, Height = 36, CornerRadius = new CornerRadius(5),
+                    Background = Brush.Parse("#0A000000"), ClipToBounds = true,
+                    VerticalAlignment = VerticalAlignment.Center,
+                    Child = new Image { Source = bmp, Stretch = Stretch.Uniform }
+                });
+            }
+        }
+        topRow.Children.Add(new TextBlock
+        {
+            Text = am.Type == AttackType.Ranged ? _vis.Loc("Vis.CombatRanged") : _vis.Loc("Vis.CombatMelee"),
+            FontSize = 11, FontWeight = FontWeight.SemiBold, Foreground = Brush.Parse("#555"),
+            VerticalAlignment = VerticalAlignment.Center
+        });
+
+        var moralePct = (int)(am.Morale * 100);
+        var moraleLabel = moralePct == 25 ? $"{moralePct}% (base)" : $"{moralePct}%";
+        var moraleColor = am.Morale > 0.25 ? "#66BB6A" : am.Morale < 0.25 ? "#E57373" : "#78909C";
+        topRow.Children.Add(new TextBlock
+        {
+            Text = $"{_vis.Loc("Morale")} {moraleLabel}", FontSize = 11, FontWeight = FontWeight.Medium,
+            Foreground = Brush.Parse(moraleColor), VerticalAlignment = VerticalAlignment.Center
+        });
+
+        var totalDmg = am.DamageCut + am.DamageBlunt;
+        if (totalDmg > 0)
+        {
+            var effectiveDmg = totalDmg * (1 + am.Morale);
+            topRow.Children.Add(new TextBlock
+            {
+                Text = $"{_vis.Loc("Vis.Effective")} {effectiveDmg:F1} (×{1 + am.Morale:F2})",
+                FontSize = 11, FontWeight = FontWeight.Medium,
+                Foreground = Brush.Parse("#9575CD"), VerticalAlignment = VerticalAlignment.Center
+            });
+        }
+        sp.Children.Add(topRow);
+
+        // R37 formula note — actual damage = (1 + character morale + weapon morale)
+        // × (1 + melee/ranged bonus) × weapon damage (Doc 38 fMorale).
+        if (totalDmg > 0)
+        {
+            sp.Children.Add(new TextBlock
+            {
+                Text = _vis.Loc("Vis.DamageFormula"),
+                FontSize = 9, Foreground = Brush.Parse("#999"), TextWrapping = TextWrapping.Wrap
+            });
+        }
+
+        // numeric row: Range / Penetration / Transfer
+        var cells = new List<(string, string, string?)>();
+        if (am.Range > 1 || am.Type == AttackType.Ranged)
+            cells.Add((_vis.Loc("Vis.Range"), $"{am.Range}", "#1565C0"));
+        if (am.Penetration > 0)
+            cells.Add((_vis.Loc("Vis.Penetration"), $"{am.Penetration}", "#6A1B9A"));
+        if (am.Transfer)
+            cells.Add(("Transfer", _vis.Loc("Vis.Yes"), "#546E7A"));
+        if (cells.Count > 0)
+            sp.Children.Add(_vis.CreatureStatGrid(cells));
+
+        // ammo: charge profiles with per-mode consumption
+        if (!string.IsNullOrWhiteSpace(am.ChargeProfiles))
+        {
+            var wp = new WrapPanel();
+            foreach (var seg in am.ChargeProfiles.Split(',').Select(s => s.Trim()).Where(s => s.Length > 0))
+            {
+                var cp = _vis.Resolver.LookupRef<ChargeProfile>(am, nameof(AttackMode.ChargeProfiles), seg);
+                if (cp is not null)
+                {
+                    var rates = new List<string>();
+                    if (cp.PerUse > 0) rates.Add($"{_vis.Loc("Vis.PerUse")} {cp.PerUse:F2}");
+                    if (cp.PerHour > 0) rates.Add($"{_vis.Loc("Vis.PerHour")} {cp.PerHour:F2}");
+                    if (cp.PerHourEquipped > 0) rates.Add($"{_vis.Loc("Vis.PerHourEquipped")} {cp.PerHourEquipped:F2}");
+                    if (cp.PerHex > 0) rates.Add($"{_vis.Loc("Vis.PerHex")} {cp.PerHex:F2}");
+                    var label = cp.Subject ?? cp.Name ?? $"CP#{cp.Id}";
+                    if (rates.Count > 0) label += $" ({string.Join(" · ", rates)})";
+                    if (cp.Degrade) label += " ⚠";
+                    wp.Children.Add(_refNode.BadgeForEntity(am, cp, label, "#E0F7FA", "#006064"));
+                }
+                else
+                {
+                    wp.Children.Add(_vis.MiniBadge(seg, "#F5F5F5", "#999"));
+                }
+            }
+            sp.Children.Add(LabeledSection(_vis.Loc("Vis.ChargeAmmo"), wp));
+        }
+
+        // attacker conditions (semantic colors)
+        if (!string.IsNullOrWhiteSpace(am.AttackerConditions))
+        {
+            var wp = new WrapPanel();
+            foreach (var seg in am.AttackerConditions.Split(',').Select(s => s.Trim()).Where(s => s.Length > 0))
+            {
+                var cond = _vis.Resolver.LookupRef<Condition>(am, nameof(AttackMode.AttackerConditions), seg);
+                if (cond is not null)
+                {
+                    var extra = ReferencePattern.FromName("{id}x{mult}").FormatExtraInfo(seg);
+                    wp.Children.Add(_refNode.BadgeForEntity(am, cond,
+                        ConditionLabel(cond, extra), ConditionBg(cond), ConditionFg(cond)));
+                }
+                else
+                {
+                    wp.Children.Add(_vis.MiniBadge(seg, "#F5F5F5", "#999"));
+                }
+            }
+            sp.Children.Add(LabeledSection(_vis.Loc("Vis.AttackerConditions"), wp));
+        }
+
+        if (!string.IsNullOrWhiteSpace(am.WieldPhrase))
+            sp.Children.Add(new TextBlock
+            {
+                Text = $"“{am.WieldPhrase}”", FontSize = 11, FontStyle = FontStyle.Italic,
+                Foreground = Brush.Parse("#666"), TextWrapping = TextWrapping.Wrap
+            });
+
+        if (!string.IsNullOrWhiteSpace(am.AttackPhrases))
+        {
+            var wp = new WrapPanel();
+            foreach (var p in am.AttackPhrases.Split(',', '，').Select(s => s.Trim()).Where(s => s.Length > 0))
+            {
+                var display = p.Length > 60 ? p[..60] + "..." : p;
+                wp.Children.Add(_vis.MiniBadge(display, "#E3F2FD", "#1565C0"));
+            }
+            sp.Children.Add(LabeledSection(_vis.Loc("Vis.AttackPhrases"), wp));
+        }
+
+        if (!string.IsNullOrWhiteSpace(am.Notes))
+            sp.Children.Add(new TextBlock
+            {
+                Text = am.Notes, FontSize = 10, Foreground = Brush.Parse("#888"),
+                TextWrapping = TextWrapping.Wrap
+            });
+
+        sp.Children.Add(new TextBlock
+        {
+            Text = _vis.Loc("Vis.CtrlClickHint"), FontSize = 9, Foreground = Brush.Parse("#999")
+        });
+        return sp;
+    }
+
+    // ═══════════════ Condition semantic colors (R36) ═══════════════
+
+    /// <summary>Doc 21 §4-C color semantics: Fatal red / Permanent orange / Stackable green / Duration blue.</summary>
+    private static string ConditionBg(Condition c)
+        => c.Fatal ? "#FFEBEE" : c.Permanent ? "#FFF3E0" : c.Stackable ? "#E8F5E9" : "#E3F2FD";
+
+    private static string ConditionFg(Condition c)
+        => c.Fatal ? "#C62828" : c.Permanent ? "#E65100" : c.Stackable ? "#2E7D32" : "#1565C0";
+
+    /// <summary>"Bleeding · FATAL" / "WellFed · 12h" — severity readable without opening the condition.</summary>
+    private static string ConditionLabel(Condition c, string? extra)
+    {
+        var suffix = c.Fatal ? "FATAL"
+            : c.Permanent ? "Instant"
+            : c.Stackable ? "Stackable"
+            : $"{c.Duration:F0}h";
+        var label = $"{c.Subject} · {suffix}";
+        return string.IsNullOrEmpty(extra) ? label : $"{label} ({extra})";
     }
 
     private static Control LabeledSection(string label, Control content)
@@ -484,9 +803,13 @@ public class ItemTypeEntityVisualizer : IEntityVisualizer
         };
     }
 
-    // ═══════════════ Equipment Card V2 — left: properties, right: preview ═══════════════
+    // ═══════════════ Equipment body — left: slots, right: wear preview ═══════════════
+    // R39: conditions moved to the Effects block; preview stays with its slots.
 
-    private Control BuildEquipmentCardV2(ItemType it)
+    private static bool HasEquipment(ItemType it)
+        => !string.IsNullOrWhiteSpace(it.EquipSlots) || !string.IsNullOrWhiteSpace(it.UseSlots) || it.SocketLocked;
+
+    private Control BuildEquipmentBody(ItemType it)
     {
         // Parse equip slots
         var equipEntries = new List<(int Slot, int ImgIdx, int SpriteIdx, bool IsHandHeld)>();
@@ -508,7 +831,7 @@ public class ItemTypeEntityVisualizer : IEntityVisualizer
             }
         }
 
-        // Left column: properties
+        // Left column: slots
         var leftPanel = new StackPanel { Spacing = 8 };
         if (equipBadges.Children.Count > 0)
             leftPanel.Children.Add(LabeledSection(_vis.Loc("Vis.EquipSlots"), equipBadges));
@@ -525,14 +848,27 @@ public class ItemTypeEntityVisualizer : IEntityVisualizer
             leftPanel.Children.Add(LabeledSection(_vis.Loc("Vis.SocketLocked"),
                 _vis.MiniBadge(_vis.Loc("Vis.SocketLockedDesc"), "#FFEBEE", "#C62828")));
 
-        if (!string.IsNullOrWhiteSpace(it.PossessConditions))
-            leftPanel.Children.Add(ConditionSection(_vis.Loc("Vis.WhenCarried"), it.PossessConditions, it, nameof(ItemType.PossessConditions)));
-        if (!string.IsNullOrWhiteSpace(it.UseConditions))
-            leftPanel.Children.Add(ConditionSection(_vis.Loc("Vis.WhenUsed"), it.UseConditions, it, nameof(ItemType.UseConditions)));
-        if (!string.IsNullOrWhiteSpace(it.EquipConditions))
-            leftPanel.Children.Add(ConditionSection(_vis.Loc("Vis.WhenEquipped"), it.EquipConditions, it, nameof(ItemType.EquipConditions)));
+        // R40: interaction sounds (pickup/putdown) belong to "what I do with it" —
+        // the same mental context as equipping/using, not "associations".
+        // R42: play button next to the cue names.
+        if (!string.IsNullOrWhiteSpace(it.Sounds) && it.Sounds != "cuePickup,cuePutdown")
+        {
+            var sndRow = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 4 };
+            sndRow.Children.Add(_vis.MiniBadge(it.Sounds, "#ECEFF1", "#546E7A"));
+            var sndBtn = _vis.PlaySoundButton(it.Sounds.Split(',')[0].Trim());
+            if (sndBtn is not null)
+            {
+                sndRow.Children.Add(sndBtn);
+                leftPanel.Children.Add(LabeledSection(_vis.Loc("Vis.Sound"), sndRow));
+            }
+            else
+            {
+                leftPanel.Children.Add(LabeledSection(_vis.Loc("Vis.Sound"),
+                    _vis.MiniBadge(it.Sounds, "#ECEFF1", "#546E7A")));
+            }
+        }
 
-        // Build card body
+        // Wear preview next to the slots when the item has equip entries.
         if (equipEntries.Count > 0)
         {
             var preview = BuildEquipSlotOverlay(it, equipEntries);
@@ -545,10 +881,10 @@ public class ItemTypeEntityVisualizer : IEntityVisualizer
             grid.Children.Add(leftPanel);
             Grid.SetColumn(preview, 1);
             grid.Children.Add(preview);
-            return _vis.Card(grid, _vis.Loc("Vis.Equipment"));
+            return grid;
         }
 
-        return _vis.Card(leftPanel, _vis.Loc("Vis.Equipment"));
+        return leftPanel;
     }
 
     /// <summary>Build a tabbed overlay preview (Image UI / Sprite UI) with checkbox toggles.</summary>
@@ -846,7 +1182,11 @@ public class ItemTypeEntityVisualizer : IEntityVisualizer
         foreach (var seg in raw.Split(',').Select(s => s.Trim()).Where(s => s.Length > 0))
         {
             var c = _vis.Resolver.LookupRef<Condition>(it, propName, seg);
-            if (c is null) continue;
+            if (c is null)
+            {
+                wp.Children.Add(_vis.MiniBadge(seg, "#F5F5F5", "#999"));
+                continue;
+            }
 
             // Parse slot prefix and negation from {value}={id} pattern
             var eqIdx = seg.IndexOf('=');
@@ -855,124 +1195,167 @@ public class ItemTypeEntityVisualizer : IEntityVisualizer
             var slotNumStr = isNeg ? slotPart[1..] : slotPart;
             var slotName = int.TryParse(slotNumStr, out var sn) ? GetSlotName(sn) : slotNumStr;
 
+            // R36: semantic severity colors (Fatal red / Permanent orange / Stackable green / Duration blue).
             var text = string.IsNullOrEmpty(slotName) ? c.Subject : $"{slotName}: {(isNeg ? "~" : "")}{c.Subject}";
-            var (bg, fg) = isNeg ? ("#F5F5F5", "#999") : ("#FCE4EC", "#C62828");
-            wp.Children.Add(_refNode.BadgeForEntity(it, c, text, bg, fg));
+            var (bg, fg) = isNeg ? ("#F5F5F5", "#999") : (ConditionBg(c), ConditionFg(c));
+            var display = $"{text} · {(c.Fatal ? "FATAL" : c.Permanent ? "Instant" : c.Stackable ? "Stackable" : $"{c.Duration:F0}h")}";
+            wp.Children.Add(_refNode.BadgeForEntity(it, c, display, bg, fg));
         }
         return wp.Children.Count > 0 ? LabeledSection(label, wp) : new TextBlock();
     }
 
-    // ═══════════════ Container Card V2 ═══════════════
+    // ═══════════════ Effects body: conditions + required condition + item properties ═══════════════
+    // R39: merged from EquipmentCardV2 conditions + LinkedDataCard CondId + CombatCard Properties.
 
-    private Control BuildContainerCardV2(ItemType it)
+    private Control BuildEffectsBody(ItemType it)
     {
         var body = new StackPanel { Spacing = 8 };
+        var hasAny = false;
 
-        if (!string.IsNullOrWhiteSpace(it.Capacities))
-            body.Children.Add(new TextBlock
-                { Text = $"{_vis.Loc("Vis.Capacity")}: {it.Capacities}", FontSize = 12, FontWeight = FontWeight.SemiBold });
-
-        if (!string.IsNullOrWhiteSpace(it.ContentIds))
+        if (it.PossessConditions.Count > 0)
         {
-            var wp = new WrapPanel();
-            foreach (var seg in it.ContentIds.Split(',').Select(s => s.Trim()).Where(s => s.Length > 0))
-            {
-                var ct = _vis.Resolver.LookupRef<ContainerType>(it, nameof(ItemType.ContentIds), seg);
-                if (ct is not null)
-                    wp.Children.Add(_refNode.BadgeForEntity(it, ct, ct.Name!,
-                        "#E8EAF6", "#283593"));
-            }
-            if (wp.Children.Count > 0)
-                body.Children.Add(LabeledSection(_vis.Loc("Vis.AcceptsContent"), wp));
+            body.Children.Add(ConditionSection(_vis.Loc("Vis.WhenCarried"),
+                it.PossessConditions.ToRawString(","), it, nameof(ItemType.PossessConditions)));
+            hasAny = true;
+        }
+        if (it.UseConditions.Count > 0)
+        {
+            body.Children.Add(ConditionSection(_vis.Loc("Vis.WhenUsed"),
+                it.UseConditions.ToRawString(","), it, nameof(ItemType.UseConditions)));
+            hasAny = true;
+        }
+        if (it.EquipConditions.Count > 0)
+        {
+            body.Children.Add(ConditionSection(_vis.Loc("Vis.WhenEquipped"),
+                it.EquipConditions.ToRawString(","), it, nameof(ItemType.EquipConditions)));
+            hasAny = true;
         }
 
-        // FormatId as simple stat
-        if (!string.IsNullOrWhiteSpace(it.FormatId) && it.FormatId != "3")
-        {
-            var ct = _vis.Resolver.LookupRef<ContainerType>(it, nameof(ItemType.FormatId), it.FormatId);
-            if (ct is not null)
-                body.Children.Add(new TextBlock
-                {
-                    Text = $"{_vis.Loc("Vis.Format")}: {ct.Name}", FontSize = 11, Foreground = Brush.Parse("#666"),
-                    Cursor = new Cursor(StandardCursorType.Hand)
-                });
-        }
-
-        return _vis.Card(body, _vis.Loc("Vis.Container"));
-    }
-
-    // ═══════════════ Switches Card ═══════════════
-
-    private Control BuildSwitchesCard(ItemType it)
-    {
-        var body = new StackPanel { Spacing = 4 };
-        var wp = new WrapPanel();
-        foreach (var seg in it.SwitchIds.Split(',').Select(s => s.Trim()).Where(s => s.Length > 0))
-        {
-            var sw = _vis.Resolver.LookupRef<ItemType>(it, nameof(ItemType.SwitchIds), seg);
-            if (sw is not null)
-            {
-                var descShort = string.IsNullOrWhiteSpace(sw.Description) ? ""
-                    : sw.Description.Length > 10 ? sw.Description[..10] : sw.Description;
-                var display = string.IsNullOrEmpty(descShort) ? sw.Name! : $"{sw.Name}({descShort})";
-                var fullDisplay = $"{sw.GroupId}.{sw.SubgroupId} {display}";
-                wp.Children.Add(_refNode.BadgeForEntity(it, sw, fullDisplay, "#F3E5F5", "#6A1B9A"));
-            }
-            else
-                wp.Children.Add(_vis.MiniBadge(seg, "#F5F5F5", "#999"));
-        }
-        body.Children.Add(wp);
-        return _vis.Card(body, _vis.Loc("Vis.SwitchStates"));
-    }
-
-    // ═══════════════ Linked Data Card (TreasureTable + Component + CondId) ═══════════════
-
-    private Control BuildLinkedDataCard(ItemType it)
-    {
-        var body = new StackPanel { Spacing = 8 };
-        var hasContent = false;
-
-        // TreasureId → expandable loot tree
-        if (!string.IsNullOrWhiteSpace(it.TreasureId) && it.TreasureId != "3")
-        {
-            var tt = _vis.Resolver.LookupRef<TreasureTable>(it, nameof(ItemType.TreasureId), it.TreasureId);
-            if (tt is not null)
-            {
-                hasContent = true;
-                body.Children.Add(BuildTreasureLinkedSection(_vis.Loc("Vis.TreasureTable"), tt));
-            }
-        }
-
-        // ComponentId
-        if (!string.IsNullOrWhiteSpace(it.ComponentId) && it.ComponentId != "0")
-        {
-            var comp = _vis.Resolver.LookupRef<TreasureTable>(it, nameof(ItemType.ComponentId), it.ComponentId);
-            if (comp is not null)
-            {
-                hasContent = true;
-                body.Children.Add(BuildTreasureLinkedSection(_vis.Loc("Vis.Component"), comp));
-            }
-        }
-
-        // CondId
-        if (!string.IsNullOrWhiteSpace(it.CondId) && it.CondId != "1")
+        // Required condition (CondId) — semantic colors
+        if (it.CondId.Count > 0)
         {
             var cond = _vis.Resolver.LookupRef<Condition>(it, nameof(ItemType.CondId), it.CondId);
             if (cond is not null)
             {
-                hasContent = true;
-                var severity = cond.Fatal ? "FATAL" : cond.Permanent ? "Instant" : cond.Stackable ? "Stackable" : "Duration";
-                var sevBg = cond.Fatal ? "#FFEBEE" : cond.Permanent ? "#FFF3E0" : cond.Stackable ? "#E8F5E9" : "#E3F2FD";
-                var sevFg = cond.Fatal ? "#C62828" : cond.Permanent ? "#E65100" : cond.Stackable ? "#2E7D32" : "#1565C0";
-                var durText = cond.Permanent ? "Instant" : $"{cond.Duration}h";
-                var label = string.IsNullOrEmpty(cond.Subject) ? $"Condition#{cond.Id}" : cond.Subject;
                 body.Children.Add(LabeledSection(_vis.Loc("Vis.RequiredCondition"),
-                    _refNode.BadgeForEntity(it, cond, $"{label} · {severity} · {durText}",
-                        sevBg, sevFg)));
+                    _refNode.BadgeForEntity(it, cond,
+                        ConditionLabel(cond, null), ConditionBg(cond), ConditionFg(cond))));
+                hasAny = true;
             }
         }
 
-        return hasContent ? _vis.Card(body, _vis.Loc("Vis.LinkedData")) : new TextBlock();
+        // Item properties (ItemProp)
+        if (it.Properties.Count > 0)
+        {
+            var wp = new WrapPanel();
+            foreach (var s in it.Properties.ToRawString(",").Split(',').Select(x => x.Trim()).Where(x => x.Length > 0))
+            {
+                wp.Children.Add(_refNode.Badge<ItemProp>(it, nameof(ItemType.Properties), s,
+                    "#E8F5E9", "#2E7D32"));
+            }
+            body.Children.Add(LabeledSection(_vis.Loc("Vis.Properties"), wp));
+            hasAny = true;
+        }
+
+        return hasAny ? body : null;
+    }
+
+    // ═══════════════ Associations body: container + switches + loot/component + sounds ═══════════════
+    // R39: merged from ContainerCardV2 + SwitchesCard + LinkedDataCard (Treasure/Component).
+
+    // ═══════════════ Container body: capacity + accepted content + format ═══════════════
+    // R40: "what it holds" is its own mental-model block, not buried in associations.
+
+    private Control BuildContainerBody(ItemType it)
+    {
+        var body = new StackPanel { Spacing = 8 };
+        var hasAny = false;
+
+        if (!string.IsNullOrWhiteSpace(it.Capacities))
+        {
+            body.Children.Add(_vis.ValueRow(_vis.Loc("Vis.Capacity"), it.Capacities, "#546E7A"));
+            hasAny = true;
+        }
+        if (it.ContentIds.Count > 0)
+        {
+            var wp = new WrapPanel();
+            foreach (var seg in it.ContentIds.ToRawString(",").Split(',').Select(s => s.Trim()).Where(s => s.Length > 0))
+            {
+                var ct = _vis.Resolver.LookupRef<ContainerType>(it, nameof(ItemType.ContentIds), seg);
+                if (ct is not null)
+                    wp.Children.Add(_refNode.BadgeForEntity(it, ct, ct.Name!, "#E8EAF6", "#283593"));
+            }
+            if (wp.Children.Count > 0)
+            {
+                body.Children.Add(LabeledSection(_vis.Loc("Vis.AcceptsContent"), wp));
+                hasAny = true;
+            }
+        }
+        if (it.FormatId.Count > 0)
+        {
+            var ct = _vis.Resolver.LookupRef<ContainerType>(it, nameof(ItemType.FormatId), it.FormatId);
+            if (ct is not null)
+            {
+                body.Children.Add(_vis.ValueRow(_vis.Loc("Vis.Format"), ct.Name ?? it.FormatId.ToString(), "#666"));
+                hasAny = true;
+            }
+        }
+
+        return hasAny ? body : null;
+    }
+
+    // ═══════════════ Associations body: switches + loot table + component ═══════════════
+    // R40: "where it comes from / what it turns into" — sounds moved to the
+    // Equipment block (interaction context), container moved to its own block.
+
+    private Control BuildAssociationsBody(ItemType it)
+    {
+        var body = new StackPanel { Spacing = 8 };
+        var hasAny = false;
+
+        // Switches — what clicking the item toggles
+        if (it.SwitchIds.Count > 0)
+        {
+            var wp = new WrapPanel();
+            foreach (var seg in it.SwitchIds.ToRawString(",").Split(',').Select(s => s.Trim()).Where(s => s.Length > 0))
+            {
+                var sw = _vis.Resolver.LookupRef<ItemType>(it, nameof(ItemType.SwitchIds), seg);
+                if (sw is not null)
+                {
+                    var descShort = string.IsNullOrWhiteSpace(sw.Description) ? ""
+                        : sw.Description.Length > 10 ? sw.Description[..10] : sw.Description;
+                    var display = string.IsNullOrEmpty(descShort) ? sw.Name! : $"{sw.Name}({descShort})";
+                    var fullDisplay = $"{sw.GroupId}.{sw.SubgroupId} {display}";
+                    wp.Children.Add(_refNode.BadgeForEntity(it, sw, fullDisplay, "#F3E5F5", "#6A1B9A"));
+                }
+                else
+                    wp.Children.Add(_vis.MiniBadge(seg, "#F5F5F5", "#999"));
+            }
+            body.Children.Add(LabeledSection(_vis.Loc("Vis.SwitchStates"), wp));
+            hasAny = true;
+        }
+
+        // Loot table + component (TreasureId / ComponentId)
+        if (it.TreasureId.Count > 0)
+        {
+            var tt = _vis.Resolver.LookupRef<TreasureTable>(it, nameof(ItemType.TreasureId), it.TreasureId);
+            if (tt is not null)
+            {
+                body.Children.Add(BuildTreasureLinkedSection(_vis.Loc("Vis.TreasureTable"), tt));
+                hasAny = true;
+            }
+        }
+        if (it.ComponentId.Count > 0)
+        {
+            var comp = _vis.Resolver.LookupRef<TreasureTable>(it, nameof(ItemType.ComponentId), it.ComponentId);
+            if (comp is not null)
+            {
+                body.Children.Add(BuildTreasureLinkedSection(_vis.Loc("Vis.Component"), comp));
+                hasAny = true;
+            }
+        }
+
+        return hasAny ? body : null;
     }
 
     private Control BuildTreasureLinkedSection(string label, TreasureTable tt)

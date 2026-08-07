@@ -210,6 +210,12 @@
                                 ItemsSource="{Binding ReferenceTabs}"
                                 IsVisible="{Binding HasReferences}"
                                 MinHeight="140">
+                                <TabControl.Styles>
+                                    <Style Selector="TabItem">
+                                        <Setter Property="Padding" Value="8,3" />
+                                        <Setter Property="FontSize" Value="12" />
+                                    </Style>
+                                </TabControl.Styles>
                                 <TabControl.ItemTemplate>
                                     <DataTemplate DataType="vm:ReferenceTab">
                                         <TextBlock Text="{Binding TableName}" />

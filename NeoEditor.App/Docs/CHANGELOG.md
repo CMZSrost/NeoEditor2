@@ -2,6 +2,389 @@
 
 ---
 
+## R58：mod 图片缺失真根因（getmods2.php 换行未 Trim）+ 图片诊断进日志 | 2026-08-08
+
+**反馈**（用户）：图片还是缺失（第三轮）。用户提供游戏目录 D:/Downloads/Neo Scavenger/。
+
+**根因定位**（用真实目录端到端验证）：
+1. 用户目录 getmods.php 是**空壳**（nRows=0），真正生效的是 **getmods2.php**（nRows=47）——R56 只读 getmods.php，解析出空列表后直接 return，Mods/ 完全没扫
+2. **getmods2.php 是多行格式**（nRows=47
+&strModName0=NSE&strModURL0=Mods/...
+）——按 & 分割后**值末尾带 
+ 未 Trim**，拼出的路径含换行符 → 目录查找全部失败（原版图片正常因为主 img/ 在列表首位，mod 图片全缺——与用户现象完全吻合）
+
+**修复**：
+1. getmods.php 与 getmods2.php **都读**，任一解析出路径即用（都空才走 Mods/*/* 两层扫描兜底）
+2. **ParseModUrls 值 Trim**（去 
+/空白）
+3. 图片缺失诊断写入日志文件（DataBrowserViewModel.LogAction → RunLogStore → player-run-*.log，含 gameRoot/getmods 内容/目录存在性）——下次再缺直接读日志定位
+
+**验证**：临时程序对真实目录端到端验证——主图 AMode308.png ✓、mod 图 AMode12ScatterGunA/B、AMode45PistolSuppressed ✓ 全部解析成功。测试：getmods2 多行格式用例（值带 
+）。Player.Core.Tests 129/129。
+
+---
+## R57：ItemType 可视化设计文档（D04）+ Creature 可视化重构（D05）+ FieldGroupMetadata 全量修正 | 2026-08-08
+
+**目标**（用户）：① 写一份 ItemType 设计文档，说明字段、描述及字段对应的设计原因和设计目的；② 之后实现剩下的类型——简单的关联类套通用组件，复杂的用独立 agent 写设计文档 → 评估 → 再开 agent 开发。
+
+**新增**：
+1. **D04 ItemType 可视化设计文档**（`spec/D04-itemtype-visualization-design.md`）：37 列（30 模型属性）→ 8 个呈现位置逐字段设计，含游戏语义 / 设计原因 / 设计目的三栏；确立「把数据翻译成问题答案」范式（损耗→寿命、士气→有效伤害、权重→概率）。登记进 spec/README
+2. **25 个 visualizer 现状审计**（Explore agent）：A 级深度设计 9 个（AttackMode/BattleMove/CampType/Condition/Encounter/Faction/HexType/Recipe/TreasureTable）、B 级表单化 8 个、C 级浅实现 6 个（纯关联类）
+3. **简单补漏**（通用组件收尾）：
+   - `DataFile`/`GameVar`/`Headline` 补挂反向引用面板（此前 23 个里仅这 3 个缺失）
+   - `AttackMode` Sound 徽章接 `PlaySoundButton`（R42 音频播放，此前是死徽章）
+   - `Encounter` 补 `fCreatureChance`（Hero 概率行）/ `aMinimapHexes`（小地图标记徽章）/ `ptEditor`（弱化显示）
+   - `BattleMove` 补 `vHexTypes`（KV 行）
+4. **D05 Creature 可视化设计文档 + 重构**：
+   - 文档：13 字段全覆盖 + 战斗三层（Σ伤害条→Σ有效伤害→行+展开）+ 出场状态概率徽章 + 战利品双池（携带 vs 尸体）+ 遭遇链（正向事件链/反向剧情/刷新点权重归一）
+   - **事实修正**：设计 agent 曾断言「nHP/nStrength 等属性游戏 XML 有、编辑器未导入」——实测全 data 目录无这些字段（creatures.xml CREATE TABLE 仅 13 列），文档改为「不预留虚构槽位」
+   - 实现：`CreatureEntityVisualizer` 293→968 行全量重写（Hero/战斗/属性/战利品/遭遇五区块，两列情境布局；注册注入 IEntityLookupService）；`Vis.OnEnterConditions` 错误标签消除（vEncounterIDs 指向 Encounter）；+5 测试（CreatureVisualizerTests）
+5. **FieldGroupMetadata 全量修正**：原分组与真实模型**大面积漂移**（Recipe「nHours/bConsumed」、AttackMode「fBluntDmg/fCutDmg」、Creature「nHP/nStrength/vCorpseID」等全是虚构或拼写错误列名 → 字段全部落入默认「属性」分组，KV 编辑器/Raw Data 分组失效）。按真实 `[Column]` 重写全部 24 个类型分组，脚本核对零漂移
+
+**测试**：845/845（13 项目全绿；EntityEditor 66→71）。
+
+---
+
+## R56：mod 图片按 getmods.php 定位（真实 mod 路径 + 两层 Mods/*/*）| 2026-08-08
+
+**反馈**（用户）：图片还是缺失。用户指路：**mod 图片位置要通过 getmods.php 拿到 mod 路径**，再从 mod 路径找 img/ 和 getimages.php。
+
+**修复**（R54/R55 目录约定不对，重做）：
+1. **getmods.php 驱动**：游戏自带 `getmods.php`（磁盘优先 serve）声明真实 mod 路径（`strModURL{i}`，如 `Mods/<分组>/<mod>`，可任意位置）——数据浏览器构造时**解析 gameRoot/getmods.php**，按声明路径收集图片目录（mod 根 + img/）
+2. **两层兜底**：getmods.php 缺失时扫 `Mods/*/*`（两层——ModListScanner 同款；R54/R55 只扫了一层 `Mods/<mod>/`，用户 mod 在 `Mods/<分组>/<mod>/` 时扫不到，这是仍缺失的直接原因）
+3. 保留主 `img/` 优先；解析容忍 URL 编码（UnescapeDataString）
+
+**测试**：WikiDetailBuilderTests 改为两层结构用例 + 新增 getmods.php 声明路径用例（CustomMods/m9/img）。Player.Core.Tests 128/128。
+
+---
+
+## R55：数据浏览器五项（mod 图片根目录 · tabHeader 紧凑 · 启动日志清理 · 存档管理两行 · 闪退防御）| 2026-08-08
+
+**反馈**（用户）：① 数据浏览器反向引用 tabHeader 太大；② 图片还是找不着；③ 去掉 v2.47 这类临时日志；④ 存档管理上边太长按钮放第二行；⑤ 浏览数据浏览器时闪退。
+
+**修复**：
+1. **mod 图片补根目录（R55）**：R54 只扫了 `Mods/<mod>/img`，但 ImageSearchService 的约定还包含 **`Mods/<mod>/` 根目录**（图片可直接放 mod 根）——补上；查找顺序 = 主 img → 各 mod 根 → 各 mod/img
+2. **tabHeader 紧凑**：数据浏览器「被引用」TabControl 加 TabItem 样式（Padding 8,3 / FontSize 12），默认 header 太大
+3. **启动日志清理（host.html v2.64）**：去掉 v2.47 逐条「启动展开」info/warn 日志与版本就绪行（用户反馈噪音）——只保留 error（LsoExpand 不可用/展开失败，诊断用）
+4. **存档管理顶栏两行**：第一行提示文字（可换行），第二行按钮（刷新/清空全部/重启游戏），顶栏高度大减
+5. **闪退防御**：日志尾部无 FATAL（托管异常处理器未触发）→ 疑似大图全尺寸解码内存爆炸（进程直接退出）。图片解码改 `Bitmap.DecodeToWidth(stream, 512)`（预览/缩略图足够，防 mod 高清图 OOM）；选中行构建整段 try/catch（异常转状态行提示不崩溃）
+
+**测试**：ModImagesResolveFromModsDirWhenNotInGameImg 扩展 mod 根目录断言。**839/839**（13 项目全绿，Player.Core.Tests 127/127）。**待用户复测**：图片（mod 根目录）、tabHeader、存档管理顶栏、闪退是否复现（若复现请告知浏览的表/行）。
+
+---
+
+## R54：数据浏览器模组图片修复 + 日志窗 UI 订正 | 2026-08-07
+
+**反馈**（用户）：① 数据浏览器里其他 mod 的图片找不着；② 订正文档。
+
+**修复**：
+1. **数据浏览器模组图片（R54）**：图片来源约定 = 主游戏 `{gameRoot}/img/` + **模组 `{gameRoot}/Mods/<mod>/img/`**（与 ProxyHttpModule.getimages.php 扫描、ImageSearchService 一致）——但 `WikiDetailBuilder.ResolveImagePath` 只查主 img/，模组图片全部显示"缺失"。修复：构造时扫描 `Mods/*/img` 目录列表缓存，解析按 主 img → 各模组 img 顺序查找（含 .png 补全）；markdown 画廊与原生走马灯（GetImageItems）共用该解析，两处同时修复
+2. **文档订正**：42 计划 v2.24 图片画廊段更新模组目录约定 + 版本历史补 v2.63（R52-R54 UI 订正）
+
+**测试**：WikiDetailBuilderTests +1（模组图片从 Mods/<mod>/img 解析、主目录缺失不误报）。**839/839**（13 项目全绿，Player.Core.Tests 127/127）。
+
+---
+
+## R53：日志窗去虚拟化 + 全局按钮紧凑化 | 2026-08-07
+
+**反馈**（用户）：① 日志窗不要虚拟化——虚拟化后滚动条跳来跳去难受；② 其他工具窗口的按钮做紧凑点，别占大块地方、还要拉窗口尺寸。
+
+**改动**：
+1. **日志窗去虚拟化**：ListBox ItemsPanel 改普通 `StackPanel`（非虚拟化）——Expander 展开行高变化时滚动条不再跳动（行数受控：剪贴板截获是大块单行，渲染开销可接受）
+2. **日志窗紧凑**：列表 Margin/行高/字号缩小（行 20px、字号 11-12、顶栏 Padding 10,6、ComboBox 120px）
+3. **全局按钮紧凑**（App.axaml 样式）：`Window Button` → Padding 10,4、FontSize 12、MinHeight 26——存档管理/存档修改器/日志窗等所有工具窗口按钮统一变小（主窗口无 Button 不受影响）
+
+---
+
+## R52：日志窗跟随主题 + 顶栏两行 | 2026-08-07
+
+**反馈**（用户）：① 日志样式和主题没对上，颜色看不清；② 顶栏按钮太多换两行。
+
+**改动**：
+1. **主题化**：移除固定深色背景（#1E1E1E/#2D2D2D）与硬编码前景色，全部换主题资源——窗口/顶栏背景 `SystemControlBackgroundChromeMediumLowBrush`、文字 `SystemControlForegroundBaseHigh/MediumBrush`、级别列 `SystemControlHighlightAccentBrush`、按钮去硬编码底色。切 系统/亮/暗 主题颜色跟随
+2. **顶栏两行**：第一行标题 + 日志文件路径；第二行级别过滤 ComboBox + 全部操作按钮（打开日志目录/剪贴板/导出日志/清空/关闭）
+
+---
+
+## R51：日志热键 Shift+Tab → F10 | 2026-08-07
+
+**反馈**（用户）：Shift+Tab 不要了，换成 F10。
+
+**改动**（host.html v2.62）：日志窗口热键全链路 Shift+Tab → **F10**——host.html 页面桥（游戏聚焦时按 F10 → chrome.webview.postMessage → 切换日志窗）、日志窗口内 F10 关闭（原 Shift+Tab 关闭）、主窗口 Avalonia 焦点时 F10 切换（KeyDown 新增）。菜单文案/窗口标题/占位提示同步更新（日志 (F10) / 运行日志 — F10 关闭 / 关闭 (F10)）。
+
+---
+
+## R50：日志覆盖层改普通弹窗 | 2026-08-07
+
+**反馈**（用户）：Shift+Tab 的日志覆盖层不灵活，换成弹窗。
+
+**改动**：LogOverlayWindow 由「无边框 + 全屏 + Topmost + 透明背景」的覆盖层改为**普通弹窗**——标题栏（可拖动、X 关闭）、900×620 可调大小、固定深色背景（#1E1E1E，硬编码前景色全兼容不依赖主题）、居中于主窗口。打开方式不变（视图 → 日志 / Shift+Tab 页面桥），Shift+Tab 仍可关闭。移除 PlayerWindow 里全屏/位置跟随逻辑。
+
+---
+
+## R49：日志行可展开（剪贴板截获内容可见化）| 2026-08-07
+
+**问题**（用户实机）：v2.59/2.60 日志里其实已有完整截获内容（mod 加载日志几千字符），但日志浮层每行固定 22px 高 + 省略号截断，**内容只能 hover tooltip 看到**——用户以为"日志还是空的"。
+
+**修复**：日志浮层行改 **Expander**——平时一行摘要（时间/级别/截断消息 + tooltip 快速预览，行高仍固定防滚动跳动），**点开展开完整内容**（TextWrapping 多行显示，剪贴板截获的多行游戏日志完整可见）。v2.61 顺带移除 v2.60 的诊断行（value setter 安装 + execCommand 命中逐条 debug——使命完成）。
+
+**剪贴板链路终态（R48-R49）**：游戏写剪贴板 = flash.desktop.Clipboard.setData → Ruffle 临时 textarea（挂在 ruffle-player 的 **shadow root**，v2.60 诊断证实 ta2=有(长度)）→ `value` setter 拦截截获内容进日志（v2.59 起，实机验证 ✓）→ execCommand 拦截阻断真实写入（系统剪贴板保持干净 ✓）。**待用户确认**：浮层点开行可见完整内容。
+
+---
+
+## R48：剪贴板源头截获 + 菜单重组 + 存档修改器改节点编辑器 | 2026-08-07
+
+**反馈**（用户）：① 日志里「游戏剪贴板日志(截获): 」还是空的——要的是把内容转到日志而不是剪贴板；② 调试菜单重组：开发者工具/关于单拎出来，打开日志目录/导出日志/导出存档放文件里；③ 存档修改器去掉顶部下拉/刷新/加载；④ 存档修改器要节点编辑器不是文本编辑器。
+
+**修复/新增**：
+1. **剪贴板源头截获（host.html v2.57）**：WebView2 selection/focus 时序不稳导致 v2.56 提取仍空；且 execCommand 同步执行先于 MutationObserver 微任务会污染 lastClipboard 去重。现在 execCommand 拦截**只阻断真实写入**，内容提取交给 **MutationObserver 监听 textarea append**（Ruffle set_value 先于 append，回调直接读 value）——从源头截获，不依赖 selection/focus
+2. **菜单重组**：撤销调试菜单——打开日志目录/导出日志/导出存档+日志 (zip) → **文件**；开发者工具 (F12) → **视图**（与 F11 同类）；关于 → 文件底部
+3. **存档修改器精简**：去掉顶部存档下拉/刷新/加载（入口=存档管理「修改」按钮已预载），窗口标题显示当前存档 key
+4. **存档修改器 → 节点编辑器**：新增 SaveNode 树模型 + SaveTree 双向转换（Build/SerializeValue）——**容器只读结构**（object names[]/values[] traits 对应不能乱，增删字段会改崩存档）、**标量内联编辑**（string/int/double 文本框、bool 复选；null/undefined/date/xml/bytes 只读 + RawJson 原样回写无损）。还原 toTree 细节：vec* values 裸数字、NaN/±Infinity 字符串标记、double "R" 精度。保存仍走 fromTree 回验；序列化失败（非法数字）状态行报字段名、不发 JS
+
+**测试**：SaveTreeTests +7（object/编辑回写/复杂结构 DeepEquals/vec·array·dict 子节点/NaN/非法数字/bool·null）；SaveEditorViewModelTests 重写适配节点树。**838/838**（13 项目全绿，Player.Core.Tests 126/126）。**待用户复测**：剪贴板内容回日志、节点编辑器实机。
+
+**R48 追加（v2.58）**：剪贴板截获仍无内容（v2.57 后连空行都没了）——根因：Ruffle 的临时 textarea 挂在 **ruffle-player 的 shadow root** 内部，`document.querySelector` 与观察 `documentElement` 的 MutationObserver 都看不到（且 v2.57 遗留了重复 observer 块、外层 try 未闭合）。v2.58：execCommand 拦截恢复**同步提取**（选区 → 普通 DOM textarea → **shadowRoot.querySelector** → activeElement），`__watchClipboard(root)` 支持任意根观察，player 创建后对 `player.shadowRoot` 也挂一份；清理重复块。待用户复测。
+
+**R48 追加（v2.59）**：v2.58 仍空——selection/MutationObserver/shadowRoot 查询都是"找 textarea 再读"，受挂载位置与时序影响。**改用 `HTMLTextAreaElement.prototype.value` setter 拦截**：Ruffle 无论把临时 textarea 挂哪，`set_value` 必然经过该 setter（同步、位置无关；本页无其他 textarea）。execCommand 拦截保留阻断 + 新增「剪贴板 execCommand 拦截命中」debug 诊断行。node 沙箱功能验证通过（赋值 → /__log clipboard 行 + 去重 ✓）。待用户复测。
+
+---
+
+## R47：工具面板名称全本地化 + 音频资产空名/0KB 修复 | 2026-08-07
+
+**反馈**（用户）：① 音频资产全是空名 + 0KB；② 怎么就音频资产 tool 的名字有本地化，其他 tool 名字没本地化？还是说你是硬编码的？
+
+**修复/新增**：
+1. **音频资产空名 + 0KB 修复**：`index.json` 字段是小写 `{id,name,file,bytes}`，而 C# 反序列化类用 PascalCase——System.Text.Json 默认大小写敏感导致全部字段落空。`SoundsToolViewModel` 与 `AudioPlaybackService` 统一改用 `PropertyNameCaseInsensitive = true` 的 `JsonSerializerOptions`。154 个音频现在正常显示名称/大小并可播放
+2. **工具面板名称全本地化**：全部 11 个 `IToolPlugin`（ProfileTool / SoundsTool / AiChat / ImageOrchestration / Editor(KV) / ImageBrowser / WebView / ParaTranz / OverlayChain / 调试：命令日志 / 调试：会话脏状态）注入 `ILocalizationService`，`Title` 改为 `_loc["Tools.Xxx"]`；新增 `Tools.*` 资源键 11 条（en/zh/en-us 三语），删除所有硬编码 Title。插件测试断言同步改为对 key 断言（stub loc 返回 key 自身）
+3. **脚本误改修复**：批处理脚本注入时误伤两处——`ParatranzPlugin` ctor 残留逗号（`viewModel), loc`）已修正；`SessionDirtyDebugTool` 的 `_loc` 字段被插进 ViewModel 类而非 Plugin 类（编译期报"不存在名称 _loc"）已移正。一次性脚本已删除
+
+**测试**：831/831（13 项目全绿）。
+
+---
+
+## R46：About 消息框化 + 存档工具并入存档管理 + 剪贴板截获内容修复 | 2026-08-07
+
+**反馈**（用户）：① About 弹窗不需要两个确认按钮，右上角能关就行（"直接拿 messagebox 做不就行了"）；② 存档修改工具应集成到存档管理里，直接加个修改按钮；③ 日志现在完全没有剪贴板里的内容了。
+
+**修复/新增**：
+1. **About → MessageBox**：Player.csproj 加 `MessageBox.Avalonia 12.0.0`（编辑器同款，命名空间 MsBox.Avalonia），`MessageBoxManager.GetMessageBoxStandard` 纯消息 + 右上角 X 关闭；PromptDialogWindow 恢复原样（此前加的"无按钮模式"撤销——不折腾共享组件）
+2. **存档修改工具并入存档管理**：移除调试菜单入口；存档管理窗口每行新增「修改」按钮 → `EditSaveRequested` 事件 → 宿主打开编辑器并预载该存档（`LoadEntryAsync`）；「保存并加载」后存档管理列表自动刷新（大小变化可见）
+3. **剪贴板截获内容修复（host.html v2.56）**：v2.54 后真实剪贴板干净但日志无截获——Ruffle 流程 textarea.value → focus → select() → execCommand("copy")，WebView2 里 selection 时序不稳取不到内容。提取链改为 selection → activeElement(textarea) → 兜底 `querySelector("textarea")`（execCommand 调用时 Ruffle 临时 textarea 尚未移除）——日志恢复「游戏剪贴板日志(截获)」
+
+**测试**：831/831（13 项目全绿，本轮无新增测试）。**待用户复测**：剪贴板内容回日志。
+
+---
+
+## R45：存档修改工具（调试用：加载/查看结构/编辑/保存/另存/保存并加载）| 2026-08-07
+
+**目标**（用户需求）：写个存档修改工具作为调试工具（顺带能看存档结构）——加载指定存档、修改、保存/另存、保存并加载。
+
+**新增**：
+1. **LSO ↔ JSON 双向转换（lso-expand-web.js v2.49）**：`LsoExpand.toTree(b64)` = 解析 LSO（复用展开器全链路）→ 引用内联树（`__amf` 类型标记：object/array/vecint/vecobject/dict/date/xml/bytes/int/double）；`fromTree(json)` = JSON → 全内联重编码 → **立即回验 parseLso**（改坏在写入前报错）。`sanitizeTree` 处理 JSON 不可表达的 NaN/±Infinity（存档里有 755 处未初始化 double）→ 字符串标记，`encValue` 的 setFloat64 自动还原——**round-trip 与原始树完全一致**（两个样本存档 node 验证）
+2. **存档修改工具（SaveEditorWindow + SaveEditorViewModel）**：调试菜单入口（需已加载游戏）。存档下拉（key/大小）→ 加载 → JSON 树缩进文本 + 结构摘要行（LSO 名/格式 v/根条目数 + 根条目类型·className——"看结构"）；**保存**（写回原 key）/ **另存为**（弹输入框新 key，默认「原名-copy」）/ **保存并加载**（写回 + 重载页面清 Ruffle SharedObject 内存缓存后生效，关窗口）；错误路径（非 LSO/JSON 坏/编码失败）状态行提示不写坏档
+3. 保存后重启游戏时启动展开器会执行 v2.48 的 m_vFactions 归一化（与游戏读取路径一致，工具不重复处理）
+
+**测试**：SaveEditorViewModelTests +8（列表/加载+摘要/解析错误/保存脚本+状态/编码错误/另存新 key/保存并加载触发重启/未选择提示）。**831/831**（13 项目全绿，Player.Core.Tests 119/119）。
+
+---
+
+## R44：剪贴板真根因修复 + 版本号/About + 存档日志 zip 导出（试用发布准备）| 2026-08-07
+
+**背景**：用户准备发布试用版，验收反馈：删档修复 ✓ / F12 ✓ / 导出日志 ✓ / 报错弹窗待确认 / **"剪贴板里依旧全都是日志"**（v2.53 未达预期）。
+
+**修复/新增**：
+1. **剪贴板真根因（host.html v2.54）**：源码取证 ruffle-rs `web/src/ui.rs` `WebUiBackend::set_clipboard_content`——Ruffle 写剪贴板**不走 `navigator.clipboard.writeText`**（注释：该 API 仅 HTTPS 安全上下文可用，本页 http://127.0.0.1 不可用），而是隐藏 textarea + select + `document.execCommand("copy")`（wasm glue 无 `__wbg_writeText`，仅 `__wbg_execCommand`）。v2.44-v2.53 的 writeText 包装从未被调用；v2.53 前日志截获行全靠 readText 轮询读回。**补拦截 `document.execCommand`**（copy/cut → 捕获选区进日志 + 返回 true 不写真实剪贴板）；Ruffle 自身 buffer 不受影响（游戏内 System.getClipboard 仍可读）。writeText/readText 包装保留防未来版本
+2. **版本号 v0.9.0**：csproj `<Version>0.9.0</Version>` → 窗口标题 / 启动日志首行 / About / 导出 zip 命名同源；publish.ps1 zip 默认命名改读 csproj Version（替代当天日期）
+3. **About**：调试菜单「关于」→ 版本 / Ruffle nightly-2026-08-04 / 平台 / 日志目录 / 游戏根目录 / WebView2 数据目录
+4. **导出存档+日志 (zip)**：调试菜单 → `NeoScavengerPlayer-export-{版本}-{时间戳}.zip` = info.txt + saves/localstorage.json（host.html 新增 `__exportSaves()` 全量存档）+ logs/*.log + save_backup/*.json（Core 新 `PlayerBundleExporter`，System.IO.Compression 内置），完成后 Explorer 定位——试用反馈/存档迁移一键包
+5. **README**：新增播放器小节（要求/使用/数据位置/已知限制/反馈方式）
+6. **文档**：42 计划 v2.54 条目 + 发布前校验清单补 8-10 条（存档闭环/调试工具/报错捕捉）+ 版本号节更新 + 运行时落盘表补导出产物
+
+**实机**（用户）：删档 ✓ / F12 ✓ / 导出日志 ✓ / 报错弹窗未确认（触发方式：DevTools Console 执行 `window.__log("error","TypeError: test")`）；剪贴板 v2.54 修复待复测。
+
+**测试**：PlayerBundleExporterTests +2。**823/823**（13 项目全绿，Player.Core.Tests 111/111）。
+
+---
+
+## R43：耐久推演 + 条件效果翻译 + 游戏音频资产（提取/浏览/播放）| 2026-08-07
+
+**定位**（用户确认）：可视化 = 单实体 · 只读 · 语义翻译。本轮补"翻译"层缺口：时间维度推演、条件真实效果、声音资产可听。
+
+**1. 耐久寿命推演**（生命周期区块）：`寿命 每小时 ≈100h · 装备时 ≈100h · 每次使用 ≈100×`——把损耗率翻译成"能用多久"（`Vis.Lifespan`）。
+
+**2. 条件效果翻译**（hover 徽章预览）：`BuildConditionEffectText` 解析 `aFieldNames/aModifiers` 逗号配对 → `m_fMoveCost +0.5 · m_fVisibility -0.2`——自定义条件光看名字不再看不懂（Doc 38 §5 格式）。
+
+**3. 游戏音频资产管线** ⭐：
+- **提取** `player-tools/extract-sounds.js`：零依赖 SWF 解析器——CWS zlib 解压 + 标签流起始探测 + **DefineSound**（头 = SoundId + 打包字节[Format:4|Rate:2|Size:1|Type:1] + SampleCount + [SeekSamples]）提取 MP3 + **SymbolClass**（NULL 结尾字符串，实测非长度前缀）映射 cue 名 → `{GameRootDir}/sounds/{cue}.mp3` + `index.json`。实测 **154/154 MP3 全部有效**（37MB，147 个 cue 命名，含 cueRiflePickup/cueAmmoDrops4 等）
+- **播放** `AudioPlaybackService`（App，winmm MCI P/Invoke 零依赖）：`IAudioPlaybackService` 接口（Core）——cue 名精确→子串匹配（strSnd `cueRifle` → 资产 `NEOScavengerSounds_cueRiflePickup`）；游戏目录切换自动重载索引
+- **音频资产 Tool Dock**（右栏「音频资产」）：搜索 cue 名 + 点击播放/停止 + 大小显示；未提取时提示运行脚本
+- **可视化播放按钮**：攻击模式行声音 `▶` + 装备区块 aSounds `▶`（`VisHelper.PlaySoundButton`，无索引自动隐藏）
+
+**测试**：EntityEditor 66/66，全量 **821/821**。⚠️ 声音为游戏 SWF 内嵌（修改需改 SWF，超出编辑器范围；此处仅资产查看/试听）。
+
+---
+
+## R42：Player 调试工具四件套（剪贴板接管 · F12 DevTools · 日志目录/导出 · 报错捕捉）| 2026-08-07
+
+**目标**（用户需求）：① 游戏老往剪贴板写内部日志很烦，能否转移到日志里（且每次启动都要点「允许写入剪贴板」）；② 想要 F12 工具看 localStorage 和 network；③ 打开日志位置、导出日志；④ 游戏报错退出到播放器能被捕捉。
+
+**修复/新增**：
+1. **剪贴板完全接管（host.html v2.53）**：旧 writeText 包装器兜底 `execCommand('copy')` 仍写真实剪贴板（日志刷屏）+ 每次启动弹 WebView2「允许写入剪贴板」权限框；readText 800ms 轮询还弹读取权限框。现在 writeText 只 `captureClipboard()` 进日志（level=clipboard）返回成功、readText 返回空串、删除轮询——**启动零弹窗、真实剪贴板干净、内容完整进日志文件**（Ruffle 只调 writeText，已核实无 ClipboardItem）
+2. **F12 开发者工具**：`WebView2DevTools`（ComImport 子集桥接 `ICoreWebView2.OpenDevToolsWindow`，vtable slot 48；包公共面只有原始 IntPtr）；窗口 F12 + 调试菜单触发；游戏聚焦时 WebView2 原生 F12/Ctrl+Shift+I 亦可用。DevTools 覆盖 Network / Application-localStorage / Console
+3. **日志目录/导出**：LogOverlayWindow 顶栏 + 调试菜单；「打开日志目录」explorer /select 最新日志；「导出日志」= 头部信息 + localStorage 快照（`__dumpLocalStorage()`，VM 注入 ExecuteJs 桥）+ 全部 run 日志行 → `player-log-export-*.txt`（RunLogReport 纯函数构建），导出后 explorer 定位
+4. **报错捕捉**：host.html 补 unhandledrejection + `load().catch` 写 /__log + `window.__log` 全局；SwfLogBridge 新增 `GameError` 事件（致命签名正则，10s 去抖）→ 播放器弹窗「检测到游戏错误」[打开日志目录/知道了]（VM 30s 去抖）+ 状态栏警示；异常退出（run 内有 error 行）状态栏「游戏异常退出」
+
+**测试**：SwfLogBridgeTests +5 模式（cannot convert / window.onerror / unhandledrejection / stack overflow / SWF 加载失败）→ GameError，+3 良性行不误报；RunLogReportTests +2。**821/821**（13 项目全绿，Player.Core.Tests 109/109）。
+
+---
+
+## R41：数值条改指标值 + 颜色柔化 + 展开详情紧凑化 | 2026-08-07
+
+**问题**（用户验收 + 截图识别）：① 数值条没有比较对象——填充比例表达的是"Cut 占比"或随意分母（有效伤害 `/8`、士气 `/1`），0.3 伤害的条看起来 60-70% 满，误导；② 高饱和纯色刺眼（Cut #C62828 / Blunt #1565C0 / 有效紫 #6A1B9A / 士气绿）；③ AttackMode 展开详情里 44px 图标 + "近战"独占一行，小图浪费行高。
+
+**修复**：
+1. **数值条 → 比例条 + 指标值**：填充条只保留有语义的比例（总伤害/攻击行的 **Cut:Blunt 构成比**）；有效伤害（`0.4 (×1.30)`）、士气补正（`+30%`）改为**纯指标值文本**（`ValueRow`/内联文本 + 语义色），删除无参照的分母
+2. **颜色柔化**（Material 300-400 系）：Cut `#E57373` / Blunt `#64B5F6` / 有效 `#9575CD` / 士气 `#66BB6A`·`#E57373` / 耐久 `#66BB6A`·`#FFB74D`·`#E57373`·`#90A4AE`——条类统一低饱和，高饱和仅用于文字前景（对比度需要）
+3. **展开详情紧凑化**：图标 36×36 + 类型 + 士气补正 + 有效伤害**合并为一行**（小图标不再独占行）；公式说明降为小字
+4. 总伤害区有效伤害合计：StatBar → `ValueRow`
+
+**测试**：断言适配新颜色（#E57373/#64B5F6）与新文本（`Effective 5.6 (×1.25)`）；EntityEditor 66/66。⚠️ 全量 12 项目 798/798 通过（Integration.Tests 因 NeoEditor GUI 运行锁 DLL 未构建，关闭后补齐）。
+
+---
+
+## R40：ItemType Detail 层级重构（两段式信息架构）| 2026-08-07
+
+**问题**（用户批评）：Detail 层级混乱——9 个区块平铺无主次、同一语义碎片化（条件散在 3 张卡）、Card 套 StackPanel 套 WrapPanel 套 Border 嵌套 5-6 层、三种值组件（StatBar/CreatureStatGrid/StatCard）混用、标题风格不统一。
+
+**重构**（`ItemTypeEntityVisualizer` + `VisHelperService`）：
+
+1. **心理模型两段式**（7 区块，语义聚合）：按用户使用物品的认知顺序组织
+   - 第一段「是什么/怎么用」：① Hero 身份（图/名/描述 + **关键数字行**：重量/价值/堆叠/镜像/槽深）→ ② 装备（穿装预览 + 槽位 + **交互音效 aSounds**）→ ③ 战斗（总伤害 → 攻击模式明细，攻击音效在行内）→ ④ **效果**（携带/使用/装备条件 + 必须条件 CondId + 物品属性 ItemProp——**条件从 3 处合并到 1 处**）
+   - 第二段「怎么活着/和什么有关」：⑤ **生命周期**（耐久条 + 损耗 + 损坏掉落 + 弹药 ChargeProfiles）→ ⑥ **来源与产出**（开关 + 战利品表 + 组件）→ ⑦ 容器（独立区块）→ ⑧ 被引用
+2. **统一视觉语言**：新组件 `SectionHeader`（**图标 + 色条** + 标题）统一所有区块头（⚔战斗/🧍装备/✨效果/⏳生命周期/📦容器/🔗来源产出）；`ValueRow`（90px 键值行）统一标量值展示；区块 = SectionHeader + Card，**嵌套 ≤ 4 层**
+3. **两列情境布局**：`AddRow(left, right)`——区块按情境两两并排（战斗|装备 / 效果|生命周期 / 容器|来源产出），空区块让另一侧横贯；不再单列无限堆叠
+4. **声音按心理情境归位**（用户指出"音效和关联有什么关系"）：`aSounds`（拾取/放下）→ 装备区块（"拿它干嘛"情境）；`strSnd`（攻击音效）→ 攻击模式行内（已有）
+5. **Hero 错位修复**：关键数字行从跨行 Grid 放置并入身份列内部（消除隐式行导致的错位）
+6. 旧函数清除：6 个卡函数 → 7 个 body 构建 + 守卫，空区块不渲染
+7. 资源键：`Vis.Effects`/`Vis.Lifecycle`/`Vis.Associations`（zh **来源与产出** / en **Sources & Crafting**）
+
+**验证**：EntityEditor 66/66，全量 **811/811**。⚠️ 待 GUI 验收整体观感。
+
+---
+
+## R39：ImageAsset 引用不再触发 LookupRef 约束异常（R38 追修）| 2026-08-07
+
+**问题**（实机日志）：打开物品 Detail 时 `[RawData] LookupRef<ImageAsset> failed ... violates the constraint of type 'T'` 异常刷屏——`ItemType.ImageList/SpriteList` 与 `AttackMode.strIMG` 的 `[ReferenceField(typeof(ImageAsset), TargetKey="{FileName}")]` 指向**非 IEntity 类型**（纯文件名引用），R34 的统一解析入口 `MakeGenericMethod(targetType)` 违反 `LookupRef<T> where T : IEntity` 约束 → 每个段抛 ArgumentException（被 catch 吞掉但刷 Warning 日志），且这些段被误标为"未解析"琥珀。
+
+**修复**（`VisHelperService.RawData.cs` 三处）：
+1. `ResolveRawSegment`：入口加 `!typeof(IEntity).IsAssignableFrom(targetType)` 守卫——非实体类型直接返回 null，不再抛异常
+2. `BuildRawRefCell`：非实体目标类型渲染**灰色原文徽章**（文件名引用天然无需解析），不标琥珀
+3. `CountUnresolvedSegments`：非实体引用不计数"未解析"——Expander 头统计不再虚高
+
+**测试**：+1（`BuildRawDataTable_ImageAssetRefs_RenderPlainRawText_NotAmber`：无琥珀、灰色原文徽章、`UnresolvedRefSegments == 0`）；**811/811**。
+
+---
+
+## R38：士气加成纳入伤害可视化（R36 追修）| 2026-08-07
+
+**问题**（用户指出）：R36 战斗卡只显示基础 Cut/Blunt，**漏了武器士气补正（`fMorale`）**——Doc 38 定义实际伤害 = (1+士气+此值)×(1+近战/远程加成)×武器伤害（实测最常见 0.3）。且展开详情的 Morale 数值行用整数格式 `+#;-#;0`，0.25 显示成 `+0`。
+
+**修复**（对照全字段重新审视后一并处理）：
+1. **攻击模式行 meta** 加 `士气 +25%`（`+0%;-0%` 百分比格式）——武器伤害修正一眼可见
+2. **展开详情伤害区重排**：基础（行内堆叠条）→ **士气补正 StatBar**（`25% (base)` 灰 / >25% 绿 / <25% 红，复用 AttackMode visualizer 成熟模式）→ **有效伤害 StatBar**（`5.6 (1.25 × 4.5)`）→ **公式说明**（`实际伤害 = (1 + 角色士气 + 武器补正) × (1 + 近战/远程加成) × 武器伤害`，新键 `Vis.DamageFormula`）
+3. **总伤害条下方**：Σ 有效伤害（每模式 base×(1+morale) 求和，`6.9 (×1.25)`）
+4. **`strIMG` 武器图标**：展开详情顶部显示（48×48，`Image.ToRawString`——同 R36 守卫加固思路，不依赖 RawText）
+5. 删除整数格式的 Morale 数值行（bug 源）
+
+**测试**：`ItemTypeCombatCardTests` 强化——Rifle Shot（Morale 0.25）断言 meta `士气 +25%` + 内联详情有效伤害 `5.6 (1.25 × 4.5)`；**810/810**（13 项目全绿）。
+
+---
+
+## R37：Player 存档修复闭环（LSO 引用展开 · 运行时生效 · 保存归一化）| 2026-08-07
+
+**目标**（用户需求）：受伤存档重启必崩 → 读档/保存跨重启可靠（"既然 ruffle 有序列化问题，为什么我们不接管呢"）。
+
+**根因链（三层）**：
+1. **读写端引用表错位**：Ruffle 写端（对象身份去重）写出的 AMF3 引用号按写端表编号，读端表（所有复杂类型占位入表）与之错位 → 同一引用号解析到不同对象（伤口 `vCurrentStates` → 物品对象 → for-each 读 `Number.m_fDate` 崩 / `Vector.<int>` 强转崩）。方案：**接管序列化**——`lso-expand-web.js` 两遍法展开器（写端表语义精确重建 + 类型不匹配回退 + `VECINT_PROPS` 字段知识修正），SWF 加载前把 localStorage 存档引用全展开为内联。
+2. **运行时展开从未执行（两层真凶）**：① 展开器导出行 `global.LsoExpand`——浏览器无 `global` → 脚本抛错，`window.LsoExpand` 从未定义，启动块与 getItem 包装全部静默跳过（node 测试有 `global` 掩盖了问题）→ 改 `globalThis`；② `GameContentServer` 路由把 `/lso-expand-web.js` 落入游戏根目录 → **404** → 脚本从未加载 → 改 **Web 目录优先**路由（+2 回归测试，13/13 绿）。
+3. **保存崩溃（`cannot convert false to Vector.<int>`）**：反编译 SWF 定位 `Creature.get SaveData` 把 `m_dictFactions` 每个值 push 进 `Vector.<int>`；存档数据 100% 干净（flash-lso 0 引用 0 错误），`false` 是游戏运行期 faction 逻辑在**空字典条目**上运算产生的运行态产物（WAL 挖到崩溃前 5 秒成功保存的存档为证）。修复：**形态归一化**——玩家 `m_vFactions` 空（异常形态）补全为与生物一致的 14×-100 默认声望。
+
+**改动**：`lso-expand-web.js`（v2.45→v2.48：两遍法展开器 + globalThis 导出 + 归一化）、`host.html`（v2.47：启动即展开落盘 + 结果 POST /__log 可验证化）、`GameContentServer.cs`（Web 目录优先路由 + .html/.js/.wasm no-store）、`GameContentServerTests`（+2 回归测试）；SWF 反编译分析（player-tools/swf-src，FFDec 取证）。
+
+**验证**：浏览器/节点展开器双版本逐字节一致 + 幂等；flash-lso 解析展开档 0 引用 0 错误；Player.Core.Tests 13/13；**实机闭环全通过**：读档 → 保存 → 关闭重开 → 读档 → 保存。
+
+**v2.49（存档管理"删除/覆盖无效"）**：用户实机发现同一会话内删除/覆盖存档后游戏仍加载同一存档。根因：**Ruffle SharedObject 内存缓存**（`avm2_shared_objects`）——`get_local` 缓存命中直接返回实例，运行中游戏从不重读 localStorage；`clear()` 只删 storage 不清缓存。存档管理的删除/清空/恢复只改 localStorage（备份证明真实执行），对运行中游戏无效。修复：操作后提示"需重启游戏生效"（`Storage.NeedRestart`）+ 存档管理窗口新增「重启游戏」按钮（`RestartGameCommand` → 页面刷新清缓存）；Player.Core.Tests 99/99。调试教训：用户从 Rider F5（Debug 构建）启动，存档在 Debug 的 WebView2 数据目录（与 Release 独立）——排查存档落盘先确认启动构建（leveldb LOG 的 Recovering 记录为证）。
+
+**v2.50（旧档"复活"追修①：自动保存写回）**：删除存档 → 重启 → 读到备份前旧档。反编译取证：游戏**每回合结束自动保存**（`PlayState.update → EndDMTurn → SaveGame`，`GUIEscMenu.bAutosave`）——删除只清 localStorage，Ruffle 缓存实例仍持旧 data，玩家行动推进回合即自动保存 → flush 把缓存旧档写回。修复：删除/清空/恢复后**自动重启游戏**（~300ms 内重载页面，在游戏有机会自动保存前销毁页面）；host.html setItem 包装器加 `__blockSaves` 拦截。
+
+**v2.51（旧档"复活"追修②：实例 Drop 全量 flush）**：游戏内删档（`SharedObject.clear`）→ 重启 → 存档复活仍可继续。源码取证（Ruffle web-lib.rs）：`RuffleInstance::drop` 调用 `flush_shared_objects()` 把**内存缓存所有 SharedObject** 写回 localStorage——`clear()` 只删存储层，缓存实例与 data 原封不动，页面卸载/实例销毁时全量回写把删除"撤销"（真实 Flash 仅显式 flush 写盘，游戏删档流程天然安全；Ruffle 的 Drop 自动 flush 是可靠性设计，删档场景成为复活源）。修复：removeItem 包装器标记 `__savesCleared`；beforeunload/pagehide 监听（先于 Ruffle 注册）在"删过档"时设 `__blockSaves` 拦截卸载 flush。
+
+**v2.52（destroy 路径补拦截 + 拦截条件收窄 + 崩溃修复）**：① `TryDestroyPlayer`（关窗/导航/停止时先 destroy 再卸载）的 Drop flush 早于 pagehide，拦截落空——改为 destroy() 前在同一脚本里先按 `__savesCleared` 置 `__blockSaves`。② 用户质疑"删档后正常关闭是否也没法保存"——拦截条件收窄为「删过档 **且** localStorage 尚无存档」才拦截；已有新档（删除后玩新游戏已自动保存）则放行 flush，新档最后一段进度正常落盘；存档管理 VM 显式设置的 `__blockSaves` 不被覆盖。③ 崩溃修复：v2.50 自动重启与旧的手动 `AskRestartAsync` 弹框冲突（删除后窗口已关闭，再以它为 owner 弹框 → `Cannot show a window with a closed owner`）——移除三处调用。Player.Core.Tests 99/99，Debug+Release 构建 0 错误。
+
+---
+
+## R36：ItemType 战斗表现可视化（游戏语义视角）| 2026-08-07
+
+**目标**（用户需求）：UI 优化 = 可视化和交互性优化——根据字段含义设计呈现与放置，让用户以最小学习/视觉成本查看物品及其**在游戏中的表现**。
+
+**改动（聚焦 ItemType，模式确立后推广）**：
+
+1. **战斗卡重写（BuildCombatCard）** ⭐
+   - **总伤害构成堆叠条**（`VisHelperService.StackedDamageBar` 新组件，Doc 21 §7 P3 落地）：一条条内 Cut（红 #C62828）/ Blunt（蓝 #1565C0）按比例分割 + `4.5 · 切割 2.5 + 钝器 2.0`——一眼看出"切割武器还是钝器"
+   - **攻击模式明细行**：每行 = 槽位+名称 | 伤害堆叠条 | 距离/穿透/音效 | 展开箭头；**点击行内联展开**完整 AttackMode 详情（数值行 + 弹药 ChargeProfile 消耗数据（每次/每小时/每装备小时/每格 + ⚠可降解）+ 攻击者条件（语义色）+ 挥击短语 + 攻击短语 + 备注 + Ctrl+Click 提示）；Ctrl+Click 仍跳转
+   - 未解析的攻击模式段：灰色行保留原文（可审计），不渲染展开
+2. **条件徽章语义色**：Fatal 红 #FFEBEE / 永久(Instant) 橙 #FFF3E0 / 可堆叠 绿 #E8F5E9 / 计时 Duration 蓝 #E3F2FD + 后缀（`Bleeding · FATAL` / `WellFed · 12h`）——携带/使用/装备三组 + 攻击模式内联详情统一应用
+3. **耐久 StatBar**：耐久度进度条（>50% 绿 / >25% 橙 / 低红 / ∞ 灰）+ 损耗率键值行
+4. **守卫加固** ⭐（真实脆弱点）：ItemType visualizer 全部 `IsNullOrWhiteSpace(it.Xxx)`（implicit→`RawText` 缓存，仅 serializer 填充）改为 `Count > 0`；`Split(',')` 改 `ToRawString(",").Split(',')`——绕过 serializer 的实体构造路径（测试/新建/部分恢复）不再静默不渲染
+5. 新资源键 ×4：`Vis.TotalDamage` / `Vis.Penetration` / `Vis.Sound` / `Vis.WieldPhrase`（en/zh/en-us）
+
+**测试**：+3（`ItemTypeCombatCardTests`：总伤害堆叠 + 行渲染（干净 id、距离/穿透 meta）/ 内联详情初始隐藏 / 条件语义色）；**810/810**。
+
+**验收**：EntityEditor.Tests 65/65；全量 810/810（13 项目）；build 0 错误（⚠ Player 主项目 MSB3027 因 NeoScavengerPlayer 运行中锁 DLL，代码无错误）。
+
+---
+
+## R35：切换游戏目录后自动重载 getmods.php 与 mod 目录 | 2026-08-07
+
+**问题**：设置页切换游戏根目录后，getmods（getmods.php 的 Game profile 与 mod 命名空间映射）和 mod 目录不自动重载——数据浏览器/引用解析继续用旧目录数据。
+
+**根因（两处断点）**：
+1. `BrowserIndexService`（getmods.php 解析 + 引用索引）**未监听 `GameRootDirChangedMessage`**——`EnsureBuiltAsync` 的 `_built` 缓存不失效，`Invalidate()` 无人调用 → 索引、`GlobalModNames`、命名空间映射永远是旧目录的
+2. `ModIndexViewModel.EnsureGameProfileAsync` 是 **one-time 创建**（`FindAsync(-1)` 存在即返回）→ Game profile 的 getmods.php 内容/路径不随目录更新；且原代码 `LoadProfile`（已填 ModLoadInfos）后又 `AddRange(LoadMods(...))` 造成**重复 mod 列表**
+
+**修复**：
+- `BrowserIndexService` 注册 `GameRootDirChangedMessage` 接收：`MarkStale()`（标记强制重建 + 清内存缓存/session store，**不删 index.db**）+ 触发 `EnsureBuiltAsync` 重建（重新解析新目录 getmods.php → 命名空间映射/索引/GlobalModNames 全量更新）
+- `EnsureBuiltAsync` 接入 `_forceRebuild`（目录切换后即使 index.db 存在也走全量重建）；`_indexedRootDir` 记录构建时目录——配置重载的重复消息（AppConfig setter 已跳过等值赋值）不会误触发重建，启动 Restore-from-disk 秒开不受影响
+- `SemaphoreSlim _buildGate` 串行化索引构建，杜绝切换目录与进行中重建的竞态
+- `ModIndexViewModel.EnsureGameProfileAsync` 改为**校验并刷新**：Game profile 的 Path/Content 与当前 getmods.php 不一致时更新并重载 `ModLoadInfos`（顺带修复重复 AddRange bug）
+- 既有接收方（ResourceManager/ProfileTool/ImageTools/ModDatabase 懒加载失效）确认工作正常
+
+**验证**：build 0 错误；全量 805/805。⚠️ 待 GUI 手动验收（切换目录 → 数据浏览器/Mod 树显示新目录数据）。
+
+---
+
+## R34：Raw Data 审计视图（分组 + 类型化渲染 + 统一引用解析）| 2026-08-06
+
+**背景**：对照 center 可视化（`BuildDetail`）与全字段解析（`BuildRawDataTable`）发现三个问题——① 两条平行数据视图无连接，visualizer 条件过滤漏掉的字段**无任何提示**（静默隐藏）；② 引用解析双路径（Detail 走 `LookupRef<T>`、Raw Data 走 `LookupSubject`）可能不一致（round30 用户反馈）；③ Raw Data 不分 `FieldGroupMetadata` 组、无类型化渲染。
+
+**方案**：Raw Data 升级为**分组审计视图**（`VisHelperService.RawData.cs` 新增 partial）：
+
+- **按 `FieldGroupMetadata` 分组**（Core 新增 `GetSections`，与 KeyValue 编辑器同源）：组头条 = 组名 + `N 字段 · M 有值` 统计；未映射类型回退默认组
+- **类型化行渲染**：bool 颜色编码（保留 `0/1` 原文）；引用列**逐段解析为可点击徽章**（绿=已解析 Subject + P6 hover 预览 + Ctrl+Click 跳转 / Ctrl+RMB Peek，琥珀=未解析警示保留原文）；文本 100 字符截断 + hover 全文
+- **统一引用解析入口** ⭐：Raw Data 引用段改走 `IReferenceResolver.LookupRef<T>`（`MakeGenericMethod`，Detail 徽章同路径）——彻底移除 `LookupSubject` 依赖，两处解析不可能再不一致
+- **Expander 头带审计统计**：新 API `BuildRawData(entity)` 一体化（头 + 折叠体），标签 `原始数据 (24 字段 · 12 有值 · 2 个引用未解析)`；`ComputeRawDataStats` 纯统计
+- **24 个 visualizer** 调用点统一替换为 `root.Children.Add(_vis.BuildRawData(<entity>))`（96 行删除，AttackMode 的 `rawContent` 间接层消除）
+- 新增 3 组资源键（`Vis.RawFields` / `Vis.RawUnresolved` / `Vis.RawOriginal`，en/zh/en-us）
+
+**测试**：+6（`RawDataTableTests`：分组顺序 / 引用徽章走 LookupRef 干净 id / 未解析琥珀 / 统计 / 标签格式 / 一体化结构）；**805/805**。
+
+**附：测试稳定性修复** ⭐ 全量并行偶发失败根因：`KeyValueEditorFieldExplanationTests` 写入共享 `Application.Current.Resources["Services"]`，其他 UI 测试经 `GetServices` 读取 → xUnit 类级并行互相污染。修复：EntityEditor.Tests 加 `[assembly: CollectionBehavior(DisableTestParallelization = true)]`（共享 headless Avalonia 单例下串行确定性）。基线 worktree 对照：HEAD 14 次全量 0 失败；修复后 8/8 稳定。
+
+**验收**：build 0 错误；全量 8 次连跑 805/805 无偶发失败。详见 [test_round34_summary.md](testround/test_round34_summary.md)。
+
+---
+
 ## 播放器 v2.44：受伤存档重启必崩修复（接管序列化——LSO 引用全展开） | 2026-08-05
 
 **问题**：角色受伤后存档，重启必崩（`m_fDate not found on Number`，Ruffle issue #1069）。

@@ -17,22 +17,25 @@
             DockPanel.Dock="Top"
             Padding="10,6"
             Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}">
-            <StackPanel Orientation="Horizontal" Spacing="10">
+            <!--  R55: 两行——第一行提示，第二行按钮（紧凑）  -->
+            <StackPanel Spacing="6">
                 <TextBlock
-                    VerticalAlignment="Center"
                     Text="{Binding [Storage.Hint], Source={x:Static loc:LocalizationManager.Instance}}"
                     FontSize="11"
+                    TextWrapping="Wrap"
                     Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}" />
-                <Button
-                    Content="{Binding [Storage.Refresh], Source={x:Static loc:LocalizationManager.Instance}}"
-                    Command="{Binding RefreshCommand}"
-                    Background="#E8E8E8"
-                    Foreground="Black" />
-                <Button
-                    Content="{Binding [Storage.ClearAll], Source={x:Static loc:LocalizationManager.Instance}}"
-                    Click="OnClearAllClick"
-                    Background="#E8E8E8"
-                    Foreground="Black" />
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <Button
+                        Content="{Binding [Storage.Refresh], Source={x:Static loc:LocalizationManager.Instance}}"
+                        Command="{Binding RefreshCommand}" />
+                    <Button
+                        Content="{Binding [Storage.ClearAll], Source={x:Static loc:LocalizationManager.Instance}}"
+                        Click="OnClearAllClick" />
+                    <!-- v2.49: Ruffle 内存缓存 — 删除/恢复需重载游戏页面后才生效 -->
+                    <Button
+                        Content="{Binding [Storage.RestartGame], Source={x:Static loc:LocalizationManager.Instance}}"
+                        Command="{Binding RestartGameCommand}" />
+                </StackPanel>
             </StackPanel>
         </Border>
 
@@ -58,7 +61,7 @@
                                     Padding="6,3"
                                     BorderThickness="0,0,0,1"
                                     BorderBrush="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}">
-                                    <Grid ColumnDefinitions="*,80,64,64">
+                                    <Grid ColumnDefinitions="*,80,64,64,64">
                                         <TextBlock
                                             Text="{Binding Key}"
                                             FontSize="12"
@@ -80,8 +83,17 @@
                                             FontSize="11"
                                             Background="#E8E8E8"
                                             Foreground="Black" />
+                                        <!-- R46: 存档修改工具入口（JSON 编辑/保存/另存/保存并加载） -->
                                         <Button
                                             Grid.Column="3"
+                                            Content="{Binding [Storage.Edit], Source={x:Static loc:LocalizationManager.Instance}}"
+                                            Tag="{Binding}"
+                                            Click="OnEditClick"
+                                            FontSize="11"
+                                            Background="#E8E8E8"
+                                            Foreground="Black" />
+                                        <Button
+                                            Grid.Column="4"
                                             Content="{Binding [Storage.Delete], Source={x:Static loc:LocalizationManager.Instance}}"
                                             Tag="{Binding}"
                                             Click="OnDeleteClick"

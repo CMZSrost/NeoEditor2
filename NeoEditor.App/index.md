@@ -14,10 +14,13 @@
 | [spec/README.md](spec/README.md) | 规则登记表（方向 D / 基石 R / 禁止 N 全列表） | ✅ |
 | [spec/_template.md](spec/_template.md) | 新增规则模板（六项字段） | — |
 | [spec/D01](spec/D01-core-plugin-architecture.md) | **根本架构方向** — Core/Plugin 边界、插件化依据 | ✅ |
+| [spec/D02](spec/D02-dynamic-dock-layout.md) | **动态 Dock 布局** — Tool/Document/Service 分类 + IToolPlugin 动态构建 | ✅ |
+| [spec/D03](spec/D03-paratranz-integration.md) | **ParaTranz 翻译平台集成** — 数据转换 / 同步工作流 / UI 设计 | ⏳ M1-M4 已完成（M5 可选） |
 | [spec/R00](spec/R00-spec-maintenance.md) | spec 维护元规则 | ✅ |
 | **R01-R16** | 基石规则（DO）：状态所有者/单 Session/注入/分层/同源/保存/选中/交互等 | ✅ |
 | **R17-R22** | Plugin 规则：互不引用/依赖范围/跨 Plugin 通信/DI/独立测试/集成测试 | ✅ |
 | **R23-R25** | Plugin 分类标记/统一写路径/跨 Plugin 扩展点 | ✅ |
+| **R26-R28** | 保存导出双 Repository（v2）/ 图片双视图 / AI-MCP 配置 | ✅ |
 | **N01-N06** | 禁止规则（DON'T）：禁静态状态/禁 .Instance/禁 View 逻辑等 | ✅ |
 | [spec/open-questions.md](spec/open-questions.md) | 暂无未决项 | ✅ |
 
@@ -31,8 +34,8 @@
 
 | 文件 | 含义 | 状态 |
 |------|------|------|
-| [Docs/42-webview-ruffle-preview-plan.md](Docs/42-webview-ruffle-preview-plan.md) | **WebView + Ruffle Web 预览**（Avalonia 官方 WebView 工具面板 + 内置 SWF 快速预览，与 ruffle.exe 运行器并存互补） | 📋 计划（P0 验证前置，暂不实施） |
-| [Docs/40-ruffle-game-runner-plan.md](Docs/40-ruffle-game-runner-plan.md) | Ruffle 游戏运行器（环境变量检测 + 进程运行 SWF + 日志捕获） | ✅ P1 完成（P2/P3 待做） |
+| [Docs/42-webview-ruffle-preview-plan.md](Docs/42-webview-ruffle-preview-plan.md) | **WebView + Ruffle Web 内置预览 + NeoScavengerPlayer 独立播放器**（取代 Docs/40 ruffle.exe 运行器） | ✅ P0-P5 全部完成（v2.44） |
+| [Docs/40-ruffle-game-runner-plan.md](Docs/40-ruffle-game-runner-plan.md) | Ruffle 游戏运行器（外部 ruffle.exe 进程） | 🗑 已废弃（2026-08-05，被 Docs/42 取代删除） |
 
 ### 已完成里程碑
 
@@ -63,7 +66,7 @@
 | 文件 | 含义 |
 |------|------|
 | [Docs/27-compliance-test-checklist.md](Docs/27-compliance-test-checklist.md) | 合规性测试检查清单 |
-| [Docs/testround/](testround/) | 测试轮次记录（test_round13~32） |
+| [Docs/testround/](testround/) | 测试轮次记录（test_round01~33） |
 
 ### 参考资料
 
@@ -94,13 +97,13 @@
 
 ## 阅读顺序建议
 
-1. **先读** [spec/README.md](spec/README.md) — 知道硬约束（R/N 规则全表，R00-R28 + D01-D02 + N01-N06 全部落地）
+1. **先读** [spec/README.md](spec/README.md) — 知道硬约束（R/N 规则全表，R00-R28 + D01-D03 + N01-N06 全部落地）
 2. **再读** [Docs/25](Docs/25-architecture-decisions.md) + [Docs/26](Docs/26-refactor-roadmap.md) — 理解架构决策与重构路线
-3. **当前** [Docs/30](Docs/30-post-m12-development-plan.md) — M13+ 全部完成内容一览
-4. **进行中** [Docs/40](Docs/40-ruffle-game-runner-plan.md)（P2/P3 待做）+ [Docs/42](Docs/42-webview-ruffle-preview-plan.md)（P0 验证先行）— 下一个任务
+3. **当前** [Docs/42](Docs/42-webview-ruffle-preview-plan.md) — WebView 内置预览 + NeoScavengerPlayer 播放器（v2.44，P0-P5 完成）⭐
+4. **进行中** [spec/D03](spec/D03-paratranz-integration.md)（M1-M4 已完成，M5 可选）+ [Docs/42](Docs/42-webview-ruffle-preview-plan.md)（播放器后续打磨）— 下一个任务
 5. **按需深入**：
    - ProDataGrid → [Docs/31](Docs/31-prodatagrid-migration-plan.md) + [Docs/34](Docs/34-prodatagrid-column-filter-plan.md) + [外部文档镜像](Docs/third-party/prodatagrid/)
    - Agent/AI → [Docs/32](Docs/32-agent-orchestration-plan.md)
-   - 像素图像 → [Docs/33](Docs/33-image-generation-plan.md)
+   - 像素图像 → [Docs/33](Docs/33-image-generation-plan.md) + [Docs/39](Docs/39-image-editor-workstation-refactor-plan.md)
    - 插件拆分 → [Docs/28](Docs/28-plugin-architecture-migration.md)
-   - 工作流 → [Docs/23](Docs/23-architecture-redesign-proposal.md) + [Docs/24](Docs/24-workflow-specification.md)
+   - 工作流 → [Docs/23](Docs/23-architecture-redesign-proposal.md) + [Docs/24](Docs/24-workflow-specification.md) + [Docs/41](Docs/41-save-workflow-onboarding-plan.md)

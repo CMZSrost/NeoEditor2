@@ -77,8 +77,16 @@ function New-ReleaseZip {
     Write-Host "打包完成：$zip（$size）" -ForegroundColor Green
 }
 
+function Get-CsprojVersion {
+    # R43: 版本号唯一来源 = csproj <Version>（窗口标题/About/导出 zip 同源）。
+    $content = Get-Content $PlayerCsproj -Raw
+    if ($content -match '<Version>([^<]+)</Version>') { return $Matches[1].Trim() }
+    return ""
+}
+
 function Read-Version {
-    $default = Get-Date -Format "yyyyMMdd"
+    $default = Get-CsprojVersion
+    if ([string]::IsNullOrWhiteSpace($default)) { $default = Get-Date -Format "yyyyMMdd" }
     $v = Read-Host "版本号（用于 zip 命名，回车默认 $default）"
     if ([string]::IsNullOrWhiteSpace($v)) { $v = $default }
     return $v

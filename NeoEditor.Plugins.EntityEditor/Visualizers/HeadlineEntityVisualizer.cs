@@ -36,10 +36,7 @@ public class HeadlineEntityVisualizer : IEntityVisualizer
         if (entity is not Headline h) return new TextBlock { Text = "Invalid" };
         var root = new StackPanel { Spacing = 16, Margin = new Thickness(16) };
 
-        var rawBody = new Border
-            { IsVisible = false, Child = _vis.BuildRawDataTable(h), Padding = new Thickness(8) };
-        root.Children.Add(_vis.BuildExpander(_vis.Loc("Vis.RawData"), rawBody));
-        root.Children.Add(rawBody);
+        root.Children.Add(_vis.BuildRawData(h));
 
         root.Children.Add(BuildHeroHeader(h));
         if (!string.IsNullOrWhiteSpace(h.HeadlineText))
@@ -54,6 +51,9 @@ public class HeadlineEntityVisualizer : IEntityVisualizer
             }));
             root.Children.Add(sp);
         }
+
+        // R48: reverse refs — who shows this headline.
+        root.Children.Add(_vis.BuildReverseRefsPanel(h.EntityId));
 
         return new ScrollViewer { Content = root, HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled };
     }

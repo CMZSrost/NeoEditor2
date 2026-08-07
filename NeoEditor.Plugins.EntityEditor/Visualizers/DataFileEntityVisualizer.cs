@@ -34,10 +34,7 @@ public class DataFileEntityVisualizer : IEntityVisualizer
         if (entity is not DataFile df) return new TextBlock { Text = "Invalid" };
         var root = new StackPanel { Spacing = 16, Margin = new Thickness(16) };
 
-        var rawBody = new Border
-            { IsVisible = false, Child = _vis.BuildRawDataTable(df), Padding = new Thickness(8) };
-        root.Children.Add(_vis.BuildExpander(_vis.Loc("Vis.RawData"), rawBody));
-        root.Children.Add(rawBody);
+        root.Children.Add(_vis.BuildRawData(df));
 
         root.Children.Add(BuildHeroHeader(df));
         if (!string.IsNullOrWhiteSpace(df.Description))
@@ -49,6 +46,9 @@ public class DataFileEntityVisualizer : IEntityVisualizer
                 { Text = desc, FontSize = 11, TextWrapping = TextWrapping.Wrap, Foreground = Brush.Parse("#333") }));
             root.Children.Add(sp);
         }
+
+        // R48: reverse refs — who references this data file (encounters/loot display it).
+        root.Children.Add(_vis.BuildReverseRefsPanel(df.EntityId));
 
         return new ScrollViewer { Content = root, HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled };
     }

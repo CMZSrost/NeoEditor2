@@ -15,15 +15,17 @@ namespace NeoEditor.Plugins.WebView;
 public class WebViewPlugin : IToolPlugin
 {
     private readonly WebViewToolViewModel _viewModel;
+    private readonly NeoEditor.Infra.Services.ILocalizationService _loc;
 
-    public WebViewPlugin(WebViewToolViewModel viewModel)
+    public WebViewPlugin(WebViewToolViewModel viewModel, NeoEditor.Infra.Services.ILocalizationService loc)
     {
+        _loc = loc;
         _viewModel = viewModel;
     }
 
     public string Name => "WebView.Panel";
     public Version Version => new(1, 0, 0);
-    public string Title => "WebView";
+    public string Title => _loc["Tools.WebView"];
     public ToolDock DefaultDock => ToolDock.Right;
     public int Order => 20;
 

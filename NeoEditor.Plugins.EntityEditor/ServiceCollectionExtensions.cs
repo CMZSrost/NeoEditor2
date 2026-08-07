@@ -65,7 +65,6 @@ public static class ServiceCollectionExtensions
         registry.Register(new Visualizers.BattleMoveEntityVisualizer(vis, refNode));
         registry.Register(new Visualizers.ChargeProfileEntityVisualizer(vis, refNode));
         registry.Register(new Visualizers.ConditionEntityVisualizer(vis, refNode));
-        registry.Register(new Visualizers.CreatureEntityVisualizer(vis, refNode));
         registry.Register(new Visualizers.DmcPlaceEntityVisualizer(vis, refNode));
         registry.Register(new Visualizers.EncounterTriggerEntityVisualizer(vis, refNode));
         registry.Register(new Visualizers.HexTypeEntityVisualizer(vis, refNode));
@@ -77,6 +76,7 @@ public static class ServiceCollectionExtensions
         registry.Register(new Visualizers.CampTypeEntityVisualizer(vis, refNode, dataTable));
         registry.Register(new Visualizers.ContainerTypeEntityVisualizer(vis, refNode, dataTable));
         registry.Register(new Visualizers.CreatureSourceEntityVisualizer(vis, refNode, dataTable));
+        registry.Register(new Visualizers.CreatureEntityVisualizer(vis, refNode, dataTable));
         registry.Register(new Visualizers.EncounterEntityVisualizer(vis, refNode, dataTable));
         registry.Register(new Visualizers.FactionEntityVisualizer(vis, refNode, dataTable));
         registry.Register(new Visualizers.ItemTypeEntityVisualizer(vis, refNode, dataTable));

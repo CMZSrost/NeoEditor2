@@ -44,10 +44,7 @@ public class AttackModeEntityVisualizer : IEntityVisualizer
         if (entity is not AttackMode am) return new TextBlock { Text = "Invalid" };
         var root = new StackPanel { Spacing = 16, Margin = new Thickness(16) };
 
-        var rawContent = _vis.BuildRawDataTable(am);
-        var rawBody = new Border { IsVisible = false, Child = rawContent, Padding = new Thickness(8) };
-        root.Children.Add(_vis.BuildExpander(_vis.Loc("Vis.RawData"), rawBody));
-        root.Children.Add(rawBody);
+        root.Children.Add(_vis.BuildRawData(am));
 
         root.Children.Add(BuildHeroHeader(am));
         root.Children.Add(BuildCombatPanel(am));
@@ -262,6 +259,10 @@ public class AttackModeEntityVisualizer : IEntityVisualizer
                     }
                 }
             });
+            // R48: play the attack sound right from the row (when extracted assets exist).
+            var sndBtn = _vis.PlaySoundButton(am.Sound);
+            if (sndBtn is not null)
+                sndRow.Children.Add(sndBtn);
             bars.Children.Add(sndRow);
         }
 

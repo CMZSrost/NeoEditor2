@@ -23,6 +23,48 @@
 
     <!-- v2.44: LSO 存档引用展开器（Ruffle #1069 修复）—— 必须在下方 getItem 包装之前加载 -->
     <script src="lso-expand-web.js"></script>
+    <!-- v2.47 修复：启动时展开 localStorage 里的存档（引用全内联 + 写端表语义），
+     修复 Ruffle/flash-lso 引用表不同步导致的存档读取崩溃（m_fDate/fDurability on Number）。
+     v2.64: 去掉逐条 info/warn 启动日志（用户反馈噪音）——只保留 error（LsoExpand
+     不可用/展开失败，诊断用）。 -->
+    <script>
+    (function () {
+        function post(level, msg) {
+            try {
+                fetch("/__log", {
+                    method: "POST",
+                    headers: { "Content-Type": "text/plain" },
+                    body: JSON.stringify({ run: Date.now(), level: level, msg: msg }),
+                    keepalive: true
+                }).catch(function () {});
+            } catch (e) {}
+        }
+        try {
+            if (!window.LsoExpand || !window.LsoExpand.expand) {
+                post("error", "启动展开: LsoExpand 不可用（lso-expand-web.js 加载失败?）");
+                return;
+            }
+            for (var i = 0; i < localStorage.length; i++) {
+                var k = localStorage.key(i);
+                if (k && k.indexOf("nsSGv1") !== -1) {
+                    var v = localStorage.getItem(k);
+                    if (v && v.indexOf("AL8A") === 0) {
+                        var exp = window.LsoExpand.expand(v);
+                        if (exp && exp !== v) {
+                            localStorage.setItem(k, exp);   // 展开后写回，游戏读到全内联版本
+                        }
+                    } else {
+                        post("warn", "启动展开: " + k + " 非 AL8A LSO 前缀");
+                    }
+                }
+            }
+        } catch (e) {
+            post("error", "启动展开失败: " + (e && e.message ? e.message : e));
+        }
+    })();
+    </script>
+
+
 
     <script>
         // ── 日志捕获（Docs/42 §3.4）──
@@ -89,8 +131,27 @@
             window.addEventListener("error", function (e) {
                 send("error", "window.onerror: " + (e.message || "") + " @ " + (e.filename || "") + ":" + (e.lineno || ""));
             });
+            // v2.53: 未处理 Promise 拒绝（Ruffle 内部异步错误/加载失败）也进错误日志。
+            window.addEventListener("unhandledrejection", function (e) {
+                var r = e && e.reason;
+                send("error", "unhandledrejection: " + (r && r.message ? r.message : String(r)));
+            });
+            // v2.53: 供后续脚本块（Ruffle 加载失败等）与宿主调试工具直接写日志。
+            window.__log = function (level, msg) { send(level, msg); };
 
-            // 游戏内部日志 = 剪贴板：writeText/write/execCommand 包装 + readText 轮询 + textarea 扫描
+            // 游戏内部日志 = 剪贴板（v2.54：完全接管，不再写真实剪贴板、不再弹权限窗）。
+            // 关键事实（v2.54 源码取证，web/src/ui.rs WebUiBackend::set_clipboard_content）：
+            // Ruffle 的剪贴板写入**不走 navigator.clipboard.writeText**（注释：该 API 仅
+            // HTTPS 安全上下文可用，本页是 http://127.0.0.1）——而是隐藏 textarea +
+            // select() + document.execCommand("copy")。因此 v2.44-v2.53 的 writeText 包装
+            // 从未被 Ruffle 调用；v2.53 前日志里的截获行全靠 readText 轮询读回（这就是
+            // 当初加轮询的原因），v2.53 删掉轮询后 execCommand 仍写真实剪贴板。
+            // v2.54 起：execCommand 拦截阻断真实写入；v2.59 起内容截获改走
+            // HTMLTextAreaElement.prototype.value **setter 拦截**——Ruffle 的临时
+            // textarea 无论挂在普通 DOM 还是 ruffle-player 的 shadow root，set_value
+            // 必然经过该 setter（同步、位置无关、时序无关；v2.56 selection / v2.57
+            // MutationObserver / v2.58 shadowRoot 查询均不可靠）。本页无其他 textarea，
+            // 不会误伤。
             var lastClipboard = null;
             function captureClipboard(text) {
                 var t = String(text == null ? "" : text);
@@ -100,46 +161,52 @@
                 }
             }
             try {
-                if (navigator.clipboard && navigator.clipboard.writeText) {
-                    // v2.44: WebView2 rejects the async Clipboard API when called outside a
-                    // user-gesture stack (Ruffle's AVM dispatch) → "Couldn't set clipboard
-                    // contents" WARN spam + broken copy. Fall back to a hidden-textarea
-                    // execCommand('copy') first — it succeeds in the synchronous click chain.
-                    navigator.clipboard.writeText = function (text) {
-                        captureClipboard(text);
-                        try {
-                            var ta = document.createElement("textarea");
-                            ta.value = String(text == null ? "" : text);
-                            ta.style.position = "fixed";
-                            ta.style.opacity = "0";
-                            document.body.appendChild(ta);
-                            ta.select();
-                            var ok = document.execCommand("copy");
-                            document.body.removeChild(ta);
-                            if (ok) return Promise.resolve();
-                        } catch (e) {}
-                        return Promise.reject("copy failed");
-                    };
+                // v2.59 核心截获：textarea.value setter——Ruffle 的临时 textarea 无论挂
+                // 在普通 DOM 还是 shadow root，set_value 必然经过该 setter（同步、位置
+                // 无关）。实机验证（v2.60 日志）：拦截已安装 + 游戏日志内容完整进日志。
+                if (window.HTMLTextAreaElement && HTMLTextAreaElement.prototype) {
+                    var valueDesc = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value');
+                    if (valueDesc && typeof valueDesc.set === 'function') {
+                        var origValueSet = valueDesc.set;
+                        var origValueGet = valueDesc.get;
+                        Object.defineProperty(HTMLTextAreaElement.prototype, 'value', {
+                            configurable: true,
+                            get: function () { return origValueGet.call(this); },
+                            set: function (v) {
+                                origValueSet.call(this, v);
+                                try {
+                                    if (typeof v === 'string' && v.length > 0) captureClipboard(v);
+                                } catch (e) {}
+                            },
+                        });
+                    }
                 }
-                function grantClipboardAccess() {
-                    try {
-                        if (navigator.clipboard && navigator.clipboard.readText) {
-                            navigator.clipboard.readText().then(function (t) {
-                                send("debug", "剪贴板读取权限已授予,轮询捕获启动");
-                                captureClipboard(t);
-                            }).catch(function () {});
-                        }
-                    } catch (e) {}
+            } catch (e) {}
+            try {
+                // 拦截 document.execCommand（v2.54）：阻断真实剪贴板写入（实机验证：
+                // 系统剪贴板为空 + 命中确认）。只阻断，不提取（提取走 value setter）。
+                var origExecCommand = document.execCommand.bind(document);
+                document.execCommand = function (cmd) {
+                    var c = String(cmd == null ? "" : cmd).toLowerCase();
+                    if (c === "copy" || c === "cut") return true;   // 不写真实剪贴板
+                    return origExecCommand.apply(this, arguments);
+                };
+                if (navigator.clipboard) {
+                    if (navigator.clipboard.writeText) {
+                        // 防未来 Ruffle 版本/HTTPS 部署走 writeText 路径。
+                        navigator.clipboard.writeText = function (text) {
+                            captureClipboard(text);
+                            return Promise.resolve();   // 只进日志；不写真实剪贴板
+                        };
+                    }
+                    if (navigator.clipboard.readText) {
+                        // 游戏无真实读剪贴板需求（Ruffle 读走自身 buffer，不碰此 API）；
+                        // 返回空串避免读权限弹窗。
+                        navigator.clipboard.readText = function () {
+                            return Promise.resolve("");
+                        };
+                    }
                 }
-                document.addEventListener("click", grantClipboardAccess, { once: true });
-                document.addEventListener("keydown", grantClipboardAccess, { once: true });
-                setInterval(function () {
-                    try {
-                        if (navigator.clipboard && navigator.clipboard.readText) {
-                            navigator.clipboard.readText().then(captureClipboard).catch(function () {});
-                        }
-                    } catch (e) {}
-                }, 800);
             } catch (e) {}
 
             // 存档备份（v2.37 + v2.43 语义修正）：POST /__backup 落盘
@@ -164,6 +231,11 @@
                 var origSetItem = localStorage.setItem.bind(localStorage);
                 Object.defineProperty(localStorage, "setItem", {
                     value: function (key, value) {
+                        // v2.50: 存档管理删除/恢复期间阻止一切写回——Ruffle 在页面卸载
+                        // （pagehide/Drop）时 flush_shared_objects 会把缓存的旧档写回
+                        // localStorage，删除存档后重启会"旧档复活"。存档管理操作前由
+                        // 页面设置 window.__blockSaves = true，重启后新页面标志自动消失。
+                        if (window.__blockSaves) return;
                         backupValue(key, value);
                         return origSetItem(key, value);
                     },
@@ -177,6 +249,10 @@
                         try {
                             var old = localStorage.getItem(key);
                             if (old !== null) backupValue(key, old);
+                            // v2.51: 游戏内删除存档（SharedObject.clear → removeItem）后，
+                            // Ruffle 页面卸载 flush_shared_objects 会把缓存 data 写回（存档复活）。
+                            // 标记本次会话删除过存档 → beforeunload/pagehide 时拦截写回。
+                            if (key && key.indexOf("nsSGv1") !== -1) window.__savesCleared = true;
                         } catch (e) {}
                         return origRemoveItem(key);
                     },
@@ -184,10 +260,29 @@
                     configurable: true,
                     enumerable: false
                 });
+                // v2.51: 游戏内删除存档后，页面卸载（重启/关闭）时 Ruffle flush 写回缓存
+                // data → 存档复活。卸载前若本会话删除过存档且 localStorage 里尚无新存档
+                // （删除后没保存过新档），设置 __blockSaves 拦截写回；若已有新档（删除后
+                // 玩新游戏已自动保存），放行 flush 以免丢失新档最后一段进度。
+                // 监听器先于 Ruffle 注册（本脚本在 ruffle.js 之前加载）→ 先置标志。
+                function __hasSave() {
+                    for (var i = 0; i < localStorage.length; i++) {
+                        var k = localStorage.key(i);
+                        if (k && k.indexOf("nsSGv1") !== -1) return true;
+                    }
+                    return false;
+                }
+                window.addEventListener("beforeunload", function () {
+                    if (window.__savesCleared && !__hasSave()) window.__blockSaves = true;
+                });
+                window.addEventListener("pagehide", function () {
+                    if (window.__savesCleared && !__hasSave()) window.__blockSaves = true;
+                });
                 // v2.44: LSO 引用展开（Ruffle #1069 修复）—— getItem 拦截：
                 // SWF 加载存档时把「含引用的原始 LSO」替换为「引用全部内联」的展开版本，
                 // Ruffle 反序列化时无 Amf3ObjectReference 可误解析（引用→undefined/Number 崩溃）。
                 // 只处理本游戏存档 key；解析失败回退原始值，绝不阻塞游戏。
+                send("info", "NE v2.64 就绪 host=" + location.href);
                 var origGetItem = localStorage.getItem.bind(localStorage);
                 Object.defineProperty(localStorage, "getItem", {
                     value: function (key) {
@@ -223,11 +318,11 @@
             o.style.display = "flex";
         }
 
-        // ── 覆盖层热键（Docs/42 §v2.3）：Shift+Tab 切换宿主覆盖层（如日志），
-        //    类似 Steam 的 shift+tab。capture 阶段监听,避免被游戏/Ruffle 的事件处理吞掉；
-        //    仅 WebView2 宿主（window.chrome.webview 存在）时转发。 ──
+        // ── 日志窗口热键（v2.62）：F10 切换宿主日志窗口。capture 阶段监听，避免被
+        //    游戏/Ruffle 的事件处理吞掉；仅 WebView2 宿主（window.chrome.webview
+        //    存在）时转发。 ──
         document.addEventListener("keydown", function (e) {
-            if (e.shiftKey && e.key === "Tab") {
+            if (e.key === "F10") {
                 try {
                     if (window.chrome && window.chrome.webview && window.chrome.webview.postMessage) {
                         e.preventDefault();
@@ -267,6 +362,27 @@
             window.__player = player;       // 供宿主 InvokeScript / 页面 blur 处理调用
             window.__gameLoaded = false;    // loaded 事件后才算就绪（加载中不暂停）
             window.__backgroundMode = false;// 宿主「后台运行」开关：true 时失焦不暂停
+            // v2.53: 宿主「导出日志」用——localStorage 快照（key/长度/前 200 字符预览；
+            // 存档是 base64 大串，整段导出会撑爆报告文件，只带预览 + 长度）。
+            window.__dumpLocalStorage = function () {
+                var out = [];
+                for (var i = 0; i < localStorage.length; i++) {
+                    var k = localStorage.key(i);
+                    var v = localStorage.getItem(k) || "";
+                    out.push({ key: k, len: v.length, head: v.slice(0, 200) });
+                }
+                return out;
+            };
+            // v2.54: 宿主「导出存档+日志 zip」用——localStorage **全量**存档值
+            // （含 nsSGv1 存档 key 的完整 base64），供打包备份/迁移。
+            window.__exportSaves = function () {
+                var out = [];
+                for (var i = 0; i < localStorage.length; i++) {
+                    var k = localStorage.key(i);
+                    out.push({ key: k, value: localStorage.getItem(k) || "" });
+                }
+                return out;
+            };
 
             player.addEventListener("loaded", function () { window.__gameLoaded = true; });
 
@@ -295,6 +411,8 @@
             } catch (e) {}
 
             player.ruffle().load(swfUrl).catch(function (err) {
+                // v2.53: 加载失败除了页面 overlay，还进 /__log（level=error）→ 宿主「报错捕捉」弹窗。
+                try { window.__log("error", "SWF 加载失败: " + (err && err.message ? err.message : err)); } catch (e) {}
                 showOverlay(
                     "SWF 加载失败",
                     "无法加载 <code>" + swfUrl + "</code><br>（" + (err && err.message ? err.message : err) + "）" +
@@ -302,6 +420,8 @@
             });
         });
     </script>
+
+
     <script src="ruffle/ruffle.js"></script>
 </body>
 </html>

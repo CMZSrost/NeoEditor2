@@ -1,4 +1,6 @@
 using System;
+using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Avalonia.Controls;
@@ -6,6 +8,8 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
+using MsBox.Avalonia;
+using MsBox.Avalonia.Dto;
 using NeoEditor.Player.Core.Services;
 using NeoEditor.Player.Core.ViewModels;
 using NeoEditor.Player.Services;
@@ -19,6 +23,8 @@ public partial class PlayerWindow : Window
     private LogOverlayWindow? _logOverlay;
     private DataBrowserWindow? _dataBrowser;
     private StorageManagerWindow? _storageWindow;
+    private StorageManagerViewModel? _storageVm;
+    private SaveEditorWindow? _saveEditor;
     private bool _attached;
     private bool _loadFailed;
     private bool _backgroundMode;
@@ -29,12 +35,19 @@ public partial class PlayerWindow : Window
     public PlayerWindow()
     {
         InitializeComponent();
+        // R43: 标题带版本（csproj <Version>）——试用反馈必须能报出版本。
+        Title = $"{NeoEditor.Player.Services.AppInfo.ProductName} (Ruffle Web) v{NeoEditor.Player.Services.AppInfo.Version}";
         Loaded += OnLoaded;
-        // F11 toggles fullscreen; ESC exits (works while the Avalonia chrome has focus —
-        // the WebView2 child window may swallow keys while the game itself is focused).
+        // F11 toggles fullscreen; ESC exits; F12 opens DevTools (R38); F10 toggles the
+        // log window (v2.62 — covers the Avalonia-chrome-focus case; while the game
+        // itself is focused, host.html forwards F10 via the page bridge). Works while
+        // the Avalonia chrome has focus — the WebView2 child window may swallow keys
+        // while the game itself is focused.
         KeyDown += (_, e) =>
         {
             if (e.Key == Avalonia.Input.Key.F11) ToggleFullScreen();
+            else if (e.Key == Avalonia.Input.Key.F12) OpenDevTools();
+            else if (e.Key == Avalonia.Input.Key.F10) ToggleLogOverlay();
             else if (e.Key == Avalonia.Input.Key.Escape && WindowState == WindowState.FullScreen)
                 WindowState = WindowState.Normal;
         };
@@ -129,10 +142,24 @@ public partial class PlayerWindow : Window
         vm.OpenFileDialogRequested += () => _ = PickAndOpenSwfAsync(vm);
         vm.ResetRequested += OnGameReset;                  // game quit → back to placeholder
         vm.BackgroundModeChanged += SetBackgroundMode;     // 后台运行 switch
+        // R38 调试工具：导出日志的 JS 桥（localStorage 快照）+ 报错捕捉弹窗 + 导出完成定位。
+        vm.ExecuteJs = script => _webView?.InvokeScript(script) ?? Task.FromResult<string?>(null);
+        vm.GameErrorDetected += ShowGameErrorDialog;
+        vm.LogExportCompleted += path => OpenLogFolder(Path.GetDirectoryName(path), path);
     }
 
-    /// <summary>Invoke Ruffle's public destroy() to stop audio/AVM immediately (best effort).</summary>
+    /// <summary>Invoke Ruffle's public destroy() to stop audio/AVM immediately (best effort).
+    /// v2.52: Ruffle 实例 Drop 时会 flush_shared_objects 把缓存旧档写回 localStorage——
+    /// 本会话删除过存档（__savesCleared）且 localStorage 尚无新存档时才拦截（删档复活）；
+    /// 已有新档（删除后玩新游戏已自动保存）则放行 flush，避免丢失新档最后一段进度。
+    /// 存档管理（VM）显式设置的 __blockSaves 不被覆盖。</summary>
     private void TryDestroyPlayer() => TryInvoke(
+        "if (!window.__blockSaves) {" +
+        "  var __has = false;" +
+        "  for (var i = 0; i < localStorage.length; i++) { var k = localStorage.key(i);" +
+        "    if (k && k.indexOf('nsSGv1') !== -1) { __has = true; break; } }" +
+        "  window.__blockSaves = window.__savesCleared && !__has;" +
+        "}" +
         "window.__player && window.__player.destroy && window.__player.destroy(); 'ok'");
 
     private void PauseGame() => TryInvoke(
@@ -181,6 +208,7 @@ public partial class PlayerWindow : Window
         }
         _dataBrowser?.Hide();
         _logOverlay?.Hide();
+        _saveEditor?.Hide();
         DropPlaceholder.IsVisible = true;
     }
 
@@ -216,25 +244,11 @@ public partial class PlayerWindow : Window
         {
             _logOverlay.Hide();
             // Return focus to the main window (ideally the WebView2 child) so the page
-            // bridge hears the next Shift+Tab and re-opens the overlay.
+            // bridge hears the next Shift+Tab and re-opens the log window.
             Activate();
         }
         else
         {
-            // Fullscreen player → fullscreen overlay; windowed player → overlay matches
-            // the window's position/size (never covers the whole screen).
-            if (WindowState == WindowState.FullScreen)
-            {
-                _logOverlay.WindowState = WindowState.FullScreen;
-            }
-            else
-            {
-                _logOverlay.WindowState = WindowState.Normal;
-                _logOverlay.Position = Position;
-                _logOverlay.Width = Width;
-                _logOverlay.Height = Height;
-            }
-
             _logOverlay.Show(this);
         }
     }
@@ -302,6 +316,107 @@ public partial class PlayerWindow : Window
 
     private void OnExitMenuClick(object? sender, RoutedEventArgs e) => Close();
 
+    /// <summary>R38: F12 / 调试菜单 → Chromium DevTools（Network / Application-localStorage /
+    /// Console）。COM 桥失败（非 Windows/接口漂移）时状态栏提示。</summary>
+    [System.Runtime.Versioning.SupportedOSPlatform("windows")]
+    private void OpenDevTools()
+    {
+        if (DataContext is not PlayerViewModel vm) return;
+        if (_webView is null || !WebView2DevTools.TryOpen(_webView))
+            vm.StatusText = LocalizationManager.Instance["Debug.DevToolsUnavailable"];
+    }
+
+    /// <summary>R38: 报错捕捉弹窗——错误详情 + 「打开日志目录」。确认=打开日志目录。</summary>
+    private async void ShowGameErrorDialog(string detail)
+    {
+        if (DataContext is not PlayerViewModel vm) return;
+        var open = await PromptDialogWindow.PromptAsync(this,
+            LocalizationManager.Instance["Error.DialogTitle"],
+            string.Format(LocalizationManager.Instance["Error.DialogBody"], detail),
+            okText: LocalizationManager.Instance["Log.OpenFolder"],
+            cancelText: LocalizationManager.Instance["Common.Ok"]);
+        if (open is not null) OpenLogFolder(vm.FileLogDirectory);
+    }
+
+    /// <summary>R38: 在 Explorer 中定位最新运行日志（或打开日志目录）。</summary>
+    public static void OpenLogFolder(string? directory, string? selectFile = null)
+    {
+        var dir = directory ?? NeoEditor.Player.Core.Logging.FileRunLogWriter.ResolveDirectory(null);
+        var target = selectFile ?? Directory.EnumerateFiles(dir, "player-run-*.log")
+            .OrderByDescending(Path.GetFileName).FirstOrDefault();
+        try
+        {
+            Process.Start("explorer.exe",
+                target is not null ? $"/select,\"{target}\"" : $"\"{dir}\"");
+        }
+        catch (Exception)
+        {
+            // Explorer unavailable — nothing useful to do.
+        }
+    }
+
+    private void OnDevToolsClick(object? sender, RoutedEventArgs e) => OpenDevTools();
+
+    private void OnOpenLogFolderClick(object? sender, RoutedEventArgs e)
+        => OpenLogFolder((DataContext as PlayerViewModel)?.FileLogDirectory);
+
+    private void OnExportLogsClick(object? sender, RoutedEventArgs e)
+        => (DataContext as PlayerViewModel)?.ExportLogsCommand.Execute(null);
+
+    /// <summary>R43: 导出存档+日志 zip（试用反馈包）——完成后 Explorer 定位。</summary>
+    private void OnExportBundleClick(object? sender, RoutedEventArgs e)
+        => (DataContext as PlayerViewModel)?.ExportBundleZipCommand.Execute(null);
+
+    /// <summary>R45/R46: 存档修改工具——加载/编辑/保存 localStorage 存档（存档管理「修改」入口）。</summary>
+    private void OpenSaveEditor(SaveEntry? entry)
+    {
+        if (DataContext is not PlayerViewModel vm) return;
+        if (_webView is null)
+        {
+            vm.StatusText = LocalizationManager.Instance["Storage.ReadFailed"];
+            return;
+        }
+
+        if (_saveEditor is null)
+        {
+            var saveEditorVm = new SaveEditorViewModel(
+                script => _webView?.InvokeScript(script) ?? Task.FromResult<string?>(null),
+                key => LocalizationManager.Instance[key],
+                // 保存并加载：写回 localStorage 后重载页面（清 Ruffle SharedObject 内存缓存）
+                () => (DataContext as PlayerViewModel)?.RestartGame());
+            // 保存并加载后存档管理窗口的列表（大小）也刷新
+            saveEditorVm.SavedAndLoaded += () => _storageVm?.RefreshCommand.Execute(null);
+            _saveEditor = new SaveEditorWindow { DataContext = saveEditorVm };
+            _saveEditor.Closed += (_, _) => _saveEditor = null;
+        }
+
+        if (entry is not null && _saveEditor.DataContext is SaveEditorViewModel evm)
+            _ = evm.LoadEntryAsync(entry);   // 预载选中存档
+        _saveEditor.Show(this);
+    }
+
+    /// <summary>R43: 调试菜单「关于」——版本/Ruffle/平台/关键目录（MessageBox，右上角关闭）。</summary>
+    private async void OnAboutClick(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is not PlayerViewModel vm) return;
+        var body = string.Format(LocalizationManager.Instance["About.Body"],
+            NeoEditor.Player.Services.AppInfo.Version,
+            NeoEditor.Player.Services.AppInfo.RuffleVersion,
+            "Windows x64",
+            vm.FileLogDirectory ?? "",
+            vm.GameRootDir,
+            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "NeoScavengerPlayer", "WebView2"));
+        var box = MessageBoxManager.GetMessageBoxStandard(new MessageBoxStandardParams
+        {
+            ContentTitle = LocalizationManager.Instance["About.Title"],
+            ContentMessage = body,
+            MinWidth = 460,
+            WindowStartupLocation = WindowStartupLocation.CenterOwner,
+        });
+        await box.ShowWindowDialogAsync(this);
+    }
+
     /// <summary>Theme radio item clicked — Tag carries "System"/"Light"/"Dark" (v2.28).</summary>
     private void OnThemeClick(object? sender, RoutedEventArgs e)
     {
@@ -333,19 +448,29 @@ public partial class PlayerWindow : Window
 
         if (_storageWindow is null)
         {
-            var storageVm = new StorageManagerViewModel(
+            _storageVm = new StorageManagerViewModel(
                 script => _webView?.InvokeScript(script) ?? Task.FromResult<string?>(null),
                 key => LocalizationManager.Instance[key],
-                new SaveBackupService(App.Services.Config));   // {gameRoot}/save_backup (v2.37)
-            _storageWindow = new StorageManagerWindow { DataContext = storageVm };
+                new SaveBackupService(App.Services.Config),   // {gameRoot}/save_backup (v2.37)
+                // v2.49/v2.50: Ruffle SharedObject 内存缓存 — 删除/恢复只写 localStorage，
+                // 且页面卸载（pagehide）时 Ruffle 会把缓存旧档 flush 写回；操作后自动
+                // 重载页面（清缓存 + 卸载写回被 __blockSaves 拦截），并关闭本窗口。
+                () =>
+                {
+                    (DataContext as PlayerViewModel)?.RestartGame();
+                    _storageWindow?.Close();
+                });
+            _storageWindow = new StorageManagerWindow { DataContext = _storageVm };
             _storageWindow.Closed += (_, _) => _storageWindow = null;
+            // R46: 存档修改工具入口（预载选中的存档）
+            _storageWindow.EditSaveRequested += OpenSaveEditor;
             // v2.42: refresh BOTH tabs on open — the VM is recreated per window instance,
             // so the backups list would otherwise show as empty (looks like backups got
             // deleted while they only weren't loaded).
             _storageWindow.Opened += (_, _) =>
             {
-                storageVm.RefreshCommand.Execute(null);
-                storageVm.RefreshBackupsCommand.Execute(null);
+                _storageVm.RefreshCommand.Execute(null);
+                _storageVm.RefreshBackupsCommand.Execute(null);
             };
         }
 

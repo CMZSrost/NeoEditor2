@@ -14,12 +14,17 @@ namespace NeoEditor.Plugins.ImageTools;
 public class ImageAssetManagerPlugin : IToolPlugin
 {
     private readonly ImageAssetManagerViewModel _viewModel;
+    private readonly NeoEditor.Infra.Services.ILocalizationService _loc;
 
-    public ImageAssetManagerPlugin(ImageAssetManagerViewModel viewModel) => _viewModel = viewModel;
+    public ImageAssetManagerPlugin(ImageAssetManagerViewModel viewModel, NeoEditor.Infra.Services.ILocalizationService loc)
+    {
+        _loc = loc;
+        _viewModel = viewModel;
+    }
 
     public string Name => "ImageTools.ImageAssetManager";
     public Version Version => new(1, 0, 0);
-    public string Title => "Image Browser";
+    public string Title => _loc["Tools.ImageBrowser"];
     public ToolDock DefaultDock => ToolDock.Left;
     public int Order => 30;
 

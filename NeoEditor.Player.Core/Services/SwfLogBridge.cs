@@ -18,6 +18,12 @@ public enum PlayerGameEventType
 
     /// <summary>The game hit an unimplemented Ruffle API (stub warning).</summary>
     ApiStub,
+
+    /// <summary>
+    /// A fatal runtime error surfaced from the page (window.onerror / unhandled rejection /
+    /// AVM crash / SWF load failure) — the host surfaces it so the crash is not silent.
+    /// </summary>
+    GameError,
 }
 
 /// <summary>Payload of <see cref="SwfLogBridge.GameEventDetected"/>.</summary>
@@ -52,6 +58,13 @@ public sealed class SwfLogBridge
             new Regex(@"navigation.{0,40}blocked|blocked.{0,40}navigation", RegexOptions.IgnoreCase)),
         (PlayerGameEventType.ApiStub,
             new Regex(@"Encountered stub", RegexOptions.IgnoreCase)),
+        // R38: 致命错误签名（window.onerror / unhandledrejection / AVM 崩溃 / SWF 加载失败）。
+        // Ruffle 本版不派发 error 事件（只有 loadedmetadata/loadeddata），运行时 AVM 错误
+        // 走 console.error 通道——由 host.html 转成 level=error 行后在这里按签名识别。
+        // 命中即触发宿主「报错捕捉」弹窗（去抖 10s，VM 侧每 run 再限一次）。
+        (PlayerGameEventType.GameError,
+            new Regex(@"window\.onerror:|unhandledrejection|cannot convert|TypeError|ReferenceError|RangeError|SyntaxError|stack overflow|Maximum call stack|SWF 加载失败|Ruffle failed",
+                RegexOptions.IgnoreCase)),
     };
 
     private static readonly TimeSpan EventDebounce = TimeSpan.FromSeconds(10);

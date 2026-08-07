@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using System.Threading.Tasks;
 using Avalonia.Controls;
@@ -15,6 +16,9 @@ namespace NeoEditor.Player.Views;
 /// </summary>
 public partial class StorageManagerWindow : Window
 {
+    /// <summary>R46: 「修改」按钮 → 宿主打开存档修改工具并预载该存档。</summary>
+    public event Action<SaveEntry>? EditSaveRequested;
+
     public StorageManagerWindow()
     {
         InitializeComponent();
@@ -74,6 +78,7 @@ public partial class StorageManagerWindow : Window
             string.Format(L("Storage.ConfirmDelete"), entry.Key),
             okText: L("Common.Ok"), cancelText: L("Common.Cancel"));
         if (confirmed is null) return;
+        // v2.50: DeleteCommand 已自动重启游戏（并关闭本窗口）——不再弹手动重启框
         await vm.DeleteCommand.ExecuteAsync(entry);
     }
 
@@ -96,12 +101,23 @@ public partial class StorageManagerWindow : Window
             L("Storage.ConfirmClearAllTitle"), L("Storage.ConfirmClearAll"),
             okText: L("Common.Ok"), cancelText: L("Common.Cancel"));
         if (confirmed is null) return;
+        // v2.50: ClearAllCommand 已自动重启游戏
         await vm.ClearAllCommand.ExecuteAsync(null);
     }
 
-    private void OnRestoreClick(object? sender, RoutedEventArgs e)
+    private async void OnRestoreClick(object? sender, RoutedEventArgs e)
     {
         if (sender is Button { Tag: SaveBackup backup } && DataContext is StorageManagerViewModel vm)
-            vm.RestoreCommand.Execute(backup);
+        {
+            // v2.50: RestoreCommand 已自动重启游戏
+            await vm.RestoreCommand.ExecuteAsync(backup);
+        }
+    }
+
+    /// <summary>R46: 存档修改工具入口（宿主打开编辑器并预载该存档）。</summary>
+    private void OnEditClick(object? sender, RoutedEventArgs e)
+    {
+        if (sender is Button { Tag: SaveEntry entry })
+            EditSaveRequested?.Invoke(entry);
     }
 }

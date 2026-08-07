@@ -61,6 +61,28 @@ public class GameContentServerTests : IDisposable
     }
 
     [Fact]
+    public async Task ServesWebRootScriptsLikeLsoExpander()
+    {
+        // v2.47 回归: /lso-expand-web.js 之前被路由到游戏根目录 → 404 →
+        // window.LsoExpand 从未加载 → 运行时存档展开从未生效。
+        File.WriteAllText(Path.Combine(_webRoot, "lso-expand-web.js"), "// expander");
+        var response = await _client.GetAsync("/lso-expand-web.js");
+        Assert.Equal(200, (int)response.StatusCode);
+        Assert.StartsWith("application/javascript", response.Content.Headers.ContentType!.ToString());
+        Assert.Equal("// expander", await response.Content.ReadAsStringAsync());
+    }
+
+    [Fact]
+    public async Task WebRootDoesNotShadowGameRootFiles()
+    {
+        // Web 目录优先, 但游戏根目录文件(如 NEOScavenger.swf)仍可访问。
+        File.WriteAllText(Path.Combine(_gameRoot, "NEOScavenger.swf"), "fake-swf");
+        var response = await _client.GetAsync("/NEOScavenger.swf");
+        Assert.Equal(200, (int)response.StatusCode);
+        Assert.StartsWith("application/x-shockwave-flash", response.Content.Headers.ContentType!.ToString());
+    }
+
+    [Fact]
     public async Task ServesGameRootFiles()
     {
         File.WriteAllText(Path.Combine(_gameRoot, "NEOScavenger.swf"), "fake-swf");

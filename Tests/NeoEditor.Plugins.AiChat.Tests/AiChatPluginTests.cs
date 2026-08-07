@@ -20,6 +20,16 @@ public class AiChatPluginTests
         public Task SaveAsync() => Task.CompletedTask;
     }
 
+    /// <summary>Returns the key itself — asserts are made against Tools.* keys.</summary>
+    private sealed class StubLoc : NeoEditor.Infra.Services.ILocalizationService
+    {
+        public string this[string key] => key;
+        public string this[string key, params object[] args] => key;
+        public System.Globalization.CultureInfo CurrentCulture => System.Globalization.CultureInfo.InvariantCulture;
+        public event System.ComponentModel.PropertyChangedEventHandler? PropertyChanged;
+        public void SetCulture(System.Globalization.CultureInfo culture) { }
+    }
+
     private static System.IServiceProvider Build()
     {
         var cfg = new AppConfig(); // no provider → disabled AI stack, never crashes (9D v1.9)
@@ -33,10 +43,10 @@ public class AiChatPluginTests
     [Fact]
     public void Plugin_HasCorrectMetadata()
     {
-        var plugin = new AiChatPlugin(null!);
+        var plugin = new AiChatPlugin(null!, new StubLoc());
 
         Assert.Equal("AiChat", plugin.Name);
-        Assert.Equal("AI Chat", plugin.Title);
+        Assert.Equal("Tools.AiChat", plugin.Title);
         Assert.Equal(new Version(1, 0, 0), plugin.Version);
         Assert.Equal(ToolDock.Right, plugin.DefaultDock);
         Assert.Equal(40, plugin.Order);
@@ -55,7 +65,7 @@ public class AiChatPluginTests
     [Fact]
     public void Plugin_Implements_IToolPlugin()
     {
-        var plugin = new AiChatPlugin(null!);
+        var plugin = new AiChatPlugin(null!, new StubLoc());
         Assert.IsAssignableFrom<IToolPlugin>(plugin);
         Assert.IsAssignableFrom<IPlugin>(plugin);
     }
@@ -63,7 +73,7 @@ public class AiChatPluginTests
     [Fact]
     public async Task InitializeAsync_CompletesSuccessfully()
     {
-        var plugin = new AiChatPlugin(null!);
+        var plugin = new AiChatPlugin(null!, new StubLoc());
         await plugin.InitializeAsync(null!);
     }
 
@@ -71,7 +81,7 @@ public class AiChatPluginTests
     public void CreateToolView_ReturnsAiChatViewBoundToViewModel()
     {
         var sp = Build();
-        var plugin = new AiChatPlugin(sp.GetRequiredService<AiChatViewModel>());
+        var plugin = new AiChatPlugin(sp.GetRequiredService<AiChatViewModel>(), new StubLoc());
 
         var view = plugin.CreateToolView();
 

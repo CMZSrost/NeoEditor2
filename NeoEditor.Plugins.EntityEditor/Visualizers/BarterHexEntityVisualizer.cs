@@ -43,10 +43,7 @@ public class BarterHexEntityVisualizer : IEntityVisualizer
         if (entity is not BarterHex bh) return new TextBlock { Text = "Invalid" };
         var root = new StackPanel { Spacing = 16, Margin = new Thickness(16) };
 
-        var rawBody = new Border
-            { IsVisible = false, Child = _vis.BuildRawDataTable(bh), Padding = new Thickness(8) };
-        root.Children.Add(_vis.BuildExpander(_vis.Loc("Vis.RawData"), rawBody));
-        root.Children.Add(rawBody);
+        root.Children.Add(_vis.BuildRawData(bh));
 
         root.Children.Add(BuildHeroHeader(bh));
         root.Children.Add(BuildStatsPanel(bh));

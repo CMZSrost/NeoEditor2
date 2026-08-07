@@ -9,7 +9,7 @@ assets without hand-writing XML. All game entity data is persisted to SQLite
 - Build tool: `dotnet` (SDK pinned in `global.json`)
 - Framework: Avalonia 12.1 (desktop UI), Dock.Avalonia, CommunityToolkit.Mvvm
 - Data: EF Core 10 + SQLite; XML export via `IXmlParser`
-- Testing Framework: xUnit (11 test projects under `Tests/`)
+- Testing Framework: xUnit (13 test projects under `Tests/`)
 
 ## architecture notes
 
@@ -25,17 +25,25 @@ assets without hand-writing XML. All game entity data is persisted to SQLite
 - `IModManager` resolves to the `HostService` instance (mod import/create/delete
   all go through the host pipeline).
 - Projects: `NeoEditor.Core` (abstractions), `NeoEditor.Infra` (services/data),
-  `NeoEditor.App` (GUI shell), `NeoEditor.Plugins.*` (feature plugins),
-  `NeoEditor.UI.Common`; specs under `NeoEditor.App/spec/` (R##/D##/N##).
+  `NeoEditor.App` (GUI shell), `NeoEditor.Plugins.*` (feature plugins:
+  DataViewer / EntityEditor / ImageTools / Mcp / Cli / AiChat / Paratranz / WebView),
+  `NeoEditor.Player` + `NeoEditor.Player.Core` (standalone game player app,
+  Docs/42), `NeoEditor.UI.Common`; specs under `NeoEditor.App/spec/` (R##/D##/N##).
+  15 source + 13 test = 28 projects; current test count 846/846 (2026-08-08).
 
 ## build / run
 
-- Build: `dotnet build NeoEditor.sln`
+- Build: `dotnet build NeoEditor.sln` (28 projects; close any running NeoEditor/player
+  first — DLL locks cause MSB3027 retry)
 - Run (GUI): `dotnet run --project NeoEditor.App`
 - Run (headless MCP server): `dotnet run --project NeoEditor.App -- --mcp`
-- Tests: `dotnet test NeoEditor.sln`
+- Run (standalone player): `dotnet run --project NeoEditor.Player` (WinExe `NeoScavengerPlayer`)
+- Tests: `dotnet test NeoEditor.sln` (13 test projects, 846/846)
+- Package/publish: `./publish.ps1` (single-file ~143MB / multi-file / tests);
+  GitHub Actions `release.yml` auto-builds editor + player on tag.
 
-No web server; no fixed ports (MCP TCP port is configurable).
+No web server in the editor itself; the player app hosts a loopback HTTP server
+(`127.0.0.1:<random port>`, GameContentServer) for SWF preview; MCP TCP port is configurable.
 
 ## dev environment (ZCode)
 

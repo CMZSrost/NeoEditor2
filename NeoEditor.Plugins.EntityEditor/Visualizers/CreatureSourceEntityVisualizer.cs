@@ -43,10 +43,7 @@ public class CreatureSourceEntityVisualizer : IEntityVisualizer
         if (entity is not CreatureSource cs) return new TextBlock { Text = "Invalid" };
         var root = new StackPanel { Spacing = 16, Margin = new Thickness(16) };
 
-        var rawBody = new Border
-            { IsVisible = false, Child = _vis.BuildRawDataTable(cs), Padding = new Thickness(8) };
-        root.Children.Add(_vis.BuildExpander(_vis.Loc("Vis.RawData"), rawBody));
-        root.Children.Add(rawBody);
+        root.Children.Add(_vis.BuildRawData(cs));
 
         root.Children.Add(BuildHeroHeader(cs));
         root.Children.Add(BuildStatsPanel(cs));

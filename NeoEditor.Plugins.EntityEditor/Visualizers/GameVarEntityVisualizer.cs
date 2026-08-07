@@ -34,13 +34,12 @@ public class GameVarEntityVisualizer : IEntityVisualizer
         if (entity is not GameVar gv) return new TextBlock { Text = "Invalid" };
         var root = new StackPanel { Spacing = 16, Margin = new Thickness(16) };
 
-        var rawBody = new Border
-            { IsVisible = false, Child = _vis.BuildRawDataTable(gv), Padding = new Thickness(8) };
-        root.Children.Add(_vis.BuildExpander(_vis.Loc("Vis.RawData"), rawBody));
-        root.Children.Add(rawBody);
+        root.Children.Add(_vis.BuildRawData(gv));
 
         root.Children.Add(BuildHeroHeader(gv));
         root.Children.Add(BuildStatsPanel(gv));
+        // R48: reverse refs — who reads this game variable.
+        root.Children.Add(_vis.BuildReverseRefsPanel(gv.EntityId));
 
         return new ScrollViewer { Content = root, HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled };
     }

@@ -51,6 +51,7 @@ jobs:
           $tag = $env:GITHUB_REF_NAME
           Remove-Item publish/win-x64/*.pdb -ErrorAction SilentlyContinue
           Remove-Item publish/player-win-x64/*.pdb -ErrorAction SilentlyContinue
+          Copy-Item NeoEditor.Player/README.txt publish/player-win-x64/README.txt
           Compress-Archive -Path publish/win-x64/* -DestinationPath "NeoEditor-$tag-win-x64.zip"
           Compress-Archive -Path publish/player-win-x64/* -DestinationPath "NeoScavengerPlayer-$tag-win-x64.zip"
 

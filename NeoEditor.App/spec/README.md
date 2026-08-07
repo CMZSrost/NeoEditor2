@@ -9,7 +9,9 @@
 |------|------|:--:|------|
 | [D01](D01-core-plugin-architecture.md) | Core / Plugin 架构方向 — 项目本质、边界定义、插件化依据 | ✅ | 用户决策 2026-07-24 |
 | [D02](D02-dynamic-dock-layout.md) | 动态 Dock 布局 — Tool/Document/Service Plugin 分类 + IToolPlugin 动态构建（1:1） | ✅ | 用户决策 2026-08-01 |
-| [D03](D03-paratranz-integration.md) | ParaTranz 集成 — 数据转换 / 同步工作流 / UI 设计（v1.2 已定案，M2 实施中） | ⏳ | 用户决策 2026-08-05 |
+| [D03](D03-paratranz-integration.md) | ParaTranz 集成 — 数据转换 / 同步工作流 / UI 设计（v1.6，M1-M4 已完成，M5 可选） | ✅ | 用户决策 2026-08-05 |
+| [D04](D04-itemtype-visualization-design.md) | ItemType 可视化设计 — 全字段语义 / 设计原因与目的 / 心理模型布局（其余实体类型的可视化设计模板） | ✅ | 用户决策 2026-08-08 |
+| [D05](D05-creature-visualization-design.md) | Creature 可视化设计 — 13 字段全覆盖 / 战斗三层 / 出场状态概率 / 战利品双池 / 遭遇链（实现中） | ✅ | 用户决策 2026-08-08 |
 
 > **D01 是项目根本架构决策**，高于所有 R/N 规则。R17-R22 是其执行细则。
 > **D02 是 Dock 布局的根本决策**，取代手写 XAML Tool 元素。Phase 9E 实现。
@@ -63,4 +65,4 @@
 
 | 文件 | 内容 |
 |------|------|
-| [open-questions.md](open-questions.md) | 暂无未决项；Q1-Q11 已全部归档为 R09-R16, N06；R17-R28 全部落地；D01-D02 全部生效 |
+| [open-questions.md](open-questions.md) | 暂无未决项；Q1-Q11 已全部归档为 R09-R16, N06；R01-R28 全部落地；D01-D03 全部生效（D03 M1-M4 已完成） |

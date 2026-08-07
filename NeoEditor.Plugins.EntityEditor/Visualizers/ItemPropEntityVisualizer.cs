@@ -35,10 +35,7 @@ public class ItemPropEntityVisualizer : IEntityVisualizer
         if (entity is not ItemProp ip) return new TextBlock { Text = "Invalid" };
         var root = new StackPanel { Spacing = 16, Margin = new Thickness(16) };
 
-        var rawBody = new Border
-            { IsVisible = false, Child = _vis.BuildRawDataTable(ip), Padding = new Thickness(8) };
-        root.Children.Add(_vis.BuildExpander(_vis.Loc("Vis.RawData"), rawBody));
-        root.Children.Add(rawBody);
+        root.Children.Add(_vis.BuildRawData(ip));
 
         root.Children.Add(BuildHeroHeader(ip));
         root.Children.Add(BuildReversePanel(ip));

@@ -246,6 +246,17 @@ public sealed class GameContentServer : IDisposable
                 return;
             }
 
+            // Plugin web assets first (host.html siblings: lso-expand-web.js 等)。
+            // v2.47 修复: 之前 /lso-expand-web.js 落到游戏根目录回退 → 404 →
+            // window.LsoExpand 从未加载 → 运行时展开从未生效（游戏一直读原始档）。
+            // 放代理之前: Web 目录无 data/、neogame.xml 等, 不冲突。
+            var webCandidate = Path.Combine(_webRoot, path.TrimStart('/'));
+            if (File.Exists(webCandidate))
+            {
+                ServeFile(response, webCandidate, headOnly, _webRoot);
+                return;
+            }
+
             // Reverse-proxy routes (live editor state).
             if (IsProxyPath(path))
             {
@@ -311,7 +322,9 @@ public sealed class GameContentServer : IDisposable
             WriteResponse(response, 200, mime, body, headOnly, cacheControl:
                 Path.GetExtension(fullPath) is ".png" or ".jpg" or ".jpeg" or ".gif"
                     ? "public, max-age=3600"
-                    : "no-cache");
+                    : Path.GetExtension(fullPath) is ".html" or ".js" or ".wasm"
+                        ? "no-store"   // v2.46: WebView2 曾缓存旧版 host.html/展开器（无展开脚本）
+                        : "no-cache");
         }
         catch (Exception ex)
         {

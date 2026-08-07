@@ -15,15 +15,17 @@ namespace NeoEditor.Plugins.Paratranz;
 public class ParatranzPlugin : IToolPlugin
 {
     private readonly ParatranzPaneViewModel _viewModel;
+    private readonly NeoEditor.Infra.Services.ILocalizationService _loc;
 
-    public ParatranzPlugin(ParatranzPaneViewModel viewModel)
+    public ParatranzPlugin(ParatranzPaneViewModel viewModel, NeoEditor.Infra.Services.ILocalizationService loc)
     {
+        _loc = loc;
         _viewModel = viewModel;
     }
 
     public string Name => "Paratranz";
     public Version Version => new(1, 0, 0);
-    public string Title => "ParaTranz";
+    public string Title => _loc["Tools.Paratranz"];
     public ToolDock DefaultDock => ToolDock.Right;
     public int Order => 60;
 

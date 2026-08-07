@@ -44,10 +44,10 @@ public class EntityEditorPluginTests
     [Fact]
     public void KeyValueEditorPlugin_HasCorrectMetadata()
     {
-        var plugin = new KeyValueEditorPlugin(null!);
+        var plugin = new KeyValueEditorPlugin(null!, new StubLocalizationService());
 
         Assert.Equal("EntityEditor.KeyValueEditor", plugin.Name);
-        Assert.Equal("Editor", plugin.Title);
+        Assert.Equal("Tools.Editor", plugin.Title);
         Assert.Equal(ToolDock.Left, plugin.DefaultDock);
         Assert.Equal(10, plugin.Order);
         Assert.IsAssignableFrom<IToolPlugin>(plugin);
@@ -56,10 +56,10 @@ public class EntityEditorPluginTests
     [Fact]
     public void OverlayChainPlugin_HasCorrectMetadata()
     {
-        var plugin = new OverlayChainPlugin(null!);
+        var plugin = new OverlayChainPlugin(null!, new StubLocalizationService());
 
         Assert.Equal("EntityEditor.OverlayChain", plugin.Name);
-        Assert.Equal("Overlay Chain", plugin.Title);
+        Assert.Equal("Tools.OverlayChain", plugin.Title);
         Assert.Equal(ToolDock.Left, plugin.DefaultDock);
         Assert.Equal(20, plugin.Order);
         Assert.IsAssignableFrom<IToolPlugin>(plugin);

@@ -24,12 +24,26 @@
                     <MenuItem Header="{Binding [Menu.File], Source={x:Static loc:LocalizationManager.Instance}}">
                         <MenuItem Header="{Binding [Menu.OpenSwf], Source={x:Static loc:LocalizationManager.Instance}}" HotKey="Ctrl+O" Click="OnOpenSwfClick" />
                         <MenuItem Header="{Binding [Menu.Reload], Source={x:Static loc:LocalizationManager.Instance}}" HotKey="F5" Click="OnReloadClick" />
+                        <!--  R46: 日志/导出类操作归入「文件」  -->
                         <Separator />
+                        <MenuItem Header="{Binding [Log.OpenFolder], Source={x:Static loc:LocalizationManager.Instance}}"
+                                  Click="OnOpenLogFolderClick" />
+                        <MenuItem Header="{Binding [Log.Export], Source={x:Static loc:LocalizationManager.Instance}}"
+                                  Click="OnExportLogsClick" />
+                        <MenuItem Header="{Binding [Log.ExportBundle], Source={x:Static loc:LocalizationManager.Instance}}"
+                                  Click="OnExportBundleClick" />
+                        <Separator />
+                        <MenuItem Header="{Binding [Menu.About], Source={x:Static loc:LocalizationManager.Instance}}"
+                                  Click="OnAboutClick" />
                         <MenuItem Header="{Binding [Menu.Exit], Source={x:Static loc:LocalizationManager.Instance}}" Click="OnExitMenuClick" />
                     </MenuItem>
                     <MenuItem Header="{Binding [Menu.View], Source={x:Static loc:LocalizationManager.Instance}}">
                         <MenuItem Header="{Binding [Menu.FullScreen], Source={x:Static loc:LocalizationManager.Instance}}" HotKey="F11" Click="OnFullScreenClick" />
                         <MenuItem Header="{Binding [Menu.Log], Source={x:Static loc:LocalizationManager.Instance}}" Click="OnLogClick" />
+                        <!--  R46: 开发者工具移入「视图」（F11/F12 同类）  -->
+                        <MenuItem Header="{Binding [Debug.DevTools], Source={x:Static loc:LocalizationManager.Instance}}"
+                                  HotKey="F12"
+                                  Click="OnDevToolsClick" />
                         <Separator />
                         <!--  Theme: System / Light / Dark (v2.28)  -->
                         <MenuItem Header="{Binding [Menu.Theme], Source={x:Static loc:LocalizationManager.Instance}}">

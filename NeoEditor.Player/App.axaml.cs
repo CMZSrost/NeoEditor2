@@ -55,8 +55,10 @@ public partial class App : Application
                 StartupSwfPath = StartupSwfPath,
             };
             desktop.Exit += (_, _) => Services.Dispose();
-            Log.Logger.Information("[Player] standalone player started" +
-                                   (StartupSwfPath is null ? "" : $" (swf: {StartupSwfPath})"));
+            // R43: 启动日志首行带版本（调试菜单「关于」同源）。
+            Log.Logger.Information("[Player] {Product} v{Version} standalone player started" +
+                                   (StartupSwfPath is null ? "" : $" (swf: {StartupSwfPath})"),
+                NeoEditor.Player.Services.AppInfo.ProductName, NeoEditor.Player.Services.AppInfo.Version);
         }
 
         base.OnFrameworkInitializationCompleted();

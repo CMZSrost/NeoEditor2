@@ -43,10 +43,7 @@ public class BattleMoveEntityVisualizer : IEntityVisualizer
         if (entity is not BattleMove bm) return new TextBlock { Text = "Invalid" };
         var root = new StackPanel { Spacing = 16, Margin = new Thickness(16) };
 
-        var rawBody = new Border
-            { IsVisible = false, Child = _vis.BuildRawDataTable(bm), Padding = new Thickness(8) };
-        root.Children.Add(_vis.BuildExpander(_vis.Loc("Vis.RawData"), rawBody));
-        root.Children.Add(rawBody);
+        root.Children.Add(_vis.BuildRawData(bm));
 
         root.Children.Add(BuildHeroHeader(bm));
         root.Children.Add(BuildStatsPanel(bm));
@@ -194,6 +191,9 @@ public class BattleMoveEntityVisualizer : IEntityVisualizer
             kvItems.Add((_vis.Loc("Vis.MinCharges"), $"{bm.MinCharges}"));
         if (!string.IsNullOrWhiteSpace(bm.ChanceType) && bm.ChanceType != "0,0,0")
             kvItems.Add(("Chance Type", bm.ChanceType));
+        // R48: required hex types (vHexTypes, official data all empty) — show when a mod sets it.
+        if (!string.IsNullOrWhiteSpace(bm.HexTypes))
+            kvItems.Add((_vis.Loc("Vis.HexTypesRef"), bm.HexTypes));
         if (kvItems.Count > 0)
         {
             var kvGrid = new Grid { Margin = new Thickness(4, 4, 4, 4) };

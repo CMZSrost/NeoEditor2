@@ -10,7 +10,7 @@
   <data name="Menu.Exit" xml:space="preserve"><value>退出</value></data>
   <data name="Menu.View" xml:space="preserve"><value>视图</value></data>
   <data name="Menu.FullScreen" xml:space="preserve"><value>全屏 (F11)</value></data>
-  <data name="Menu.Log" xml:space="preserve"><value>日志（Shift+Tab）</value></data>
+  <data name="Menu.Log" xml:space="preserve"><value>日志 (F10)</value></data>
   <data name="Menu.BackgroundRun" xml:space="preserve"><value>后台运行</value></data>
   <data name="Menu.BackgroundRunTip" xml:space="preserve"><value>开启后窗口失焦不暂停游戏（声音继续）</value></data>
   <data name="Menu.Theme" xml:space="preserve"><value>主题</value></data>
@@ -23,11 +23,11 @@
   <data name="Menu.DataBrowser" xml:space="preserve"><value>数据浏览</value></data>
   <data name="Placeholder.Drop" xml:space="preserve"><value>把 SWF 文件拖到这里</value></data>
   <data name="Placeholder.Click" xml:space="preserve"><value>或点击浏览…（NEOScavenger.swf）</value></data>
-  <data name="Placeholder.MenuHint" xml:space="preserve"><value>菜单：文件 → 打开 SWF (Ctrl+O) / 重新加载 (F5)&#x0a;视图 → 全屏 (F11) / 日志 (Shift+Tab) / 数据浏览 / 后台运行&#x0a;视图 → 主题 / 语言</value></data>
-  <data name="Log.OverlayTitle" xml:space="preserve"><value>运行日志 — Shift+Tab 关闭</value></data>
+  <data name="Placeholder.MenuHint" xml:space="preserve"><value>菜单：文件 → 打开 SWF (Ctrl+O) / 重新加载 (F5)&#x0a;视图 → 全屏 (F11) / 日志 (F10) / 数据浏览 / 后台运行&#x0a;视图 → 主题 / 语言</value></data>
+  <data name="Log.OverlayTitle" xml:space="preserve"><value>运行日志 — F10 关闭</value></data>
   <data name="Log.Level" xml:space="preserve"><value>级别：</value></data>
   <data name="Log.Clear" xml:space="preserve"><value>清空</value></data>
-  <data name="Log.Close" xml:space="preserve"><value>关闭 (Shift+Tab)</value></data>
+  <data name="Log.Close" xml:space="preserve"><value>关闭 (F10)</value></data>
   <data name="Log.FilePrefix" xml:space="preserve"><value>日志文件：</value></data>
   <data name="DataBrowser.Title" xml:space="preserve"><value>数据浏览</value></data>
   <data name="Db.Status.NotLoaded" xml:space="preserve"><value>未加载</value></data>
@@ -48,11 +48,54 @@
   <data name="Gallery.Missing" xml:space="preserve"><value>{0}（缺失）</value></data>
   <data name="Field.Title" xml:space="preserve"><value>字段</value></data>
   <data name="Menu.Storage" xml:space="preserve"><value>存档管理</value></data>
+  <data name="Menu.Debug" xml:space="preserve"><value>调试</value></data>
+  <data name="Debug.DevTools" xml:space="preserve"><value>开发者工具 (F12)</value></data>
+  <data name="Debug.DevToolsUnavailable" xml:space="preserve"><value>开发者工具不可用（WebView 未就绪）</value></data>
+  <data name="Log.OpenFolder" xml:space="preserve"><value>打开日志目录</value></data>
+  <data name="Log.Export" xml:space="preserve"><value>导出日志</value></data>
+  <data name="Log.Exported" xml:space="preserve"><value>已导出: {0}</value></data>
+  <data name="Log.ExportBundle" xml:space="preserve"><value>导出存档+日志 (zip)</value></data>
+  <data name="Log.Clipboard" xml:space="preserve"><value>剪贴板</value></data>
+  <data name="Log.ClipboardTitle" xml:space="preserve"><value>系统剪贴板内容</value></data>
+  <data name="Log.ClipboardEmpty" xml:space="preserve"><value>（系统剪贴板为空）</value></data>
+  <data name="Menu.About" xml:space="preserve"><value>关于</value></data>
+  <data name="Menu.SaveEditor" xml:space="preserve"><value>存档修改工具</value></data>
+  <data name="SaveEditor.Title" xml:space="preserve"><value>存档修改工具</value></data>
+  <data name="SaveEditor.Refresh" xml:space="preserve"><value>刷新</value></data>
+  <data name="SaveEditor.Load" xml:space="preserve"><value>加载</value></data>
+  <data name="SaveEditor.Save" xml:space="preserve"><value>保存</value></data>
+  <data name="SaveEditor.SaveAs" xml:space="preserve"><value>另存为…</value></data>
+  <data name="SaveEditor.SaveAsTitle" xml:space="preserve"><value>另存为…</value></data>
+  <data name="SaveEditor.SaveAsHint" xml:space="preserve"><value>新存档 key（localStorage）</value></data>
+  <data name="SaveEditor.SaveAndLoad" xml:space="preserve"><value>保存并加载</value></data>
+  <data name="SaveEditor.Close" xml:space="preserve"><value>关闭</value></data>
+  <data name="SaveEditor.Empty" xml:space="preserve"><value>（无存档）</value></data>
+  <data name="SaveEditor.NoSelection" xml:space="preserve"><value>请先选择存档</value></data>
+  <data name="SaveEditor.EmptyJson" xml:space="preserve"><value>先加载存档再保存</value></data>
+  <data name="SaveEditor.LoadFailed" xml:space="preserve"><value>加载失败: {0}</value></data>
+  <data name="SaveEditor.Loaded" xml:space="preserve"><value>已加载（{0} KB）——改完点「保存」，改动需「保存并加载」重启游戏后生效</value></data>
+  <data name="SaveEditor.Saved" xml:space="preserve"><value>已保存（{0} 字节）——「保存并加载」重启后生效</value></data>
+  <data name="SaveEditor.SaveFailed" xml:space="preserve"><value>保存失败: {0}</value></data>
+  <data name="SaveEditor.Summary" xml:space="preserve"><value>LSO: {0} · 格式 v{1} · {2} 个根条目</value></data>
+  <data name="SaveEditor.JsonHint" xml:space="preserve"><value>存档 JSON（__amf 为类型标记；改完点「保存」）</value></data>
+  <data name="About.Title" xml:space="preserve"><value>关于 NeoScavenger Player</value></data>
+  <data name="About.Body" xml:space="preserve"><value>版本: {0}&#x0a;Ruffle: {1}&#x0a;平台: {2}&#x0a;&#x0a;日志目录: {3}&#x0a;游戏根目录: {4}&#x0a;WebView2 数据目录: {5}</value></data>
+  <data name="Common.Close" xml:space="preserve"><value>关闭</value></data>
+  <data name="Error.DialogTitle" xml:space="preserve"><value>检测到游戏错误</value></data>
+  <data name="Error.DialogBody" xml:space="preserve"><value>游戏可能发生了错误：&#x0a;{0}&#x0a;&#x0a;完整错误已记录到运行日志。</value></data>
+  <data name="Status.ErrorDetected" xml:space="preserve"><value>⚠ 检测到游戏错误（详见日志）</value></data>
+  <data name="Status.ErrorExit" xml:space="preserve"><value>游戏异常退出（详见日志）</value></data>
   <data name="Storage.Title" xml:space="preserve"><value>存档管理</value></data>
   <data name="Storage.Hint" xml:space="preserve"><value>存档保存在页面 localStorage（Ruffle SharedObject）；固定回环端口后重开游戏存档保留</value></data>
   <data name="Storage.Refresh" xml:space="preserve"><value>刷新</value></data>
   <data name="Storage.ClearAll" xml:space="preserve"><value>清空全部</value></data>
   <data name="Storage.Delete" xml:space="preserve"><value>删除</value></data>
+  <data name="Storage.Edit" xml:space="preserve"><value>修改</value></data>
+  <data name="Storage.RestartGame" xml:space="preserve"><value>重启游戏</value></data>
+  <data name="Storage.NeedRestart" xml:space="preserve"><value>已删除/恢复，正在重启游戏使更改生效（游戏运行期持有 SharedObject 内存缓存，自动保存会写回旧档）</value></data>
+  <data name="Storage.RestartPromptTitle" xml:space="preserve"><value>重启游戏</value></data>
+  <data name="Storage.RestartPrompt" xml:space="preserve"><value>更改已写入 localStorage；运行中的游戏持有内存缓存（Ruffle SharedObject），需重启游戏后生效。立即重启游戏？</value></data>
+  <data name="Storage.RestartNow" xml:space="preserve"><value>重启游戏</value></data>
   <data name="Storage.Empty" xml:space="preserve"><value>（无存档）</value></data>
   <data name="Storage.ReadFailed" xml:space="preserve"><value>无法读取存档（请先加载游戏）</value></data>
   <data name="Storage.ParseFailed" xml:space="preserve"><value>存档数据解析失败</value></data>

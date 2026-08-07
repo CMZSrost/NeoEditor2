@@ -14,12 +14,17 @@ namespace NeoEditor.Plugins.ImageTools;
 public class ImageOrchestrationPlugin : IToolPlugin
 {
     private readonly ImageOrchestrationViewModel _viewModel;
+    private readonly NeoEditor.Infra.Services.ILocalizationService _loc;
 
-    public ImageOrchestrationPlugin(ImageOrchestrationViewModel viewModel) => _viewModel = viewModel;
+    public ImageOrchestrationPlugin(ImageOrchestrationViewModel viewModel, NeoEditor.Infra.Services.ILocalizationService loc)
+    {
+        _loc = loc;
+        _viewModel = viewModel;
+    }
 
     public string Name => "ImageTools.ImageOrchestration";
     public Version Version => new(1, 0, 0);
-    public string Title => "Image Orchestration";
+    public string Title => _loc["Tools.ImageOrchestration"];
     public ToolDock DefaultDock => ToolDock.Right;
     public int Order => 35;
 

@@ -470,10 +470,12 @@ NeoEditor.Player（新 exe，Avalonia 桌面，独立运行）
   误判；图片列（ImageAsset 无真实目标表）自动排除。
 - **图片画廊**：`[ReferenceField(typeof(ImageAsset))]` 列（strImg/strIMG/vImageList/vSpriteList，
   含 ItemType/Creature/AttackMode/CampType/DmcPlace/DataFile/Encounters）→ 解析文件名列
-  （vSpriteList 的 `{value}={id}` 取 id；防御性剥离 "ns:" 前缀）→ `{gameRoot}/img/*.png`
-  存在性检查 → markdown 图片 **3 列网格**（表格内图片，ImageBasePath = gameRoot，
+  （vSpriteList 的 `{value}={id}` 取 id；防御性剥离 "ns:" 前缀）→ 存在性检查 →
+  markdown 图片 **3 列网格**（表格内图片，ImageBasePath = gameRoot，
   `Uri.EscapeDataString` 处理中文/空格文件名）；缺失文件回退为 `文件名（缺失）` 文本；
-  图片列从字段表排除。
+  图片列从字段表排除。**R54：图片来源 = 主游戏 `img/` + 各模组 `Mods/<mod>/img/`**
+  （与 ProxyHttpModule / ImageSearchService 约定一致），构造时扫描缓存目录列表，
+  按 主 img → 模组 img 顺序查找——模组图片不再显示"缺失"。
 - 重构：`ReferenceMetadata`（Player.Core/Data，internal）提取 [ReferenceField] 元数据 +
   段解析（RefColumn 增加 IsImage 标志），WikiDetailBuilder 与 ReferenceAnalyzer 共用。
 - 测试：新增 ReferenceAnalyzerTests 6 项（跨表/跨表同 key 不误判/双目标/复合键/去重/图片列
@@ -684,7 +686,7 @@ dist/
 | 路径 | 内容 |
 |------|------|
 | `%LocalAppData%/NeoScavengerPlayer/settings.json` | 主题 / 语言持久化 |
-| `%LocalAppData%/NeoScavengerPlayer/logs/` | `player-run-*.log`，每 run 一个，保留最新 2 个 |
+| exe 旁 `logs/`（不可写时回退 `%LocalAppData%/NeoScavengerPlayer/logs/`） | `player-run-*.log`，每 run 一个，保留最新 2 个；导出产物（`player-log-export-*.txt`、`NeoScavengerPlayer-export-*.zip`）也落这里 |
 | `%LocalAppData%/NeoScavengerPlayer/WebView2/` | WebView2 缓存（EBWebView） |
 
 ### 发布前校验清单
@@ -697,11 +699,19 @@ dist/
 6. 日志：覆盖层分类过滤（console/clipboard/warn/error/debug）；游戏退出后 `logs/`
    有文件且目录只剩最新 2 个。
 7. 游戏内退出 → 回到「把 SWF 文件拖到这里」占位态，无残留音频/进程。
+8. **存档闭环（R37 起）**：读档/保存跨重启可靠；存档管理删档 → 重启不复活；
+   删档后玩新档 → 正常关闭不丢进度；`save_backup/` 有自动备份。
+9. **调试工具（R42/R43）**：启动**无剪贴板权限弹窗**且系统剪贴板不被游戏日志污染
+   （剪贴板内容只出现在日志 level=clipboard）；F12/调试菜单开 DevTools；导出日志 /
+   导出存档+日志 zip 生成文件并在 Explorer 定位；「关于」显示 v0.9.0。
+10. 报错捕捉（R42）：DevTools Console 执行 `window.__log("error","TypeError: test")`
+    → 状态栏警示 + 弹窗「检测到游戏错误」。
 
 ### 版本号
 
-- 分发名固定 `NeoScavengerPlayer`（AssemblyName）；版本号经 csproj
-  `Version`/`FileVersion` 管理（当前未显式设置，首次正式分发时补充）。
+- 分发名固定 `NeoScavengerPlayer`（AssemblyName）；版本号 = csproj `<Version>`（R43 起，
+  当前 `0.9.0` 试用版），窗口标题/About/启动日志/导出 zip 命名同源；publish.ps1 的 zip
+  默认命名读取该值，git tag `vX.Y.Z` 走 GitHub Actions 自动 release。
 - ruffle 版本锁定 nightly-2026-08-04；升级走独立变更（替换 `Web/ruffle` + 更新本文档）。
 
 ### 常见问题
@@ -1158,3 +1168,246 @@ BaseLow 与侧栏区分；Markdown 区域走 MarkdownTheme.axaml 双字典（v2.
       （23732/28792/42668 字节 → 展开后 79600/97356/114560），值树逐叶子对比
       （4312 叶子值）**零不一致**；host.html 拦截脚本沙箱端到端测试 6/6 通过；
       `Player.Core` 构建 0 错误。**待用户实机验证**：受伤存档重启不再崩。
+  - v2.45（2026-08-06）：**读写端引用表错位根因确认 + 两遍法重写** —— 实机验证暴露
+    新崩溃（`fDurability not found on Number`、`cannot convert 0 to Vector.<int>`）。
+    对照 flash-lso write.rs/read.rs 源码确认**根因链**：写端（Ruffle
+    `get_or_create_value`，对象身份去重）写出的引用号按**写端表**（值相等去重、
+    VectorInt 等 to_length 类型不入表）编号；读端表（所有复杂类型占位式入表）与
+    写端表错位 → 同一引用号解析到不同对象（如伤口 `vCurrentStates` 引用指向物品
+    对象 → 游戏 for-each 读 `Number.m_fDate` 崩）。重写为**两遍法**（P1 解析建
+    占位树 + 写端表语义重建 → 引用全展开内联）：表按写端语义（仅
+    Object/VectorObject/Dictionary/ECMAArray 入表、值相等去重）重建 + 类型不匹配
+    回退（0x10/0x11/0x0a 引用标记 vs 表项类型不符 → 回退到包含该表项的容器）；
+    `VECINT_PROPS` 字段知识修正（`m_vWaypoints` 等 Vector.<int> 属性被去重成空
+    vecobject → 还原空 vecint，修复保存时 `cannot convert 0 to Vector.<int>`）。
+    node 版验证 17/17 伤口正确；浏览器版同步 + 输出逐字节一致 + 幂等。
+  - v2.46（2026-08-06）：**启动即修复（自动修复循环）+ 缓存追修** —— 展开从
+    getItem 读取时扩展到**启动时**：页面加载即扫描 localStorage 展开并 setItem
+    落盘（游戏保存写回原始 LSO → 下次启动自动再展开 = 用户要的自动修复循环）；
+    GameContentServer 对 .html/.js/.wasm 改 `no-store`（WebView2 曾缓存旧版
+    host.html/展开器导致展开脚本缺失）；版本标记入日志（`NE v2.46 展开器就绪`）
+    便于实机确认加载的是新 host.html。**待实机验证**。
+  - v2.47（2026-08-07）：**两层真根因修复 —— 运行时展开从未执行** —— 实机日志
+    显示启动展开块报 `LsoExpand 不可用`。排查发现两层根因：① `lso-expand-web.js`
+    导出行 `global.LsoExpand = ...` —— 浏览器无 `global`（仅 window/globalThis），
+    脚本抛 ReferenceError，`window.LsoExpand` 从未定义 → 启动块与 getItem 包装
+    全部静默跳过（node 测试能过是因为 node VM 有 `global`，验证方法缺陷掩盖了
+    问题）；修复为 `globalThis.LsoExpand`。② 更早被忽略的真凶：**GameContentServer
+    路由**把 `/lso-expand-web.js` 落入游戏根目录回退 → **404**（特殊路由只有
+    `/`、`/ruffle/*`、代理路径）→ 脚本从未加载；修复为 **Web 目录优先**（Web 根
+    存在文件先于游戏根，放代理路由前不冲突）+ 2 个回归测试
+    （ServesWebRootScriptsLikeLsoExpander / WebRootDoesNotShadowGameRootFiles，
+    13/13 绿）。启动展开块直接 POST /__log（早于 console 拦截，原 console.log
+    不可见）可验证化。**实机：读档成功**（`v2.47 启动展开: nsSGv1 29676->82844`）。
+  - v2.48（2026-08-07）：**保存崩溃修复（cannot convert false to Vector.<int>）** ——
+    读档成功后可玩但保存必崩（`Creature/get SaveData → AICreature/get SaveData →
+    DataHandler/SaveGame`）。反编译 SWF（FFDec + 便携 JRE，源码存
+    player-tools/swf-src）定位：`Creature.get SaveData` 把 `m_dictFactions` 每个值
+    push 进 `Vector.<int> m_vFactions`，活体字典混入 `false` 即崩。排查结论：
+    存档数据**100% 干净**（flash-lso 0 引用 0 错误、全部值数字）；WAL 挖到崩溃前
+    5 秒（00:41:08）游戏**成功保存**的存档为证——`false` 是游戏运行期 faction
+    逻辑（`m_dictFactions[0] += delta` 在空字典条目上运算）在加载后数秒内产生的
+    运行态产物（游戏自身缺陷，无法改 SWF）。修复：**形态归一化**——玩家存档
+    `m_vFactions` 为空是异常形态（生物均为 14×-100 默认声望），展开时补全为
+    14×-100，使运行期 faction 运算全部落在已存在的数字条目上；浏览器版同步
+    （双版本逐字节一致 + 幂等验证）。**实机闭环验证通过**：读档 → 保存 → 关闭
+    重开 → 读档 → 保存全部成功。旧备份（save_backup 原始字节快照）需经同样
+    展开处理方可加载，游戏 SharedObject 单槽、新档覆盖槽位。
+  - v2.49（2026-08-07）：**存档管理"删除/覆盖无效"根因修复（Ruffle SharedObject
+    内存缓存）** —— 用户实机：同一会话内「每次加载同一个存档 / 覆盖后仍同一个 /
+    删除后仍可加载」。源码取证（Ruffle avm2-shared-object.rs）：`get_local` 按
+    full_name 缓存实例（`avm2_shared_objects`），**缓存命中即返回，运行中游戏
+    从不重读 localStorage**；`clear()` 只删 storage 不清缓存与 data。因此存档
+    管理的删除/清空/恢复只改 localStorage（备份证明 setItem/removeItem 真实
+    执行），对运行中的游戏无效；唯一生效路径 = 重载页面（缓存随文档销毁）。
+    修复：StorageManagerViewModel 删除/清空/恢复后提示「需重启游戏生效」
+    （Storage.NeedRestart），存档管理窗口新增「重启游戏」按钮
+    （RestartGameCommand → PlayerViewModel.RestartGame → 页面 Refresh）；
+    新增 resx 键 ×2（zh/en）。**调试教训**：用户从 Rider F5（Debug 构建）启动，
+    存档在 `bin/Debug/.../NeoScavengerPlayer.exe.WebView2` 数据目录，与 Release
+    目录独立——排查存档落盘先确认启动的构建（leveldb LOG 的 Recovering 记录
+    是判定数据目录活跃度的直接证据）。Player.Core.Tests 99/99 绿。
+  - v2.50（2026-08-07）：**删除/恢复后旧档"复活"追修（自动保存写回）** ——
+    用户实机：删除存档 → 手动重启游戏 → 读到**备份前的旧档**。反编译取证：
+    游戏**每回合结束自动保存**（PlayState.update → EndDMTurn → SaveGame，
+    `GUIEscMenu.bAutosave`）——删除只清 localStorage，运行中游戏的 Ruffle
+    缓存实例仍持有旧 data，玩家任意行动推进回合即触发自动保存 → flush 把
+    缓存旧数据**写回 localStorage**，重启后自然读到旧档。修复：删除/清空/
+    恢复成功后**自动重启游戏**（`RestartGameNow`：操作完成后 ~300ms 重载页面，
+    在游戏有机会自动保存前销毁页面），提示文案同步更新。手动「重启游戏」
+    按钮保留（不触发变更时也可用）。
+  - v2.51（2026-08-07）：**游戏内删档重启复活根因（Ruffle 实例 Drop 全量 flush）** ——
+    用户实机：游戏内删档（`SharedObject.clear`）→ 重启 → 存档复活仍可继续。
+    源码取证（web-lib.rs）：`RuffleInstance::drop` 调用 `flush_shared_objects()`
+    把**内存缓存的所有 SharedObject** 写回 localStorage——`clear()` 只删存储层
+    （`storage.remove_key`），缓存实例与 data 原封不动；页面卸载/实例销毁时
+    全量回写把删除"撤销"。真实 Flash 只有显式 `flush()` 才写盘（游戏删档流程
+    天然安全）；Ruffle 的 Drop 自动 flush 是可靠性设计，在删档场景成为复活源。
+    修复：host.html 的 removeItem 包装器标记 `window.__savesCleared`；
+    beforeunload/pagehide 监听（先于 Ruffle 注册）在"删过档"时设
+    `window.__blockSaves` 拦截卸载 flush（setItem 包装器拒绝写入）。
+  - v2.52（2026-08-07）：**destroy 路径补拦截 + 拦截条件收窄 + 存档管理崩溃修复** ——
+    ① 用户实机仍复活：`TryDestroyPlayer`（关窗/导航/停止时先 destroy 再卸载）的
+    Drop flush 早于 pagehide，拦截落空——改为 destroy() 前在**同一脚本**里先按
+    `__savesCleared` 置 `__blockSaves`。② 用户质疑"删档后正常关闭是否也没法保存"
+    ——拦截条件收窄为「本会话删过档 **且** localStorage 尚无存档」（= 删除后没
+    保存过新档）才拦截；已有新档（删除后玩新游戏已自动保存）则放行 flush，
+    新档最后一段进度正常落盘；存档管理 VM 显式设置的 `__blockSaves` 不被覆盖
+    （恢复场景安全）。③ 崩溃修复：v2.50 自动重启与旧的手动 `AskRestartAsync`
+    弹框冲突（删除后窗口已关闭，再以它为 owner 弹框 →
+    `Cannot show a window with a closed owner`）——移除三处 AskRestartAsync
+    调用。Player.Core.Tests 99/99 绿，Debug+Release 构建 0 错误。
+  - v2.53（2026-08-07）：**调试工具四件套（R42）——剪贴板完全接管 · F12 DevTools ·
+    日志目录/导出 · 报错捕捉** ——
+    ① **剪贴板零弹窗**：旧 writeText 包装器用隐藏 textarea + `execCommand('copy')`
+    兜底，仍写真实剪贴板（游戏内部日志刷屏用户剪贴板）且每次启动触发 WebView2
+    「允许写入剪贴板」弹窗；readText 800ms 轮询还会弹读取权限框。v2.53 起
+    `writeText` 只 `captureClipboard()` 进日志并返回成功、`readText` 返回空串、
+    删除轮询——**真实剪贴板不再被写、启动零弹窗、隐私不再偷读**（Ruffle 只调
+    writeText，已核实 ruffle.js/core 无 ClipboardItem）。内容完整保留在
+    /__log（level=clipboard）与日志文件。
+    ② **F12 开发者工具**：Chromium DevTools（Network / Application-localStorage /
+    Console）。Avalonia.Controls.WebView 12.0.1 公共面只暴露原始 COM 指针
+    （`IWindowsWebView2PlatformHandle.CoreWebView2` 是 IntPtr，托管 ICoreWebView2
+    包装内部且无工厂）——用最小 `[ComImport]` 子集接口（GUID
+    76eceacb-0462-4d94-ac83-423a6793775e，vtable slot 48 = OpenDevToolsWindow，
+    0..47 声明但不调用）桥接调用；包从未禁用 DevTools（默认开启），游戏聚焦时
+    F12/Ctrl+Shift+I 原生可用，本桥覆盖菜单项/窗口聚焦场景。失败降级状态栏提示。
+    ③ **日志目录/导出**：LogOverlayWindow 顶栏 + 调试菜单 →「打开日志目录」
+    （explorer /select 最新 player-run-*.log）、「导出日志」（头部信息 +
+    localStorage 快照 + 全部 run 日志行 → `player-log-export-*.txt`，导出后
+    explorer 定位；localStorage 快照走 host.html 新增 `window.__dumpLocalStorage()`，
+    key/长度/前 200 字符预览，VM 注入 ExecuteJs 桥）。
+    ④ **报错捕捉**：本版 Ruffle 不派发 error 事件（仅 loadedmetadata/loadeddata），
+    运行时 AVM 错误走 console.error 通道。补全 unhandledrejection 监听 +
+    `load().catch` 写 /__log + `window.__log` 全局暴露；SwfLogBridge 新增
+    GameError 事件（致命签名：window.onerror / unhandledrejection / cannot
+    convert / TypeError·ReferenceError·RangeError·SyntaxError / stack overflow /
+    Maximum call stack / SWF 加载失败）→ 播放器弹窗「检测到游戏错误」+
+    状态栏警示（30s 去抖）；异常退出（run 内有 error 行）状态栏「游戏异常退出」。
+    测试：Player.Core.Tests 109/109（+10：GameError 模式 5 + 良性行 3 +
+    RunLogReport 2）；全量 821/821 绿。
+  - v2.54（2026-08-07）：**剪贴板真根因修复（execCommand）+ 版本号/About + 存档日志 zip 导出（R43）** ——
+    ① **剪贴板仍被写**（用户实机：v2.53 后"剪贴板里依旧全都是日志"）。源码取证
+    （ruffle-rs master web/src/ui.rs `WebUiBackend::set_clipboard_content`）：
+    Ruffle 的剪贴板写入**不走 navigator.clipboard.writeText**（注释：该 API 仅 HTTPS
+    安全上下文可用，本页 http://127.0.0.1 不可用）——而是隐藏 textarea + select() +
+    `document.execCommand("copy")`（已核实本版 wasm glue 无 `__wbg_writeText`，
+    仅 `__wbg_execCommand` + `__wbg_clipboard_ed`[navigator.clipboard getter]）。
+    因此 v2.44-v2.53 的 writeText 包装从未被 Ruffle 调用，v2.53 前日志里的截获行
+    全靠 readText 800ms 轮询读回（当初加轮询的原因），v2.53 删轮询后 execCommand
+    仍写真实剪贴板。修复：**拦截 document.execCommand**（copy/cut → 捕获选区文本
+    进日志 + 返回 true，不写真实剪贴板）；writeText/readText 包装保留（防未来版本/
+    HTTPS 部署 + 读权限弹窗）。Ruffle 自身 buffer（clipboard_content）不受影响，
+    游戏内 System.getClipboard 仍可读到它写的内容。
+    ② **版本号**：csproj `<Version>0.9.0</Version>`（试用版）——窗口标题、启动日志
+    首行、About 同源；publish.ps1 的 zip 命名默认取 csproj Version（替代当天日期）。
+    ③ **About**：调试菜单 → 版本 / Ruffle nightly-2026-08-04 / 平台 / 日志目录 /
+    游戏根目录 / WebView2 数据目录。
+    ④ **导出存档+日志 zip**：调试菜单 → `NeoScavengerPlayer-export-{版本}-{时间戳}.zip`
+    = info.txt + saves/localstorage.json（新增 `window.__exportSaves()` 全量存档）+
+    logs/*.log + save_backup/*.json（PlayerBundleExporter，System.IO.Compression 内置），
+    完成后 explorer 定位——试用反馈/存档迁移一键包。
+    实机结果（用户）：删档复活修复 ✓ 确认；F12 ✓；导出日志 ✓；报错弹窗**未确认**
+    （触发方式：DevTools Console 执行 `window.__log("error","TypeError: test")`）。
+    测试：Player.Core.Tests 111/111（+2 PlayerBundleExporter）；全量 823/823 绿。
+  - v2.55（2026-08-07）：**存档修改工具（R45，调试用）** —— 调试菜单「存档修改工具」：
+    加载指定存档（localStorage 列表）→ LSO 反序列化为 JSON 树（`LsoExpand.toTree`，
+    __amf 类型标记保留：object/array/vecint/vecobject/dict/date/xml/bytes/int/double）
+    → 文本编辑 → **保存**（写回原 key）/ **另存为**（新 key）/ **保存并加载**（写回 +
+    重载页面清 Ruffle SharedObject 内存缓存后生效）。保存走 `LsoExpand.fromTree`：
+    JSON → 全内联重编码 → 立即回验 parseLso，改坏在写入前报错；NaN/±Infinity
+    （存档里 755 处未初始化 double）经 sanitizeTree 转字符串标记保语义，round-trip
+    与原始树完全一致（_current-wal-save / _precrash-save 两样本 node 验证）。
+    结构查看 = 摘要行（LSO 名/格式版本/根条目数 + 根条目类型与 className）+
+    JSON 树本身。注意：工具不执行 v2.48 的 m_vFactions 归一化——保存后重启时
+    启动展开器会补全（与游戏读取路径一致）。
+    测试：SaveEditorViewModelTests +8（加载/错误/保存/另存/保存并加载/去抖）；
+    Player.Core.Tests 119/119；全量 831/831 绿。
+  - v2.56（2026-08-07）：**About 消息框化 + 存档工具并入存档管理 + 剪贴板截获内容修复（R46）** ——
+    ① **About**：用户反馈提示弹窗不该带两个确认按钮——改用编辑器同款
+    `MessageBox.Avalonia`（MsBox，包 12.0.0 加入 Player.csproj），纯消息 +
+    右上角关闭；PromptDialogWindow 保持原样（不再加"无按钮模式"）。
+    ② **存档修改工具入口迁移**：用户反馈工具应集成进存档管理——移除调试菜单
+    入口，存档管理窗口每行加「修改」按钮（EditSaveRequested 事件 → 宿主打开
+    编辑器并预载该存档 LoadEntryAsync）；「保存并加载」后存档管理列表自动刷新。
+    ③ **剪贴板截获内容修复**：用户实机 v2.54 后真实剪贴板干净了，但**日志里
+    完全没有截获内容**——Ruffle 流程是 textarea.value → focus → select() →
+    execCommand("copy")，WebView2 里 focus/selection 时序不稳，getSelection()
+    为空导致提取失败。v2.56 提取链：selection → activeElement(textarea) →
+    兜底 querySelector("textarea")（execCommand 时 Ruffle 的临时 textarea 尚未
+    移除）——日志恢复显示「游戏剪贴板日志(截获)」。待用户复测。
+    测试：全量 831/831 绿（本轮无新增测试）。
+  - v2.57（2026-08-07）：**剪贴板源头截获 + 菜单重组 + 存档修改器改节点编辑器（R47）** ——
+    ① **剪贴板再修复**：用户实机 v2.56 日志里「游戏剪贴板日志(截获): 」仍为空——
+    WebView2 selection/focus 时序不稳，execCommand 同步执行先于 MutationObserver
+    微任务还会污染 lastClipboard 去重。v2.57：execCommand 拦截只负责**阻断真实
+    写入**（return true），内容提取改由 **MutationObserver 监听 textarea append**
+    （Ruffle set_value 先于 append，回调时直接读 value；节点被 remove 不影响已捕获
+    引用）——从源头截获，不依赖 selection/focus。待用户复测。
+    ② **菜单重组**：调试菜单撤销——「打开日志目录/导出日志/导出存档+日志」移入
+    **文件**菜单；「开发者工具 (F12)」移入**视图**（与 F11 同类）；「关于」移入
+    文件底部。
+    ③ **存档修改器 → 节点编辑器**（用户需求"不要文本编辑器"）：去掉顶部存档
+    下拉/刷新/加载（入口已在存档管理「修改」按钮，窗口标题显示当前 key）；
+    新增 SaveNode 树模型（SaveObjectNode/SaveListNode/SavePairNode/SaveScalarNode）
+    + SaveTree 双向转换（Build/SerializeValue）：**容器只读结构**（保持 object
+    names[]/values[] traits 对应，增删字段会把存档改崩——不提供），**标量内联
+    编辑**（string/int/double TextBox、bool CheckBox；null/undefined/date/xml/
+    bytes 只读显示 + RawJson 原样回写无损）。数值标记还原：vec* 的 values 是
+    裸数字（非 {"__n"}）、NaN/±Infinity 保持字符串标记、double 用 "R" 保留精度。
+    保存仍走 fromTree（编码回验），序列化失败（如「m_fHealth」不是有效数字）
+    状态行报字段名、不发 JS、不写坏档。
+    测试：SaveTreeTests +7（object 构建/编辑回写/复杂结构等价/vec·array·dict
+    子节点/NaN 标记/非法数字报字段名/bool·null）；SaveEditorViewModelTests 重写
+    适配节点树。Player.Core.Tests 126/126；全量 838/838 绿。
+  - v2.58（2026-08-07）：**剪贴板截获再修复（shadow root）** —— 用户实机 v2.57 后
+    「游戏剪贴板日志(截获)」**完全没有**（连空行都没了）。根因：Ruffle 的临时
+    textarea 可能 append 到 ruffle-player 元素的 **shadow root**（attachShadow open）
+    内部——`document.querySelector` 和观察 `documentElement` 的 MutationObserver
+    都看不到 shadow 内部，v2.57 的 observer 从未触发。v2.58：execCommand 拦截恢复
+    **同步提取**（调用时 set_value 已执行、textarea 尚未移除，读取最可靠），提取链
+    选区 → 普通 DOM textarea → **shadowRoot.querySelector("textarea")** → activeElement；
+    同时 `window.__watchClipboard(root)` 可在任意根挂 observer，block 3 在 player
+    创建后对 `player.shadowRoot` 也挂一份。顺带清理 v2.57 遗留的重复 observer 块
+    （外层 try 未闭合的残留）。待用户复测。
+  - v2.59（2026-08-07）：**剪贴板截获改走 value setter（确定性方案）** —— 用户实机
+    v2.58 仍空。v2.56-58 的 selection / MutationObserver / shadowRoot 查询都是
+    "找 textarea 再读"，受挂载位置与时序影响不可靠。v2.59 改为
+    **`HTMLTextAreaElement.prototype.value` setter 拦截**：Ruffle 无论把临时
+    textarea 挂在哪（普通 DOM / shadow root），`set_value` 必然经过该 setter——
+    同步、位置无关、时序无关（本页无其他 textarea 不会误伤）。execCommand 拦截
+    保留阻断真实写入，并新增 `send("debug", "剪贴板 execCommand 拦截命中")`
+    诊断行（若日志出现该行说明 Ruffle 确实走 execCommand；若始终没有则需重新
+    审视调用链）。node 沙箱功能验证：textarea.value 赋值 → POST /__log
+    level=clipboard「游戏剪贴板日志(截获): …」+ 去重 ✓。待用户复测。
+  - v2.60/v2.61（2026-08-07）：**实机确认 + 诊断收尾 + 日志行可展开（R49）** ——
+    用户实机日志（v2.60 诊断）证实：`剪贴板 value setter 拦截已安装` ✓ +
+    `剪贴板拦截: cmd=copy sel=56 ta1=无 ta2=有(56)`（**textarea 挂在 ruffle-player
+    的 shadow root**，value 长度 = 选区长度）+ **截获内容完整进日志**（游戏 mod
+    加载日志，几千字符）。用户"日志还是空的"实为**浮层行高固定截断**（省略号 +
+    tooltip），非截获失败。v2.61：移除 v2.60 诊断行（完成使命）；日志浮层行改
+    **Expander**——摘要行固定高度 + 点开展开完整内容（多行剪贴板日志可见）。
+    剪贴板链路终态：游戏 setData → Ruffle 临时 textarea（shadow root）→ value
+    setter 截获进日志（v2.59 起 ✓）→ execCommand 阻断真实写入（系统剪贴板干净 ✓）。
+  - v2.62（2026-08-07）：**日志热键 Shift+Tab → F10（R51）** —— 用户要求换键。
+    host.html 页面桥改 F10（游戏聚焦时转发 toggle-overlay）；日志窗内 F10 关闭；
+    主窗口 Avalonia 焦点时 F10 切换（三处同步，见 R51）。
+  - v2.64（2026-08-08）：**临时日志清理（R55）** —— 去掉 v2.47 逐条「启动展开」info/warn
+    日志与版本就绪行（用户反馈噪音）——只保留 error（LsoExpand 不可用/展开失败，诊断用）。
+  - v2.65（2026-08-08）：**mod 图片缺失真根因修复（R56-R58）+ 版本 1.0.0 内测包** ——
+    用户目录实查（D:/Downloads/Neo Scavenger/）：① getmods.php 是空壳（nRows=0），
+    真正生效的是 getmods2.php（nRows=47）——图片目录收集改为**两个文件都读**；
+    ② getmods2.php 多行格式值末尾带 
+ 未 Trim，拼出的路径含换行符导致 mod 目录
+    查找全失败（原版图片正常、mod 图片全缺——与用户现象吻合）——ParseModUrls 值
+    Trim 修复；③ 图片缺失诊断写入日志文件（LogAction → RunLogStore）。真实目录
+    端到端验证：主图 + mod 图（NSExtended/img）全部解析成功。版本号 0.9.0 → 1.0.0
+    （首个内测包，publish.ps1 自动读取）。
+  - v2.63（2026-08-07）：**UI 订正批次（R52-R54，host.html 未变）** —— ① 日志窗
+    跟随主题（去掉固定深色，全量 DynamicResource）+ 顶栏两行（标题/路径 + 过滤/按钮）；
+    ② 日志列表去虚拟化（StackPanel ItemsPanel，Expander 展开时滚动条不再跳动）+ 紧凑
+    （行 20px、字号 11-12）；③ 全局工具窗口按钮紧凑（App.axaml `Window Button` 样式，
+    存档管理/存档修改器/日志窗统一缩小）；④ **数据浏览器模组图片修复**：图片来源 =
+    主 `img/` + `Mods/<mod>/img/`（与 ProxyHttpModule/ImageSearchService 约定一致），
+    WikiDetailBuilder 构造时扫描缓存、按序查找——mod 图片不再"缺失"（R54）。

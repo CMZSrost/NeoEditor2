@@ -22,17 +22,90 @@ public sealed class WikiDetailBuilder
     private const int GalleryColumns = 3;
 
     private readonly GameDataCatalog _catalog;
-    private readonly string? _imageRoot;
     private readonly Dictionary<string, List<RefColumn>> _refColumns;
     private readonly ReferenceAnalyzer _analyzer;
+    private readonly List<string> _imageDirs = [];
 
     /// <param name="imageRoot">Game root dir — used to check img/*.png existence for the gallery.</param>
     public WikiDetailBuilder(GameDataCatalog catalog, string? imageRoot = null)
     {
         _catalog = catalog;
-        _imageRoot = imageRoot;
         _refColumns = ReferenceMetadata.Build();
         _analyzer = new ReferenceAnalyzer(catalog);
+        // R54-R56: 图片来源 = 主 {gameRoot}/img + 各 mod 的根目录/img 子目录。
+        // mod 路径**来自游戏自带 getmods.php**（strModURL{i}，如 Mods/<分组>/<mod>，
+        // 见 ProxyHttpModule/ModListScanner）——不存在的固定约定；getmods.php 缺失时
+        // 兜底扫 Mods/*/*（两层，与 ModListScanner 一致）。启动时扫一次缓存。
+        if (imageRoot is { } root)
+        {
+            _imageDirs.AddRange(CollectImageDirs(root));
+        }
+    }
+
+    private static List<string> CollectImageDirs(string root)
+    {
+        var dirs = new List<string>();
+        dirs.Add(Path.Combine(root, "img"));
+        try
+        {
+            // mod 路径来自游戏 getmods*.php（strModURL{i}）。注意：磁盘上的 getmods.php
+            // 可能是空壳（nRows=0，如用户目录），真正生效的是 getmods2.php——两个都读，
+            // 任一解析出路径即用；都空才走 Mods/*/* 两层扫描兜底（ModListScanner 同款）。
+            var modPaths = new List<string>();
+            foreach (var file in new[] { "getmods.php", "getmods2.php" })
+            {
+                var php = Path.Combine(root, file);
+                if (File.Exists(php))
+                    modPaths.AddRange(ParseModUrls(File.ReadAllText(php)));
+            }
+
+            if (modPaths.Count > 0)
+            {
+                foreach (var modPath in modPaths.Distinct(StringComparer.OrdinalIgnoreCase))
+                {
+                    var dir = Path.Combine(root, modPath);
+                    dirs.Add(dir);                                  // mod 根目录
+                    var img = Path.Combine(dir, "img");
+                    if (Directory.Exists(img)) dirs.Add(img);
+                }
+                return dirs;
+            }
+
+            // 兜底：Mods/<分组>/<mod> 两层扫描
+            var modsRoot = Path.Combine(root, "Mods");
+            if (Directory.Exists(modsRoot))
+            {
+                foreach (var category in Directory.EnumerateDirectories(modsRoot))
+                {
+                    foreach (var modDir in Directory.EnumerateDirectories(category))
+                    {
+                        dirs.Add(modDir);
+                        var img = Path.Combine(modDir, "img");
+                        if (Directory.Exists(img)) dirs.Add(img);
+                    }
+                }
+            }
+        }
+        catch (Exception)
+        {
+            // 只读扫描失败不影响详情页
+        }
+        return dirs;
+    }
+
+    /// <summary>getmods.php → strModURL{i} 路径列表（query-string 格式；文件可能多行，
+    /// 值末尾带换行——必须 Trim，否则拼出的路径带 \n 导致目录查找失败）。</summary>
+    private static List<string> ParseModUrls(string php)
+    {
+        var result = new List<string>();
+        foreach (var pair in php.Split('&'))
+        {
+            var eq = pair.IndexOf('=');
+            if (eq <= 0) continue;
+            if (pair[..eq].StartsWith("strModURL", StringComparison.OrdinalIgnoreCase))
+                result.Add(Uri.UnescapeDataString(pair[(eq + 1)..]).Trim());
+        }
+        return result;
     }
 
     /// <summary>Render the row as a Markdown wiki page (detail + field table + gallery + refs).</summary>
@@ -187,11 +260,14 @@ public sealed class WikiDetailBuilder
 
     private string? ResolveImagePath(string fileName)
     {
-        if (_imageRoot is null) return null;
-        var path = Path.Combine(_imageRoot, "img", fileName);
-        if (!File.Exists(path) && !fileName.Contains('.'))
-            path = Path.Combine(_imageRoot, "img", fileName + ".png");
-        return File.Exists(path) ? path : null;
+        foreach (var dir in _imageDirs)
+        {
+            var path = Path.Combine(dir, fileName);
+            if (!File.Exists(path) && !fileName.Contains('.'))
+                path = Path.Combine(dir, fileName + ".png");
+            if (File.Exists(path)) return path;
+        }
+        return null;
     }
 
     // ── helpers ──

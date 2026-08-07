@@ -43,10 +43,7 @@ public class ContainerTypeEntityVisualizer : IEntityVisualizer
         if (entity is not ContainerType ct) return new TextBlock { Text = "Invalid" };
         var root = new StackPanel { Spacing = 16, Margin = new Thickness(16) };
 
-        var rawBody = new Border
-            { IsVisible = false, Child = _vis.BuildRawDataTable(ct), Padding = new Thickness(8) };
-        root.Children.Add(_vis.BuildExpander(_vis.Loc("Vis.RawData"), rawBody));
-        root.Children.Add(rawBody);
+        root.Children.Add(_vis.BuildRawData(ct));
 
         root.Children.Add(BuildHeroHeader(ct));
         root.Children.Add(BuildReversePanel(ct));

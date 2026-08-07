@@ -40,10 +40,7 @@ public class IngredientEntityVisualizer : IEntityVisualizer
         if (entity is not Ingredient ing) return new TextBlock { Text = "Invalid" };
         var root = new StackPanel { Spacing = 16, Margin = new Thickness(16) };
 
-        var rawBody = new Border
-            { IsVisible = false, Child = _vis.BuildRawDataTable(ing), Padding = new Thickness(8) };
-        root.Children.Add(_vis.BuildExpander(_vis.Loc("Vis.RawData"), rawBody));
-        root.Children.Add(rawBody);
+        root.Children.Add(_vis.BuildRawData(ing));
 
         root.Children.Add(BuildHeroHeader(ing));
         root.Children.Add(BuildPropsPanel(ing));

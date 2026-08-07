@@ -2134,9 +2134,33 @@ Keyboard Shortcuts:
   <data name="DomainMap" xml:space="preserve"><value>Map</value></data>
   <data name="DomainOther" xml:space="preserve"><value>Other</value></data>
   <!-- Visualizer display labels -->
+  <data name="Vis.Effects" xml:space="preserve"><value>Effects</value></data>
+  <data name="Vis.Lifecycle" xml:space="preserve"><value>Lifecycle</value></data>
+  <data name="Vis.Associations" xml:space="preserve"><value>Sources &amp; Crafting</value></data>
+  <data name="Vis.Lifespan" xml:space="preserve"><value>Lifespan</value></data>
+  <data name="Vis.PlaySound" xml:space="preserve"><value>Play sound</value></data>
+  <data name="Tools.ProfileTool" xml:space="preserve"><value>Mod Manager</value></data>
+  <data name="Tools.SoundsTool" xml:space="preserve"><value>Audio Assets</value></data>
+  <data name="Tools.AiChat" xml:space="preserve"><value>AI Chat</value></data>
+  <data name="Tools.ImageOrchestration" xml:space="preserve"><value>Image Orchestration</value></data>
+  <data name="Tools.Editor" xml:space="preserve"><value>Editor</value></data>
+  <data name="Tools.ImageBrowser" xml:space="preserve"><value>Image Browser</value></data>
+  <data name="Tools.WebView" xml:space="preserve"><value>WebView</value></data>
+  <data name="Tools.Paratranz" xml:space="preserve"><value>ParaTranz</value></data>
+  <data name="Tools.OverlayChain" xml:space="preserve"><value>Overlay Chain</value></data>
+  <data name="Tools.DebugCommandLog" xml:space="preserve"><value>Debug: Command Log</value></data>
+  <data name="Tools.DebugSessionDirty" xml:space="preserve"><value>Debug: Session Dirty</value></data>
   <data name="Vis.RawData" xml:space="preserve"><value>Raw Data</value></data>
+  <data name="Vis.RawFields" xml:space="preserve"><value>{0} fields · {1} set</value></data>
+  <data name="Vis.RawUnresolved" xml:space="preserve"><value> · {0} unresolved refs</value></data>
+  <data name="Vis.RawOriginal" xml:space="preserve"><value>Raw: {0}</value></data>
   <data name="Vis.Stats" xml:space="preserve"><value>Stats</value></data>
   <data name="Vis.Total" xml:space="preserve"><value>Total</value></data>
+  <data name="Vis.TotalDamage" xml:space="preserve"><value>Total Damage</value></data>
+  <data name="Vis.Penetration" xml:space="preserve"><value>Penetration</value></data>
+  <data name="Vis.Sound" xml:space="preserve"><value>Sound</value></data>
+  <data name="Vis.WieldPhrase" xml:space="preserve"><value>Wield Phrase</value></data>
+  <data name="Vis.DamageFormula" xml:space="preserve"><value>Actual damage = (1 + character morale + weapon morale) × (1 + melee/ranged bonus) × weapon damage</value></data>
   <data name="Vis.Effective" xml:space="preserve"><value>Effective</value></data>
   <data name="Vis.Cut" xml:space="preserve"><value>Cut</value></data>
   <data name="Vis.Blunt" xml:space="preserve"><value>Blunt</value></data>
@@ -2191,6 +2215,8 @@ Keyboard Shortcuts:
   <data name="Vis.BattleMove.Conditions" xml:space="preserve"><value>Conditions</value></data>
   <data name="Vis.BattleMove.Flags" xml:space="preserve"><value>behavior</value></data>
   <data name="Vis.Move" xml:space="preserve"><value>Move</value></data>
+  <data name="Vis.EditorPos" xml:space="preserve"><value>Editor Pos</value></data>
+  <data name="Vis.MinimapHexes" xml:space="preserve"><value>Minimap Markers</value></data>
   <data name="Vis.Exposure.Hidden" xml:space="preserve"><value>Hidden</value></data>
   <data name="Vis.Exposure.Seen" xml:space="preserve"><value>Seen</value></data>
   <data name="Vis.Exposure.Any" xml:space="preserve"><value>Any</value></data>
@@ -2426,7 +2452,7 @@ Keyboard Shortcuts:
 
   <data name="SwfPreviewButton" xml:space="preserve"><value>In-App Preview</value></data>
   <data name="SwfPreviewTooltip" xml:space="preserve"><value>Preview the game SWF in the WebView panel with live editor data (no export needed)</value></data>
-  <data name="SwfPreviewRuffleMissing" xml:space="preserve"><value>Ruffle Web assets not found (Web/ruffle missing) - in-app preview unavailable, use "Launch with Ruffle" instead.</value></data>
+  <data name="SwfPreviewRuffleMissing" xml:space="preserve"><value>Ruffle Web assets not found (Web/ruffle missing) - in-app preview unavailable. Re-publish or copy the Web/ruffle folder next to the executable.</value></data>
   <data name="SwfPreviewServerFailed" xml:space="preserve"><value>Could not start the local preview server (loopback port bind failed).</value></data>
   <data name="SwfPreviewNoGameRoot" xml:space="preserve"><value>No valid Game Root Dir configured. Set it in Settings to preview.</value></data>
   <data name="SwfPreviewSwfNotFound" xml:space="preserve"><value>No SWF found in the game root. Expected NEOScavenger.swf.</value></data>
@@ -2453,4 +2479,17 @@ Keyboard Shortcuts:
   <data name="Paratranz.DiffNote" xml:space="preserve"><value>Applying runs editor commands (undoable); XML files are not modified directly.</value></data>
   <data name="Paratranz.ConfirmApply" xml:space="preserve"><value>Apply Translations</value></data>
   <data name="Paratranz.Cancel" xml:space="preserve"><value>Cancel</value></data>
+  <data name="Vis.Attributes" xml:space="preserve"><value>Attributes &amp; Status</value></data>
+  <data name="Vis.Encounters" xml:space="preserve"><value>Encounters</value></data>
+  <data name="Vis.CreatureIdHint" xml:space="preserve"><value>Referenced by spawn points &amp; story encounters</value></data>
+  <data name="Vis.FistsOnly" xml:space="preserve"><value>Fists only</value></data>
+  <data name="Vis.TowardPlayer" xml:space="preserve"><value>vs Player</value></data>
+  <data name="Vis.SpawnStatus" xml:space="preserve"><value>Spawn Status</value></data>
+  <data name="Vis.CarriedLoot" xml:space="preserve"><value>Carried Loot</value></data>
+  <data name="Vis.AppearsIn" xml:space="preserve"><value>Appears in Encounters</value></data>
+  <data name="Vis.SpawnPoints" xml:space="preserve"><value>Spawn Points</value></data>
+  <data name="Vis.EncTypeStory" xml:space="preserve"><value>Story</value></data>
+  <data name="Vis.EncTypeScavenge" xml:space="preserve"><value>Scavenge</value></data>
+  <data name="Vis.EncTypeCombat" xml:space="preserve"><value>Combat</value></data>
+  <data name="Vis.EncTypeHack" xml:space="preserve"><value>Hack</value></data>
 </root>

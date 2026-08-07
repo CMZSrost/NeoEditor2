@@ -1,0 +1,117 @@
+<Window
+    x:Class="NeoEditor.Player.Views.SaveEditorWindow"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:vm="clr-namespace:NeoEditor.Player.Core.ViewModels;assembly=NeoEditor.Player.Core"
+    xmlns:loc="clr-namespace:NeoEditor.Player.Services"
+    x:Name="Root"
+    x:DataType="vm:SaveEditorViewModel"
+    Title="{Binding WindowTitle}"
+    Width="760"
+    Height="640"
+    WindowStartupLocation="CenterOwner">
+
+    <DockPanel Margin="12">
+        <!--  结构摘要  -->
+        <Border
+            DockPanel.Dock="Top"
+            Padding="8,6"
+            Background="#141414"
+            CornerRadius="4">
+            <TextBlock
+                Text="{Binding SummaryText}"
+                TextWrapping="Wrap"
+                FontFamily="Consolas, Sarasa Mono SC, monospace"
+                FontSize="12"
+                Foreground="#BBBBBB" />
+        </Border>
+
+        <!--  底部操作 + 状态  -->
+        <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" Spacing="8" Margin="0,8,0,0">
+            <Button
+                Content="{Binding [SaveEditor.Save], Source={x:Static loc:LocalizationManager.Instance}}"
+                Click="OnSaveClick" />
+            <Button
+                Content="{Binding [SaveEditor.SaveAs], Source={x:Static loc:LocalizationManager.Instance}}"
+                Click="OnSaveAsClick" />
+            <Button
+                Content="{Binding [SaveEditor.SaveAndLoad], Source={x:Static loc:LocalizationManager.Instance}}"
+                Background="#2E7D32"
+                Foreground="White"
+                Click="OnSaveAndLoadClick" />
+            <Button
+                Content="{Binding [SaveEditor.Close], Source={x:Static loc:LocalizationManager.Instance}}"
+                Click="OnCloseClick" />
+            <TextBlock
+                Margin="12,0,0,0"
+                VerticalAlignment="Center"
+                Text="{Binding StatusText}"
+                TextTrimming="CharacterEllipsis"
+                Foreground="#AAAAAA" />
+        </StackPanel>
+
+        <!--  节点树：容器（结构只读）+ 标量（内联编辑）  -->
+        <TreeView
+            Margin="0,8,0,0"
+            ItemsSource="{Binding RootNodes}">
+            <TreeView.DataTemplates>
+                <TreeDataTemplate DataType="vm:SaveObjectNode" ItemsSource="{Binding Children}">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <TextBlock Text="{Binding Name}" FontWeight="SemiBold" />
+                        <TextBlock Text="{Binding TypeLabel}" Foreground="#7FC8FF" />
+                    </StackPanel>
+                </TreeDataTemplate>
+                <TreeDataTemplate DataType="vm:SaveListNode" ItemsSource="{Binding Children}">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <TextBlock Text="{Binding Name}" FontWeight="SemiBold" />
+                        <TextBlock Text="{Binding TypeLabel}" Foreground="#7FC8FF" />
+                    </StackPanel>
+                </TreeDataTemplate>
+                <TreeDataTemplate DataType="vm:SavePairNode" ItemsSource="{Binding Children}">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <TextBlock Text="{Binding Name}" FontWeight="SemiBold" />
+                        <TextBlock Text="{Binding TypeLabel}" Foreground="#7FC8FF" />
+                    </StackPanel>
+                </TreeDataTemplate>
+                <DataTemplate DataType="vm:SaveScalarNode">
+                    <Grid ColumnDefinitions="200,90,*,36" Margin="0,1">
+                        <TextBlock
+                            Text="{Binding Name}"
+                            FontSize="12"
+                            VerticalAlignment="Center"
+                            TextTrimming="CharacterEllipsis"
+                            ToolTip.Tip="{Binding Name}" />
+                        <TextBlock
+                            Grid.Column="1"
+                            Text="{Binding TypeLabel}"
+                            FontSize="11"
+                            VerticalAlignment="Center"
+                            Foreground="#7FC8FF" />
+                        <!--  可编辑：string/int/double  -->
+                        <TextBox
+                            Grid.Column="2"
+                            Margin="0,0,8,0"
+                            FontSize="12"
+                            Text="{Binding ValueText}"
+                            IsVisible="{Binding IsEditable}" />
+                        <!--  布尔  -->
+                        <CheckBox
+                            Grid.Column="2"
+                            VerticalAlignment="Center"
+                            IsChecked="{Binding BoolValue}"
+                            IsVisible="{Binding IsBool}" />
+                        <!--  只读：null/undefined/date/xml/bytes  -->
+                        <TextBlock
+                            Grid.Column="2"
+                            Text="{Binding DisplayText}"
+                            FontSize="11"
+                            VerticalAlignment="Center"
+                            Foreground="#999999"
+                            TextTrimming="CharacterEllipsis"
+                            IsVisible="{Binding IsReadOnly}" />
+                    </Grid>
+                </DataTemplate>
+            </TreeView.DataTemplates>
+        </TreeView>
+    </DockPanel>
+</Window>

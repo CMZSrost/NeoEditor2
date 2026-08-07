@@ -40,10 +40,7 @@ public class EncounterEntityVisualizer : IEntityVisualizer
         if (entity is not Encounter enc) return new TextBlock { Text = "Invalid" };
         var root = new StackPanel { Spacing = 16, Margin = new Thickness(16) };
 
-        var rawBody = new Border
-            { IsVisible = false, Child = _vis.BuildRawDataTable(enc), Padding = new Thickness(8) };
-        root.Children.Add(_vis.BuildExpander(_vis.Loc("Vis.RawData"), rawBody));
-        root.Children.Add(rawBody);
+        root.Children.Add(_vis.BuildRawData(enc));
 
         root.Children.Add(BuildHeroHeader(enc));
         if (!string.IsNullOrWhiteSpace(enc.Description))
@@ -147,6 +144,10 @@ public class EncounterEntityVisualizer : IEntityVisualizer
         if (enc.AccidentChance > 0)
             chanceRow.Children.Add(new TextBlock
                 { Text = $"Accident: {enc.AccidentChance:P0}", FontSize = 11, Foreground = Brush.Parse("#C62828") });
+        // R48: creature ambush chance — same scavenge-odds family as loot/accident.
+        if (enc.CreatureChance > 0)
+            chanceRow.Children.Add(new TextBlock
+                { Text = $"Creature: {enc.CreatureChance:P0}", FontSize = 11, Foreground = Brush.Parse("#283593") });
         if (chanceRow.Children.Count > 0) identity.Children.Add(chanceRow);
         Grid.SetColumn(identity, 1);
         grid.Children.Add(identity);
@@ -1379,6 +1380,30 @@ public class EncounterEntityVisualizer : IEntityVisualizer
             }
 
             sp.Children.Add(_vis.Card(wp));
+        }
+
+        // R48: minimap markers "x,y=label" — where this encounter pins the minimap.
+        if (!string.IsNullOrWhiteSpace(enc.MinimapHexes))
+        {
+            sp.Children.Add(_vis.SectionLabel(_vis.Loc("Vis.MinimapHexes")));
+            var wp = new WrapPanel();
+            foreach (var seg in enc.MinimapHexes.Split(',').Select(s => s.Trim()).Where(s => s.Length > 0))
+            {
+                var eqIdx = seg.IndexOf('=');
+                var pos = eqIdx > 0 ? seg[..eqIdx].Trim() : seg;
+                var label = eqIdx > 0 ? seg[(eqIdx + 1)..].Trim() : null;
+                var text = string.IsNullOrEmpty(label) ? $"({pos})" : $"({pos}) {label}";
+                wp.Children.Add(_vis.MiniBadge(text, "#FFF8E1", "#F57F17"));
+            }
+            sp.Children.Add(_vis.Card(wp));
+        }
+
+        // R48: editor-only placement (game ignores) — keep visible but de-emphasized.
+        if (!string.IsNullOrWhiteSpace(enc.Editor) && enc.Editor != "0,0")
+        {
+            sp.Children.Add(_vis.SectionLabel(_vis.Loc("Vis.EditorPos")));
+            sp.Children.Add(_vis.Card(new TextBlock
+                { Text = $"({enc.Editor})", FontSize = 11, Foreground = Brush.Parse("#999") }));
         }
 
         return sp;

@@ -14,12 +14,17 @@ namespace NeoEditor.Plugins.EntityEditor;
 public class KeyValueEditorPlugin : IToolPlugin
 {
     private readonly KeyValueEditorViewModel _viewModel;
+    private readonly NeoEditor.Infra.Services.ILocalizationService _loc;
 
-    public KeyValueEditorPlugin(KeyValueEditorViewModel viewModel) => _viewModel = viewModel;
+    public KeyValueEditorPlugin(KeyValueEditorViewModel viewModel, NeoEditor.Infra.Services.ILocalizationService loc)
+    {
+        _loc = loc;
+        _viewModel = viewModel;
+    }
 
     public string Name => "EntityEditor.KeyValueEditor";
     public Version Version => new(1, 0, 0);
-    public string Title => "Editor";
+    public string Title => _loc["Tools.Editor"];
     public ToolDock DefaultDock => ToolDock.Left;
     public int Order => 10;
 

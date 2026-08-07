@@ -14,12 +14,17 @@ namespace NeoEditor.Plugins.AiChat;
 public class AiChatPlugin : IToolPlugin
 {
     private readonly AiChatViewModel _viewModel;
+    private readonly NeoEditor.Infra.Services.ILocalizationService _loc;
 
-    public AiChatPlugin(AiChatViewModel viewModel) => _viewModel = viewModel;
+    public AiChatPlugin(AiChatViewModel viewModel, NeoEditor.Infra.Services.ILocalizationService loc)
+    {
+        _loc = loc;
+        _viewModel = viewModel;
+    }
 
     public string Name => "AiChat";
     public Version Version => new(1, 0, 0);
-    public string Title => "AI Chat";
+    public string Title => _loc["Tools.AiChat"];
     public ToolDock DefaultDock => ToolDock.Right;
     public int Order => 40;
 

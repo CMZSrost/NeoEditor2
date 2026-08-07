@@ -128,10 +128,7 @@ public class ConditionEntityVisualizer : IEntityVisualizer
         if (entity is not Condition cond) return new TextBlock { Text = "Invalid" };
         var root = new StackPanel { Spacing = 16, Margin = new Thickness(16) };
 
-        var rawBody = new Border
-            { IsVisible = false, Child = _vis.BuildRawDataTable(cond), Padding = new Thickness(8) };
-        root.Children.Add(_vis.BuildExpander(_vis.Loc("Vis.RawData"), rawBody));
-        root.Children.Add(rawBody);
+        root.Children.Add(_vis.BuildRawData(cond));
 
         root.Children.Add(BuildHeroHeader(cond));
         root.Children.Add(BuildPropertiesPanel(cond));

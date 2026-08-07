@@ -255,6 +255,95 @@ public class WikiDetailBuilderTests
     }
 
     [Fact]
+    public void ModImagesResolveFromModsDirWhenNotInGameImg()
+    {
+        // R54-R56: mod 图片目录 = 主 img/ + mod 目录（根 + img 子目录）。mod 路径
+        // 默认两层结构 Mods/<分组>/<mod>（ModListScanner 同款兜底）；getmods.php
+        // 存在时以它声明的 strModURL 为准（见下个用例）。
+        var root = NewImageRoot();
+        Directory.CreateDirectory(Path.Combine(root, "img"));
+        Directory.CreateDirectory(Path.Combine(root, "Mods", "cat", "m1", "img"));
+        try
+        {
+            File.WriteAllText(Path.Combine(root, "Mods", "cat", "m1", "img", "ModWeapon.png"), "x");
+            File.WriteAllText(Path.Combine(root, "Mods", "cat", "m1", "ModRootPic.png"), "x");
+            File.WriteAllText(Path.Combine(root, "img", "VanillaItem.png"), "x");
+            var builder = BuilderWithImageRoot(root,
+                ("itemtypes", new[] { Row("itemtypes", F("nID", "1"), F("strName", "Item")) }));
+
+            var md = builder.Build(Row("itemtypes", F("nID", "1"), F("strName", "Item"),
+                F("vImageList", "VanillaItem.png,ModWeapon.png,ModRootPic.png")));
+
+            Assert.Contains("![VanillaItem.png](img/VanillaItem.png)", md);
+            Assert.Contains("![ModWeapon.png](img/ModWeapon.png)", md);   // Mods/cat/m1/img
+            Assert.Contains("![ModRootPic.png](img/ModRootPic.png)", md);  // Mods/cat/m1 根目录
+            Assert.DoesNotContain("缺失", md);
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void ModImagesResolveFromGetmodsPhpDeclaredPaths()
+    {
+        // R56: 游戏自带 getmods.php 声明 mod 路径（strModURL{i}，可在任意位置）——
+        // 数据浏览器以它为准收集图片目录，不再假设 Mods/ 固定布局。
+        var root = NewImageRoot();
+        Directory.CreateDirectory(Path.Combine(root, "img"));
+        Directory.CreateDirectory(Path.Combine(root, "CustomMods", "m9", "img"));
+        try
+        {
+            File.WriteAllText(Path.Combine(root, "getmods.php"),
+                "nRows=1&strModName0=m9&strModURL0=CustomMods/m9");
+            File.WriteAllText(Path.Combine(root, "CustomMods", "m9", "img", "ExtPic.png"), "x");
+            var builder = BuilderWithImageRoot(root,
+                ("itemtypes", new[] { Row("itemtypes", F("nID", "1"), F("strName", "Item")) }));
+
+            var md = builder.Build(Row("itemtypes", F("nID", "1"), F("strName", "Item"),
+                F("vImageList", "ExtPic.png")));
+
+            Assert.Contains("![ExtPic.png](img/ExtPic.png)", md);   // CustomMods/m9/img
+            Assert.DoesNotContain("缺失", md);
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void ModImagesFallBackToGetmods2WhenGetmodsIsEmpty()
+    {
+        // R57: 用户目录的 getmods.php 是空壳（nRows=0），真正生效的是 getmods2.php——
+        // 两个都读，任一解析出路径即用（实测 D:/Downloads/Neo Scavenger/）。
+        var root = NewImageRoot();
+        Directory.CreateDirectory(Path.Combine(root, "img"));
+        Directory.CreateDirectory(Path.Combine(root, "Mods", "NeoScavExtended", "NSExtended", "img"));
+        try
+        {
+            File.WriteAllText(Path.Combine(root, "getmods.php"), "nRows=0");
+            // 真实格式：多行 + 每行末尾换行（值末尾带 \n 必须 Trim，否则路径带换行找不到目录）
+            File.WriteAllText(Path.Combine(root, "getmods2.php"),
+                "nRows=1&strModName0=NSE&strModURL0=Mods/NeoScavExtended/NSExtended\n");
+            File.WriteAllText(Path.Combine(root, "Mods", "NeoScavExtended", "NSExtended", "img", "NsePic.png"), "x");
+            var builder = BuilderWithImageRoot(root,
+                ("itemtypes", new[] { Row("itemtypes", F("nID", "1"), F("strName", "Item")) }));
+
+            var md = builder.Build(Row("itemtypes", F("nID", "1"), F("strName", "Item"),
+                F("vImageList", "NsePic.png")));
+
+            Assert.Contains("![NsePic.png](img/NsePic.png)", md);   // getmods2 声明的路径
+            Assert.DoesNotContain("缺失", md);
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Fact]
     public void MissingImagesShownAsText()
     {
         var root = NewImageRoot();

@@ -40,10 +40,7 @@ public class EncounterTriggerEntityVisualizer : IEntityVisualizer
         if (entity is not EncounterTrigger et) return new TextBlock { Text = "Invalid" };
         var root = new StackPanel { Spacing = 16, Margin = new Thickness(16) };
 
-        var rawBody = new Border
-            { IsVisible = false, Child = _vis.BuildRawDataTable(et), Padding = new Thickness(8) };
-        root.Children.Add(_vis.BuildExpander(_vis.Loc("Vis.RawData"), rawBody));
-        root.Children.Add(rawBody);
+        root.Children.Add(_vis.BuildRawData(et));
 
         root.Children.Add(BuildHeroHeader(et));
         root.Children.Add(BuildStatsPanel(et));

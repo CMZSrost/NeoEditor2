@@ -2100,9 +2100,33 @@ Ctrl+右键点击引用 = 仅预览不跳转。
     <data name="DomainMap" xml:space="preserve"><value>地图</value></data>
     <data name="DomainOther" xml:space="preserve"><value>其他</value></data>
     <!-- Visualizer display labels -->
+    <data name="Vis.Effects" xml:space="preserve"><value>效果</value></data>
+    <data name="Vis.Lifecycle" xml:space="preserve"><value>生命周期</value></data>
+    <data name="Vis.Associations" xml:space="preserve"><value>来源与产出</value></data>
+    <data name="Vis.Lifespan" xml:space="preserve"><value>寿命</value></data>
+    <data name="Vis.PlaySound" xml:space="preserve"><value>播放声音</value></data>
+    <data name="Tools.ProfileTool" xml:space="preserve"><value>模组管理</value></data>
+    <data name="Tools.SoundsTool" xml:space="preserve"><value>音频资产</value></data>
+    <data name="Tools.AiChat" xml:space="preserve"><value>AI 助手</value></data>
+    <data name="Tools.ImageOrchestration" xml:space="preserve"><value>图像编排</value></data>
+    <data name="Tools.Editor" xml:space="preserve"><value>编辑器</value></data>
+    <data name="Tools.ImageBrowser" xml:space="preserve"><value>图像浏览器</value></data>
+    <data name="Tools.WebView" xml:space="preserve"><value>网页预览</value></data>
+    <data name="Tools.Paratranz" xml:space="preserve"><value>ParaTranz</value></data>
+    <data name="Tools.OverlayChain" xml:space="preserve"><value>覆盖链</value></data>
+    <data name="Tools.DebugCommandLog" xml:space="preserve"><value>调试：命令日志</value></data>
+    <data name="Tools.DebugSessionDirty" xml:space="preserve"><value>调试：会话脏状态</value></data>
     <data name="Vis.RawData" xml:space="preserve"><value>原始数据</value></data>
+    <data name="Vis.RawFields" xml:space="preserve"><value>{0} 字段 · {1} 有值</value></data>
+    <data name="Vis.RawUnresolved" xml:space="preserve"><value> · {0} 个引用未解析</value></data>
+    <data name="Vis.RawOriginal" xml:space="preserve"><value>原始值: {0}</value></data>
     <data name="Vis.Stats" xml:space="preserve"><value>属性</value></data>
     <data name="Vis.Total" xml:space="preserve"><value>总计</value></data>
+    <data name="Vis.TotalDamage" xml:space="preserve"><value>总伤害</value></data>
+    <data name="Vis.Penetration" xml:space="preserve"><value>穿透</value></data>
+    <data name="Vis.Sound" xml:space="preserve"><value>音效</value></data>
+    <data name="Vis.WieldPhrase" xml:space="preserve"><value>挥击短语</value></data>
+    <data name="Vis.DamageFormula" xml:space="preserve"><value>实际伤害 = (1 + 角色士气 + 武器补正) × (1 + 近战/远程加成) × 武器伤害</value></data>
     <data name="Vis.Effective" xml:space="preserve"><value>有效伤害</value></data>
     <data name="Vis.Cut" xml:space="preserve"><value>切割</value></data>
     <data name="Vis.Blunt" xml:space="preserve"><value>钝器</value></data>
@@ -2157,6 +2181,8 @@ Ctrl+右键点击引用 = 仅预览不跳转。
     <data name="Vis.BattleMove.Conditions" xml:space="preserve"><value>条件</value></data>
     <data name="Vis.BattleMove.Flags" xml:space="preserve"><value>行为标签</value></data>
     <data name="Vis.Move" xml:space="preserve"><value>移动</value></data>
+    <data name="Vis.MinimapHexes" xml:space="preserve"><value>小地图标记</value></data>
+    <data name="Vis.EditorPos" xml:space="preserve"><value>编辑器坐标</value></data>
     <data name="Vis.Exposure.Hidden" xml:space="preserve"><value>隐藏</value></data>
     <data name="Vis.Exposure.Seen" xml:space="preserve"><value>可见</value></data>
     <data name="Vis.Exposure.Any" xml:space="preserve"><value>任意</value></data>
@@ -2380,7 +2406,7 @@ Ctrl+右键点击引用 = 仅预览不跳转。
 
     <data name="SwfPreviewButton" xml:space="preserve"><value>内置预览</value></data>
     <data name="SwfPreviewTooltip" xml:space="preserve"><value>在 WebView 面板内用 Ruffle Web 预览游戏 SWF（实时数据，无需导出）</value></data>
-    <data name="SwfPreviewRuffleMissing" xml:space="preserve"><value>Ruffle Web 资源未部署（Web/ruffle 缺失），内置预览不可用，请使用「用 Ruffle 启动」。</value></data>
+    <data name="SwfPreviewRuffleMissing" xml:space="preserve"><value>Ruffle Web 资源未部署（Web/ruffle 缺失），内置预览不可用。请重新发布或将 Web/ruffle 目录拷贝到可执行文件旁。</value></data>
     <data name="SwfPreviewServerFailed" xml:space="preserve"><value>无法启动本地预览服务器（回环端口绑定失败）。</value></data>
     <data name="SwfPreviewNoGameRoot" xml:space="preserve"><value>未设置有效的游戏根目录，无法预览。请在设置中配置 Game Root Dir。</value></data>
     <data name="SwfPreviewSwfNotFound" xml:space="preserve"><value>游戏根目录未找到 SWF 文件（预期 NEOScavenger.swf）。</value></data>
@@ -2407,4 +2433,17 @@ Ctrl+右键点击引用 = 仅预览不跳转。
   <data name="Paratranz.DiffNote" xml:space="preserve"><value>确认后将通过编辑器命令应用（可撤销），不会直接修改 XML 文件。</value></data>
   <data name="Paratranz.ConfirmApply" xml:space="preserve"><value>应用译文</value></data>
   <data name="Paratranz.Cancel" xml:space="preserve"><value>取消</value></data>
+  <data name="Vis.Attributes" xml:space="preserve"><value>属性与出场状态</value></data>
+  <data name="Vis.Encounters" xml:space="preserve"><value>遭遇</value></data>
+  <data name="Vis.CreatureIdHint" xml:space="preserve"><value>被刷新点/剧情引用</value></data>
+  <data name="Vis.FistsOnly" xml:space="preserve"><value>仅有空手攻击</value></data>
+  <data name="Vis.TowardPlayer" xml:space="preserve"><value>对玩家</value></data>
+  <data name="Vis.SpawnStatus" xml:space="preserve"><value>出场状态</value></data>
+  <data name="Vis.CarriedLoot" xml:space="preserve"><value>随身携带</value></data>
+  <data name="Vis.AppearsIn" xml:space="preserve"><value>会出现在哪些剧情</value></data>
+  <data name="Vis.SpawnPoints" xml:space="preserve"><value>刷新点</value></data>
+  <data name="Vis.EncTypeStory" xml:space="preserve"><value>剧情</value></data>
+  <data name="Vis.EncTypeScavenge" xml:space="preserve"><value>搜刮</value></data>
+  <data name="Vis.EncTypeCombat" xml:space="preserve"><value>战斗</value></data>
+  <data name="Vis.EncTypeHack" xml:space="preserve"><value>破解</value></data>
 </root>

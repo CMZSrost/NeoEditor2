@@ -2,12 +2,15 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Avalonia.Threading;
+using CommunityToolkit.Mvvm.Messaging;
 using Microsoft.EntityFrameworkCore;
 using IConfigService = NeoEditor.Core.Abstractions.IConfigService;
 using NeoEditor.Data.Context;
 using NeoEditor.Data.DTO;
+using NeoEditor.Data.Messages;
 using NeoEditor.Data.Model.Game;
 using NeoEditor.Helper;
 using Serilog;
@@ -32,6 +35,14 @@ public class BrowserIndexService : IBrowserIndexService
     private bool _built;
     private Task? _buildTask;
     private readonly object _buildLock = new();
+    /// <summary>R35: game root the current index was built for — lets a
+    /// GameRootDirChangedMessage with an unchanged value be ignored.</summary>
+    private string? _indexedRootDir;
+    /// <summary>R35: next build must rebuild (game root switched) even if index.db exists.</summary>
+    private bool _forceRebuild;
+    /// <summary>R35: serializes index builds so a root-switch rebuild can never
+    /// race an in-flight build.</summary>
+    private readonly SemaphoreSlim _buildGate = new(1, 1);
 
     public ReferenceIndexService? Index { get; private set; }
 
@@ -65,6 +76,37 @@ public class BrowserIndexService : IBrowserIndexService
         _notification = notification;
         _phpParser = phpParser;
         _referenceResolver = referenceResolver;
+
+        // R35: switching the game root must invalidate and rebuild this index —
+        // getmods.php namespaces, GlobalModNames and the reference index would
+        // otherwise keep serving the PREVIOUS directory's data. The AppConfig
+        // setter already skips equal values, so a message here means a real change.
+        WeakReferenceMessenger.Default.Register<GameRootDirChangedMessage>(this, (_, msg) =>
+        {
+            if (_built && _indexedRootDir == msg.Value) return; // unchanged root (config reload)
+            MarkStale();
+            _ = EnsureBuiltAsync();
+        });
+    }
+
+    /// <summary>
+    /// R35: mark the index stale WITHOUT deleting index.db — the next
+    /// EnsureBuiltAsync rebuilds from the new game root (getmods.php namespaces
+    /// re-parsed). Keeps startup restore-from-disk fast when the root did not
+    /// actually change (AppConfig skips equal assignments, so this is only hit
+    /// on a real switch or before the first build).
+    /// </summary>
+    private void MarkStale()
+    {
+        lock (_buildLock)
+        {
+            _built = false;
+            _buildTask = null;
+            _forceRebuild = true;
+        }
+        _session.SetBrowserStore(null);
+        GlobalBrowserCache.Clear();
+        GlobalModNames.Clear();
     }
 
     public void Invalidate()
@@ -92,7 +134,11 @@ public class BrowserIndexService : IBrowserIndexService
             if (_built) return Task.CompletedTask;
             if (_buildTask is { IsCompleted: false })
                 return _buildTask;
-            _buildTask = IndexDbHasData() ? RestoreFromDiskAsync() : RebuildAsync();
+            // R35: a stale force-rebuild wins over disk restore — the game root
+            // changed, so index.db (old root's data) must be rebuilt from scratch.
+            var rebuild = _forceRebuild || !IndexDbHasData();
+            _forceRebuild = false;
+            _buildTask = rebuild ? RebuildAsync() : RestoreFromDiskAsync();
             return _buildTask;
         }
     }
@@ -121,6 +167,22 @@ public class BrowserIndexService : IBrowserIndexService
 
     private async Task BuildStoreAndIndexAsync(bool rebuildIndex)
     {
+        await _buildGate.WaitAsync();
+        try
+        {
+            await BuildStoreAndIndexCoreAsync(rebuildIndex);
+        }
+        finally
+        {
+            _buildGate.Release();
+        }
+    }
+
+    private async Task BuildStoreAndIndexCoreAsync(bool rebuildIndex)
+    {
+        // R35: record the root this build serves so later unchanged-value
+        // GameRootDirChangedMessages (config reload) can be ignored.
+        _indexedRootDir = _configService.Config?.GameRootDir;
         try
         {
             Log.Logger.Information(rebuildIndex
