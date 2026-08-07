@@ -2,7 +2,31 @@
 
 ---
 
-## R59：Encounter 剧情分支重构（D06 v1.1：节点单组件 + tooltip 信息卡 + Mermaid 同源）| 2026-08-08
+---
+
+## R60：发布线拆分（player-v*/editor-v* 独立 workflow）+ 内测包 1.0.0 | 2026-08-08
+
+**反馈**（用户）：① 推送脚本应该单独两条发布线——Player 发包时 release 只发播放器包，不混发；② 重新发 1.0.0 只发 player。
+
+**改动**：
+1. **发布线拆分**：删掉混发 release.yml（v* 触发编辑器+播放器）→ 两个独立 workflow——`release-player.yml`（`player-v*` tag → 只发 `NeoScavengerPlayer-{版本}-win-x64.zip`，zip 名去前缀）+ `release-editor.yml`（`editor-v*` tag → 只发编辑器）；播放器 Release body 带使用/反馈说明；CI 打包复制 `NeoEditor.Player/README.txt` 进 zip
+2. **v1.0.0 内测包**：csproj 版本 0.9.0 → 1.0.0；`player-v1.0.0` tag 已推送（CI 构建中）；本地包 `NeoScavengerPlayer-1.0.0-win-x64.zip`（53MB，含 README.txt）
+3. **发布隐患修复**：dist/（单文件 exe 108MB）曾误入 git → 重写历史排除 + .gitignore（`dist/`、`*.zip`）
+4. **42 文档 §八**：发布方式改两条线说明 + 校验清单/版本号段更新（1.0.0）
+
+---
+
+## R61：SmartScreen 解除锁定指引（未签名 exe 内测提示）| 2026-08-08
+
+**反馈**（用户）：发送的包显示作者未知、被 Windows 阻止。
+
+**说明**：未签名 exe（无 Authenticode 证书）+ 网络下载 MOTW → SmartScreen「发布者未知/已保护你的电脑」正常提示。
+
+**处理**：README.txt 加解除锁定指引（zip/exe 属性 → 解除锁定；或「更多信息 → 仍要运行」）；本地 zip 重打 + 重新触发 CI。代码签名（Azure Trusted Signing / 商业证书）列入后续计划——Azure Trusted Signing 免费额度 + GitHub Actions 官方 action，Publisher 显示微软签名、SmartScreen 基本放行。
+
+---
+
+## R59：Encounter 剧情分支重构（D06 v1.1：节点单组件 + tooltip 信息卡 + Mermaid 同源）| 2026-08-08## R59：Encounter 剧情分支重构（D06 v1.1：节点单组件 + tooltip 信息卡 + Mermaid 同源）| 2026-08-08
 
 **反馈**（用户）：① 多个组件定位重复没有区别（反向引用三处渲染、响应数据双渲染）；② Mermaid 信息量与图形变化很大（两套独立生成）；③ 剧情分支应做成图片+title 单组件，条件/目标散开很散乱；④（追加）较复杂的信息通过 tooltip 信息卡呈现，节点关注图片（记忆）、标题（目标）、概率（可能性）。
 
@@ -14,6 +38,8 @@
 5. **顺带修正**：类型 chip 补齐实测值域 0-3（剧情/搜刮/战斗/破解四色，现状只区分 Normal/Scavenge），Hero/分支卡/链树三处统一共享映射；概率格式统一 `0.##%`（P2 在部分文化产生 "50 %" 空格）
 
 **测试**：EncounterVisualizerTests +15（纯函数数值断言 + Avalonia.Headless 输入模拟导航 + ToolTip.GetTip 断言 tooltip 内容）。**861/861**（13 项目全绿，EntityEditor 71→86）。
+
+**v2 微调**（用户复测反馈）：节点卡布局改为 标题（第一行居中）→ 图片（第二行主体 168×110 ≈ 卡片 70%，点击放大）→ 第三行左&中 ID/类型 chip + 右侧概率胶囊；tooltip 物品行用 **Item.Name**（非 Description）且置于第二行（标题之后）。测试断言图片 52→168。
 
 ---
 

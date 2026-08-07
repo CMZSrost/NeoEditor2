@@ -29,7 +29,7 @@ assets without hand-writing XML. All game entity data is persisted to SQLite
   DataViewer / EntityEditor / ImageTools / Mcp / Cli / AiChat / Paratranz / WebView),
   `NeoEditor.Player` + `NeoEditor.Player.Core` (standalone game player app,
   Docs/42), `NeoEditor.UI.Common`; specs under `NeoEditor.App/spec/` (R##/D##/N##).
-  15 source + 13 test = 28 projects; current test count 846/846 (2026-08-08).
+  15 source + 13 test = 28 projects; current test count 861/861 (2026-08-08).
 
 ## build / run
 
@@ -38,7 +38,7 @@ assets without hand-writing XML. All game entity data is persisted to SQLite
 - Run (GUI): `dotnet run --project NeoEditor.App`
 - Run (headless MCP server): `dotnet run --project NeoEditor.App -- --mcp`
 - Run (standalone player): `dotnet run --project NeoEditor.Player` (WinExe `NeoScavengerPlayer`)
-- Tests: `dotnet test NeoEditor.sln` (13 test projects, 846/846)
+- Tests: `dotnet test NeoEditor.sln` (13 test projects, 861/861)
 - Package/publish: `./publish.ps1` (single-file ~143MB / multi-file / tests);
   GitHub Actions `release.yml` auto-builds editor + player on tag.
 

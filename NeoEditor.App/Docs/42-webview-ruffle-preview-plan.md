@@ -705,20 +705,21 @@ dist/
    删档后玩新档 → 正常关闭不丢进度；`save_backup/` 有自动备份。
 9. **调试工具（R42/R43）**：启动**无剪贴板权限弹窗**且系统剪贴板不被游戏日志污染
    （剪贴板内容只出现在日志 level=clipboard）；F12/调试菜单开 DevTools；导出日志 /
-   导出存档+日志 zip 生成文件并在 Explorer 定位；「关于」显示 v0.9.0。
+   导出存档+日志 zip 生成文件并在 Explorer 定位；「关于」显示 v1.0.0。
 10. 报错捕捉（R42）：DevTools Console 执行 `window.__log("error","TypeError: test")`
     → 状态栏警示 + 弹窗「检测到游戏错误」。
 
 ### 版本号
 
 - 分发名固定 `NeoScavengerPlayer`（AssemblyName）；版本号 = csproj `<Version>`（R43 起，
-  当前 `0.9.0` 试用版），窗口标题/About/启动日志/导出 zip 命名同源；publish.ps1 的 zip
+  当前 `1.0.0` 内测版，2026-08-08 已发 player-v1.0.0），窗口标题/About/启动日志/导出 zip 命名同源；publish.ps1 的 zip
   默认命名读取该值，git tag `vX.Y.Z` 走 GitHub Actions 自动 release。
 - ruffle 版本锁定 nightly-2026-08-04；升级走独立变更（替换 `Web/ruffle` + 更新本文档）。
 
 ### 常见问题
 
 - **杀毒/Defender 误报** self-contained 单文件：加白名单或改多文件发布。
+- **SmartScreen「发布者未知/已保护你的电脑」**：未签名 exe 从网络下载（带 MOTW）的正常提示——右键 zip/exe → 属性 → 解除锁定，或「更多信息 → 仍要运行」；代码签名（Azure Trusted Signing / 商业证书）列入后续计划（R61）。
 - **WebView2 Runtime 缺失**：控件加载异常提示 → 安装 WebView2 Runtime。
 - **端口占用**：GameContentServer 随机回环端口，冲突自动重试。
 - **日志文件打不开**：日志 sink 以 FileShare.ReadWrite 打开，可并发读；保留策略自动清理。
@@ -1397,6 +1398,7 @@ BaseLow 与侧栏区分；Markdown 区域走 MarkdownTheme.axaml 双字典（v2.
     主窗口 Avalonia 焦点时 F10 切换（三处同步，见 R51）。
   - v2.64（2026-08-08）：**临时日志清理（R55）** —— 去掉 v2.47 逐条「启动展开」info/warn
     日志与版本就绪行（用户反馈噪音）——只保留 error（LsoExpand 不可用/展开失败，诊断用）。
+  - v2.66（2026-08-08）：**发布线拆分 + 1.0.0 内测包 + SmartScreen 指引（R60/R61，host.html 未变）** —— ① 两条独立发布线：release-player.yml（player-v* tag，只发播放器 zip）/ release-editor.yml（editor-v* tag，只发编辑器），删混发 release.yml；② csproj 版本 1.0.0，player-v1.0.0 已推送（内测包，含 README.txt）；dist/ 与 zip 不入库（.gitignore + 历史重写，单文件 exe 超 GitHub 100MB）；③ SmartScreen「发布者未知」= 未签名 + MOTW 正常提示，README 加解除锁定指引，代码签名（Azure Trusted Signing）列入计划。全量 861/861 绿。
   - v2.65（2026-08-08）：**mod 图片缺失真根因修复（R56-R58）+ 版本 1.0.0 内测包** ——
     用户目录实查（D:/Downloads/Neo Scavenger/）：① getmods.php 是空壳（nRows=0），
     真正生效的是 getmods2.php（nRows=47）——图片目录收集改为**两个文件都读**；

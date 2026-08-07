@@ -417,21 +417,24 @@ public class EncounterEntityVisualizer : IEntityVisualizer
                 Text = _vis.Loc("Vis.CurrentEncounter"), FontSize = 8, Foreground = Brush.Parse("#1565C0")
             });
 
-        // Row: 52px image | title (image and title on the same line)
-        var imageTitleGrid = new Grid
+        // R59 v2: title first (row 1), image second as the main body (~70% of card
+        // width), then a chips row (ID + type left/center, probability right).
+        body.Children.Add(new TextBlock
         {
-            ColumnDefinitions = { new(52, GridUnitType.Pixel), new(1, GridUnitType.Star) }
-        };
+            Text = e.Subject ?? $"Enc #{e.Id}", FontSize = 12, FontWeight = FontWeight.SemiBold,
+            Foreground = Brush.Parse("#333"), TextWrapping = TextWrapping.Wrap,
+            HorizontalAlignment = HorizontalAlignment.Center
+        });
 
         var bmp = _vis.LoadImage(e.Image);
         var imageArea = new Border
         {
-            Width = 52, Height = 52, CornerRadius = new CornerRadius(6), ClipToBounds = true,
-            Background = Brush.Parse("#0A000000"), VerticalAlignment = VerticalAlignment.Top
+            Width = 168, Height = 110, CornerRadius = new CornerRadius(6), ClipToBounds = true,
+            Background = Brush.Parse("#0A000000"), HorizontalAlignment = HorizontalAlignment.Center
         };
         if (bmp is not null)
         {
-            imageArea.Child = new Image { Source = bmp, Stretch = Stretch.Uniform, Width = 52, Height = 52 };
+            imageArea.Child = new Image { Source = bmp, Stretch = Stretch.Uniform, Width = 168, Height = 110 };
             var capturedBmp = bmp;
             imageArea.Cursor = new Cursor(StandardCursorType.Hand);
             imageArea.PointerPressed += (_, _) => _vis.OpenZoomableImage(capturedBmp, e.Subject ?? e.Name);
@@ -442,21 +445,10 @@ public class EncounterEntityVisualizer : IEntityVisualizer
                 Symbol = Symbol.BookOpen, FontSize = 24, Foreground = Brush.Parse("#999"),
                 HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center
             };
-        Grid.SetColumn(imageArea, 0);
-        imageTitleGrid.Children.Add(imageArea);
+        body.Children.Add(imageArea);
 
-        var titleTb = new TextBlock
-        {
-            Text = e.Subject ?? $"Enc #{e.Id}", FontSize = 12, FontWeight = FontWeight.SemiBold,
-            Foreground = Brush.Parse("#333"), TextWrapping = TextWrapping.Wrap,
-            VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(8, 0, 0, 0)
-        };
-        Grid.SetColumn(titleTb, 1);
-        imageTitleGrid.Children.Add(titleTb);
-        body.Children.Add(imageTitleGrid);
-
-        // Row 1: ID chip + type chip (9px auxiliary info)
-        var chipsRow = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 4 };
+        // Row 3: chips (left/center) | probability (right)
+        var chipsRow = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 4, VerticalAlignment = VerticalAlignment.Center };
         chipsRow.Children.Add(new Border
         {
             CornerRadius = new CornerRadius(4), Background = Brush.Parse("#E3F2FD"), Padding = new Thickness(5, 1),
@@ -477,24 +469,33 @@ public class EncounterEntityVisualizer : IEntityVisualizer
                 }
             });
         }
-        body.Children.Add(chipsRow);
 
-        // Probability pill (branch cards only)
+        // Probability pill (branch cards only) — right side of the chips row
         if (!opts.IsCurrent)
         {
             var probColor = opts.EffectiveProb >= 0.5 ? "#2E7D32" : opts.EffectiveProb >= 0.1 ? "#E65100" : "#999";
-            body.Children.Add(new Border
+            var probPill = new Border
             {
                 CornerRadius = new CornerRadius(10),
                 Background = Brush.Parse(probColor),
                 Padding = new Thickness(8, 2),
-                HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center,
                 Child = new TextBlock
                 {
                     Text = $"{opts.Weight.ToString("F1", CultureInfo.InvariantCulture)}({FormatProbability(opts.EffectiveProb)})",
                     FontSize = 9, FontWeight = FontWeight.Bold, Foreground = Brushes.White
                 }
-            });
+            };
+            var bottomGrid = new Grid { ColumnDefinitions = { new(1, GridUnitType.Star), new(GridLength.Auto) }, Margin = new Thickness(0, 2, 0, 0) };
+            Grid.SetColumn(chipsRow, 0);
+            bottomGrid.Children.Add(chipsRow);
+            Grid.SetColumn(probPill, 1);
+            bottomGrid.Children.Add(probPill);
+            body.Children.Add(bottomGrid);
+        }
+        else
+        {
+            body.Children.Add(chipsRow);
         }
 
         // Branch cards: navigation + hover info tooltip (complex info lives here, not in the card)
@@ -522,6 +523,19 @@ public class EncounterEntityVisualizer : IEntityVisualizer
             FontSize = 11, FontWeight = FontWeight.SemiBold,
             Foreground = Brush.Parse("#333"), TextWrapping = TextWrapping.Wrap
         });
+
+        // R59 v2: item trigger goes right after the title (row 2), using Name
+        // (not Description) — the name is the identity, description is flavor.
+        if (b.Item is not null)
+        {
+            var qty = b.ItemMult > 1 ? $" ×{b.ItemMult}" : "";
+            sp.Children.Add(_refNode.BadgeForEntity(source, b.Item,
+                $"🛡 {b.Item.Name}{qty}", "#E3F2FD", "#1565C0"));
+        }
+        else if (b.ItemId is not null)
+        {
+            sp.Children.Add(_vis.MiniBadge($"Item #{b.ItemId}", "#F5F5F5", "#999"));
+        }
 
         if (b.Target is not null && !string.IsNullOrWhiteSpace(b.Target.Description))
         {
@@ -560,17 +574,6 @@ public class EncounterEntityVisualizer : IEntityVisualizer
                 });
             }
             sp.Children.Add(wp);
-        }
-
-        if (b.Item is not null)
-        {
-            var qty = b.ItemMult > 1 ? $" ×{b.ItemMult}" : "";
-            sp.Children.Add(_refNode.BadgeForEntity(source, b.Item,
-                $"🛡 {b.Item.Description}{qty}", "#E3F2FD", "#1565C0"));
-        }
-        else if (b.ItemId is not null)
-        {
-            sp.Children.Add(_vis.MiniBadge($"Item #{b.ItemId}", "#F5F5F5", "#999"));
         }
 
         sp.Children.Add(new TextBlock

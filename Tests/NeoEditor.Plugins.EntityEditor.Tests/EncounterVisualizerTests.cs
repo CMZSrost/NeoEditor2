@@ -278,7 +278,8 @@ public class EncounterVisualizerTests
             var image = FindAll<Image>(card).Single();
             Assert.NotNull(image.Source);
             Assert.Equal(Stretch.Uniform, image.Stretch);
-            Assert.Equal(52, image.Width);
+            // R59 v2: image is the main body of the card (~70% of the 240px width)
+            Assert.Equal(168, image.Width);
             Assert.Empty(FindAll<SymbolIcon>(card));
         }
         finally
