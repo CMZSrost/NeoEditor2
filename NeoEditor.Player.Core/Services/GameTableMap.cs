@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Reflection;
@@ -13,10 +14,15 @@ namespace NeoEditor.Player.Core.Services;
 /// to entity Type resolution, scanning the editor's entity model for [Table] classes
 /// (Docs/42 §3.6). v2.27: self-contained reflection so Player.Core does NOT reference
 /// NeoEditor.Infra — the whole EF Core stack stays out of the player package.
+/// v2.72: also maps (table, XML column) → display key for the data browser localization
+/// (same [Display] metadata the editor's data table uses).
 /// </summary>
-internal static class GameTableMap
+public static class GameTableMap
 {
     private static readonly Lazy<IReadOnlyDictionary<string, Type>> ByTableName = new(Build, true);
+
+    private static readonly Lazy<IReadOnlyDictionary<string, string>> FieldKeysByColumn =
+        new(BuildFieldKeys, true);
 
     private static IReadOnlyDictionary<string, Type> Build()
         => typeof(IEntity).Assembly.GetTypes()
@@ -39,4 +45,34 @@ internal static class GameTableMap
 
     /// <summary>All known game entity table names (the editor's typed tables — the 24 data classes).</summary>
     public static IReadOnlyCollection<string> KnownTableNames => ByTableName.Value.Keys.ToList();
+
+    /// <summary>
+    /// Field display key for an XML column: the property's [Display(Name=…)] value, or the
+    /// property name when no [Display] exists — the resx key <c>FieldName.{key}</c> holds the
+    /// localized label and <c>FieldDesc.{key}</c> the description (v2.72, mirror of the
+    /// editor's data-table header/tooltip metadata). Null for unknown tables/columns.
+    /// </summary>
+    public static string? GetFieldDisplayKey(string tableName, string column)
+        => string.IsNullOrWhiteSpace(tableName) || string.IsNullOrWhiteSpace(column)
+            ? null
+            : FieldKeysByColumn.Value.GetValueOrDefault($"{tableName}.{column}");
+
+    private static IReadOnlyDictionary<string, string> BuildFieldKeys()
+    {
+        var map = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var type in ByTableName.Value.Values)
+        {
+            var table = type.GetCustomAttribute<TableAttribute>()?.Name;
+            if (string.IsNullOrEmpty(table)) continue;
+            foreach (var prop in type.GetProperties())
+            {
+                // Columns without [Column] map by property name (EF convention) — the
+                // game XML uses the attribute name when present.
+                var column = prop.GetCustomAttribute<ColumnAttribute>()?.Name ?? prop.Name;
+                var display = prop.GetCustomAttribute<DisplayAttribute>()?.Name;
+                map[$"{table}.{column}"] = display ?? prop.Name;
+            }
+        }
+        return map;
+    }
 }

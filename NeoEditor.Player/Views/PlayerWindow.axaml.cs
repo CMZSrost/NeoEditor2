@@ -493,13 +493,13 @@ public partial class PlayerWindow : Window
                 script => _webView?.InvokeScript(script) ?? Task.FromResult<string?>(null),
                 key => LocalizationManager.Instance[key],
                 new SaveBackupService(App.Services.Config),   // {gameRoot}/save_backup (v2.37)
-                // v2.49/v2.50: Ruffle SharedObject 内存缓存 — 删除/恢复只写 localStorage，
-                // 且页面卸载（pagehide）时 Ruffle 会把缓存旧档 flush 写回；操作后自动
-                // 重载页面（清缓存 + 卸载写回被 __blockSaves 拦截），并关闭本窗口。
+                // v2.77 引导式重启：删除/清空免重启（墓碑拦截写回）；已触碰后的恢复不
+                // 打断操作，窗口标题提示 + 关闭窗口时统一重启（IsVisible 守卫：手动按钮
+                // 路径窗口还开着；关闭路径窗口已在 Closed 中）。
                 () =>
                 {
                     (DataContext as PlayerViewModel)?.RestartGame();
-                    _storageWindow?.Close();
+                    if (_storageWindow is { IsVisible: true }) _storageWindow.Close();
                 });
             _storageWindow = new StorageManagerWindow { DataContext = _storageVm };
             _storageWindow.Closed += (_, _) => _storageWindow = null;

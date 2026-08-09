@@ -7,7 +7,7 @@
     xmlns:loc="clr-namespace:NeoEditor.Player.Services"
     x:Name="Root"
     x:DataType="vm:StorageManagerViewModel"
-    Title="{Binding [Storage.Title], Source={x:Static loc:LocalizationManager.Instance}}"
+    Title="{Binding WindowTitle}"
     ShowInTaskbar="False"
     Width="620" Height="460"
     WindowStartupLocation="CenterOwner">

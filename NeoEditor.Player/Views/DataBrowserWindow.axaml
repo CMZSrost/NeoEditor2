@@ -25,13 +25,20 @@
 
         <!--  master-master-detail: tables → rows → wiki detail (Docs/42 v2.22)  -->
         <Grid ColumnDefinitions="150,230,*">
-            <!--  Pane 1: entity tables (the 24 data classes, merged base + mods)  -->
+            <!--  Pane 1: entity tables (the 24 data classes, merged base + mods).
+                  v2.72: localized display names, raw table key in the tooltip  -->
             <ListBox
                 Grid.Column="0"
                 Margin="6,6,2,6"
                 ItemsSource="{Binding Tables}"
-                SelectedItem="{Binding SelectedTable}"
-                FontSize="12" />
+                SelectedItem="{Binding SelectedTableItem}"
+                FontSize="12">
+                <ListBox.ItemTemplate>
+                    <DataTemplate DataType="vm:TableItem">
+                        <TextBlock Text="{Binding Display}" ToolTip.Tip="{Binding Key}" TextTrimming="CharacterEllipsis" />
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
 
             <!--  Pane 2: merged rows of the selected table  -->
             <ListBox
@@ -89,11 +96,12 @@
                                                 BorderBrush="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}">
                                                 <Grid ColumnDefinitions="140,*">
                                                     <TextBlock
-                                                        Text="{Binding Column}"
+                                                        Text="{Binding DisplayName}"
                                                         FontSize="12"
                                                         FontWeight="SemiBold"
                                                         Margin="0,0,8,0"
                                                         TextTrimming="CharacterEllipsis"
+                                                        ToolTip.Tip="{Binding Description}"
                                                         Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}" />
                                                     <Grid Grid.Column="1">
                                                         <TextBlock
@@ -218,7 +226,7 @@
                                 </TabControl.Styles>
                                 <TabControl.ItemTemplate>
                                     <DataTemplate DataType="vm:ReferenceTab">
-                                        <TextBlock Text="{Binding TableName}" />
+                                        <TextBlock Text="{Binding DisplayName}" ToolTip.Tip="{Binding TableName}" />
                                     </DataTemplate>
                                 </TabControl.ItemTemplate>
                                 <TabControl.ContentTemplate>

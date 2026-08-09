@@ -23,7 +23,12 @@ namespace NeoEditor.Player.ViewModels;
 /// </summary>
 public sealed partial class PlayerViewModel : ObservableObject, IDisposable
 {
-    public static readonly string[] LevelFilters = ["全部", "console", "clipboard", "error", "warn", "debug"];
+    /// <summary>
+    /// Log level filter options for the overlay combo (v2.72): the "all" entry is localized
+    /// (Log.LevelAll), the rest are the canonical level identifiers (console/clipboard/…).
+    /// Rebuilt when the language switches.
+    /// </summary>
+    public ObservableCollection<string> LevelFilterOptions { get; } = [];
 
     private readonly PlayerConfigService _config;
     private readonly GameContentServer _server;
@@ -99,12 +104,25 @@ public sealed partial class PlayerViewModel : ObservableObject, IDisposable
         };
         Theme = config.Config.Theme;          // persisted theme (v2.28)
         Language = config.Language;           // persisted language (v2.28)
+        RebuildLevelFilterOptions();
+        LevelFilter = LevelFilterOptions[0];  // 默认「全部/All」
         StatusText = L("Status.NotLoaded");
         RefreshLines();
     }
 
     /// <summary>Localized string lookup (v2.28).</summary>
     private static string L(string key) => LocalizationManager.Instance[key];
+
+    /// <summary>v2.72: 重建级别过滤选项（「全部/All」随语言），并保持当前选中值有效。</summary>
+    private void RebuildLevelFilterOptions()
+    {
+        var current = LevelFilter;
+        LevelFilterOptions.Clear();
+        LevelFilterOptions.Add(L("Log.LevelAll"));
+        foreach (var level in new[] { "console", "clipboard", "error", "warn", "debug" })
+            LevelFilterOptions.Add(level);
+        if (LevelFilterOptions.Contains(current)) LevelFilter = current;
+    }
 
     partial void OnThemeChanged(string value)
     {
@@ -125,6 +143,7 @@ public sealed partial class PlayerViewModel : ObservableObject, IDisposable
         LocalizationManager.Instance.SetLanguage(value);
         _config.Language = value;
         _ = _config.SaveAsync();
+        RebuildLevelFilterOptions();
         // Re-apply the idle status text in the new language.
         if (_currentUri is null)
             StatusText = L("Status.NotLoaded");
@@ -385,9 +404,9 @@ public sealed partial class PlayerViewModel : ObservableObject, IDisposable
         VisibleLines = new ObservableCollection<PlayerLogLine>(lines);
     }
 
-    private static bool Matches(PlayerLogLine line, string filter)
+    private bool Matches(PlayerLogLine line, string filter)
     {
-        if (filter is "全部" or "") return true;
+        if (filter.Length == 0 || filter == L("Log.LevelAll")) return true;
         if (string.Equals(line.Level, filter, StringComparison.OrdinalIgnoreCase)) return true;
         return line.Message.StartsWith("[" + filter + "]", StringComparison.OrdinalIgnoreCase);
     }

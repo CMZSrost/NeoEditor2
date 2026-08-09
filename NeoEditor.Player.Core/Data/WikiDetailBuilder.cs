@@ -4,6 +4,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
+using NeoEditor.Player.Core.Services;
 
 namespace NeoEditor.Player.Core.Data;
 
@@ -13,7 +14,9 @@ namespace NeoEditor.Player.Core.Data;
 /// cross-table reference links (db://table/key); recipes get a crafting card and
 /// treasuretable a loot probability tree. v2.24 adds: an image gallery (image reference
 /// columns → img/*.png grid) and an incoming-references section ("who references this row").
-/// Pure data transformation — no UI dependencies.
+/// v2.72: an optional <see cref="Func{TResult}"/> text delegate localizes every label,
+/// table name and field name (the editor's [Display] resx keys); without it the built-in
+/// Chinese defaults are used (tests). Pure data transformation — no UI dependencies.
 /// </summary>
 public sealed class WikiDetailBuilder
 {
@@ -25,11 +28,16 @@ public sealed class WikiDetailBuilder
     private readonly Dictionary<string, List<RefColumn>> _refColumns;
     private readonly ReferenceAnalyzer _analyzer;
     private readonly List<string> _imageDirs = [];
+    private readonly Func<string, string>? _text;
 
     /// <param name="imageRoot">Game root dir — used to check img/*.png existence for the gallery.</param>
-    public WikiDetailBuilder(GameDataCatalog catalog, string? imageRoot = null)
+    /// <param name="text">Localized text lookup (resx-key based, e.g. "Wiki.Tools" /
+    /// "Table.itemtypes" / "FieldName.Name"); missing keys fall back to the raw key string.
+    /// Null keeps the built-in Chinese defaults (v2.72).</param>
+    public WikiDetailBuilder(GameDataCatalog catalog, string? imageRoot = null, Func<string, string>? text = null)
     {
         _catalog = catalog;
+        _text = text;
         _refColumns = ReferenceMetadata.Build();
         _analyzer = new ReferenceAnalyzer(catalog);
         // R54-R56: 图片来源 = 主 {gameRoot}/img + 各 mod 的根目录/img 子目录。
@@ -108,6 +116,24 @@ public sealed class WikiDetailBuilder
         return result;
     }
 
+    /// <summary>
+    /// Localized string (v2.72): delegate lookup when provided — the delegate returns the
+    /// resx value, or the key itself when untranslated, in which case <paramref name="fallback"/>
+    /// is used. With no delegate the built-in Chinese default is returned (tests / legacy).
+    /// </summary>
+    private string T(string key, string fallback)
+        => _text is null ? fallback : (_text(key) is { } value && value != key ? value : fallback);
+
+    /// <summary>Localized display name of a game table ("Table.{name}" key, raw name fallback).</summary>
+    private string TableDisplay(string tableName)
+        => T($"Table.{tableName}", tableName);
+
+    /// <summary>Localized label of an XML column (editor [Display] resx key, raw column fallback).</summary>
+    private string FieldDisplay(string tableName, string column)
+        => GameTableMap.GetFieldDisplayKey(tableName, column) is { } key
+            ? T($"FieldName.{key}", column)
+            : column;
+
     /// <summary>Render the row as a Markdown wiki page (detail + field table + gallery + refs).</summary>
     public string Build(GameDataRow row)
     {
@@ -141,12 +167,20 @@ public sealed class WikiDetailBuilder
         return row.Fields
             .Where(f => !IsImageColumn(row.TableName, f.Column)
                         && (excluded is null || !excluded.Contains(f.Column)))
-            .Select(f => BuildFieldItem(f, refs))
+            .Select(f => BuildFieldItem(row.TableName, f, refs))
             .ToList();
     }
 
-    private FieldItem BuildFieldItem(GameDataField field, IReadOnlyList<RefColumn>? refs)
+    private FieldItem BuildFieldItem(string tableName, GameDataField field, IReadOnlyList<RefColumn>? refs)
     {
+        var item = new FieldItem(field.Column, field.Value)
+        {
+            // v2.72: localized label + description from the editor's [Display] resx keys.
+            DisplayName = FieldDisplay(tableName, field.Column),
+            Description = GameTableMap.GetFieldDisplayKey(tableName, field.Column) is { } key
+                ? T($"FieldDesc.{key}", "")
+                : "",
+        };
         var refColumn = refs?.FirstOrDefault(c =>
             string.Equals(c.Column, field.Column, StringComparison.OrdinalIgnoreCase));
         if (refColumn is not null)
@@ -155,9 +189,9 @@ public sealed class WikiDetailBuilder
                 .Select(seg => ResolveLink(refColumn.TableName, seg.Id))
                 .ToList();
             if (links.Count > 0)
-                return new FieldItem(field.Column, field.Value) { Links = links };
+                return item with { Links = links };
         }
-        return new FieldItem(field.Column, field.Value);
+        return item;
     }
 
     /// <summary>Resolve one reference id to a display name + db:// target (raw id when
@@ -181,8 +215,8 @@ public sealed class WikiDetailBuilder
         var fields = GetFields(row);
         if (fields.Count == 0) return;
 
-        sb.AppendLine("## 字段");
-        sb.AppendLine("| 列 | 值 |");
+        sb.AppendLine(T("Wiki.Fields", "## 字段"));
+        sb.AppendLine($"| {T("Wiki.Column", "列")} | {T("Wiki.Value", "值")} |");
         sb.AppendLine("|---|---|");
         foreach (var field in fields)
         {
@@ -209,7 +243,7 @@ public sealed class WikiDetailBuilder
         if (groups.Count == 0) return "";
 
         var sb = new StringBuilder();
-        sb.AppendLine($"## 被引用（{groups.Sum(g => g.Count)}）");
+        sb.AppendLine(string.Format(T("Wiki.References", "## 被引用（{0}）"), groups.Sum(g => g.Count)));
         foreach (var group in groups)
         {
             sb.AppendLine($"### {Escape(group.TableName)}");
@@ -229,11 +263,14 @@ public sealed class WikiDetailBuilder
             .Select(g => new ReferenceGroup(g.Key, RenderReferenceLines(g), g.Count()))
             .ToList();
 
-    private static string RenderReferenceLines(IEnumerable<ReferenceAnalyzer.ReferenceHit> hits)
+    private string RenderReferenceLines(IEnumerable<ReferenceAnalyzer.ReferenceHit> hits)
     {
         var sb = new StringBuilder();
         foreach (var hit in hits)
-            sb.AppendLine($"- {RowLink(hit.SourceRow)} — `{Escape(hit.Column)}`");
+        {
+            // v2.72: 引用来源列名本地化（与字段网格同一 [Display] 词典）。
+            sb.AppendLine($"- {RowLink(hit.SourceRow)} — `{Escape(FieldDisplay(hit.SourceRow.TableName, hit.Column))}`");
+        }
         return sb.ToString();
     }
 
@@ -322,7 +359,8 @@ public sealed class WikiDetailBuilder
     {
         var sb = new StringBuilder();
         sb.AppendLine($"# {Escape(DisplayName(row))}");
-        sb.AppendLine($"> `{Escape(row.TableName)}` · ID `{Escape(row.RowKey)}`");
+        // v2.72: 表名显示本地化名（未知表回退原始名）；ID 经 Wiki.ID。
+        sb.AppendLine($"> {Escape(TableDisplay(row.TableName))} · {T("Wiki.ID", "ID")} `{Escape(row.RowKey)}`");
         sb.AppendLine();
         return sb.ToString();
     }
@@ -336,28 +374,28 @@ public sealed class WikiDetailBuilder
         var id = Value(row, "nID");
         sb.AppendLine($"# {Escape(name.Length > 0 ? name : $"#{id}")}");
 
-        var meta = new List<string> { $"ID `{Escape(id)}`" };
+        var meta = new List<string> { $"{T("Wiki.ID", "ID")} `{Escape(id)}`" };
         var type = Value(row, "strType");
         if (type.Length > 0) meta.Add(Escape(type));
         var flags = new List<string>();
-        if (IsTrue(Value(row, "bIdentify"))) flags.Add("识别");
-        if (IsTrue(Value(row, "bScrap"))) flags.Add("可拆解");
-        if (IsTrue(Value(row, "bDegradeOutput"))) flags.Add("产物降级");
-        if (IsTrue(Value(row, "bTransferComponents"))) flags.Add("转移组件");
-        if (flags.Count > 0) meta.Add(string.Join("·", flags));
+        if (IsTrue(Value(row, "bIdentify"))) flags.Add(T("Wiki.FlagIdentify", "识别"));
+        if (IsTrue(Value(row, "bScrap"))) flags.Add(T("Wiki.FlagScrap", "可拆解"));
+        if (IsTrue(Value(row, "bDegradeOutput"))) flags.Add(T("Wiki.FlagDegradeOutput", "产物降级"));
+        if (IsTrue(Value(row, "bTransferComponents"))) flags.Add(T("Wiki.FlagTransferComponents", "转移组件"));
+        if (flags.Count > 0) meta.Add(string.Join(T("Wiki.FlagSep", "·"), flags));
         var hours = Value(row, "fHours");
-        if (hours.Length > 0) meta.Add($"耗时 {hours}h");
+        if (hours.Length > 0) meta.Add(string.Format(T("Wiki.Hours", "耗时 {0}h"), hours));
         sb.AppendLine($"> {string.Join(" · ", meta)}");
         sb.AppendLine();
 
-        AppendIngredientGroup(sb, row, "strTools", "## 工具");
-        AppendIngredientGroup(sb, row, "strConsumed", "## 消耗");
-        AppendIngredientGroup(sb, row, "strDestroyed", "## 破坏");
+        AppendIngredientGroup(sb, row, "strTools", T("Wiki.Tools", "## 工具"));
+        AppendIngredientGroup(sb, row, "strConsumed", T("Wiki.Consumed", "## 消耗"));
+        AppendIngredientGroup(sb, row, "strDestroyed", T("Wiki.Destroyed", "## 破坏"));
 
         var treasureId = Value(row, "nTreasureID");
         if (treasureId.Length > 0)
         {
-            sb.AppendLine("## 产物");
+            sb.AppendLine(T("Wiki.Output", "## 产物"));
             sb.AppendLine($"- {LinkFor("treasuretable", treasureId) ?? $"`{Escape(treasureId)}`"}");
             AppendLootPreview(sb, treasureId);
             sb.AppendLine();
@@ -366,13 +404,13 @@ public sealed class WikiDetailBuilder
         if (tempTreasureId.Length > 0 && tempTreasureId != "3" &&
             !string.Equals(tempTreasureId, treasureId, StringComparison.OrdinalIgnoreCase))
         {
-            sb.AppendLine("## 临时产物预览");
+            sb.AppendLine(T("Wiki.TempOutput", "## 临时产物预览"));
             sb.AppendLine($"- {LinkFor("treasuretable", tempTreasureId) ?? $"`{Escape(tempTreasureId)}`"}");
             sb.AppendLine();
         }
 
-        AppendReferenceList(sb, row, "vAlsoTry", "## 替代配方");
-        AppendReferenceList(sb, row, "nHiddenID", "## 隐藏关联");
+        AppendReferenceList(sb, row, "vAlsoTry", T("Wiki.AltRecipes", "## 替代配方"));
+        AppendReferenceList(sb, row, "nHiddenID", T("Wiki.HiddenLinks", "## 隐藏关联"));
         return sb.ToString();
     }
 
@@ -412,7 +450,8 @@ public sealed class WikiDetailBuilder
             .Take(6)
             .ToList();
         if (previews.Count > 0)
-            sb.AppendLine($"  掉落预览：{string.Join("、", previews)}");
+            sb.AppendLine(string.Format(T("Wiki.DropPreview", "掉落预览：{0}"),
+                string.Join(T("Wiki.PreviewSep", "、"), previews)));
     }
 
     private void AppendReferenceList(StringBuilder sb, GameDataRow row, string column, string heading)
@@ -438,23 +477,23 @@ public sealed class WikiDetailBuilder
         var id = Value(row, "id");
         sb.AppendLine($"# {Escape(name.Length > 0 ? name : $"#{id}")}");
 
-        var meta = new List<string> { $"ID `{Escape(id)}`" };
+        var meta = new List<string> { $"{T("Wiki.ID", "ID")} `{Escape(id)}`" };
         var flags = new List<string>();
-        if (IsTrue(Value(row, "bNested"))) flags.Add("Nested");
-        if (IsTrue(Value(row, "bSuppress"))) flags.Add("Suppress");
-        if (IsTrue(Value(row, "bIdentify"))) flags.Add("Identify");
-        if (flags.Count > 0) meta.Add(string.Join("·", flags));
+        if (IsTrue(Value(row, "bNested"))) flags.Add(T("Wiki.Nested", "嵌套"));
+        if (IsTrue(Value(row, "bSuppress"))) flags.Add(T("Wiki.Suppress", "抑制"));
+        if (IsTrue(Value(row, "bIdentify"))) flags.Add(T("Wiki.Identify", "识别"));
+        if (flags.Count > 0) meta.Add(string.Join(T("Wiki.FlagSep", "·"), flags));
         sb.AppendLine($"> {string.Join(" · ", meta)}");
         sb.AppendLine();
 
         var raw = Value(row, "aTreasures");
         if (raw.Length == 0)
         {
-            sb.AppendLine("_（无掉落条目）_");
+            sb.AppendLine($"_{T("Wiki.NoDrops", "（无掉落条目）")}_");
             return sb.ToString();
         }
 
-        sb.AppendLine("## 掉落物");
+        sb.AppendLine(T("Wiki.Drops", "## 掉落物"));
         AppendTreasureItems(sb, raw, 0, new HashSet<string>(StringComparer.OrdinalIgnoreCase) { row.RowKey });
         return sb.ToString();
     }
@@ -463,7 +502,7 @@ public sealed class WikiDetailBuilder
     {
         if (depth > MaxTreasureDepth)
         {
-            sb.AppendLine($"{Indent(depth)}- …（嵌套过深）");
+            sb.AppendLine($"{Indent(depth)}- {T("Wiki.TooDeep", "…（嵌套过深）")}");
             return;
         }
         var refColumn = RefFor("treasuretable", "aTreasures");
@@ -489,7 +528,7 @@ public sealed class WikiDetailBuilder
             {
                 if (visited.Contains(nested.RowKey))
                 {
-                    sb.AppendLine($"{Indent(depth)}- **{Escape(DisplayName(nested))}** — `{FormatPercent(prob)}`{qtyText}（循环引用）");
+                    sb.AppendLine($"{Indent(depth)}- **{Escape(DisplayName(nested))}** — `{FormatPercent(prob)}`{qtyText}{T("Wiki.CycleRef", "（循环引用）")}");
                     continue;
                 }
                 sb.AppendLine($"{Indent(depth)}- **{LinkFor("treasuretable", id) ?? Escape(id)}** — `{FormatPercent(prob)}`{qtyText}");
@@ -498,7 +537,7 @@ public sealed class WikiDetailBuilder
                 continue;
             }
 
-            sb.AppendLine($"{Indent(depth)}- `{Escape(id)}` — `{FormatPercent(prob)}`{qtyText}（未解析）");
+            sb.AppendLine($"{Indent(depth)}- `{Escape(id)}` — `{FormatPercent(prob)}`{qtyText}{T("Wiki.Unresolved", "（未解析）")}");
         }
     }
 
@@ -519,12 +558,12 @@ public sealed class WikiDetailBuilder
     {
         var images = GetImageItems(row)
             .Select(img => img.FullPath is null
-                ? $"`{Escape(img.FileName)}`（缺失）"
+                ? $"`{Escape(img.FileName)}`{T("Gallery.Missing", "（缺失）")}"
                 : $"![{Escape(img.FileName)}](img/{Uri.EscapeDataString(img.FileName)})")
             .ToList();
         if (images.Count == 0) return;
 
-        sb.AppendLine("## 图片");
+        sb.AppendLine(T("Wiki.Images", "## 图片"));
         for (var i = 0; i < images.Count; i += GalleryColumns)
             sb.AppendLine("| " + string.Join(" | ", images.Skip(i).Take(GalleryColumns)) + " |");
         sb.AppendLine();
@@ -552,13 +591,22 @@ public sealed record WikiImage(string FileName, string? FullPath)
 public sealed record ReferenceGroup(string TableName, string Markdown, int Count);
 
 /// <summary>One field-table row for the UI grid (v2.34) — raw Value keeps multi-line
-/// content; reference columns resolve to <see cref="Links"/> (clickable in the UI).</summary>
+/// content; reference columns resolve to <see cref="Links"/> (clickable in the UI).
+/// v2.72: <see cref="DisplayName"/> is the localized column label and
+/// <see cref="Description"/> the localized field description (tooltip); both fall back
+/// to raw/empty when the [Display] resx key is missing.</summary>
 public sealed record FieldItem(string Column, string Value)
 {
     /// <summary>Resolved reference links (Target null → unresolvable, plain text).</summary>
     public IReadOnlyList<FieldLink>? Links { get; init; }
 
     public bool ShowRawValue => Links is not { Count: > 0 };
+
+    /// <summary>Localized column label — raw XML column name when untranslated.</summary>
+    public string DisplayName { get; init; } = "";
+
+    /// <summary>Localized field description (tooltip) — empty when none.</summary>
+    public string Description { get; init; } = "";
 }
 
 /// <summary>One resolved reference link inside a field value (v2.34).</summary>

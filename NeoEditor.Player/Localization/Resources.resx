@@ -54,7 +54,7 @@
   <data name="Log.OpenFolder" xml:space="preserve"><value>打开日志目录</value></data>
   <data name="Log.Export" xml:space="preserve"><value>导出日志</value></data>
   <data name="Log.Exported" xml:space="preserve"><value>已导出: {0}</value></data>
-  <data name="Log.ExportBundle" xml:space="preserve"><value>导出存档+日志 (zip)</value></data>
+  <data name="Log.ExportBundle" xml:space="preserve"><value>Export Saves &amp; Logs (zip)</value></data>
   <data name="Log.Clipboard" xml:space="preserve"><value>剪贴板</value></data>
   <data name="Log.ClipboardTitle" xml:space="preserve"><value>系统剪贴板内容</value></data>
   <data name="Log.ClipboardEmpty" xml:space="preserve"><value>（系统剪贴板为空）</value></data>
@@ -89,13 +89,11 @@
   <data name="Status.ErrorDetected" xml:space="preserve"><value>⚠ 检测到游戏错误（详见日志）</value></data>
   <data name="Status.ErrorExit" xml:space="preserve"><value>游戏异常退出（详见日志）</value></data>
   <data name="Storage.Title" xml:space="preserve"><value>存档管理</value></data>
-  <data name="Storage.Hint" xml:space="preserve"><value>存档保存在页面 localStorage（Ruffle SharedObject）；固定回环端口后重开游戏存档保留</value></data>
   <data name="Storage.Refresh" xml:space="preserve"><value>刷新</value></data>
   <data name="Storage.ClearAll" xml:space="preserve"><value>清空全部</value></data>
   <data name="Storage.Delete" xml:space="preserve"><value>删除</value></data>
   <data name="Storage.Edit" xml:space="preserve"><value>修改</value></data>
   <data name="Storage.RestartGame" xml:space="preserve"><value>重启游戏</value></data>
-  <data name="Storage.NeedRestart" xml:space="preserve"><value>已删除/恢复，正在重启游戏使更改生效（游戏运行期持有 SharedObject 内存缓存，自动保存会写回旧档）</value></data>
   <data name="Storage.RestartPromptTitle" xml:space="preserve"><value>重启游戏</value></data>
   <data name="Storage.RestartPrompt" xml:space="preserve"><value>更改已写入 localStorage；运行中的游戏持有内存缓存（Ruffle SharedObject），需重启游戏后生效。立即重启游戏？</value></data>
   <data name="Storage.RestartNow" xml:space="preserve"><value>重启游戏</value></data>
@@ -120,4 +118,444 @@
   <data name="Storage.ConfirmDeleteBackup" xml:space="preserve"><value>确定删除备份「{0}」？</value></data>
   <data name="Storage.ConfirmClearAllTitle" xml:space="preserve"><value>清空确认</value></data>
   <data name="Storage.ConfirmClearAll" xml:space="preserve"><value>确定清空全部存档？此操作无法撤销。</value></data>
+// 生成于 2026-08-09T12:27:47.620Z：173 个字段键（表名→列名映射见 Player.Core GameTableMap）
+  <data name="Storage.DeleteInstant" xml:space="preserve"><value>已删除「{0}」——游戏尚未读取该存档，更改立即生效，无需重启</value></data>
+  <data name="Storage.ClearAllInstant" xml:space="preserve"><value>已清空全部存档——游戏尚未读取存档，更改立即生效，无需重启</value></data>
+  <data name="Storage.RestoreInstant" xml:space="preserve"><value>已恢复「{0}」——游戏尚未读取存档，更改立即生效，无需重启</value></data>
+<!-- 数据浏览器字段名/描述词典 BEGIN（Docs/42 v2.72，由 artifacts/gen-player-field-resx.js 生成） -->
+// 生成于 2026-08-09T12:48:10.872Z：184 个字段键（表名→列名映射见 Player.Core GameTableMap）
+  <data name="FieldName.Id" xml:space="preserve"><value>ID</value></data>
+  <data name="FieldDesc.Id" xml:space="preserve"><value>代码标号</value></data>
+  <data name="FieldName.Name" xml:space="preserve"><value>名称</value></data>
+  <data name="FieldDesc.Name" xml:space="preserve"><value>名称</value></data>
+  <data name="FieldName.Notes" xml:space="preserve"><value>注释</value></data>
+  <data name="FieldDesc.Notes" xml:space="preserve"><value>物品注释，一般留空，对游戏无影响</value></data>
+  <data name="FieldName.Range" xml:space="preserve"><value>攻击距离</value></data>
+  <data name="FieldDesc.Range" xml:space="preserve"><value>攻击距离，近战为1，远程武器根据类型不同</value></data>
+  <data name="FieldName.DamageCut" xml:space="preserve"><value>切割伤害</value></data>
+  <data name="FieldDesc.DamageCut" xml:space="preserve"><value>切割伤害值</value></data>
+  <data name="FieldName.DamageBlunt" xml:space="preserve"><value>钝击伤害</value></data>
+  <data name="FieldDesc.DamageBlunt" xml:space="preserve"><value>钝器伤害值</value></data>
+  <data name="FieldName.ChargeProfiles" xml:space="preserve"><value>弹药配置</value></data>
+  <data name="FieldDesc.ChargeProfiles" xml:space="preserve"><value>弹药/耗电配置 ID（chargeprofiles，即弹药类型），逗号分隔如 '6,31'</value></data>
+  <data name="FieldName.Penetration" xml:space="preserve"><value>穿透</value></data>
+  <data name="FieldDesc.Penetration" xml:space="preserve"><value>穿透等级</value></data>
+  <data name="FieldName.Type" xml:space="preserve"><value>类型</value></data>
+  <data name="FieldDesc.Type" xml:space="preserve"><value>攻击类别：0 近战，1 远程</value></data>
+  <data name="FieldName.Sound" xml:space="preserve"><value>声音</value></data>
+  <data name="FieldDesc.Sound" xml:space="preserve"><value>武器分类声音：近战/Punch、爪子/Claws、棍棒类/Club、利刃/Blade、长枪/Rifle、短枪/Pistol、激光/Laser、弓箭类/Bow、投掷/Throw、勒死/Choke、抓住/Grasp、撕咬/Bite</value></data>
+  <data name="FieldName.Transfer" xml:space="preserve"><value>转移性</value></data>
+  <data name="FieldDesc.Transfer" xml:space="preserve"><value>转移性：攻击能否转化为物品，例如弓箭的攻击能够回收箭枝, 弹药位置转移：0为不转移，1为转移（弓箭、弹弓等弹药会留在敌人身上或掉落地面）</value></data>
+  <data name="FieldName.AttackerConditions" xml:space="preserve"><value>攻击方状态</value></data>
+  <data name="FieldDesc.AttackerConditions" xml:space="preserve"><value>攻击时的状态，结合conditions数据类别使用，如'211x1.0,NSE:42x1'</value></data>
+  <data name="FieldName.Image" xml:space="preserve"><value>图标</value></data>
+  <data name="FieldDesc.Image" xml:space="preserve"><value>图片/图标文件名（随表不同：武器图标/地图贴图等）</value></data>
+  <data name="FieldName.Morale" xml:space="preserve"><value>士气</value></data>
+  <data name="FieldDesc.Morale" xml:space="preserve"><value>该武器默认为你带来的士气补正，计算公式：(1+士气)*(1+近战/远程士气加成)*武器伤害=实际伤害</value></data>
+  <data name="FieldName.WieldPhrase" xml:space="preserve"><value>战斗台词</value></data>
+  <data name="FieldDesc.WieldPhrase" xml:space="preserve"><value>使用该武器进入战斗时的文字描述</value></data>
+  <data name="FieldName.AttackPhrases" xml:space="preserve"><value>攻击台词</value></data>
+  <data name="FieldDesc.AttackPhrases" xml:space="preserve"><value>使用该武器攻击敌人时的文字描述，多个描述用逗号分隔</value></data>
+  <data name="FieldName.X" xml:space="preserve"><value>X</value></data>
+  <data name="FieldDesc.X" xml:space="preserve"><value>X轴坐标</value></data>
+  <data name="FieldName.Y" xml:space="preserve"><value>Y</value></data>
+  <data name="FieldDesc.Y" xml:space="preserve"><value>Y轴坐标</value></data>
+  <data name="FieldName.Buys" xml:space="preserve"><value>收购</value></data>
+  <data name="FieldDesc.Buys" xml:space="preserve"><value>是否可以购买玩家的物品：0为不可以，1为可以</value></data>
+  <data name="FieldName.RestockTreasureId" xml:space="preserve"><value>补货掉落</value></data>
+  <data name="FieldDesc.RestockTreasureId" xml:space="preserve"><value>引用的战利品数据，结合treasuretable使用。注意：底特律C商店是个例外，使用3号战利品池</value></data>
+  <data name="FieldName.StrId" xml:space="preserve"><value>物品 ID</value></data>
+  <data name="FieldDesc.StrId" xml:space="preserve"><value>物品标号，如'90.35'</value></data>
+  <data name="FieldName.Success" xml:space="preserve"><value>成功文本</value></data>
+  <data name="FieldDesc.Success" xml:space="preserve"><value>动作执行成功后在游戏中显示的文本，&lt;us&gt;代表自己，&lt;them&gt;代表目标</value></data>
+  <data name="FieldName.Fail" xml:space="preserve"><value>失败文本</value></data>
+  <data name="FieldDesc.Fail" xml:space="preserve"><value>动作执行失败后在游戏中显示的文本</value></data>
+  <data name="FieldName.PopUp" xml:space="preserve"><value>动作说明</value></data>
+  <data name="FieldDesc.PopUp" xml:space="preserve"><value>游戏内的动作说明，显示在动作选择界面</value></data>
+  <data name="FieldName.ChanceType" xml:space="preserve"><value>几率类型</value></data>
+  <data name="FieldDesc.ChanceType" xml:space="preserve"><value>三值格式 `0,距离档,概率系数`（`0,7,0`=潜行类）</value></data>
+  <data name="FieldName.UsConditions" xml:space="preserve"><value>我方状态</value></data>
+  <data name="FieldDesc.UsConditions" xml:space="preserve"><value>需要我方处于的状态，负号表示非，即不处于该状态'</value></data>
+  <data name="FieldName.ThemConditions" xml:space="preserve"><value>对方状态</value></data>
+  <data name="FieldDesc.ThemConditions" xml:space="preserve"><value>需要对方处于的状态，负号表示非，即不处于该状态</value></data>
+  <data name="FieldName.PairConditions" xml:space="preserve"><value>自身状态</value></data>
+  <data name="FieldDesc.PairConditions" xml:space="preserve"><value>该行动对自己带来的影响</value></data>
+  <data name="FieldName.UsFailConditions" xml:space="preserve"><value>失败我方状态</value></data>
+  <data name="FieldDesc.UsFailConditions" xml:space="preserve"><value>行动失败时会为自己带来的状态</value></data>
+  <data name="FieldName.ThemFailConditions" xml:space="preserve"><value>失败对方状态</value></data>
+  <data name="FieldDesc.ThemFailConditions" xml:space="preserve"><value>行动失败时会为敌方带来的状态（官方所有数据均未填写）</value></data>
+  <data name="FieldName.PairFailConditions" xml:space="preserve"><value>失败自身状态</value></data>
+  <data name="FieldDesc.PairFailConditions" xml:space="preserve"><value>行动失败时会为自己带来的影响</value></data>
+  <data name="FieldName.UsPreConditions" xml:space="preserve"><value>我方前置</value></data>
+  <data name="FieldDesc.UsPreConditions" xml:space="preserve"><value>执行该行动的前置要求，格式如'137,151,-143'（负数表示不可拥有该状态）</value></data>
+  <data name="FieldName.ThemPreConditions" xml:space="preserve"><value>对方前置</value></data>
+  <data name="FieldDesc.ThemPreConditions" xml:space="preserve"><value>敌方需要满足的前置条件</value></data>
+  <data name="FieldName.SeeThem" xml:space="preserve"><value>对方暴露</value></data>
+  <data name="FieldDesc.SeeThem" xml:space="preserve"><value>对方需要处于的暴露等级</value></data>
+  <data name="FieldName.SeeUs" xml:space="preserve"><value>我方暴露</value></data>
+  <data name="FieldDesc.SeeUs" xml:space="preserve"><value>自己需要处于的暴露等级</value></data>
+  <data name="FieldName.AllOutOfRange" xml:space="preserve"><value>出射程</value></data>
+  <data name="FieldDesc.AllOutOfRange" xml:space="preserve"><value>离开所有场上目标距离</value></data>
+  <data name="FieldName.InAttackRange" xml:space="preserve"><value>近战射程</value></data>
+  <data name="FieldDesc.InAttackRange" xml:space="preserve"><value>攻击范围，可能用于判定溅射或武器长度</value></data>
+  <data name="FieldName.MinCharges" xml:space="preserve"><value>最低充能</value></data>
+  <data name="FieldDesc.MinCharges" xml:space="preserve"><value>最低弹药/充能数（0=不限）</value></data>
+  <data name="FieldName.MinRange" xml:space="preserve"><value>最小距离</value></data>
+  <data name="FieldDesc.MinRange" xml:space="preserve"><value>距离最小需求，-1为全场覆盖</value></data>
+  <data name="FieldName.MaxRange" xml:space="preserve"><value>最大距离</value></data>
+  <data name="FieldDesc.MaxRange" xml:space="preserve"><value>距离最大需求，-1为全场覆盖</value></data>
+  <data name="FieldName.AttackModeType" xml:space="preserve"><value>模式类型</value></data>
+  <data name="FieldDesc.AttackModeType" xml:space="preserve"><value>攻击模式类型：-1非攻击动作，0近战攻击，1远程攻击</value></data>
+  <data name="FieldName.HexTypes" xml:space="preserve"><value>格子类型</value></data>
+  <data name="FieldDesc.HexTypes" xml:space="preserve"><value>所在地图格子类型（官方所有数据均留空）</value></data>
+  <data name="FieldName.Chance" xml:space="preserve"><value>触发几率</value></data>
+  <data name="FieldDesc.Chance" xml:space="preserve"><value>可以使用该技能的几率（百分比）</value></data>
+  <data name="FieldName.Priority" xml:space="preserve"><value>优先级</value></data>
+  <data name="FieldDesc.Priority" xml:space="preserve"><value>优先级，对玩家无效，Bot专用，同一回合中哪边的战斗行动先触发</value></data>
+  <data name="FieldName.Detect" xml:space="preserve"><value>被发现率</value></data>
+  <data name="FieldDesc.Detect" xml:space="preserve"><value>执行该动作使你被发现的几率，设为0则不会被发现</value></data>
+  <data name="FieldName.Order" xml:space="preserve"><value>行动顺序</value></data>
+  <data name="FieldDesc.Order" xml:space="preserve"><value>AI 使用该动作的排序权重</value></data>
+  <data name="FieldName.Fatigue" xml:space="preserve"><value>疲劳消耗</value></data>
+  <data name="FieldDesc.Fatigue" xml:space="preserve"><value>疲劳值消耗</value></data>
+  <data name="FieldName.Approach" xml:space="preserve"><value>接近动作</value></data>
+  <data name="FieldDesc.Approach" xml:space="preserve"><value>该动作是否会使你接近对方</value></data>
+  <data name="FieldName.Offense" xml:space="preserve"><value>进攻动作</value></data>
+  <data name="FieldDesc.Offense" xml:space="preserve"><value>是否是攻击性动作</value></data>
+  <data name="FieldName.FallBack" xml:space="preserve"><value>后退动作</value></data>
+  <data name="FieldDesc.FallBack" xml:space="preserve"><value>该动作是否为远离动作</value></data>
+  <data name="FieldName.Retreat" xml:space="preserve"><value>撤退动作</value></data>
+  <data name="FieldDesc.Retreat" xml:space="preserve"><value>该动作是否为撤退动作</value></data>
+  <data name="FieldName.Position" xml:space="preserve"><value>姿势动作</value></data>
+  <data name="FieldDesc.Position" xml:space="preserve"><value>该动作是否为姿势动作</value></data>
+  <data name="FieldName.Passive" xml:space="preserve"><value>被动</value></data>
+  <data name="FieldDesc.Passive" xml:space="preserve"><value>该动作是否为被动</value></data>
+  <data name="FieldName.Description" xml:space="preserve"><value>描述</value></data>
+  <data name="FieldDesc.Description" xml:space="preserve"><value>描述/说明文本（随数据表不同含义不同）</value></data>
+  <data name="FieldName.ImageList" xml:space="preserve"><value>图片列表</value></data>
+  <data name="FieldDesc.ImageList" xml:space="preserve"><value>图片文件名列表（逗号分隔）</value></data>
+  <data name="FieldName.Capacities" xml:space="preserve"><value>营地大小</value></data>
+  <data name="FieldDesc.Capacities" xml:space="preserve"><value>营地大小，格式如'34x26'</value></data>
+  <data name="FieldName.TreasureId" xml:space="preserve"><value>掉落池</value></data>
+  <data name="FieldDesc.TreasureId" xml:space="preserve"><value>该营地的战利品池ID</value></data>
+  <data name="FieldName.Alertness" xml:space="preserve"><value>警戒值</value></data>
+  <data name="FieldDesc.Alertness" xml:space="preserve"><value>营地的默认警戒值（百分比）</value></data>
+  <data name="FieldName.Visibility" xml:space="preserve"><value>可见度</value></data>
+  <data name="FieldDesc.Visibility" xml:space="preserve"><value>营地的默认可见值（百分比），-0.05表示-5%</value></data>
+  <data name="FieldName.WetTempAdjustMod" xml:space="preserve"><value>温度调节</value></data>
+  <data name="FieldDesc.WetTempAdjustMod" xml:space="preserve"><value>营地的默认温度调节</value></data>
+  <data name="FieldName.HealPerHourMod" xml:space="preserve"><value>每小时恢复</value></data>
+  <data name="FieldDesc.HealPerHourMod" xml:space="preserve"><value>营地默认每小时带来的恢复效果（百分比）</value></data>
+  <data name="FieldName.SleepQuality" xml:space="preserve"><value>睡眠质量</value></data>
+  <data name="FieldDesc.SleepQuality" xml:space="preserve"><value>营地默认为你带来的睡眠质量（百分比），-0.26表示-26%</value></data>
+  <data name="FieldName.ItemId" xml:space="preserve"><value>物品 ID</value></data>
+  <data name="FieldDesc.ItemId" xml:space="preserve"><value>物品ID，如'10.3'</value></data>
+  <data name="FieldName.PerUse" xml:space="preserve"><value>每次消耗</value></data>
+  <data name="FieldDesc.PerUse" xml:space="preserve"><value>每次使用所消耗的数量</value></data>
+  <data name="FieldName.PerHour" xml:space="preserve"><value>每小时消耗</value></data>
+  <data name="FieldDesc.PerHour" xml:space="preserve"><value>每小时所消耗数量，基本用于电器的电力消耗</value></data>
+  <data name="FieldName.PerHourEquipped" xml:space="preserve"><value>装备每小时</value></data>
+  <data name="FieldDesc.PerHourEquipped" xml:space="preserve"><value>装备在身上时每小时的消耗耐久，仅用于XM54过滤芯片</value></data>
+  <data name="FieldName.PerHex" xml:space="preserve"><value>每格消耗</value></data>
+  <data name="FieldDesc.PerHex" xml:space="preserve"><value>每移动一格所消耗的数量</value></data>
+  <data name="FieldName.Degrade" xml:space="preserve"><value>耐久损耗</value></data>
+  <data name="FieldDesc.Degrade" xml:space="preserve"><value>是否会降解</value></data>
+  <data name="FieldName.FieldNames" xml:space="preserve"><value>效果字段</value></data>
+  <data name="FieldDesc.FieldNames" xml:space="preserve"><value>该状态为你带来的效果字段列表，如'm_fHealPerHourMod,m_fImmuneRestoreRate'等</value></data>
+  <data name="FieldName.Modifiers" xml:space="preserve"><value>效果数值</value></data>
+  <data name="FieldDesc.Modifiers" xml:space="preserve"><value>该状态为你带来的效果的具体影响数值，与FieldNames对应</value></data>
+  <data name="FieldName.Effects" xml:space="preserve"><value>效果</value></data>
+  <data name="FieldDesc.Effects" xml:space="preserve"><value>状态带来的效果，如SetImmunity免疫力，ArmorWound护甲。如'ArmorWound=100,0.1,0.05'，</value></data>
+  <data name="FieldName.Fatal" xml:space="preserve"><value>致命</value></data>
+  <data name="FieldDesc.Fatal" xml:space="preserve"><value>是否为玩家带来死亡效果（得到这个状态会不会暴毙）</value></data>
+  <data name="FieldName.IdNext" xml:space="preserve"><value>下阶段状态</value></data>
+  <data name="FieldDesc.IdNext" xml:space="preserve"><value>该状态下一阶段为你带来的新状态ID，可能为多个逗号分隔</value></data>
+  <data name="FieldName.Duration" xml:space="preserve"><value>持续时长</value></data>
+  <data name="FieldDesc.Duration" xml:space="preserve"><value>持续时间（小时）</value></data>
+  <data name="FieldName.Permanent" xml:space="preserve"><value>永久</value></data>
+  <data name="FieldDesc.Permanent" xml:space="preserve"><value>是否为会为你带来长期影响（如吃药、割伤等），为true表示回合结束不会自动消失</value></data>
+  <data name="FieldName.ChanceNext" xml:space="preserve"><value>进阶几率</value></data>
+  <data name="FieldDesc.ChanceNext" xml:space="preserve"><value>有多大几率该状态在下个阶段为你带来新的状态</value></data>
+  <data name="FieldName.Stackable" xml:space="preserve"><value>可堆叠</value></data>
+  <data name="FieldDesc.Stackable" xml:space="preserve"><value>该状态是否可以堆叠</value></data>
+  <data name="FieldName.Display" xml:space="preserve"><value>可见</value></data>
+  <data name="FieldDesc.Display" xml:space="preserve"><value>该状态是否可见</value></data>
+  <data name="FieldName.DisplayOther" xml:space="preserve"><value>他人可见</value></data>
+  <data name="FieldDesc.DisplayOther" xml:space="preserve"><value>该状态是否可被其他人看见</value></data>
+  <data name="FieldName.DisplayGameOver" xml:space="preserve"><value>总结显示</value></data>
+  <data name="FieldDesc.DisplayGameOver" xml:space="preserve"><value>该状态是否会在你的游戏总结中出现</value></data>
+  <data name="FieldName.Color" xml:space="preserve"><value>颜色</value></data>
+  <data name="FieldDesc.Color" xml:space="preserve"><value>状态颜色：0白色，1红色，2绿色，3黄色</value></data>
+  <data name="FieldName.ResetTimer" xml:space="preserve"><value>刷新时间</value></data>
+  <data name="FieldDesc.ResetTimer" xml:space="preserve"><value>刷新时间，游戏中休息一次为一小时</value></data>
+  <data name="FieldName.RemoveAll" xml:space="preserve"><value>移除同类</value></data>
+  <data name="FieldDesc.RemoveAll" xml:space="preserve"><value>1=移除所有同组状态（投降/食堂等）</value></data>
+  <data name="FieldName.RemovePostCombat" xml:space="preserve"><value>战后移除</value></data>
+  <data name="FieldDesc.RemovePostCombat" xml:space="preserve"><value>1=战斗结束后移除</value></data>
+  <data name="FieldName.TransferRange" xml:space="preserve"><value>传染距离</value></data>
+  <data name="FieldDesc.TransferRange" xml:space="preserve"><value>传染距离，-1为不传播</value></data>
+  <data name="FieldName.Thresholds" xml:space="preserve"><value>触发阈值</value></data>
+  <data name="FieldDesc.Thresholds" xml:space="preserve"><value>触发阈值，目前用于传奇技能的触发</value></data>
+  <data name="FieldName.NamePublic" xml:space="preserve"><value>未知名称</value></data>
+  <data name="FieldDesc.NamePublic" xml:space="preserve"><value>未接触时显示的名称</value></data>
+  <data name="FieldName.EncounterIds" xml:space="preserve"><value>触发状态</value></data>
+  <data name="FieldDesc.EncounterIds" xml:space="preserve"><value>遇到该生物会触发的状态ID列表，逗号分隔</value></data>
+  <data name="FieldName.MovesPerTurn" xml:space="preserve"><value>行动点数</value></data>
+  <data name="FieldDesc.MovesPerTurn" xml:space="preserve"><value>每回合的行动点数</value></data>
+  <data name="FieldName.FactionId" xml:space="preserve"><value>阵营</value></data>
+  <data name="FieldDesc.FactionId" xml:space="preserve"><value>所属阵营ID</value></data>
+  <data name="FieldName.AttackModes" xml:space="preserve"><value>攻击方式</value></data>
+  <data name="FieldDesc.AttackModes" xml:space="preserve"><value>攻击方式ID，结合attackmodes使用，可能为单个ID或逗号分隔</value></data>
+  <data name="FieldName.BaseConditions" xml:space="preserve"><value>基础状态</value></data>
+  <data name="FieldDesc.BaseConditions" xml:space="preserve"><value>该生物生成时的基础状态，格式如'38=1,50=0.5'</value></data>
+  <data name="FieldName.CorpseId" xml:space="preserve"><value>尸体掉落</value></data>
+  <data name="FieldDesc.CorpseId" xml:space="preserve"><value>尸体编号（战利品池编号）</value></data>
+  <data name="FieldName.Activities" xml:space="preserve"><value>活动描述</value></data>
+  <data name="FieldDesc.Activities" xml:space="preserve"><value>该生物的活动方式描述，可能仅为注释用途</value></data>
+  <data name="FieldName.CreatureId" xml:space="preserve"><value>生物</value></data>
+  <data name="FieldDesc.CreatureId" xml:space="preserve"><value>刷新的生物编号，结合creatures中的标号</value></data>
+  <data name="FieldName.Min" xml:space="preserve"><value>最小数量</value></data>
+  <data name="FieldDesc.Min" xml:space="preserve"><value>最小刷新数量</value></data>
+  <data name="FieldName.Max" xml:space="preserve"><value>最大数量</value></data>
+  <data name="FieldDesc.Max" xml:space="preserve"><value>最大刷新数量（数值过大会导致大量生物刷新在同一区块）</value></data>
+  <data name="FieldName.Weight" xml:space="preserve"><value>权重/重量</value></data>
+  <data name="FieldDesc.Weight" xml:space="preserve"><value>权重/重量（随表不同：itemtypes=重量，50=不可拾取；creaturesources=刷新权重）</value></data>
+  <data name="FieldName.Value" xml:space="preserve"><value>数值</value></data>
+  <data name="FieldDesc.Value" xml:space="preserve"><value>该资料的价值</value></data>
+  <data name="FieldName.EncounterId" xml:space="preserve"><value>遭遇</value></data>
+  <data name="FieldDesc.EncounterId" xml:space="preserve"><value>调用的剧情代码ID，结合encounters使用</value></data>
+  <data name="FieldName.RemoveTreasureId" xml:space="preserve"><value>移除掉落</value></data>
+  <data name="FieldDesc.RemoveTreasureId" xml:space="preserve"><value>剧情发生时在玩家脚下移除的战利品池ID</value></data>
+  <data name="FieldName.Conditions" xml:space="preserve"><value>附带状态</value></data>
+  <data name="FieldDesc.Conditions" xml:space="preserve"><value>该剧情的获得状态ID列表，逗号分隔</value></data>
+  <data name="FieldName.PreConditions" xml:space="preserve"><value>前置状态</value></data>
+  <data name="FieldDesc.PreConditions" xml:space="preserve"><value>出现该剧情时必要的前置状态，负数表示不可拥有该状态</value></data>
+  <data name="FieldName.Price" xml:space="preserve"><value>价格</value></data>
+  <data name="FieldDesc.Price" xml:space="preserve"><value>给/扣的钱；玩家钱不够则选项不显示</value></data>
+  <data name="FieldName.Responses" xml:space="preserve"><value>回应选项</value></data>
+  <data name="FieldDesc.Responses" xml:space="preserve"><value>玩家在经历该剧情时的回应选项，格式如'=15x0.083x0x0x0,=16x0.083x0x0x0'</value></data>
+  <data name="FieldName.MinimapHexes" xml:space="preserve"><value>小地图点</value></data>
+  <data name="FieldDesc.MinimapHexes" xml:space="preserve"><value>小地图上显示的点坐标</value></data>
+  <data name="FieldName.RemoveCreatures" xml:space="preserve"><value>移除生物</value></data>
+  <data name="FieldDesc.RemoveCreatures" xml:space="preserve"><value>该剧情发生时是否需要移除生物</value></data>
+  <data name="FieldName.RemoveUsed" xml:space="preserve"><value>移除物品</value></data>
+  <data name="FieldDesc.RemoveUsed" xml:space="preserve"><value>该剧情是否会移除你的物品</value></data>
+  <data name="FieldName.ItemsId" xml:space="preserve"><value>产出物品</value></data>
+  <data name="FieldDesc.ItemsId" xml:space="preserve"><value>发生该剧情时产生的物品ID</value></data>
+  <data name="FieldName.CreatureHex" xml:space="preserve"><value>生物坐标</value></data>
+  <data name="FieldDesc.CreatureHex" xml:space="preserve"><value>生物出现位置坐标，格式如'0,0'</value></data>
+  <data name="FieldName.Teleport" xml:space="preserve"><value>传送</value></data>
+  <data name="FieldDesc.Teleport" xml:space="preserve"><value>发生该剧情时将玩家传送到的位置，'0,0'为不传送</value></data>
+  <data name="FieldName.Editor" xml:space="preserve"><value>编辑器坐标</value></data>
+  <data name="FieldDesc.Editor" xml:space="preserve"><value>编辑器坐标（游戏忽略）</value></data>
+  <data name="FieldName.LootChance" xml:space="preserve"><value>搜刮几率</value></data>
+  <data name="FieldDesc.LootChance" xml:space="preserve"><value>成功搜刮到物品的几率</value></data>
+  <data name="FieldName.AccidentChance" xml:space="preserve"><value>意外几率</value></data>
+  <data name="FieldDesc.AccidentChance" xml:space="preserve"><value>发生意外的几率（如破楼倒塌）</value></data>
+  <data name="FieldName.CreatureChance" xml:space="preserve"><value>袭击几率</value></data>
+  <data name="FieldDesc.CreatureChance" xml:space="preserve"><value>生物袭击几率</value></data>
+  <data name="FieldName.Accidents" xml:space="preserve"><value>意外事件</value></data>
+  <data name="FieldDesc.Accidents" xml:space="preserve"><value>出现意外时发生的事件ID（调用encounters）</value></data>
+  <data name="FieldName.Loot" xml:space="preserve"><value>搜刮掉落</value></data>
+  <data name="FieldDesc.Loot" xml:space="preserve"><value>搜刮成功时的战利品种类ID</value></data>
+  <data name="FieldName.LocBased" xml:space="preserve"><value>定点触发</value></data>
+  <data name="FieldDesc.LocBased" xml:space="preserve"><value>该触发器是否为固定位置触发</value></data>
+  <data name="FieldName.DateBased" xml:space="preserve"><value>定时触发</value></data>
+  <data name="FieldDesc.DateBased" xml:space="preserve"><value>该触发器是否为固定时间触发</value></data>
+  <data name="FieldName.HexBased" xml:space="preserve"><value>地形触发</value></data>
+  <data name="FieldDesc.HexBased" xml:space="preserve"><value>该触发器是否为固定场景触发</value></data>
+  <data name="FieldName.Unique" xml:space="preserve"><value>唯一</value></data>
+  <data name="FieldDesc.Unique" xml:space="preserve"><value>该事件是否是独一无二的</value></data>
+  <data name="FieldName.AIPassable" xml:space="preserve"><value>AI 可触发</value></data>
+  <data name="FieldDesc.AIPassable" xml:space="preserve"><value>该事件是否能被AI触发</value></data>
+  <data name="FieldName.Area" xml:space="preserve"><value>触发坐标</value></data>
+  <data name="FieldDesc.Area" xml:space="preserve"><value>该事件触发的位置坐标，格式如'20,164,0'</value></data>
+  <data name="FieldName.DateMin" xml:space="preserve"><value>最早时间</value></data>
+  <data name="FieldDesc.DateMin" xml:space="preserve"><value>最小触发时间，格式'年-月-日-小时'</value></data>
+  <data name="FieldName.DateMax" xml:space="preserve"><value>最晚时间</value></data>
+  <data name="FieldDesc.DateMax" xml:space="preserve"><value>最大触发时间，格式'年-月-日-小时'</value></data>
+  <data name="FieldName.DictFactions" xml:space="preserve"><value>阵营声望</value></data>
+  <data name="FieldDesc.DictFactions" xml:space="preserve"><value>与其他派系的声望关系，格式如'0=-100,1=1,2=-100'</value></data>
+  <data name="FieldName.HeadlineText" xml:space="preserve"><value>头条文本</value></data>
+  <data name="FieldDesc.HeadlineText" xml:space="preserve"><value>头版头条具体文本内容</value></data>
+  <data name="FieldName.TerrainCost" xml:space="preserve"><value>地形消耗</value></data>
+  <data name="FieldDesc.TerrainCost" xml:space="preserve"><value>在该地块上消耗的行动点数</value></data>
+  <data name="FieldName.VizLimiter" xml:space="preserve"><value>视距减少</value></data>
+  <data name="FieldDesc.VizLimiter" xml:space="preserve"><value>在该地块上减少的视距</value></data>
+  <data name="FieldName.VizIncrease" xml:space="preserve"><value>视距增加</value></data>
+  <data name="FieldDesc.VizIncrease" xml:space="preserve"><value>在该地块上增加的视距</value></data>
+  <data name="FieldName.Passable" xml:space="preserve"><value>可通行</value></data>
+  <data name="FieldDesc.Passable" xml:space="preserve"><value>是否可以移动到该地形：0不可通行，1可通行</value></data>
+  <data name="FieldName.ScavengeInitialId" xml:space="preserve"><value>首次搜刮池</value></data>
+  <data name="FieldDesc.ScavengeInitialId" xml:space="preserve"><value>初次搜刮该地形时调用的战利品池ID</value></data>
+  <data name="FieldName.ScavengeItemsIdPerHour" xml:space="preserve"><value>反复搜刮池</value></data>
+  <data name="FieldDesc.ScavengeItemsIdPerHour" xml:space="preserve"><value>多次搜刮该地形时调用的战利品池ID</value></data>
+  <data name="FieldName.CampItems" xml:space="preserve"><value>营地类型</value></data>
+  <data name="FieldDesc.CampItems" xml:space="preserve"><value>营地类型ID</value></data>
+  <data name="FieldName.LightLevels" xml:space="preserve"><value>亮度</value></data>
+  <data name="FieldDesc.LightLevels" xml:space="preserve"><value>亮度等级，对应：凌晨,上午,中午,下午,傍晚,半夜，6个浮点数</value></data>
+  <data name="FieldName.DefaultCampId" xml:space="preserve"><value>默认营地</value></data>
+  <data name="FieldDesc.DefaultCampId" xml:space="preserve"><value>默认营地的代码标号，结合treasuretable使用</value></data>
+  <data name="FieldName.ConditionIds" xml:space="preserve"><value>地块状态</value></data>
+  <data name="FieldDesc.ConditionIds" xml:space="preserve"><value>进入该地块会为玩家带来的状态ID</value></data>
+  <data name="FieldName.RequiredProps" xml:space="preserve"><value>所需属性</value></data>
+  <data name="FieldDesc.RequiredProps" xml:space="preserve"><value>合成项所需的属性 ID，可用 '&amp;' 表示'与'关系</value></data>
+  <data name="FieldName.ForbidProps" xml:space="preserve"><value>禁用属性</value></data>
+  <data name="FieldDesc.ForbidProps" xml:space="preserve"><value>合成项不可拥有的属性ID</value></data>
+  <data name="FieldName.PropertyName" xml:space="preserve"><value>属性名</value></data>
+  <data name="FieldDesc.PropertyName" xml:space="preserve"><value>属性名称，如'easily ignitable'（易燃物）</value></data>
+  <data name="FieldName.GroupId" xml:space="preserve"><value>分组 ID</value></data>
+  <data name="FieldDesc.GroupId" xml:space="preserve"><value>物品所属分组代码</value></data>
+  <data name="FieldName.SubgroupId" xml:space="preserve"><value>子组 ID</value></data>
+  <data name="FieldDesc.SubgroupId" xml:space="preserve"><value>物品所属子组代码</value></data>
+  <data name="FieldName.DescriptionAlt" xml:space="preserve"><value>备选描述</value></data>
+  <data name="FieldDesc.DescriptionAlt" xml:space="preserve"><value>备用描述文本（如替换/变体物品）</value></data>
+  <data name="FieldName.CondId" xml:space="preserve"><value>使用条件</value></data>
+  <data name="FieldDesc.CondId" xml:space="preserve"><value>使用该物品需满足的条件</value></data>
+  <data name="FieldName.SpriteList" xml:space="preserve"><value>精灵列表</value></data>
+  <data name="FieldDesc.SpriteList" xml:space="preserve"><value>精灵图片列表（{value}={id} 格式）</value></data>
+  <data name="FieldName.ImageUsage" xml:space="preserve"><value>图片用途</value></data>
+  <data name="FieldDesc.ImageUsage" xml:space="preserve"><value>图片使用方式说明</value></data>
+  <data name="FieldName.MonetaryValue" xml:space="preserve"><value>货币价值</value></data>
+  <data name="FieldDesc.MonetaryValue" xml:space="preserve"><value>物品货币价值</value></data>
+  <data name="FieldName.MonetaryValueAlt" xml:space="preserve"><value>备选价值</value></data>
+  <data name="FieldDesc.MonetaryValueAlt" xml:space="preserve"><value>备用货币价值</value></data>
+  <data name="FieldName.Durability" xml:space="preserve"><value>耐久度</value></data>
+  <data name="FieldDesc.Durability" xml:space="preserve"><value>耐久度上限</value></data>
+  <data name="FieldName.DegradePerHour" xml:space="preserve"><value>每小时损耗</value></data>
+  <data name="FieldDesc.DegradePerHour" xml:space="preserve"><value>每小时损耗值</value></data>
+  <data name="FieldName.EquipDegradePerHour" xml:space="preserve"><value>装备损耗</value></data>
+  <data name="FieldDesc.EquipDegradePerHour" xml:space="preserve"><value>装备状态下每小时损耗值</value></data>
+  <data name="FieldName.DegradePerUse" xml:space="preserve"><value>每次损耗</value></data>
+  <data name="FieldDesc.DegradePerUse" xml:space="preserve"><value>每次使用损耗值</value></data>
+  <data name="FieldName.DegradeTreasureIds" xml:space="preserve"><value>损耗掉落</value></data>
+  <data name="FieldDesc.DegradeTreasureIds" xml:space="preserve"><value>耐久归零时掉落的战利品表</value></data>
+  <data name="FieldName.EquipConditions" xml:space="preserve"><value>装备状态</value></data>
+  <data name="FieldDesc.EquipConditions" xml:space="preserve"><value>该物品装备时会为你带来的状态</value></data>
+  <data name="FieldName.PossessConditions" xml:space="preserve"><value>持有状态</value></data>
+  <data name="FieldDesc.PossessConditions" xml:space="preserve"><value>该物品持有时会为你带来的永久性状态</value></data>
+  <data name="FieldName.UseConditions" xml:space="preserve"><value>使用状态</value></data>
+  <data name="FieldDesc.UseConditions" xml:space="preserve"><value>使用该物品会为你带来的状态</value></data>
+  <data name="FieldName.EquipSlots" xml:space="preserve"><value>装备栏</value></data>
+  <data name="FieldDesc.EquipSlots" xml:space="preserve"><value>装备插槽，物品能放在身上的位置：20左手，21右手，22背部</value></data>
+  <data name="FieldName.UseSlots" xml:space="preserve"><value>使用位置</value></data>
+  <data name="FieldDesc.UseSlots" xml:space="preserve"><value>使用位置，211为直接给自己使用（如吃药）</value></data>
+  <data name="FieldName.SocketLocked" xml:space="preserve"><value>锁定属性</value></data>
+  <data name="FieldDesc.SocketLocked" xml:space="preserve"><value>锁定属性，带此属性的物品无法被玩家移动</value></data>
+  <data name="FieldName.Properties" xml:space="preserve"><value>属性列表</value></data>
+  <data name="FieldDesc.Properties" xml:space="preserve"><value>该物品的属性ID列表，用于合成与检定</value></data>
+  <data name="FieldName.ContentIds" xml:space="preserve"><value>可装内容</value></data>
+  <data name="FieldDesc.ContentIds" xml:space="preserve"><value>该物品的空间属性，定义作为容器能存放的物品类型</value></data>
+  <data name="FieldName.FormatId" xml:space="preserve"><value>内部掉落池</value></data>
+  <data name="FieldDesc.FormatId" xml:space="preserve"><value>该物品内部的战利品池ID</value></data>
+  <data name="FieldName.ComponentId" xml:space="preserve"><value>成分</value></data>
+  <data name="FieldDesc.ComponentId" xml:space="preserve"><value>成分ID，结合treasuretable使用,可逆向合成的物品，如果由合成以外的方式获得，拆解时得到的物品ID</value></data>
+  <data name="FieldName.Mirrored" xml:space="preserve"><value>镜像</value></data>
+  <data name="FieldDesc.Mirrored" xml:space="preserve"><value>镜像，专门用于鞋子</value></data>
+  <data name="FieldName.SlotDepth" xml:space="preserve"><value>叠放顺序</value></data>
+  <data name="FieldDesc.SlotDepth" xml:space="preserve"><value>决定多件衣服等哪件在上面</value></data>
+  <data name="FieldName.StackLimit" xml:space="preserve"><value>堆叠上限</value></data>
+  <data name="FieldDesc.StackLimit" xml:space="preserve"><value>最大堆叠数量</value></data>
+  <data name="FieldName.SwitchIds" xml:space="preserve"><value>切换 ID</value></data>
+  <data name="FieldDesc.SwitchIds" xml:space="preserve"><value>转变的ID，用于电子产品开关机状态切换</value></data>
+  <data name="FieldName.Sounds" xml:space="preserve"><value>物品声音</value></data>
+  <data name="FieldDesc.Sounds" xml:space="preserve"><value>拿起放下该物品时的声音</value></data>
+  <data name="FieldName.Definition" xml:space="preserve"><value>地图数据</value></data>
+  <data name="FieldDesc.Definition" xml:space="preserve"><value>地图定义数据，大量数字和逗号组成的地形数据</value></data>
+  <data name="FieldName.SecretName" xml:space="preserve"><value>隐藏名称</value></data>
+  <data name="FieldDesc.SecretName" xml:space="preserve"><value>隐藏名称，用于区分人肉和动物肉、水的毒性等</value></data>
+  <data name="FieldName.Tools" xml:space="preserve"><value>工具</value></data>
+  <data name="FieldDesc.Tools" xml:space="preserve"><value>合成需要的工具，格式如'1x1'</value></data>
+  <data name="FieldName.Consumed" xml:space="preserve"><value>消耗品</value></data>
+  <data name="FieldDesc.Consumed" xml:space="preserve"><value>合成会消耗/损耗掉的物品，格式如'1x2+1x3'</value></data>
+  <data name="FieldName.Destroyed" xml:space="preserve"><value>破坏物</value></data>
+  <data name="FieldDesc.Destroyed" xml:space="preserve"><value>摧毁的物品，用于熄灭火把等</value></data>
+  <data name="FieldName.Hours" xml:space="preserve"><value>合成耗时</value></data>
+  <data name="FieldDesc.Hours" xml:space="preserve"><value>合成需要消耗的行动点数</value></data>
+  <data name="FieldName.Reverse" xml:space="preserve"><value>逆向合成</value></data>
+  <data name="FieldDesc.Reverse" xml:space="preserve"><value>是否可以逆向工程：0不可逆，1可逆，2等</value></data>
+  <data name="FieldName.HiddenId" xml:space="preserve"><value>隐藏配方</value></data>
+  <data name="FieldDesc.HiddenId" xml:space="preserve"><value>是否为隐藏配方，需要捡纸片解锁</value></data>
+  <data name="FieldName.Identify" xml:space="preserve"><value>可鉴别</value></data>
+  <data name="FieldDesc.Identify" xml:space="preserve"><value>是否能被鉴别，用于配合隐藏名称</value></data>
+  <data name="FieldName.TransferComponents" xml:space="preserve"><value>转移组件</value></data>
+  <data name="FieldDesc.TransferComponents" xml:space="preserve"><value>合成时是否把材料组件转移到产物（如弓弦等）</value></data>
+  <data name="FieldName.AlsoTry" xml:space="preserve"><value>替代配方</value></data>
+  <data name="FieldDesc.AlsoTry" xml:space="preserve"><value>使用其他不同配方但相同成品的配方ID</value></data>
+  <data name="FieldName.TempTreasureId" xml:space="preserve"><value>预览掉落</value></data>
+  <data name="FieldDesc.TempTreasureId" xml:space="preserve"><value>合成时在成品栏以虚影显示的合成结果ID</value></data>
+  <data name="FieldName.DegradeOutput" xml:space="preserve"><value>产物损耗</value></data>
+  <data name="FieldDesc.DegradeOutput" xml:space="preserve"><value>合成出的物品耐久是否和材料耐久关联：1有关，0无关</value></data>
+  <data name="FieldName.Scrap" xml:space="preserve"><value>可拆解</value></data>
+  <data name="FieldDesc.Scrap" xml:space="preserve"><value>是否可分解</value></data>
+  <data name="FieldName.Nested" xml:space="preserve"><value>嵌套</value></data>
+  <data name="FieldDesc.Nested" xml:space="preserve"><value>生成物品是否会装在同时生成的容器里</value></data>
+  <data name="FieldName.Suppress" xml:space="preserve"><value>抑制生成</value></data>
+  <data name="FieldDesc.Suppress" xml:space="preserve"><value>抑制物品可能产生的内容物生成：1时水瓶里不会有水，枪里不会有子弹</value></data>
+<!-- 数据浏览器字段名/描述词典 END -->
+
+
+  <data name="Storage.DeleteDone" xml:space="preserve"><value>已删除「{0}」——立即生效；本局游戏结束前不再保存进度，重启游戏后恢复正常。</value></data>
+  <data name="Storage.ClearAllDone" xml:space="preserve"><value>已清空全部存档——立即生效；本局游戏结束前不再保存进度，重启游戏后恢复正常。</value></data>
+  <data name="Storage.RestoreDone" xml:space="preserve"><value>已恢复「{0}」</value></data>
+  <data name="Storage.NeedRestart" xml:space="preserve"><value>正在重启游戏加载恢复的存档…</value></data>
+  <data name="Storage.Hint" xml:space="preserve"><value>存档操作提示：备份、删除存档永远不需要重启游戏。恢复备份时——如果游戏刚打开、还没进过游戏，立即生效不用重启；如果已经进过游戏或保存过，需要重启游戏才能读到恢复的存档。</value></data>
+  <!-- 数据浏览器表名（v2.72） -->
+  <data name="Table.attackmodes" xml:space="preserve"><value>攻击模式</value></data>
+  <data name="Table.barterhexes" xml:space="preserve"><value>交易格子</value></data>
+  <data name="Table.battlemoves" xml:space="preserve"><value>战斗招式</value></data>
+  <data name="Table.camptypes" xml:space="preserve"><value>营地类型</value></data>
+  <data name="Table.chargeprofiles" xml:space="preserve"><value>弹药配置</value></data>
+  <data name="Table.conditions" xml:space="preserve"><value>状态效果</value></data>
+  <data name="Table.containertypes" xml:space="preserve"><value>容器类型</value></data>
+  <data name="Table.creatures" xml:space="preserve"><value>生物</value></data>
+  <data name="Table.creaturesources" xml:space="preserve"><value>生物来源</value></data>
+  <data name="Table.datafiles" xml:space="preserve"><value>数据文件</value></data>
+  <data name="Table.dmcplaces" xml:space="preserve"><value>地点</value></data>
+  <data name="Table.encounters" xml:space="preserve"><value>遭遇</value></data>
+  <data name="Table.encountertriggers" xml:space="preserve"><value>遭遇触发器</value></data>
+  <data name="Table.factions" xml:space="preserve"><value>阵营</value></data>
+  <data name="Table.forbiddenhexes" xml:space="preserve"><value>禁区格子</value></data>
+  <data name="Table.gamevars" xml:space="preserve"><value>全局变量</value></data>
+  <data name="Table.headlines" xml:space="preserve"><value>头条</value></data>
+  <data name="Table.hextypes" xml:space="preserve"><value>地图格子类型</value></data>
+  <data name="Table.ingredients" xml:space="preserve"><value>成分</value></data>
+  <data name="Table.itemprops" xml:space="preserve"><value>物品属性</value></data>
+  <data name="Table.itemtypes" xml:space="preserve"><value>物品类型</value></data>
+  <data name="Table.maps" xml:space="preserve"><value>地图</value></data>
+  <data name="Table.recipes" xml:space="preserve"><value>配方</value></data>
+  <data name="Table.treasuretable" xml:space="preserve"><value>战利品表</value></data>
+  <!-- 数据浏览器 wiki 标签（v2.72） -->
+  <data name="Wiki.ID" xml:space="preserve"><value>ID</value></data>
+  <data name="Wiki.Fields" xml:space="preserve"><value>## 字段</value></data>
+  <data name="Wiki.Column" xml:space="preserve"><value>列</value></data>
+  <data name="Wiki.Value" xml:space="preserve"><value>值</value></data>
+  <data name="Wiki.References" xml:space="preserve"><value>## 被引用（{0}）</value></data>
+  <data name="Wiki.Tools" xml:space="preserve"><value>## 工具</value></data>
+  <data name="Wiki.Consumed" xml:space="preserve"><value>## 消耗</value></data>
+  <data name="Wiki.Destroyed" xml:space="preserve"><value>## 破坏</value></data>
+  <data name="Wiki.Output" xml:space="preserve"><value>## 产物</value></data>
+  <data name="Wiki.TempOutput" xml:space="preserve"><value>## 临时产物预览</value></data>
+  <data name="Wiki.AltRecipes" xml:space="preserve"><value>## 替代配方</value></data>
+  <data name="Wiki.HiddenLinks" xml:space="preserve"><value>## 隐藏关联</value></data>
+  <data name="Wiki.Drops" xml:space="preserve"><value>## 掉落物</value></data>
+  <data name="Wiki.DropPreview" xml:space="preserve"><value>掉落预览：{0}</value></data>
+  <data name="Wiki.NoDrops" xml:space="preserve"><value>（无掉落条目）</value></data>
+  <data name="Wiki.CycleRef" xml:space="preserve"><value>（循环引用）</value></data>
+  <data name="Wiki.Unresolved" xml:space="preserve"><value>（未解析）</value></data>
+  <data name="Wiki.TooDeep" xml:space="preserve"><value>…（嵌套过深）</value></data>
+  <data name="Wiki.FlagSep" xml:space="preserve"><value>·</value></data>
+  <data name="Wiki.PreviewSep" xml:space="preserve"><value>、</value></data>
+  <data name="Wiki.Hours" xml:space="preserve"><value>耗时 {0}h</value></data>
+  <data name="Wiki.FlagIdentify" xml:space="preserve"><value>识别</value></data>
+  <data name="Wiki.FlagScrap" xml:space="preserve"><value>可拆解</value></data>
+  <data name="Wiki.FlagDegradeOutput" xml:space="preserve"><value>产物降级</value></data>
+  <data name="Wiki.FlagTransferComponents" xml:space="preserve"><value>转移组件</value></data>
+  <data name="Wiki.Nested" xml:space="preserve"><value>嵌套</value></data>
+  <data name="Wiki.Suppress" xml:space="preserve"><value>抑制</value></data>
+  <data name="Wiki.Identify" xml:space="preserve"><value>识别</value></data>
+  <data name="Wiki.Images" xml:space="preserve"><value>## 图片</value></data>
+  <data name="Log.LevelAll" xml:space="preserve"><value>全部</value></data>
+  <data name="Storage.RestartPendingTitle" xml:space="preserve"><value>退出时将重启游戏生效</value></data>
+  <data name="Storage.Hint" xml:space="preserve"><value>存档操作提示：备份、删除存档永远不需要重启游戏。恢复备份时——如果游戏刚打开、还没进过游戏，立即生效不用重启；如果已经进过游戏或保存过，需要重启游戏才能读到恢复的存档（退出本窗口时会自动重启）。</value></data>
 </root>

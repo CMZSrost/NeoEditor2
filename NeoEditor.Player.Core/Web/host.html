@@ -229,6 +229,41 @@
                 // own *enumerable* props on the Storage instance, so Object.keys(localStorage)
                 // would list setItem/removeItem as fake "saves" in the storage manager.
                 var origSetItem = localStorage.setItem.bind(localStorage);
+                // v2.72: 存档管理免重启方案（墓碑 + 恢复保护）——
+                // - __deletedKeys[key]：存档管理「删除/清空」后墓碑化——游戏仍持有该存档的
+                //   内存副本（Ruffle SharedObject 缓存，运行中从不重读 localStorage），其
+                //   自动保存/卸载 flush 会把旧档写回（"删除复活"）。墓碑拦截写回 → 删除
+                //   立即且永久生效，无需重启游戏；游戏继续可玩但该档保存被挂起，直到
+                //   重启游戏（或游戏内新开档 clear 解除墓碑）。
+                // - __protectedKeys[key]：存档管理「恢复」后保护——运行中游戏的内存副本
+                //   是旧状态，其写回会覆盖刚恢复的存档（用户反馈的坑）。保护拦截写回 →
+                //   恢复的存档安全保留在 localStorage，点「重启游戏」后生效。
+                // - __managerOp：存档管理自己执行 setItem/removeItem 时置位，避免其
+                //   操作被「游戏发起」的解除逻辑误判（见 removeItem 包装）。
+                window.__deletedKeys = {};
+                window.__protectedKeys = {};
+                window.__managerOp = false;
+                window.__blockLogged = {};
+                // v2.74: 本会话游戏是否已读取过存档（nsSGv1 SharedObject 实例是否已创建）——
+                // 反编译确认（DataHandler.as）：主菜单启动**不**读存档，首次
+                // LoadGame/SaveGame/DeleteSave 才 SharedObject.getLocal 创建实例并缓存于
+                // AVM（Ruffle 从不重读 localStorage）。未触碰时存档管理操作（删除/恢复/
+                // 清空）直接生效、无需重启；已触碰后恢复才必须重启（读档界面读的是内存副本）。
+                // 包装器能观察到 Ruffle 的每一次 get/set/remove（localStorage 通道），
+                // 启动展开块在包装器安装前执行、不误标。
+                window.__saveTouched = false;
+                function __markTouched(key) {
+                    if (key && key.indexOf("nsSGv1") !== -1) window.__saveTouched = true;
+                }
+                window.__tombstoneKey = function (k) { if (k) window.__deletedKeys[k] = true; };
+                window.__protectKey = function (k) { if (k) window.__protectedKeys[k] = true; };
+                window.__unmarkKey = function (k) { if (!k) return; delete window.__deletedKeys[k]; delete window.__protectedKeys[k]; };
+                function __saveBlocked(key) {
+                    if (!window.__blockLogged[key]) {
+                        window.__blockLogged[key] = true;
+                        try { window.__log("warn", "存档写回已拦截（已删除或已恢复保护）: " + key); } catch (e) {}
+                    }
+                }
                 Object.defineProperty(localStorage, "setItem", {
                     value: function (key, value) {
                         // v2.50: 存档管理删除/恢复期间阻止一切写回——Ruffle 在页面卸载
@@ -236,6 +271,12 @@
                         // localStorage，删除存档后重启会"旧档复活"。存档管理操作前由
                         // 页面设置 window.__blockSaves = true，重启后新页面标志自动消失。
                         if (window.__blockSaves) return;
+                        __markTouched(key);   // v2.74: 游戏保存 = 已触碰
+                        // v2.72: 墓碑/保护拦截（免重启删除与恢复的核心）。
+                        if (window.__deletedKeys[key] || window.__protectedKeys[key]) {
+                            __saveBlocked(key);
+                            return;
+                        }
                         backupValue(key, value);
                         return origSetItem(key, value);
                     },
@@ -247,12 +288,16 @@
                 Object.defineProperty(localStorage, "removeItem", {
                     value: function (key) {
                         try {
+                            __markTouched(key);   // v2.74
                             var old = localStorage.getItem(key);
                             if (old !== null) backupValue(key, old);
                             // v2.51: 游戏内删除存档（SharedObject.clear → removeItem）后，
                             // Ruffle 页面卸载 flush_shared_objects 会把缓存 data 写回（存档复活）。
                             // 标记本次会话删除过存档 → beforeunload/pagehide 时拦截写回。
                             if (key && key.indexOf("nsSGv1") !== -1) window.__savesCleared = true;
+                            // v2.72: 游戏内 clear/新开档 = 主动重新开始 → 解除墓碑/保护
+                            // （新档的保存放行）；存档管理自己的操作（__managerOp）不受影响。
+                            if (!window.__managerOp) window.__unmarkKey(key);
                         } catch (e) {}
                         return origRemoveItem(key);
                     },
@@ -288,6 +333,8 @@
                     value: function (key) {
                         var v = origGetItem(key);
                         if (v === null || !key || key.indexOf("nsSGv1") === -1) return v;
+                        // v2.74: Ruffle 首次创建 SharedObject 实例会读 localStorage → 已触碰。
+                        __markTouched(key);
                         try {
                             if (window.LsoExpand && window.LsoExpand.expand) {
                                 var expanded = window.LsoExpand.expand(v);

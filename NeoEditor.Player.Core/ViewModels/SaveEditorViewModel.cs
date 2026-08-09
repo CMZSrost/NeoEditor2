@@ -181,6 +181,8 @@ public sealed partial class SaveEditorViewModel : ObservableObject
             "(function () {" +
             "  var r = LsoExpand.fromTree(" + JsonSerializer.Serialize(jsonText) + ");" +
             "  if (r.error) return r;" +
+            // v2.72: 存档修改器保存 = 明确意图让该存档存在 → 解除可能存在的墓碑/恢复保护
+            "  window.__unmarkKey && window.__unmarkKey(" + JsonSerializer.Serialize(key) + ");" +
             "  localStorage.setItem(" + JsonSerializer.Serialize(key) + ", r.b64);" +
             "  return { ok: true, len: r.b64.length };" +
             "})()");

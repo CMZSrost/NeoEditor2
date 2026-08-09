@@ -1443,3 +1443,87 @@ BaseLow 与侧栏区分；Markdown 区域走 MarkdownTheme.axaml 双字典（v2.
   - v2.70（2026-08-09）：**v1.0.1 内测包** —— 版本号 1.0.0 → 1.0.1，git tag
     `player-v1.0.1`（release-player.yml 自动构建 + 发 Release）；v2.68（WebView2 启动检测
     弹窗）与 v2.69（player-boot-*.log 启动日志）随 0809.01 入库后首个内测包。
+  - v2.71（2026-08-09）：**闪退实测定案（无日志型）** —— 用户反馈机器（Win10 22H2 教育版）
+    启动即闪退且**连 player-boot-*.log 都没有**：BootstrapLog 是托管 Main 第一行，无日志 =
+    进程死在**托管代码之前**（CLR host 原生加载阶段）。实测定案：系统未升级/缺组件（装 .NET
+    运行库 + 升级系统后可启动）——self-contained 虽自带运行时，host 仍依赖系统 UCRT/API
+    组件，老 build Win10 缺件时静默失败（无提示、无日志、不产生 WER 条目属正常）。FAQ 补充
+    「无 boot 日志 → 先升级系统/查杀软」。纯文档订正。
+  - v2.72（2026-08-09）：**数据浏览器全量本地化 + 存档操作免重启（墓碑/保护）** ——
+    ① **数据浏览器本地化**：编辑器数据表用 `[Display(Name=…)]` 属性 → resx `Xxx`（本地化
+    字段名）/`XxxDesc`（本地化字段描述）——Player 侧复用同一套元数据：新增
+    `artifacts/gen-player-field-resx.js`（从实体模型 + editor resx 提取 173 个字段键 × zh/en，
+    写入 Player resx `FieldName.*`/`FieldDesc.*`；itemtypes 核心字段无 [Display]，手工补齐
+    13 键含 SpriteList）；`GameTableMap.GetFieldDisplayKey`（列 → Display 键，无 Display 回退
+    属性名，public）；`WikiDetailBuilder` 注入文本委托（表名/字段名/全部标签走 resx，无委托
+    时保持内置中文默认 → 既有测试不变）；字段网格 = 本地化名 + 描述 ToolTip（原始列名保留
+    在 Column 供对照）；表列表/引用 Tab = 本地化表名（`Table.*` 24 键，原始键 ToolTip）；
+    行摘要列名前缀本地化（`GameDataRow.ColumnLabel`，取值时解析 → 语言切换即时生效）；
+    语言切换就地重渲染（`Relocalize`：表名/行摘要/详情 markdown/字段/引用全部跟随，窗口
+    可开着切语言）。② **存档管理免重启（用户反馈的坑：Ruffle 内存副本覆盖操作结果）**——
+    根因：Ruffle 把运行中游戏的 SharedObject 缓存于 AVM 内存（avm2_shared_objects），从不
+    重读 localStorage；自动保存/卸载 flush 会把内存副本写回，删除/恢复都被覆盖。host.html
+    新增 `__deletedKeys`（墓碑）/`__protectedKeys`（恢复保护）两张拦截表：删除/清空 =
+    墓碑化该 key → 一切写回被拦截（删除立即永久生效、不会复活；游戏可继续玩但该档保存
+    挂起，直到重启游戏）；恢复 = 写入 + 保护 → 内存旧档无法覆盖恢复的存档；**游戏内
+    clear/新开档自动解除墓碑**（新档保存放行）；存档管理操作**不再自动重启游戏**
+    （移除 v2.50 的 RestartGameNow 自动重载，手动「重启游戏」按钮保留）；存档修改器保存前
+    解除墓碑（明确意图）。③ 日志浮层级别过滤「全部」本地化（`Log.LevelAll`，`LevelFilterOptions`
+    随语言重建）。测试：新增 LocalizationTests 9 项 + StorageManagerViewModelTests +4（墓碑/
+    保护/免重启），Player.Core.Tests 126 → 143 全绿。
+  - v2.73（2026-08-09）：**v2.72 追修（实机反馈）** —— ① **恢复必须自动重启**：删除→恢复后
+    游戏**仍持空内存档**（Ruffle SharedObject 缓存），不重启则读档界面「显示没有存档」——
+    恢复改回自动重启（300ms 重载页面加载恢复存档），删除/清空保持免重启；保护标志保证重启
+    瞬间内存旧档（含卸载 flush）无法覆盖恢复值（沙箱验证：`player-tools/saves-no-restart-flow.js`
+    删除→恢复→重启全流程通过）。② **字段词典审查订正**：编辑器 resx 的字段「名称」多为完整
+    描述句，不适合做列头——全部 172 键订正为短名（zh ≤6 字/en 1-3 词，含义以
+    `Core/Model/field_descriptions.json`（Docs/38）为准）；描述订正 ~16 处（共享键过于具体/
+    错误，如 Description/Image/Price/Weight/Order/Editor/RemoveAll/TransferComponents 等）；
+    修复生成器 XML 实体二次转义（`&lt;us&gt;` → `&amp;lt;us&amp;gt;`，实体先解码再重转义）。
+  - v2.74（2026-08-09）：**存档操作免重启最大化（__saveTouched 检测）** —— 用户反馈重启
+    3-8 分钟太慢。反编译取证（`player-tools/swf-src/scripts/DataHandler.as`）：**主菜单启动
+    不读存档**——`FlxSave` 静态实例在首次 `LoadGame/SaveGame/DeleteSave` 才
+    `SharedObject.getLocal("nsSGv1")` 创建并被 Ruffle 缓存于 AVM。host.html 包装器在
+    get/set/remove 上标记 `window.__saveTouched`（启动展开块在包装器安装前执行不误标）：
+    - **未触碰**（主菜单/新开档早期，游戏尚无内存副本）→ 删除/清空直接生效、
+      **恢复直接写回立即生效，全部免重启**（游戏首次读档才创建实例，读到的就是最新值）；
+    - **已触碰**（载入过/保存过/死亡删档后）→ 删除/清空仍免重启（墓碑）；**恢复必须重启**
+      ——Ruffle 内存缓存是硬限制（读档界面读的是 AVM 内存副本，非 localStorage）。
+    存档管理三操作状态文案分流（`Storage.*Instant` 三键）。测试 +3（未触碰删除/清空/恢复
+    即时生效无墓碑无重启），Player.Core.Tests 146/146 全绿；沙箱
+    `player-tools/saves-no-restart-flow.js` 增补未触碰流程验证。
+  - v2.75（2026-08-09）：**数据浏览器本地化修复（用户反馈）** —— ① **表名列表退回英文的
+    根因**：v2.72/2.73 生成器 `--apply` 按「注释 → `</root>`」替换整段，误删了插入在字段块
+    之后的 `Table.*`(24)/`Wiki.*`(29)/`Log.LevelAll`/`Storage.DeleteDone` 等键——`--apply`
+    改为只替换显式 BEGIN/END 标记之间的内容，误删键全部恢复（resx 全文件按 key 去重 +
+    修复 en 文件既有的 `Log.ExportBundle` 嵌套坏行）。② **itemtypes 翻译不全根因**：生成器
+    属性名提取正则只匹配属性声明前的文本，`[Column("fDurability")] public double Durability`
+    紧凑单行写法提取失败 → 无 `[Display]` 的字段全部跳过——正则在 200 字符内跨到
+    `public` 并从声明本身提取属性名，itemtypes 37 列翻译全覆盖（校验脚本 0 缺失）。③
+    **chargeprofiles 语义订正**：attackmodes/itemtypes 的 strChargeProfiles 实际是**弹药类型**
+    （用户确认）——字段名「耗电配置」→「弹药配置」，描述同步（chargeprofiles 表名也改为
+    弹药配置）。④ **存档管理提示白话化**（用户反馈「不要复杂术语」）：窗口顶部
+    `Storage.Hint` 只说明什么情况需要重启——备份/删除永不需要；游戏刚打开还没玩过时恢复
+    也立即生效；玩过或保存过之后恢复才需要重启。删除/清空/恢复的状态文案同步简化。
+  - v2.76（2026-08-09）：**英文字段名保持原样（用户要求）** —— 英文模式下字段名不再做
+    可读化改写：`FieldName.*` 直接用 editor en-us 的原值（技术名/属性名，如
+    PerUse/DamageCut/ChargeProfiles），编辑器缺失的键回退属性名本身（如 itemtypes 的
+    Durability/MonetaryValue）；中文短名与中英文描述不受影响。生成器已同步（英文名永不
+    走 NAMES 改写）。
+  - v2.77（2026-08-09）：**存档管理引导式重启（用户要求）** —— 不再「点一下就重启」：
+    - 不需要重启的操作（备份/删除/清空、未触碰时的恢复）：**静默直接生效**，无提示、无
+      拦截、无重启标志；
+    - 需要重启的操作（已触碰后的恢复）：写入 + 保护照常（内存旧档无法覆盖恢复值），但
+      **不打断流程、不立即重启**——`NeedsRestart` 置位 → 窗口标题追加「退出时将重启游戏
+      生效」（`Storage.RestartPendingTitle`，标题绑定 VM.WindowTitle），**窗口关闭时统一
+      触发一次重启**（Closed 处理器；手动「重启游戏」按钮保留，RestartGameCommand 先清
+      标志避免重复触发）；玩家可连续做多次操作后一次性重启。
+    测试：恢复用例改为断言「不立即重启 + 待重启标志 + 标题提示 + 手动触发后重启一次」，
+    Player.Core.Tests 146/146 全绿。
+  - v2.78（2026-08-09）：**v1.0.2 内测包** —— 版本号 1.0.1 → 1.0.2，git tag
+    `player-v1.0.2`（release-player.yml 自动构建 + 发 Release）；Release body 改为
+    `body_path` 直接附 `NeoEditor.Player/CHANGELOG.md`（用户向更新内容，替代内联 body，
+    CHANGELOG 同时作为资产上传），generate_release_notes 关闭；v2.72-v2.77（数据浏览器
+    全量本地化、存档免重启/引导式重启、字段词典订正）随 1.0.2 入库。
+    （注：NeoEditor.Plugins.JsVisualization 有未提交 WIP 编译错误
+    IReferenceResolver/ReferenceList<>，非本版本引入，全解决方案构建待 WIP 完成后验证）

@@ -54,7 +54,7 @@
   <data name="Log.OpenFolder" xml:space="preserve"><value>Open Log Folder</value></data>
   <data name="Log.Export" xml:space="preserve"><value>Export Logs</value></data>
   <data name="Log.Exported" xml:space="preserve"><value>Exported: {0}</value></data>
-  <data name="Log.ExportBundle" xml:space="preserve"><value>Export Saves   <data name="Log.ExportBundle" xml:space="preserve"><value>Export Saves &amp; Logs (zip)</value></data>amp; Logs (zip)</value></data>
+  <data name="Log.ExportBundle" xml:space="preserve"><value>Export Saves &amp; Logs (zip)</value></data>
   <data name="Log.Clipboard" xml:space="preserve"><value>Clipboard</value></data>
   <data name="Log.ClipboardTitle" xml:space="preserve"><value>System Clipboard</value></data>
   <data name="Log.ClipboardEmpty" xml:space="preserve"><value>(system clipboard is empty)</value></data>
@@ -89,13 +89,11 @@
   <data name="Status.ErrorDetected" xml:space="preserve"><value>⚠ Game error detected (see logs)</value></data>
   <data name="Status.ErrorExit" xml:space="preserve"><value>Game exited abnormally (see logs)</value></data>
   <data name="Storage.Title" xml:space="preserve"><value>Save Manager</value></data>
-  <data name="Storage.Hint" xml:space="preserve"><value>Saves live in the page localStorage (Ruffle SharedObject); the fixed loopback port keeps them across launches</value></data>
   <data name="Storage.Refresh" xml:space="preserve"><value>Refresh</value></data>
   <data name="Storage.ClearAll" xml:space="preserve"><value>Clear all</value></data>
   <data name="Storage.Delete" xml:space="preserve"><value>Delete</value></data>
   <data name="Storage.Edit" xml:space="preserve"><value>Edit</value></data>
   <data name="Storage.RestartGame" xml:space="preserve"><value>Restart game</value></data>
-  <data name="Storage.NeedRestart" xml:space="preserve"><value>Change applied — restarting the game now (the running game caches the SharedObject and its autosave would write the old save back)</value></data>
   <data name="Storage.RestartPromptTitle" xml:space="preserve"><value>Restart game</value></data>
   <data name="Storage.RestartPrompt" xml:space="preserve"><value>Changes written to localStorage; the running game keeps the SharedObject in memory (Ruffle cache) — restart the game for them to take effect. Restart now?</value></data>
   <data name="Storage.RestartNow" xml:space="preserve"><value>Restart game</value></data>
@@ -120,4 +118,444 @@
   <data name="Storage.ConfirmDeleteBackup" xml:space="preserve"><value>Delete backup "{0}"?</value></data>
   <data name="Storage.ConfirmClearAllTitle" xml:space="preserve"><value>Confirm Clear</value></data>
   <data name="Storage.ConfirmClearAll" xml:space="preserve"><value>Clear all saves? This cannot be undone.</value></data>
+// 生成于 2026-08-09T12:27:47.620Z：173 个字段键（表名→列名映射见 Player.Core GameTableMap）
+  <data name="Storage.DeleteInstant" xml:space="preserve"><value>Deleted &quot;{0}&quot; — the game has not read this save yet; takes effect immediately, no restart needed</value></data>
+  <data name="Storage.ClearAllInstant" xml:space="preserve"><value>Cleared all saves — the game has not read them yet; takes effect immediately, no restart needed</value></data>
+  <data name="Storage.RestoreInstant" xml:space="preserve"><value>Restored &quot;{0}&quot; — the game has not read the save yet; takes effect immediately, no restart needed</value></data>
+<!-- 数据浏览器字段名/描述词典 BEGIN（Docs/42 v2.72，由 artifacts/gen-player-field-resx.js 生成） -->
+// 生成于 2026-08-09T12:48:10.872Z：184 个字段键（表名→列名映射见 Player.Core GameTableMap）
+  <data name="FieldName.Id" xml:space="preserve"><value>Id</value></data>
+  <data name="FieldDesc.Id" xml:space="preserve"><value>ID Code</value></data>
+  <data name="FieldName.Name" xml:space="preserve"><value>Name</value></data>
+  <data name="FieldDesc.Name" xml:space="preserve"><value>Name</value></data>
+  <data name="FieldName.Notes" xml:space="preserve"><value>Notes</value></data>
+  <data name="FieldDesc.Notes" xml:space="preserve"><value>Item notes, usually left blank, does not affect gameplay</value></data>
+  <data name="FieldName.Range" xml:space="preserve"><value>Range</value></data>
+  <data name="FieldDesc.Range" xml:space="preserve"><value>Attack range, 1 for melee, varies for ranged weapons</value></data>
+  <data name="FieldName.DamageCut" xml:space="preserve"><value>DamageCut</value></data>
+  <data name="FieldDesc.DamageCut" xml:space="preserve"><value>Cutting damage value</value></data>
+  <data name="FieldName.DamageBlunt" xml:space="preserve"><value>DamageBlunt</value></data>
+  <data name="FieldDesc.DamageBlunt" xml:space="preserve"><value>Blunt damage value</value></data>
+  <data name="FieldName.ChargeProfiles" xml:space="preserve"><value>ChargeProfiles</value></data>
+  <data name="FieldDesc.ChargeProfiles" xml:space="preserve"><value>Ammo/charge profile IDs (chargeprofiles, the ammo types), comma-separated e.g. '6,31'</value></data>
+  <data name="FieldName.Penetration" xml:space="preserve"><value>Penetration</value></data>
+  <data name="FieldDesc.Penetration" xml:space="preserve"><value>Penetration level</value></data>
+  <data name="FieldName.Type" xml:space="preserve"><value>Type</value></data>
+  <data name="FieldDesc.Type" xml:space="preserve"><value>Attack type: 0 Melee, 1 Ranged</value></data>
+  <data name="FieldName.Sound" xml:space="preserve"><value>Sound</value></data>
+  <data name="FieldDesc.Sound" xml:space="preserve"><value>Weapon sound category: Melee/Punch, Claws, Club, Blade, Rifle, Pistol, Laser, Bow, Throw, Choke, Grasp, Bite</value></data>
+  <data name="FieldName.Transfer" xml:space="preserve"><value>Transfer</value></data>
+  <data name="FieldDesc.Transfer" xml:space="preserve"><value>Transfer property: Whether attack can be converted to item, e.g., bow arrows can be recovered. 0 no transfer, 1 transfer (arrows, slingshot ammo stays on enemy or drops)</value></data>
+  <data name="FieldName.AttackerConditions" xml:space="preserve"><value>AttackerConditions</value></data>
+  <data name="FieldDesc.AttackerConditions" xml:space="preserve"><value>Conditions during attack, used with conditions data, e.g., '211x1.0,NSE:42x1'</value></data>
+  <data name="FieldName.Image" xml:space="preserve"><value>Image</value></data>
+  <data name="FieldDesc.Image" xml:space="preserve"><value>Image/icon file name (varies by table: weapon icon, map sprite, etc.)</value></data>
+  <data name="FieldName.Morale" xml:space="preserve"><value>Morale</value></data>
+  <data name="FieldDesc.Morale" xml:space="preserve"><value>Default morale bonus from this weapon, formula: (1+morale)*(1+melee/ranged morale bonus)*weapon damage=actual damage</value></data>
+  <data name="FieldName.WieldPhrase" xml:space="preserve"><value>WieldPhrase</value></data>
+  <data name="FieldDesc.WieldPhrase" xml:space="preserve"><value>Text description when entering combat with this weapon</value></data>
+  <data name="FieldName.AttackPhrases" xml:space="preserve"><value>AttackPhrases</value></data>
+  <data name="FieldDesc.AttackPhrases" xml:space="preserve"><value>Text description when attacking with this weapon, multiple descriptions separated by commas</value></data>
+  <data name="FieldName.X" xml:space="preserve"><value>X</value></data>
+  <data name="FieldDesc.X" xml:space="preserve"><value>X-axis coordinate</value></data>
+  <data name="FieldName.Y" xml:space="preserve"><value>Y</value></data>
+  <data name="FieldDesc.Y" xml:space="preserve"><value>Y-axis coordinate</value></data>
+  <data name="FieldName.Buys" xml:space="preserve"><value>Buys</value></data>
+  <data name="FieldDesc.Buys" xml:space="preserve"><value>Whether player items can be purchased: 0 no, 1 yes</value></data>
+  <data name="FieldName.RestockTreasureId" xml:space="preserve"><value>RestockTreasureId</value></data>
+  <data name="FieldDesc.RestockTreasureId" xml:space="preserve"><value>Referenced treasure data, used with treasuretable. Note: Detroit C shop is an exception, uses treasure pool 3</value></data>
+  <data name="FieldName.StrId" xml:space="preserve"><value>StrId</value></data>
+  <data name="FieldDesc.StrId" xml:space="preserve"><value>Item ID, e.g., '90.35'</value></data>
+  <data name="FieldName.Success" xml:space="preserve"><value>Success</value></data>
+  <data name="FieldDesc.Success" xml:space="preserve"><value>Text displayed in game after action succeeds, &lt;us&gt; represents self, &lt;them&gt; represents target</value></data>
+  <data name="FieldName.Fail" xml:space="preserve"><value>Fail</value></data>
+  <data name="FieldDesc.Fail" xml:space="preserve"><value>Text displayed in game after action fails</value></data>
+  <data name="FieldName.PopUp" xml:space="preserve"><value>PopUp</value></data>
+  <data name="FieldDesc.PopUp" xml:space="preserve"><value>Action description in game, shown in action selection screen</value></data>
+  <data name="FieldName.ChanceType" xml:space="preserve"><value>ChanceType</value></data>
+  <data name="FieldDesc.ChanceType" xml:space="preserve"><value>Triple format `0,range-tier,chance-coeff` (`0,7,0` = stealth class)</value></data>
+  <data name="FieldName.UsConditions" xml:space="preserve"><value>UsConditions</value></data>
+  <data name="FieldDesc.UsConditions" xml:space="preserve"><value>Required conditions for our side, minus sign means NOT, i.e., not in that state</value></data>
+  <data name="FieldName.ThemConditions" xml:space="preserve"><value>ThemConditions</value></data>
+  <data name="FieldDesc.ThemConditions" xml:space="preserve"><value>Required conditions for opponent, minus sign means NOT, i.e., not in that state</value></data>
+  <data name="FieldName.PairConditions" xml:space="preserve"><value>PairConditions</value></data>
+  <data name="FieldDesc.PairConditions" xml:space="preserve"><value>Effect this action brings to self</value></data>
+  <data name="FieldName.UsFailConditions" xml:space="preserve"><value>UsFailConditions</value></data>
+  <data name="FieldDesc.UsFailConditions" xml:space="preserve"><value>Conditions brought to self when action fails</value></data>
+  <data name="FieldName.ThemFailConditions" xml:space="preserve"><value>ThemFailConditions</value></data>
+  <data name="FieldDesc.ThemFailConditions" xml:space="preserve"><value>Conditions brought to opponent when action fails (all official data is empty)</value></data>
+  <data name="FieldName.PairFailConditions" xml:space="preserve"><value>PairFailConditions</value></data>
+  <data name="FieldDesc.PairFailConditions" xml:space="preserve"><value>Effect brought to self when action fails</value></data>
+  <data name="FieldName.UsPreConditions" xml:space="preserve"><value>UsPreConditions</value></data>
+  <data name="FieldDesc.UsPreConditions" xml:space="preserve"><value>Prerequisites for executing this action, format like '137,151,-143' (negative means cannot have that condition)</value></data>
+  <data name="FieldName.ThemPreConditions" xml:space="preserve"><value>ThemPreConditions</value></data>
+  <data name="FieldDesc.ThemPreConditions" xml:space="preserve"><value>Prerequisites opponent must meet</value></data>
+  <data name="FieldName.SeeThem" xml:space="preserve"><value>SeeThem</value></data>
+  <data name="FieldDesc.SeeThem" xml:space="preserve"><value>Exposure level opponent needs to be at</value></data>
+  <data name="FieldName.SeeUs" xml:space="preserve"><value>SeeUs</value></data>
+  <data name="FieldDesc.SeeUs" xml:space="preserve"><value>Exposure level self needs to be at</value></data>
+  <data name="FieldName.AllOutOfRange" xml:space="preserve"><value>AllOutOfRange</value></data>
+  <data name="FieldDesc.AllOutOfRange" xml:space="preserve"><value>Distance from all targets on field</value></data>
+  <data name="FieldName.InAttackRange" xml:space="preserve"><value>InAttackRange</value></data>
+  <data name="FieldDesc.InAttackRange" xml:space="preserve"><value>Attack range, possibly used to determine splash or weapon length</value></data>
+  <data name="FieldName.MinCharges" xml:space="preserve"><value>MinCharges</value></data>
+  <data name="FieldDesc.MinCharges" xml:space="preserve"><value>Minimum ammo/charge count (0 = unlimited)</value></data>
+  <data name="FieldName.MinRange" xml:space="preserve"><value>MinRange</value></data>
+  <data name="FieldDesc.MinRange" xml:space="preserve"><value>Minimum range requirement, -1 for full field coverage</value></data>
+  <data name="FieldName.MaxRange" xml:space="preserve"><value>MaxRange</value></data>
+  <data name="FieldDesc.MaxRange" xml:space="preserve"><value>Maximum range requirement, -1 for full field coverage</value></data>
+  <data name="FieldName.AttackModeType" xml:space="preserve"><value>AttackModeType</value></data>
+  <data name="FieldDesc.AttackModeType" xml:space="preserve"><value>Attack mode type: -1 non-attack action, 0 melee attack, 1 ranged attack</value></data>
+  <data name="FieldName.HexTypes" xml:space="preserve"><value>HexTypes</value></data>
+  <data name="FieldDesc.HexTypes" xml:space="preserve"><value>Map hex type (all official data is empty)</value></data>
+  <data name="FieldName.Chance" xml:space="preserve"><value>Chance</value></data>
+  <data name="FieldDesc.Chance" xml:space="preserve"><value>Chance to use this skill (percentage)</value></data>
+  <data name="FieldName.Priority" xml:space="preserve"><value>Priority</value></data>
+  <data name="FieldDesc.Priority" xml:space="preserve"><value>Priority, no effect on player, Bot only, which side's action triggers first in same turn</value></data>
+  <data name="FieldName.Detect" xml:space="preserve"><value>Detect</value></data>
+  <data name="FieldDesc.Detect" xml:space="preserve"><value>Chance of being detected when executing this action, 0 means won't be detected</value></data>
+  <data name="FieldName.Order" xml:space="preserve"><value>Order</value></data>
+  <data name="FieldDesc.Order" xml:space="preserve"><value>AI action ordering weight</value></data>
+  <data name="FieldName.Fatigue" xml:space="preserve"><value>Fatigue</value></data>
+  <data name="FieldDesc.Fatigue" xml:space="preserve"><value>Fatigue cost</value></data>
+  <data name="FieldName.Approach" xml:space="preserve"><value>Approach</value></data>
+  <data name="FieldDesc.Approach" xml:space="preserve"><value>Whether this action makes you approach opponent</value></data>
+  <data name="FieldName.Offense" xml:space="preserve"><value>Offense</value></data>
+  <data name="FieldDesc.Offense" xml:space="preserve"><value>Whether this is an offensive action</value></data>
+  <data name="FieldName.FallBack" xml:space="preserve"><value>FallBack</value></data>
+  <data name="FieldDesc.FallBack" xml:space="preserve"><value>Whether this action is a retreat action</value></data>
+  <data name="FieldName.Retreat" xml:space="preserve"><value>Retreat</value></data>
+  <data name="FieldDesc.Retreat" xml:space="preserve"><value>Whether this action is a retreat action</value></data>
+  <data name="FieldName.Position" xml:space="preserve"><value>Position</value></data>
+  <data name="FieldDesc.Position" xml:space="preserve"><value>Whether this action is a position action</value></data>
+  <data name="FieldName.Passive" xml:space="preserve"><value>Passive</value></data>
+  <data name="FieldDesc.Passive" xml:space="preserve"><value>Whether this action is passive</value></data>
+  <data name="FieldName.Description" xml:space="preserve"><value>Description</value></data>
+  <data name="FieldDesc.Description" xml:space="preserve"><value>Description text (meaning varies by table)</value></data>
+  <data name="FieldName.ImageList" xml:space="preserve"><value>ImageList</value></data>
+  <data name="FieldDesc.ImageList" xml:space="preserve"><value>List of image file names (comma-separated)</value></data>
+  <data name="FieldName.Capacities" xml:space="preserve"><value>Capacities</value></data>
+  <data name="FieldDesc.Capacities" xml:space="preserve"><value>Camp size, format like '34x26'</value></data>
+  <data name="FieldName.TreasureId" xml:space="preserve"><value>TreasureId</value></data>
+  <data name="FieldDesc.TreasureId" xml:space="preserve"><value>Treasure pool ID for this camp</value></data>
+  <data name="FieldName.Alertness" xml:space="preserve"><value>Alertness</value></data>
+  <data name="FieldDesc.Alertness" xml:space="preserve"><value>Default alertness value of camp (percentage)</value></data>
+  <data name="FieldName.Visibility" xml:space="preserve"><value>Visibility</value></data>
+  <data name="FieldDesc.Visibility" xml:space="preserve"><value>Default visibility value of camp (percentage), -0.05 means -5%</value></data>
+  <data name="FieldName.WetTempAdjustMod" xml:space="preserve"><value>WetTempAdjustMod</value></data>
+  <data name="FieldDesc.WetTempAdjustMod" xml:space="preserve"><value>Default temperature adjustment of camp</value></data>
+  <data name="FieldName.HealPerHourMod" xml:space="preserve"><value>HealPerHourMod</value></data>
+  <data name="FieldDesc.HealPerHourMod" xml:space="preserve"><value>Default recovery effect per hour from camp (percentage)</value></data>
+  <data name="FieldName.SleepQuality" xml:space="preserve"><value>SleepQuality</value></data>
+  <data name="FieldDesc.SleepQuality" xml:space="preserve"><value>Default sleep quality from camp (percentage), -0.26 means -26%</value></data>
+  <data name="FieldName.ItemId" xml:space="preserve"><value>ItemId</value></data>
+  <data name="FieldDesc.ItemId" xml:space="preserve"><value>Item ID, e.g., '10.3'</value></data>
+  <data name="FieldName.PerUse" xml:space="preserve"><value>PerUse</value></data>
+  <data name="FieldDesc.PerUse" xml:space="preserve"><value>Amount consumed per use</value></data>
+  <data name="FieldName.PerHour" xml:space="preserve"><value>PerHour</value></data>
+  <data name="FieldDesc.PerHour" xml:space="preserve"><value>Amount consumed per hour, mainly for electrical power consumption</value></data>
+  <data name="FieldName.PerHourEquipped" xml:space="preserve"><value>PerHourEquipped</value></data>
+  <data name="FieldDesc.PerHourEquipped" xml:space="preserve"><value>Durability consumed per hour when equipped, only for XM54 filter chip</value></data>
+  <data name="FieldName.PerHex" xml:space="preserve"><value>PerHex</value></data>
+  <data name="FieldDesc.PerHex" xml:space="preserve"><value>Amount consumed per hex moved</value></data>
+  <data name="FieldName.Degrade" xml:space="preserve"><value>Degrade</value></data>
+  <data name="FieldDesc.Degrade" xml:space="preserve"><value>Whether it degrades</value></data>
+  <data name="FieldName.FieldNames" xml:space="preserve"><value>FieldNames</value></data>
+  <data name="FieldDesc.FieldNames" xml:space="preserve"><value>Effect field list brought by this condition, e.g., 'm_fHealPerHourMod,m_fImmuneRestoreRate'</value></data>
+  <data name="FieldName.Modifiers" xml:space="preserve"><value>Modifiers</value></data>
+  <data name="FieldDesc.Modifiers" xml:space="preserve"><value>Specific effect values brought by this condition, corresponding to FieldNames</value></data>
+  <data name="FieldName.Effects" xml:space="preserve"><value>Effects</value></data>
+  <data name="FieldDesc.Effects" xml:space="preserve"><value>Effects brought by condition, e.g., SetImmunity, ArmorWound. Like 'ArmorWound=100,0.1,0.05'</value></data>
+  <data name="FieldName.Fatal" xml:space="preserve"><value>Fatal</value></data>
+  <data name="FieldDesc.Fatal" xml:space="preserve"><value>Whether it brings death effect to player (will getting this condition kill you)</value></data>
+  <data name="FieldName.IdNext" xml:space="preserve"><value>IdNext</value></data>
+  <data name="FieldDesc.IdNext" xml:space="preserve"><value>Next stage condition ID this condition brings, may be multiple comma-separated</value></data>
+  <data name="FieldName.Duration" xml:space="preserve"><value>Duration</value></data>
+  <data name="FieldDesc.Duration" xml:space="preserve"><value>Duration (hours)</value></data>
+  <data name="FieldName.Permanent" xml:space="preserve"><value>Permanent</value></data>
+  <data name="FieldDesc.Permanent" xml:space="preserve"><value>Whether it brings long-term effects (like medicine, cuts, etc.), true means won't auto-remove after turn ends</value></data>
+  <data name="FieldName.ChanceNext" xml:space="preserve"><value>ChanceNext</value></data>
+  <data name="FieldDesc.ChanceNext" xml:space="preserve"><value>Chance of this condition bringing new condition in next stage</value></data>
+  <data name="FieldName.Stackable" xml:space="preserve"><value>Stackable</value></data>
+  <data name="FieldDesc.Stackable" xml:space="preserve"><value>Whether this condition is stackable</value></data>
+  <data name="FieldName.Display" xml:space="preserve"><value>Display</value></data>
+  <data name="FieldDesc.Display" xml:space="preserve"><value>Whether this condition is visible</value></data>
+  <data name="FieldName.DisplayOther" xml:space="preserve"><value>DisplayOther</value></data>
+  <data name="FieldDesc.DisplayOther" xml:space="preserve"><value>Whether this condition can be seen by others</value></data>
+  <data name="FieldName.DisplayGameOver" xml:space="preserve"><value>DisplayGameOver</value></data>
+  <data name="FieldDesc.DisplayGameOver" xml:space="preserve"><value>Whether this condition appears in game over summary</value></data>
+  <data name="FieldName.Color" xml:space="preserve"><value>Color</value></data>
+  <data name="FieldDesc.Color" xml:space="preserve"><value>Condition color: 0 white, 1 red, 2 green, 3 yellow</value></data>
+  <data name="FieldName.ResetTimer" xml:space="preserve"><value>ResetTimer</value></data>
+  <data name="FieldDesc.ResetTimer" xml:space="preserve"><value>Refresh time, one rest in game equals one hour</value></data>
+  <data name="FieldName.RemoveAll" xml:space="preserve"><value>RemoveAll</value></data>
+  <data name="FieldDesc.RemoveAll" xml:space="preserve"><value>1 = removes all states of the same group (surrender, cafeteria, etc.)</value></data>
+  <data name="FieldName.RemovePostCombat" xml:space="preserve"><value>RemovePostCombat</value></data>
+  <data name="FieldDesc.RemovePostCombat" xml:space="preserve"><value>1 = removed after combat ends</value></data>
+  <data name="FieldName.TransferRange" xml:space="preserve"><value>TransferRange</value></data>
+  <data name="FieldDesc.TransferRange" xml:space="preserve"><value>Infection distance, -1 for no spread</value></data>
+  <data name="FieldName.Thresholds" xml:space="preserve"><value>Thresholds</value></data>
+  <data name="FieldDesc.Thresholds" xml:space="preserve"><value>Trigger threshold, currently used for legendary skill triggers</value></data>
+  <data name="FieldName.NamePublic" xml:space="preserve"><value>NamePublic</value></data>
+  <data name="FieldDesc.NamePublic" xml:space="preserve"><value>Name displayed before contact</value></data>
+  <data name="FieldName.EncounterIds" xml:space="preserve"><value>EncounterIds</value></data>
+  <data name="FieldDesc.EncounterIds" xml:space="preserve"><value>List of condition IDs triggered when encountering this creature, comma-separated</value></data>
+  <data name="FieldName.MovesPerTurn" xml:space="preserve"><value>MovesPerTurn</value></data>
+  <data name="FieldDesc.MovesPerTurn" xml:space="preserve"><value>Action points per turn</value></data>
+  <data name="FieldName.FactionId" xml:space="preserve"><value>Faction</value></data>
+  <data name="FieldDesc.FactionId" xml:space="preserve"><value>Faction ID</value></data>
+  <data name="FieldName.AttackModes" xml:space="preserve"><value>AttackModes</value></data>
+  <data name="FieldDesc.AttackModes" xml:space="preserve"><value>Attack mode ID, used with attackmodes, may be single ID or comma-separated</value></data>
+  <data name="FieldName.BaseConditions" xml:space="preserve"><value>BaseConditions</value></data>
+  <data name="FieldDesc.BaseConditions" xml:space="preserve"><value>Base conditions when creature spawns, format like '38=1,50=0.5'</value></data>
+  <data name="FieldName.CorpseId" xml:space="preserve"><value>CorpseId</value></data>
+  <data name="FieldDesc.CorpseId" xml:space="preserve"><value>Corpse ID (treasure pool ID)</value></data>
+  <data name="FieldName.Activities" xml:space="preserve"><value>Activities</value></data>
+  <data name="FieldDesc.Activities" xml:space="preserve"><value>Description of creature's activity pattern, possibly for notes only</value></data>
+  <data name="FieldName.CreatureId" xml:space="preserve"><value>CreatureId</value></data>
+  <data name="FieldDesc.CreatureId" xml:space="preserve"><value>Spawned creature ID, used with creatures table</value></data>
+  <data name="FieldName.Min" xml:space="preserve"><value>Min</value></data>
+  <data name="FieldDesc.Min" xml:space="preserve"><value>Minimum spawn count</value></data>
+  <data name="FieldName.Max" xml:space="preserve"><value>Max</value></data>
+  <data name="FieldDesc.Max" xml:space="preserve"><value>Maximum spawn count (too large value causes many creatures to spawn in same hex)</value></data>
+  <data name="FieldName.Weight" xml:space="preserve"><value>Weight</value></data>
+  <data name="FieldDesc.Weight" xml:space="preserve"><value>Weight (itemtypes: item weight, 50 = unpickable; creaturesources: spawn weight)</value></data>
+  <data name="FieldName.Value" xml:space="preserve"><value>Value</value></data>
+  <data name="FieldDesc.Value" xml:space="preserve"><value>Value of this data</value></data>
+  <data name="FieldName.EncounterId" xml:space="preserve"><value>EncounterId</value></data>
+  <data name="FieldDesc.EncounterId" xml:space="preserve"><value>Called encounter ID, used with encounters</value></data>
+  <data name="FieldName.RemoveTreasureId" xml:space="preserve"><value>RemoveTreasureId</value></data>
+  <data name="FieldDesc.RemoveTreasureId" xml:space="preserve"><value>Treasure pool ID removed at player's feet when encounter occurs</value></data>
+  <data name="FieldName.Conditions" xml:space="preserve"><value>Conditions</value></data>
+  <data name="FieldDesc.Conditions" xml:space="preserve"><value>List of attached condition IDs for this encounter, comma-separated</value></data>
+  <data name="FieldName.PreConditions" xml:space="preserve"><value>PreConditions</value></data>
+  <data name="FieldDesc.PreConditions" xml:space="preserve"><value>Required preconditions for this encounter, negative means cannot have that condition</value></data>
+  <data name="FieldName.Price" xml:space="preserve"><value>Price</value></data>
+  <data name="FieldDesc.Price" xml:space="preserve"><value>Money given/taken; option hidden when the player cannot afford it</value></data>
+  <data name="FieldName.Responses" xml:space="preserve"><value>Responses</value></data>
+  <data name="FieldDesc.Responses" xml:space="preserve"><value>Player response options during encounter, format like '=15x0.083x0x0x0,=16x0.083x0x0x0'</value></data>
+  <data name="FieldName.MinimapHexes" xml:space="preserve"><value>MinimapHexes</value></data>
+  <data name="FieldDesc.MinimapHexes" xml:space="preserve"><value>Coordinates displayed on minimap</value></data>
+  <data name="FieldName.RemoveCreatures" xml:space="preserve"><value>RemoveCreatures</value></data>
+  <data name="FieldDesc.RemoveCreatures" xml:space="preserve"><value>Whether creatures need to be removed when this encounter occurs</value></data>
+  <data name="FieldName.RemoveUsed" xml:space="preserve"><value>RemoveUsed</value></data>
+  <data name="FieldDesc.RemoveUsed" xml:space="preserve"><value>Whether this encounter removes your items</value></data>
+  <data name="FieldName.ItemsId" xml:space="preserve"><value>ItemsId</value></data>
+  <data name="FieldDesc.ItemsId" xml:space="preserve"><value>Item ID generated when this encounter occurs</value></data>
+  <data name="FieldName.CreatureHex" xml:space="preserve"><value>CreatureHex</value></data>
+  <data name="FieldDesc.CreatureHex" xml:space="preserve"><value>Creature spawn position coordinates, format like '0,0'</value></data>
+  <data name="FieldName.Teleport" xml:space="preserve"><value>Teleport</value></data>
+  <data name="FieldDesc.Teleport" xml:space="preserve"><value>Position player is teleported to when this encounter occurs, '0,0' for no teleport</value></data>
+  <data name="FieldName.Editor" xml:space="preserve"><value>Editor</value></data>
+  <data name="FieldDesc.Editor" xml:space="preserve"><value>Editor coordinates (ignored by the game)</value></data>
+  <data name="FieldName.LootChance" xml:space="preserve"><value>LootChance</value></data>
+  <data name="FieldDesc.LootChance" xml:space="preserve"><value>Chance of successfully scavenging items</value></data>
+  <data name="FieldName.AccidentChance" xml:space="preserve"><value>AccidentChance</value></data>
+  <data name="FieldDesc.AccidentChance" xml:space="preserve"><value>Chance of accident occurring (e.g., building collapse)</value></data>
+  <data name="FieldName.CreatureChance" xml:space="preserve"><value>CreatureChance</value></data>
+  <data name="FieldDesc.CreatureChance" xml:space="preserve"><value>Creature ambush chance</value></data>
+  <data name="FieldName.Accidents" xml:space="preserve"><value>Accidents</value></data>
+  <data name="FieldDesc.Accidents" xml:space="preserve"><value>Event ID when accident occurs (calls encounters)</value></data>
+  <data name="FieldName.Loot" xml:space="preserve"><value>Loot</value></data>
+  <data name="FieldDesc.Loot" xml:space="preserve"><value>Treasure type ID when scavenging succeeds</value></data>
+  <data name="FieldName.LocBased" xml:space="preserve"><value>LocBased</value></data>
+  <data name="FieldDesc.LocBased" xml:space="preserve"><value>Whether this trigger is location-based</value></data>
+  <data name="FieldName.DateBased" xml:space="preserve"><value>DateBased</value></data>
+  <data name="FieldDesc.DateBased" xml:space="preserve"><value>Whether this trigger is time-based</value></data>
+  <data name="FieldName.HexBased" xml:space="preserve"><value>HexBased</value></data>
+  <data name="FieldDesc.HexBased" xml:space="preserve"><value>Whether this trigger is hex-based</value></data>
+  <data name="FieldName.Unique" xml:space="preserve"><value>Unique</value></data>
+  <data name="FieldDesc.Unique" xml:space="preserve"><value>Whether this event is unique</value></data>
+  <data name="FieldName.AIPassable" xml:space="preserve"><value>AIPassable</value></data>
+  <data name="FieldDesc.AIPassable" xml:space="preserve"><value>Whether this event can be triggered by AI</value></data>
+  <data name="FieldName.Area" xml:space="preserve"><value>Area</value></data>
+  <data name="FieldDesc.Area" xml:space="preserve"><value>Position coordinates where this event triggers, format like '20,164,0'</value></data>
+  <data name="FieldName.DateMin" xml:space="preserve"><value>DateMin</value></data>
+  <data name="FieldDesc.DateMin" xml:space="preserve"><value>Minimum trigger time, format 'year-month-day-hour'</value></data>
+  <data name="FieldName.DateMax" xml:space="preserve"><value>DateMax</value></data>
+  <data name="FieldDesc.DateMax" xml:space="preserve"><value>Maximum trigger time, format 'year-month-day-hour'</value></data>
+  <data name="FieldName.DictFactions" xml:space="preserve"><value>DictFactions</value></data>
+  <data name="FieldDesc.DictFactions" xml:space="preserve"><value>Reputation relationship with other factions, format like '0=-100,1=1,2=-100'</value></data>
+  <data name="FieldName.HeadlineText" xml:space="preserve"><value>HeadlineText</value></data>
+  <data name="FieldDesc.HeadlineText" xml:space="preserve"><value>Headline text content</value></data>
+  <data name="FieldName.TerrainCost" xml:space="preserve"><value>TerrainCost</value></data>
+  <data name="FieldDesc.TerrainCost" xml:space="preserve"><value>Action points consumed on this hex</value></data>
+  <data name="FieldName.VizLimiter" xml:space="preserve"><value>VizLimiter</value></data>
+  <data name="FieldDesc.VizLimiter" xml:space="preserve"><value>Visibility reduced on this hex</value></data>
+  <data name="FieldName.VizIncrease" xml:space="preserve"><value>VizIncrease</value></data>
+  <data name="FieldDesc.VizIncrease" xml:space="preserve"><value>Visibility increased on this hex</value></data>
+  <data name="FieldName.Passable" xml:space="preserve"><value>Passable</value></data>
+  <data name="FieldDesc.Passable" xml:space="preserve"><value>Whether can move to this terrain: 0 impassable, 1 passable</value></data>
+  <data name="FieldName.ScavengeInitialId" xml:space="preserve"><value>ScavengeInitialId</value></data>
+  <data name="FieldDesc.ScavengeInitialId" xml:space="preserve"><value>Treasure pool ID used when first scavenging this terrain</value></data>
+  <data name="FieldName.ScavengeItemsIdPerHour" xml:space="preserve"><value>ScavengeItemsIdPerHour</value></data>
+  <data name="FieldDesc.ScavengeItemsIdPerHour" xml:space="preserve"><value>Treasure pool ID used when scavenging this terrain repeatedly</value></data>
+  <data name="FieldName.CampItems" xml:space="preserve"><value>CampItems</value></data>
+  <data name="FieldDesc.CampItems" xml:space="preserve"><value>Camp type ID</value></data>
+  <data name="FieldName.LightLevels" xml:space="preserve"><value>LightLevels</value></data>
+  <data name="FieldDesc.LightLevels" xml:space="preserve"><value>Light levels, corresponding to: dawn, morning, noon, afternoon, dusk, midnight, 6 floats</value></data>
+  <data name="FieldName.DefaultCampId" xml:space="preserve"><value>DefaultCampId</value></data>
+  <data name="FieldDesc.DefaultCampId" xml:space="preserve"><value>Default camp ID code, used with treasuretable</value></data>
+  <data name="FieldName.ConditionIds" xml:space="preserve"><value>ConditionIds</value></data>
+  <data name="FieldDesc.ConditionIds" xml:space="preserve"><value>Condition IDs brought to player when entering this hex</value></data>
+  <data name="FieldName.RequiredProps" xml:space="preserve"><value>RequiredProps</value></data>
+  <data name="FieldDesc.RequiredProps" xml:space="preserve"><value>Property IDs the recipe needs; '&amp;' means AND</value></data>
+  <data name="FieldName.ForbidProps" xml:space="preserve"><value>ForbidProps</value></data>
+  <data name="FieldDesc.ForbidProps" xml:space="preserve"><value>Property IDs this ingredient cannot have</value></data>
+  <data name="FieldName.PropertyName" xml:space="preserve"><value>PropertyName</value></data>
+  <data name="FieldDesc.PropertyName" xml:space="preserve"><value>Property name, e.g., 'easily ignitable'</value></data>
+  <data name="FieldName.GroupId" xml:space="preserve"><value>GroupId</value></data>
+  <data name="FieldDesc.GroupId" xml:space="preserve"><value>Item category group ID</value></data>
+  <data name="FieldName.SubgroupId" xml:space="preserve"><value>SubgroupId</value></data>
+  <data name="FieldDesc.SubgroupId" xml:space="preserve"><value>Item category subgroup ID</value></data>
+  <data name="FieldName.DescriptionAlt" xml:space="preserve"><value>DescriptionAlt</value></data>
+  <data name="FieldDesc.DescriptionAlt" xml:space="preserve"><value>Alternate description text (e.g. for variant items)</value></data>
+  <data name="FieldName.CondId" xml:space="preserve"><value>CondId</value></data>
+  <data name="FieldDesc.CondId" xml:space="preserve"><value>Condition required to use this item</value></data>
+  <data name="FieldName.SpriteList" xml:space="preserve"><value>SpriteList</value></data>
+  <data name="FieldDesc.SpriteList" xml:space="preserve"><value>Sprite image list ({value}={id} format)</value></data>
+  <data name="FieldName.ImageUsage" xml:space="preserve"><value>ImageUsage</value></data>
+  <data name="FieldDesc.ImageUsage" xml:space="preserve"><value>How the item image is used</value></data>
+  <data name="FieldName.MonetaryValue" xml:space="preserve"><value>MonetaryValue</value></data>
+  <data name="FieldDesc.MonetaryValue" xml:space="preserve"><value>Item monetary value</value></data>
+  <data name="FieldName.MonetaryValueAlt" xml:space="preserve"><value>MonetaryValueAlt</value></data>
+  <data name="FieldDesc.MonetaryValueAlt" xml:space="preserve"><value>Alternate monetary value</value></data>
+  <data name="FieldName.Durability" xml:space="preserve"><value>Durability</value></data>
+  <data name="FieldDesc.Durability" xml:space="preserve"><value>Maximum durability</value></data>
+  <data name="FieldName.DegradePerHour" xml:space="preserve"><value>DegradePerHour</value></data>
+  <data name="FieldDesc.DegradePerHour" xml:space="preserve"><value>Durability lost per hour</value></data>
+  <data name="FieldName.EquipDegradePerHour" xml:space="preserve"><value>EquipDegradePerHour</value></data>
+  <data name="FieldDesc.EquipDegradePerHour" xml:space="preserve"><value>Durability lost per hour while equipped</value></data>
+  <data name="FieldName.DegradePerUse" xml:space="preserve"><value>DegradePerUse</value></data>
+  <data name="FieldDesc.DegradePerUse" xml:space="preserve"><value>Durability lost per use</value></data>
+  <data name="FieldName.DegradeTreasureIds" xml:space="preserve"><value>DegradeTreasureIds</value></data>
+  <data name="FieldDesc.DegradeTreasureIds" xml:space="preserve"><value>Treasure table used when durability hits zero</value></data>
+  <data name="FieldName.EquipConditions" xml:space="preserve"><value>EquipConditions</value></data>
+  <data name="FieldDesc.EquipConditions" xml:space="preserve"><value>Conditions brought to you when this item is equipped</value></data>
+  <data name="FieldName.PossessConditions" xml:space="preserve"><value>PossessConditions</value></data>
+  <data name="FieldDesc.PossessConditions" xml:space="preserve"><value>Permanent conditions brought to you when holding this item</value></data>
+  <data name="FieldName.UseConditions" xml:space="preserve"><value>UseConditions</value></data>
+  <data name="FieldDesc.UseConditions" xml:space="preserve"><value>Conditions brought to you when using this item</value></data>
+  <data name="FieldName.EquipSlots" xml:space="preserve"><value>EquipSlots</value></data>
+  <data name="FieldDesc.EquipSlots" xml:space="preserve"><value>Equipment slots, positions item can be placed on body: 20 left hand, 21 right hand, 22 back</value></data>
+  <data name="FieldName.UseSlots" xml:space="preserve"><value>UseSlots</value></data>
+  <data name="FieldDesc.UseSlots" xml:space="preserve"><value>Use position, 211 for direct self-use (like taking medicine)</value></data>
+  <data name="FieldName.SocketLocked" xml:space="preserve"><value>SocketLocked</value></data>
+  <data name="FieldDesc.SocketLocked" xml:space="preserve"><value>Lock property, items with this property cannot be moved by player</value></data>
+  <data name="FieldName.Properties" xml:space="preserve"><value>Properties</value></data>
+  <data name="FieldDesc.Properties" xml:space="preserve"><value>List of property IDs for this item, used for crafting and checks</value></data>
+  <data name="FieldName.ContentIds" xml:space="preserve"><value>ContentIds</value></data>
+  <data name="FieldDesc.ContentIds" xml:space="preserve"><value>Space property of this item, defines what items can be stored as container</value></data>
+  <data name="FieldName.FormatId" xml:space="preserve"><value>FormatId</value></data>
+  <data name="FieldDesc.FormatId" xml:space="preserve"><value>Internal treasure pool ID of this item</value></data>
+  <data name="FieldName.ComponentId" xml:space="preserve"><value>ComponentId</value></data>
+  <data name="FieldDesc.ComponentId" xml:space="preserve"><value>Component ID, used with treasuretable, for reverse-craftable items, items obtained by disassembling if acquired by non-crafting means</value></data>
+  <data name="FieldName.Mirrored" xml:space="preserve"><value>Mirrored</value></data>
+  <data name="FieldDesc.Mirrored" xml:space="preserve"><value>Mirrored, specifically for shoes</value></data>
+  <data name="FieldName.SlotDepth" xml:space="preserve"><value>SlotDepth</value></data>
+  <data name="FieldDesc.SlotDepth" xml:space="preserve"><value>Determines which clothing is on top when wearing multiple items</value></data>
+  <data name="FieldName.StackLimit" xml:space="preserve"><value>StackLimit</value></data>
+  <data name="FieldDesc.StackLimit" xml:space="preserve"><value>Maximum stack quantity</value></data>
+  <data name="FieldName.SwitchIds" xml:space="preserve"><value>SwitchIds</value></data>
+  <data name="FieldDesc.SwitchIds" xml:space="preserve"><value>Switch ID, used for electronic device on/off state switching</value></data>
+  <data name="FieldName.Sounds" xml:space="preserve"><value>Sounds</value></data>
+  <data name="FieldDesc.Sounds" xml:space="preserve"><value>Sound when picking up or putting down this item</value></data>
+  <data name="FieldName.Definition" xml:space="preserve"><value>Definition</value></data>
+  <data name="FieldDesc.Definition" xml:space="preserve"><value>Map definition data, terrain data composed of large amounts of numbers and commas</value></data>
+  <data name="FieldName.SecretName" xml:space="preserve"><value>SecretName</value></data>
+  <data name="FieldDesc.SecretName" xml:space="preserve"><value>Recipe's hidden name, used to distinguish human meat from animal meat, water toxicity, etc.</value></data>
+  <data name="FieldName.Tools" xml:space="preserve"><value>Tools</value></data>
+  <data name="FieldDesc.Tools" xml:space="preserve"><value>Tools required for crafting, format like '1x1'</value></data>
+  <data name="FieldName.Consumed" xml:space="preserve"><value>Consumed</value></data>
+  <data name="FieldDesc.Consumed" xml:space="preserve"><value>Items that will be consumed/degraded in crafting, format like '1x2+1x3'</value></data>
+  <data name="FieldName.Destroyed" xml:space="preserve"><value>Destroyed</value></data>
+  <data name="FieldDesc.Destroyed" xml:space="preserve"><value>Destroyed items, used for extinguishing torches, etc.</value></data>
+  <data name="FieldName.Hours" xml:space="preserve"><value>Hours</value></data>
+  <data name="FieldDesc.Hours" xml:space="preserve"><value>Action points consumed for crafting</value></data>
+  <data name="FieldName.Reverse" xml:space="preserve"><value>Reverse</value></data>
+  <data name="FieldDesc.Reverse" xml:space="preserve"><value>Whether reverse engineering is possible: 0 irreversible, 1 reversible, 2, etc.</value></data>
+  <data name="FieldName.HiddenId" xml:space="preserve"><value>HiddenId</value></data>
+  <data name="FieldDesc.HiddenId" xml:space="preserve"><value>Whether it's a hidden recipe, needs to pick up paper to unlock</value></data>
+  <data name="FieldName.Identify" xml:space="preserve"><value>Identify</value></data>
+  <data name="FieldDesc.Identify" xml:space="preserve"><value>Whether it can be identified, used with hidden name</value></data>
+  <data name="FieldName.TransferComponents" xml:space="preserve"><value>TransferComponents</value></data>
+  <data name="FieldDesc.TransferComponents" xml:space="preserve"><value>Whether recipe components transfer to the output (e.g. bowstrings)</value></data>
+  <data name="FieldName.AlsoTry" xml:space="preserve"><value>AlsoTry</value></data>
+  <data name="FieldDesc.AlsoTry" xml:space="preserve"><value>Other recipe IDs with different recipes but same result</value></data>
+  <data name="FieldName.TempTreasureId" xml:space="preserve"><value>TempTreasureId</value></data>
+  <data name="FieldDesc.TempTreasureId" xml:space="preserve"><value>Crafting result ID shown as ghost in result slot during crafting</value></data>
+  <data name="FieldName.DegradeOutput" xml:space="preserve"><value>DegradeOutput</value></data>
+  <data name="FieldDesc.DegradeOutput" xml:space="preserve"><value>Whether crafted item durability is related to material durability: 1 related, 0 unrelated</value></data>
+  <data name="FieldName.Scrap" xml:space="preserve"><value>Scrap</value></data>
+  <data name="FieldDesc.Scrap" xml:space="preserve"><value>Whether it can be disassembled</value></data>
+  <data name="FieldName.Nested" xml:space="preserve"><value>Nested</value></data>
+  <data name="FieldDesc.Nested" xml:space="preserve"><value>Whether generated items will be placed in simultaneously generated containers</value></data>
+  <data name="FieldName.Suppress" xml:space="preserve"><value>Suppress</value></data>
+  <data name="FieldDesc.Suppress" xml:space="preserve"><value>Suppress content generation from items: when 1, water bottles won't have water, guns won't have bullets</value></data>
+<!-- 数据浏览器字段名/描述词典 END -->
+
+
+  <data name="Storage.DeleteDone" xml:space="preserve"><value>Deleted &quot;{0}&quot; — takes effect immediately; saving is paused for this session and resumes after a restart.</value></data>
+  <data name="Storage.ClearAllDone" xml:space="preserve"><value>Cleared all saves — takes effect immediately; saving is paused for this session and resumes after a restart.</value></data>
+  <data name="Storage.RestoreDone" xml:space="preserve"><value>Restored &quot;{0}&quot;</value></data>
+  <data name="Storage.NeedRestart" xml:space="preserve"><value>Restarting the game to load the restored save…</value></data>
+  <data name="Storage.Hint" xml:space="preserve"><value>Save tips: backing up and deleting saves never needs a restart. When restoring a backup — if the game was just opened and hasn't been played yet, it takes effect immediately; if you have already played or saved, restart the game to read the restored save.</value></data>
+  <!-- 数据浏览器表名（v2.72） -->
+  <data name="Table.attackmodes" xml:space="preserve"><value>Attack Modes</value></data>
+  <data name="Table.barterhexes" xml:space="preserve"><value>Barter Hexes</value></data>
+  <data name="Table.battlemoves" xml:space="preserve"><value>Battle Moves</value></data>
+  <data name="Table.camptypes" xml:space="preserve"><value>Camp Types</value></data>
+  <data name="Table.chargeprofiles" xml:space="preserve"><value>Ammo Configs</value></data>
+  <data name="Table.conditions" xml:space="preserve"><value>Conditions</value></data>
+  <data name="Table.containertypes" xml:space="preserve"><value>Container Types</value></data>
+  <data name="Table.creatures" xml:space="preserve"><value>Creatures</value></data>
+  <data name="Table.creaturesources" xml:space="preserve"><value>Creature Sources</value></data>
+  <data name="Table.datafiles" xml:space="preserve"><value>Data Files</value></data>
+  <data name="Table.dmcplaces" xml:space="preserve"><value>DMC Places</value></data>
+  <data name="Table.encounters" xml:space="preserve"><value>Encounters</value></data>
+  <data name="Table.encountertriggers" xml:space="preserve"><value>Encounter Triggers</value></data>
+  <data name="Table.factions" xml:space="preserve"><value>Factions</value></data>
+  <data name="Table.forbiddenhexes" xml:space="preserve"><value>Forbidden Hexes</value></data>
+  <data name="Table.gamevars" xml:space="preserve"><value>Game Variables</value></data>
+  <data name="Table.headlines" xml:space="preserve"><value>Headlines</value></data>
+  <data name="Table.hextypes" xml:space="preserve"><value>Hex Types</value></data>
+  <data name="Table.ingredients" xml:space="preserve"><value>Ingredients</value></data>
+  <data name="Table.itemprops" xml:space="preserve"><value>Item Props</value></data>
+  <data name="Table.itemtypes" xml:space="preserve"><value>Item Types</value></data>
+  <data name="Table.maps" xml:space="preserve"><value>Maps</value></data>
+  <data name="Table.recipes" xml:space="preserve"><value>Recipes</value></data>
+  <data name="Table.treasuretable" xml:space="preserve"><value>Treasure Tables</value></data>
+  <!-- 数据浏览器 wiki 标签（v2.72） -->
+  <data name="Wiki.ID" xml:space="preserve"><value>ID</value></data>
+  <data name="Wiki.Fields" xml:space="preserve"><value>## Fields</value></data>
+  <data name="Wiki.Column" xml:space="preserve"><value>Column</value></data>
+  <data name="Wiki.Value" xml:space="preserve"><value>Value</value></data>
+  <data name="Wiki.References" xml:space="preserve"><value>## Referenced by ({0})</value></data>
+  <data name="Wiki.Tools" xml:space="preserve"><value>## Tools</value></data>
+  <data name="Wiki.Consumed" xml:space="preserve"><value>## Consumed</value></data>
+  <data name="Wiki.Destroyed" xml:space="preserve"><value>## Destroyed</value></data>
+  <data name="Wiki.Output" xml:space="preserve"><value>## Output</value></data>
+  <data name="Wiki.TempOutput" xml:space="preserve"><value>## Temporary output</value></data>
+  <data name="Wiki.AltRecipes" xml:space="preserve"><value>## Alternative recipes</value></data>
+  <data name="Wiki.HiddenLinks" xml:space="preserve"><value>## Hidden links</value></data>
+  <data name="Wiki.Drops" xml:space="preserve"><value>## Drops</value></data>
+  <data name="Wiki.DropPreview" xml:space="preserve"><value>Drop preview: {0}</value></data>
+  <data name="Wiki.NoDrops" xml:space="preserve"><value>(no drop entries)</value></data>
+  <data name="Wiki.CycleRef" xml:space="preserve"><value>(circular reference)</value></data>
+  <data name="Wiki.Unresolved" xml:space="preserve"><value>(unresolved)</value></data>
+  <data name="Wiki.TooDeep" xml:space="preserve"><value>… (nesting too deep)</value></data>
+  <data name="Wiki.FlagSep" xml:space="preserve"><value>·</value></data>
+  <data name="Wiki.PreviewSep" xml:space="preserve"><value>, </value></data>
+  <data name="Wiki.Hours" xml:space="preserve"><value>Time {0}h</value></data>
+  <data name="Wiki.FlagIdentify" xml:space="preserve"><value>Identify</value></data>
+  <data name="Wiki.FlagScrap" xml:space="preserve"><value>Scrappable</value></data>
+  <data name="Wiki.FlagDegradeOutput" xml:space="preserve"><value>Degrade output</value></data>
+  <data name="Wiki.FlagTransferComponents" xml:space="preserve"><value>Transfer components</value></data>
+  <data name="Wiki.Nested" xml:space="preserve"><value>Nested</value></data>
+  <data name="Wiki.Suppress" xml:space="preserve"><value>Suppress</value></data>
+  <data name="Wiki.Identify" xml:space="preserve"><value>Identify</value></data>
+  <data name="Wiki.Images" xml:space="preserve"><value>## Images</value></data>
+  <data name="Log.LevelAll" xml:space="preserve"><value>All</value></data>
+  <data name="Storage.RestartPendingTitle" xml:space="preserve"><value>restart on exit to apply</value></data>
+  <data name="Storage.Hint" xml:space="preserve"><value>Save tips: backing up and deleting saves never needs a restart. When restoring a backup — if the game was just opened and hasn't been played yet, it takes effect immediately; if you have already played or saved, restart the game to read the restored save (this window restarts it automatically when closed).</value></data>
 </root>

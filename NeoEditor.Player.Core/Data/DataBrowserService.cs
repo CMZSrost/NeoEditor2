@@ -11,10 +11,16 @@ namespace NeoEditor.Player.Core.Data;
 /// <summary>One parsed row of game data (pma_xml_export: each row = a <c>&lt;table&gt;</c> block).</summary>
 public sealed record GameDataRow(string TableName, IReadOnlyList<GameDataField> Fields)
 {
+    /// <summary>
+    /// Optional per-column label resolver (v2.72, localization) — set by the catalog when
+    /// built with a column labeler; not part of the record's structural equality.
+    /// </summary>
+    public Func<string, string?>? ColumnLabel { get; set; }
+
     /// <summary>First few non-empty fields joined for compact display (no dynamic columns needed).</summary>
     public string Summary
         => string.Join(" | ", Fields.Where(f => !string.IsNullOrWhiteSpace(f.Value)).Take(4)
-            .Select(f => $"{f.Column}:{Truncate(f.Value, 40)}"));
+            .Select(f => $"{ColumnLabel?.Invoke(f.Column) ?? f.Column}:{Truncate(f.Value, 40)}"));
 
     /// <summary>Merge key: nID → id → first field value (later source wins in the catalog).</summary>
     public string RowKey
@@ -105,8 +111,12 @@ public sealed class DataBrowserService
     /// <summary>Game root dir — img/*.png resolve under it (wiki image gallery).</summary>
     public string? GameRootDir => _config.Config.GameRootDir;
 
-    /// <summary>Scan + merge ALL data files into the per-table catalog (base first, mods in order).</summary>
-    public GameDataCatalog BuildCatalog()
+    /// <summary>
+    /// Scan + merge ALL data files into the per-table catalog (base first, mods in order).
+    /// <paramref name="columnLabel"/> optionally localizes the row-summary column prefixes
+    /// (table, column) → label; null keeps the raw XML column names (v2.72).
+    /// </summary>
+    public GameDataCatalog BuildCatalog(Func<string, string, string?>? columnLabel = null)
     {
         var merged = new Dictionary<string, Dictionary<string, GameDataRow>>(StringComparer.OrdinalIgnoreCase);
 
@@ -120,6 +130,12 @@ public sealed class DataBrowserService
                     merged[row.TableName] = rows;
                 }
 
+                if (columnLabel is not null)
+                {
+                    // 行摘要里的列名前缀本地化（本地化查找在取值时进行 → 语言切换即时生效）。
+                    var table = row.TableName;
+                    row.ColumnLabel = column => columnLabel(table, column);
+                }
                 rows[row.RowKey] = row;   // later source wins: mods overlay base
             }
         }

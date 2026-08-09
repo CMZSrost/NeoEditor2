@@ -26,6 +26,14 @@ public partial class StorageManagerWindow : Window
         // running) — refresh the backups list whenever the window re-gains focus so
         // new backups appear without a manual Refresh click.
         Activated += (_, _) => RefreshBackupsIfVisible();
+        // v2.77 引导式重启：需要重启的操作（已触碰存档后的恢复）不打断流程——标题提示
+        // 「退出时将重启游戏生效」，**窗口关闭时**统一触发一次重启（手动「重启游戏」按钮
+        // 的路径已由 RestartGameCommand 先清标志，这里不会重复触发）。
+        Closed += (_, _) =>
+        {
+            if (DataContext is StorageManagerViewModel { NeedsRestart: true } vm)
+                vm.RestartGameCommand.Execute(null);
+        };
     }
 
     /// <summary>Refresh the backups list when the Backups tab is selected (or on focus).</summary>

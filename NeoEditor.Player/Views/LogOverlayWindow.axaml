@@ -43,7 +43,7 @@
                         Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}" />
                     <ComboBox
                         Width="120"
-                        ItemsSource="{x:Static vm:PlayerViewModel.LevelFilters}"
+                        ItemsSource="{Binding LevelFilterOptions}"
                         SelectedItem="{Binding LevelFilter}" />
                     <Button
                         Content="{Binding [Log.OpenFolder], Source={x:Static loc:LocalizationManager.Instance}}"
