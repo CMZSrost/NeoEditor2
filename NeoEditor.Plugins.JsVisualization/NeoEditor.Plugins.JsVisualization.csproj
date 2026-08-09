@@ -1,0 +1,43 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <LangVersion>preview</LangVersion>
+        <RootNamespace>NeoEditor.Plugins.JsVisualization</RootNamespace>
+        <NoWarn>CS8618;CS9264</NoWarn>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <InternalsVisibleTo Include="NeoEditor.Plugins.JsVisualization.Tests" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\NeoEditor.Core\NeoEditor.Core.csproj" />
+        <ProjectReference Include="..\NeoEditor.Infra\NeoEditor.Infra.csproj" />
+        <ProjectReference Include="..\NeoEditor.UI.Common\NeoEditor.UI.Common.csproj" />
+        <!-- Shared player core: loopback HTTP serving pattern (Docs/42 §3.8) -->
+        <ProjectReference Include="..\NeoEditor.Player.Core\NeoEditor.Player.Core.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <Using Include="NeoEditor.Infra.Services" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Avalonia" Version="12.1.1" />
+        <!-- Avalonia 12 official WebView (re-open-sourced); WebView2 on Windows (Docs/42 §2.1) -->
+        <PackageReference Include="Avalonia.Controls.WebView" Version="12.0.1" />
+        <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
+        <PackageReference Include="Serilog" Version="4.3.1" />
+    </ItemGroup>
+
+    <!-- D09 §3.2: the viz page ships as static assets copied next to the binaries
+         (same deploy pattern as Player.Core Web/). Zero-host-dependency page: it is
+         served by VizContentServer from this folder and must also run standalone
+         in a plain browser for AI screenshot verification. -->
+    <ItemGroup>
+        <Content Include="Web\**\*.*">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </Content>
+    </ItemGroup>
+</Project>

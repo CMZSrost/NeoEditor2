@@ -2103,6 +2103,14 @@ Double-click to navigate directly.</value></data>
   <data name="Vis.StoryBranch" xml:space="preserve"><value>Story Branch</value></data>
   <data name="Vis.NoBranches" xml:space="preserve"><value>(No branches)</value></data>
   <data name="Vis.RemoveSubmit" xml:space="preserve"><value>Remove (submit/destroy)</value></data>
+  <data name="Vis.EventGive" xml:space="preserve"><value>Event Give</value></data>
+  <data name="Vis.TriggerGiveItem" xml:space="preserve"><value>Trigger Give Item</value></data>
+  <data name="Vis.ScavengePool" xml:space="preserve"><value>Scavenge Pool</value></data>
+  <data name="Vis.StayEnd" xml:space="preserve"><value>⏹ Stay</value></data>
+  <data name="Vis.BlankEnd" xml:space="preserve"><value>☰ No Follow-up</value></data>
+  <data name="Vis.RequireAll" xml:space="preserve"><value>Require all: </value></data>
+  <data name="Vis.Consumed" xml:space="preserve"><value> (consumed)</value></data>
+  <data name="Vis.SuccessProb" xml:space="preserve"><value>Success Chance</value></data>
   <data name="Vis.Conditions" xml:space="preserve"><value>Conditions</value></data>
   <data name="Vis.PreConditions" xml:space="preserve"><value>Pre-Conditions</value></data>
   <data name="Vis.CurrentEncounter" xml:space="preserve"><value>📍 Current</value></data>
@@ -2125,6 +2133,7 @@ Double-click to navigate directly.</value></data>
   <data name="Vis.Accident" xml:space="preserve"><value>Accident</value></data>
   <data name="Vis.CreatureRef" xml:space="preserve"><value>Creature</value></data>
   <data name="Vis.MinimapHexes" xml:space="preserve"><value>Minimap Markers</value></data>
+  <data name="Vis.MapNotes" xml:space="preserve"><value>Map Notes</value></data>
   <data name="Vis.EditorPos" xml:space="preserve"><value>Editor Pos</value></data>
   <data name="Vis.Teleport" xml:space="preserve"><value>Teleport</value></data>
   <data name="Vis.Responses" xml:space="preserve"><value>Responses</value></data>
@@ -2196,4 +2205,20 @@ Double-click to navigate directly.</value></data>
   <data name="Vis.EncTypeScavenge" xml:space="preserve"><value>Scavenge</value></data>
   <data name="Vis.EncTypeCombat" xml:space="preserve"><value>Combat</value></data>
   <data name="Vis.EncTypeHack" xml:space="preserve"><value>Hack</value></data>
+  <!-- D08 2026-08-08: Encounter page lifecycle redesign -->
+  <data name="Vis.FlowView" xml:space="preserve"><value>Story Flow</value></data>
+  <data name="Vis.HowToEnter" xml:space="preserve"><value>How to Enter</value></data>
+  <data name="Vis.ContentEffects" xml:space="preserve"><value>Content &amp; Effects</value></data>
+  <data name="Vis.BackToCurrent" xml:space="preserve"><value>⏎ Back to current</value></data>
+  <data name="Vis.EntryPoint" xml:space="preserve"><value>⛳ Entry</value></data>
+  <data name="Vis.TerminalPoint" xml:space="preserve"><value>⏹ End</value></data>
+  <data name="Vis.Triggers" xml:space="preserve"><value>Triggers</value></data>
+  <data name="Vis.GiveLoot" xml:space="preserve"><value>🎁 Give Loot</value></data>
+  <data name="Vis.LootPool" xml:space="preserve"><value>🎒 Loot Pool</value></data>
+  <data name="Vis.Cost" xml:space="preserve"><value>💰 Cost</value></data>
+  <data name="Vis.RemoveLoot" xml:space="preserve"><value>🗑 Remove</value></data>
+  <data name="Vis.TeleportTo" xml:space="preserve"><value>📍 Teleport</value></data>
+  <data name="Vis.SpawnOut" xml:space="preserve"><value>🐾 Spawn</value></data>
+  <data name="Vis.Repeatable" xml:space="preserve"><value>♻ Repeatable</value></data>
+  <data name="Vis.HexTypesShort" xml:space="preserve"><value>🧱 Hex</value></data>
 </root>

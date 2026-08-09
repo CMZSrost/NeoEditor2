@@ -1,0 +1,318 @@
+/* D09 §四: JS 可视化组件样式 — 语义色与 D04-D08 视觉规格一致
+   （类型 chip / 概率胶囊 / 节点卡 / 效果徽章全部沿用 Avalonia 版的色板）。 */
+
+:root {
+  --card-bg: #fafafa;
+  --card-border: #e0e0e0;
+  --current-bg: #e3f2fd;
+  --current-border: #1565c0;
+  --text: #333;
+  --text-dim: #999;
+  --text-faint: #aaa;
+  --teal: #00695c;
+  --accent-blue: #1565c0;
+  --accent-bg-blue: #e3f2fd;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: #fff;
+  color: var(--text);
+  font-family: "Segoe UI", "Microsoft YaHei", system-ui, sans-serif;
+  font-size: 12px;
+}
+
+#app { padding: 12px 16px; }
+
+.status { color: var(--text-dim); padding: 24px; text-align: center; }
+.status.error { color: #c62828; }
+
+/* ── 通用容器 ─────────────────────────────────────────── */
+.card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+
+.section { margin-bottom: 14px; }
+.section-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 10px 0 8px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #333;
+}
+.section-head .accent-bar { width: 3px; height: 14px; border-radius: 2px; }
+.section-head .back-btn {
+  margin-left: auto;
+  font-size: 9px;
+  padding: 2px 8px;
+  background: var(--accent-bg-blue);
+  color: var(--accent-blue);
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.section-head .back-btn:hover { filter: brightness(0.95); }
+
+.row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+
+/* ── 徽章 / chip ─────────────────────────────────────── */
+.chip {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 10px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: default;
+}
+.badge[data-nav] { cursor: pointer; }
+.badge[data-nav]:hover { filter: brightness(0.94); }
+
+/* ── Hero ────────────────────────────────────────────── */
+.hero { display: flex; gap: 12px; }
+.hero-img {
+  width: 132px;
+  height: 132px;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.04);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+.hero-img img { max-width: 132px; max-height: 132px; object-fit: contain; }
+.hero-img .placeholder { font-size: 40px; color: #999; }
+.hero-info { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.hero-title { font-size: 18px; font-weight: 700; margin: 2px 0 0; }
+.hero-chance { font-size: 11px; color: #666; display: flex; gap: 12px; flex-wrap: wrap; }
+
+/* ── 内容与效果两栏 ──────────────────────────────────── */
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+@media (max-width: 900px) { .two-col { grid-template-columns: 1fr; } }
+.story-text { font-size: 12px; color: #333; white-space: pre-wrap; word-break: break-word; }
+
+.effect-row { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 6px; flex-wrap: wrap; }
+.effect-row .value { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 11px; font-weight: 600; }
+.effect-row .value.text { color: #555; font-weight: 600; }
+
+/* ── 场景流转（D08 §二：单横向轨道 + 三行，整体横向滚动）────────────── */
+.flow-hint { font-size: 9px; color: var(--text-faint); margin: -2px 0 6px; }
+
+.flow-scroll {
+  display: flex;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-bottom: 4px;
+}
+.flow-track {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 2px;
+}
+.flow-row {
+  display: flex;
+  gap: 10px;
+  align-self: center;   /* 窄行居中；最宽行撑满轨道 */
+}
+.flow-row > * { flex-shrink: 0; }
+
+/* 焦点切换动画：全部 JS 驱动插值（离屏 WebView2 不播 CSS transition）——
+   仅保留脉冲 keyframes（animation 在离屏下正常）与静态样式 */
+@keyframes cardPulse {
+  0% { box-shadow: 0 0 0 0 rgba(21, 101, 192, 0.45); }
+  70% { box-shadow: 0 0 0 12px rgba(21, 101, 192, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(21, 101, 192, 0); }
+}
+.node-card.current.card-pulse { animation: cardPulse 0.9s ease-out; }
+
+.flow-scroll {
+  display: flex;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+.flow-row { display: flex; gap: 10px; margin: 0 auto; padding: 2px 0; }
+
+.precond-filter { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
+.precond-filter label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  color: #555;
+  cursor: pointer;
+  margin-right: 6px;
+}
+.precond-filter label.neg { text-decoration: line-through; color: #888; }
+
+/* ── 节点卡（D06 §四 最终版 / R64）───────────────────── */
+.node-card {
+  width: 240px;
+  border-radius: 6px;
+  padding: 10px;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex-shrink: 0;
+  cursor: default;
+}
+.node-card.current {
+  background: var(--current-bg);
+  border: 2px solid var(--current-border);
+}
+.node-card.filtered { opacity: 0.5; }
+.node-card.navigable { cursor: pointer; }
+.node-card.navigable:hover { box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15); }
+
+.node-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.node-title { font-size: 12px; font-weight: 600; color: #333; text-align: center; }
+.node-title.unresolved { color: #999; }
+.node-current-tag { font-size: 8px; color: var(--accent-blue); }
+
+.node-img {
+  width: 168px;
+  height: 110px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.04);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto;
+  overflow: hidden;
+}
+.node-img img { max-width: 168px; max-height: 110px; object-fit: contain; }
+.node-img .placeholder { font-size: 24px; color: #999; }
+
+.node-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+}
+.prob-pill {
+  border-radius: 10px;
+  padding: 2px 8px;
+  font-size: 9px;
+  font-weight: 700;
+  color: #fff;
+  white-space: nowrap;
+}
+.node-annotation {
+  font-size: 9px;
+  color: var(--teal);
+  text-align: center;
+  word-break: break-word;
+}
+
+/* 终点胶囊（D07 §3.2：永不渲染成卡片） */
+.end-capsule {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 10px;
+  background: #eceff1;
+  color: #546e7a;
+  border-radius: 12px;
+  font-size: 10px;
+  font-weight: 600;
+  white-space: nowrap;
+  flex-shrink: 0;
+  align-self: center;
+}
+
+/* ── tooltip（hover 信息卡，D06 §四）────────────────── */
+.tip {
+  position: fixed;
+  z-index: 99;
+  max-width: 280px;
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  padding: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  pointer-events: none;
+  font-size: 10px;
+}
+.tip .tip-title { font-size: 11px; font-weight: 600; color: #333; margin-bottom: 4px; }
+.tip .tip-line { color: #555; margin: 2px 0; }
+.tip .tip-dim { color: #999; font-size: 9px; }
+.tip .tip-cond {
+  display: inline-block;
+  padding: 1px 4px;
+  border-radius: 3px;
+  font-size: 9px;
+  margin: 1px;
+}
+
+/* ── Raw XML 折叠 ───────────────────────────────────── */
+details.raw-xml { margin-top: 14px; }
+details.raw-xml summary { font-size: 10px; color: var(--text-dim); cursor: pointer; }
+details.raw-xml pre {
+  font-size: 10px;
+  background: #f7f7f7;
+  border: 1px solid #eee;
+  border-radius: 4px;
+  padding: 8px;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* ── 空态 / 未实现 ──────────────────────────────────── */
+.not-implemented {
+  padding: 24px;
+  color: var(--text-dim);
+  text-align: center;
+  border: 1px dashed #ccc;
+  border-radius: 8px;
+}
+
+/* ── 版本标记（右下角小字）────────────────────────── */
+.viz-version {
+  position: fixed;
+  right: 8px;
+  bottom: 4px;
+  z-index: 80;
+  font-size: 9px;
+  color: #bbb;
+  user-select: none;
+  cursor: default;
+}
+
+/* ── 错误横幅（切换失败保留视图）────────────────────── */
+.error-banner {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: #ffebee;
+  color: #c62828;
+  border: 1px solid #ef9a9a;
+  border-radius: 6px;
+  padding: 8px 12px;
+  margin-bottom: 10px;
+  font-size: 11px;
+  box-shadow: 0 1px 4px rgba(198, 40, 40, 0.15);
+}

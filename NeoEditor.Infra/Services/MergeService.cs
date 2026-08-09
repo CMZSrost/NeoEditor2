@@ -9,6 +9,7 @@ using Microsoft.EntityFrameworkCore;
 using NeoEditor.Data;
 using NeoEditor.Data.Context;
 using NeoEditor.Data.Model.Game;
+using NeoEditor.Diagnostics;
 using NeoEditor.Helper;
 
 namespace NeoEditor.Services;
@@ -54,7 +55,12 @@ public class MergeService : IMergeService
         {
             ct.ThrowIfCancellationRequested();
 
-            var allTypedEntities = await LoadEntitiesByModIdsAsync(db, entityType, allModIds);
+            // 埋点：EF 查询（从数据库加载）与内存合并分开计时，判断慢在数据库还是计算
+            List<IEntity> allTypedEntities;
+            using (PerfTracer.Scope("profile-open", $"Merge.Load.{entityType.Name}"))
+            {
+                allTypedEntities = await LoadEntitiesByModIdsAsync(db, entityType, allModIds);
+            }
             var allItems = new List<(IEntity Entity, int LoadIndex, string ModName, bool IsMerge)>();
             foreach (var item in allTypedEntities)
             {
@@ -62,10 +68,14 @@ public class MergeService : IMergeService
                     allItems.Add((item, meta.LoadIndex, meta.Name, meta.IsMerge));
             }
 
-            var typeResult = ComputeTypeMerge(
-                allItems, entityType,
-                entityModNames, entityNamespaces, overlayChains, fieldSources, fieldConflicts,
-                entityMergedIds, overriddenEntityIds, showAll, namespaceToModName, modIdToNamespace);
+            TypeMergeData typeResult;
+            using (PerfTracer.Scope("profile-open", $"Merge.Compute.{entityType.Name}"))
+            {
+                typeResult = ComputeTypeMerge(
+                    allItems, entityType,
+                    entityModNames, entityNamespaces, overlayChains, fieldSources, fieldConflicts,
+                    entityMergedIds, overriddenEntityIds, showAll, namespaceToModName, modIdToNamespace);
+            }
 
             types.Add(typeResult);
 

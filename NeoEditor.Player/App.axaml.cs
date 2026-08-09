@@ -26,7 +26,11 @@ public partial class App : Application
     /// <summary>SWF path passed as a command-line argument (drag onto exe).</summary>
     public static string? StartupSwfPath { get; set; }
 
-    public override void Initialize() => AvaloniaXamlLoader.Load(this);
+    public override void Initialize()
+    {
+        BootstrapLog.Write("App.Initialize（XAML 资源加载）");
+        AvaloniaXamlLoader.Load(this);
+    }
 
     public override void OnFrameworkInitializationCompleted()
     {
@@ -36,7 +40,10 @@ public partial class App : Application
             // the log overlay is still open (default OnLastWindowClose would linger).
             desktop.ShutdownMode = Avalonia.Controls.ShutdownMode.OnMainWindowClose;
 
+            BootstrapLog.Write("PlayerServices.Create 开始");
             Services = PlayerServices.Create();
+            BootstrapLog.Write(
+                $"PlayerServices 创建完成（日志目录: {Services.FileLog.LogDirectory}，端口: {Services.Config.Config.ServerPort}）");
             // v2.28: apply persisted theme + language before the window shows.
             if (Services.Config.Config.Theme is "Light" or "Dark")
                 RequestedThemeVariant = Services.Config.Config.Theme == "Light"
@@ -54,7 +61,12 @@ public partial class App : Application
                 DataContext = Services.ViewModel,
                 StartupSwfPath = StartupSwfPath,
             };
-            desktop.Exit += (_, _) => Services.Dispose();
+            BootstrapLog.Write("主窗口创建完成");
+            desktop.Exit += (_, _) =>
+            {
+                BootstrapLog.Write("应用退出（desktop.Exit）");
+                Services.Dispose();
+            };
             // R43: 启动日志首行带版本（调试菜单「关于」同源）。
             Log.Logger.Information("[Player] {Product} v{Version} standalone player started" +
                                    (StartupSwfPath is null ? "" : $" (swf: {StartupSwfPath})"),

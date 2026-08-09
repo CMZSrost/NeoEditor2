@@ -23,6 +23,7 @@ using NeoEditor.Data;
 using NeoEditor.Data.Context;
 using NeoEditor.Data.Model;
 using NeoEditor.Data.Model.Game;
+using NeoEditor.Diagnostics;
 using NeoEditor.Helper;
 using NeoEditor.Helper.Converter;
 using NeoEditor.Services;
@@ -332,6 +333,11 @@ public partial class ModGameDataTabsView
 
     private async Task ReloadMergeTabsAsync(ProfileInfo profileInfo)
     {
+        // Defensive start: single-mod open (OpenModGameDataDocumentMessage) doesn't go
+        // through Receive(OpenMergeEditorMessage), so the profile-open flow may not exist yet.
+        if (!PerfTracer.IsActive("profile-open"))
+            PerfTracer.Start("profile-open");
+        PerfTracer.Checkpoint("profile-open", "ReloadMergeTabs.start");
         IsLoading = true;
         var loadVersion = ++_loadVersion;
         _logger.LogInformation("[ReloadMergeTabs] START profile='{ProfileName}' (id={ProfileId})",
@@ -366,6 +372,7 @@ public partial class ModGameDataTabsView
 
         // Auto-load mods into DB if not already loaded (ensures merge view always has data)
         var modManager = _modManager;
+        using (PerfTracer.Scope("profile-open", "ReloadMergeTabs.AutoLoad"))
         foreach (var modLoad in profileInfo.ModLoadInfos)
         {
             _logger.LogInformation("[AutoLoad] mod namespace={Ns} info={HasInfo} modId={ModId}",
@@ -432,6 +439,7 @@ public partial class ModGameDataTabsView
             {
                 _logger.LogWarning("[ReloadMergeTabs] No mod data in DB at all. Nothing to load.");
                 IsLoading = false;
+                PerfTracer.End("profile-open");
                 return;
             }
 
@@ -484,61 +492,68 @@ public partial class ModGameDataTabsView
 
         // Delegate merge computation to MergeService
         var mergeService = _mergeService;
-        var mergeResult = await mergeService.ComputeMergeAsync(
-            db, modMeta, allModIds,
-            MergeStore.NamespaceToModName,
-            modIdToNs,
-            MergeStore.MergeSpaceModIds,
-            ShowAllEntities);
-
-        // Activate stores before copying results (so GDH writes delegate to MergeStore)
-        PushEditStateToGrid(MergeStore, EditStore);
-
-        // Copy merge results into BOTH MergeStore (for cache) AND GDH (for converters)
-        foreach (var kv in mergeResult.EntityModNames)
-            MergeStore.EntityModNames[kv.Key] = kv.Value;
-        foreach (var kv in mergeResult.EntityNamespaces)
-            MergeStore.EntityNamespaces[kv.Key] = kv.Value;
-        foreach (var kv in mergeResult.OverlayChains)
-            MergeStore.OverlayChainDisplay[kv.Key] = kv.Value;
-        foreach (var kv in mergeResult.FieldSources)
-            MergeStore.FieldSources[kv.Key] = kv.Value;
-        foreach (var fk in mergeResult.FieldConflicts)
-            MergeStore.FieldConflicts.Add(fk);
-        foreach (var kv in mergeResult.EntityMergedIds)
-            MergeStore.EntityMergedIds[kv.Key] = kv.Value;
-        foreach (var eid in mergeResult.OverriddenEntityIds)
+        MergeResult mergeResult;
+        using (PerfTracer.Scope("profile-open", "ReloadMergeTabs.ComputeMerge"))
         {
-            _overriddenEntityIds.Add(eid);
-            MergeStore.OverriddenEntityIds.Add(eid);
+            mergeResult = await mergeService.ComputeMergeAsync(
+                db, modMeta, allModIds,
+                MergeStore.NamespaceToModName,
+                modIdToNs,
+                MergeStore.MergeSpaceModIds,
+                ShowAllEntities);
         }
 
-        foreach (var kv in mergeResult.NamespaceToModName)
-            MergeStore.NamespaceToModName[kv.Key] = kv.Value;
-        foreach (var mid in mergeResult.MergeSpaceModIds)
-            MergeStore.MergeSpaceModIds.Add(mid);
-        foreach (var kv in mergeResult.ReferenceLookups)
-            MergeStore.ReferenceLookups[kv.Key] = kv.Value;
-
-        foreach (var typeData in mergeResult.Types)
+        // Activate stores before copying results (so GDH writes delegate to MergeStore)
+        using (PerfTracer.Scope("profile-open", "ReloadMergeTabs.CopyToStores"))
         {
-            if (loadVersion != _loadVersion) return;
+            PushEditStateToGrid(MergeStore, EditStore);
 
-            var allSource = new ObservableCollection<object>(typeData.AllEntities.Select(e => (object)e));
-            var visibleItems = new ObservableCollection<object>(typeData.VisibleEntities.Select(e => (object)e));
-
-            Tabs.Add(new GameDataTypeTabItem
+            // Copy merge results into BOTH MergeStore (for cache) AND GDH (for converters)
+            foreach (var kv in mergeResult.EntityModNames)
+                MergeStore.EntityModNames[kv.Key] = kv.Value;
+            foreach (var kv in mergeResult.EntityNamespaces)
+                MergeStore.EntityNamespaces[kv.Key] = kv.Value;
+            foreach (var kv in mergeResult.OverlayChains)
+                MergeStore.OverlayChainDisplay[kv.Key] = kv.Value;
+            foreach (var kv in mergeResult.FieldSources)
+                MergeStore.FieldSources[kv.Key] = kv.Value;
+            foreach (var fk in mergeResult.FieldConflicts)
+                MergeStore.FieldConflicts.Add(fk);
+            foreach (var kv in mergeResult.EntityMergedIds)
+                MergeStore.EntityMergedIds[kv.Key] = kv.Value;
+            foreach (var eid in mergeResult.OverriddenEntityIds)
             {
-                EntityType = typeData.EntityType,
-                Header = _dataLoader.BuildHeader(typeData.EntityType, allSource.Count),
-                SourceCollection = allSource,
-                ItemsSource = visibleItems
-            });
+                _overriddenEntityIds.Add(eid);
+                MergeStore.OverriddenEntityIds.Add(eid);
+            }
 
-            _logger.LogInformation(
-                "[ReloadMergeTabs] {EntityType}: source={SourceCount} visible={VisibleCount} overridden={OverriddenCount} showAll={ShowAll}",
-                typeData.EntityType.Name, allSource.Count, visibleItems.Count, typeData.OverriddenCount,
-                ShowAllEntities);
+            foreach (var kv in mergeResult.NamespaceToModName)
+                MergeStore.NamespaceToModName[kv.Key] = kv.Value;
+            foreach (var mid in mergeResult.MergeSpaceModIds)
+                MergeStore.MergeSpaceModIds.Add(mid);
+            foreach (var kv in mergeResult.ReferenceLookups)
+                MergeStore.ReferenceLookups[kv.Key] = kv.Value;
+
+            foreach (var typeData in mergeResult.Types)
+            {
+                if (loadVersion != _loadVersion) return;
+
+                var allSource = new ObservableCollection<object>(typeData.AllEntities.Select(e => (object)e));
+                var visibleItems = new ObservableCollection<object>(typeData.VisibleEntities.Select(e => (object)e));
+
+                Tabs.Add(new GameDataTypeTabItem
+                {
+                    EntityType = typeData.EntityType,
+                    Header = _dataLoader.BuildHeader(typeData.EntityType, allSource.Count),
+                    SourceCollection = allSource,
+                    ItemsSource = visibleItems
+                });
+
+                _logger.LogInformation(
+                    "[ReloadMergeTabs] {EntityType}: source={SourceCount} visible={VisibleCount} overridden={OverriddenCount} showAll={ShowAll}",
+                    typeData.EntityType.Name, allSource.Count, visibleItems.Count, typeData.OverriddenCount,
+                    ShowAllEntities);
+            }
         }
 
         _logger.LogInformation(
@@ -548,13 +563,17 @@ public partial class ModGameDataTabsView
         // Docs/41 追修(C): merge THIS profile's edit overlay (per-column overrides + new /
         // deleted markers) into the loaded baseline view — multi-profile isolation: another
         // profile's edits live in its own overlay and never touch this view (or game.db).
-        await ApplyProfileOverlayAsync();
+        using (PerfTracer.Scope("profile-open", "ReloadMergeTabs.ProfileOverlay"))
+        {
+            await ApplyProfileOverlayAsync();
+        }
 
         // R30 (追修 6): seed the HostService working-set cache with every loaded entity.
         // SaveAllAsync persists ONLY entities present in that cache (dirty id → cache miss
         // → silently dropped → "No mod entities to save" → WAL never cleared → replay on
         // every restart = dirty-on-open). Edit commands now carry cache deltas too, but a
         // never-edited entity (e.g. one restored from WAL replay) would still miss.
+        using (PerfTracer.Scope("profile-open", "ReloadMergeTabs.SeedCache"))
         foreach (var tab in Tabs)
         {
             foreach (var item in tab.SourceCollection)
@@ -564,32 +583,93 @@ public partial class ModGameDataTabsView
             }
         }
 
-        // P3 fix (Test Round 10): build in-memory ReferenceIndex so reference columns
-        // in the DataGrid can resolve raw IDs to display names.
-        // R30 (H1): MUST run BEFORE BuildMergeViewIndexAsync — the SQLite reverse index
-        // resolves each segment through the in-memory index; building it first left
-        // reference_reverse empty on first load.
-        await MergeStore.Index.BuildAsync();
-
-        // Build SQLite reference index for O(1) namespace-prefixed lookups
-        await BuildMergeViewIndexAsync();
-
-        var cacheKey = $"profile_{profileInfo.ProfileId}";
-        TabSnapshotCache[cacheKey] = (Tabs, MergeStore, EditStore);
-        PopulateModFilterCombo(profileInfo);
-        _persistSequence = 0;
-        _commandsSinceSnapshot = 0;
-        await RestoreCommandsFromLogAsync();
-        // Docs/41: restore the persisted "edited, not yet exported" set so row/cell
-        // highlights (and green "new" rows) survive an app restart. NOT marked dirty —
-        // those entities are already in game.db (auto-saved); dirty now means "not in DB".
-        await RestorePendingExportsAsync();
+        // ── 阶段 1 完成：数据就绪，先让网格可见。引用列此时显示 rawtext，
+        //    阶段 2 索引就绪后会重绑 ItemsSource 刷新为解析文本。──
         PushEditStateToGrid(MergeStore, EditStore);
         IsLoading = false;
+        PerfTracer.Checkpoint("profile-open", "DataReady");
         var totalEntities = Tabs.Sum(t => t.SourceCollection.Count);
         _messenger.Send(new DataLoadCompletedMessage(Tabs.Count, totalEntities));
         SelectFirstNonEmptyTab();
-        Dispatcher.UIThread.Post(() => { RefreshIsEmptyMod(); }, DispatcherPriority.Loaded);
+        Dispatcher.UIThread.Post(() =>
+        {
+            // UILoaded = 网格以 Loaded 优先级渲染完成后的时刻（“UI 正常”终点）。
+            PerfTracer.Checkpoint("profile-open", "UILoaded");
+            RefreshIsEmptyMod();
+        }, DispatcherPriority.Loaded);
+
+        // ── 阶段 2（后台异步）：引用索引构建 + 收尾，完成后刷新引用显示。──
+        AsyncHelper.FireAndForget(BuildIndexesAndFinalizeAsync(loadVersion, profileInfo));
+    }
+
+    /// <summary>
+    /// 阶段 2（后台异步）：构建内存 ReferenceIndex + SQLite reference_index/reverse
+    /// （保序：SQLite 反向解析依赖内存索引），然后写 TabSnapshotCache（缓存保存 store
+    /// 实例含完整索引，缓存命中路径不会重建，必须等索引完成）、恢复命令日志与待导出
+    /// 集合。全部完成后在 UI 线程重绑当前 tab 的 ItemsSource——引用列模板重新生成，
+    /// 单元格从 rawtext 刷新为解析文本。切 profile（loadVersion 变化）时静默放弃。
+    /// 失败不影响已显示的数据网格。
+    /// </summary>
+    private async Task BuildIndexesAndFinalizeAsync(int loadVersion, ProfileInfo profileInfo)
+    {
+        try
+        {
+            if (loadVersion != _loadVersion) return;
+
+            // P3 fix (Test Round 10): build in-memory ReferenceIndex so reference columns
+            // in the DataGrid can resolve raw IDs to display names.
+            // R30 (H1): MUST run BEFORE BuildMergeViewIndexAsync — the SQLite reverse index
+            // resolves each segment through the in-memory index; building it first left
+            // reference_reverse empty on first load.
+            using (PerfTracer.Scope("profile-open", "ReloadMergeTabs.IndexBuild"))
+            {
+                await MergeStore.Index.BuildAsync();
+            }
+
+            if (loadVersion != _loadVersion) return;
+
+            // Build SQLite reference index for O(1) namespace-prefixed lookups
+            using (PerfTracer.Scope("profile-open", "ReloadMergeTabs.MergeViewIndex"))
+            {
+                await BuildMergeViewIndexAsync();
+            }
+
+            if (loadVersion != _loadVersion) return;
+
+            var cacheKey = $"profile_{profileInfo.ProfileId}";
+            TabSnapshotCache[cacheKey] = (Tabs, MergeStore, EditStore);
+            PopulateModFilterCombo(profileInfo);
+            _persistSequence = 0;
+            _commandsSinceSnapshot = 0;
+            using (PerfTracer.Scope("profile-open", "ReloadMergeTabs.RestoreCommands"))
+            {
+                await RestoreCommandsFromLogAsync();
+            }
+            // Docs/41: restore the persisted "edited, not yet exported" set so row/cell
+            // highlights (and green "new" rows) survive an app restart. NOT marked dirty —
+            // those entities are already in game.db (auto-saved); dirty now means "not in DB".
+            using (PerfTracer.Scope("profile-open", "ReloadMergeTabs.RestorePendingExports"))
+            {
+                await RestorePendingExportsAsync();
+            }
+            PushEditStateToGrid(MergeStore, EditStore);
+
+            if (loadVersion != _loadVersion) return;
+
+            Dispatcher.UIThread.Post(() =>
+            {
+                PerfTracer.Checkpoint("profile-open", "IndexReady");
+                PerfTracer.End("profile-open");
+                // 索引就绪：重绑当前 tab 的 ItemsSource（列模板重新生成），引用列从
+                // rawtext 刷新为解析文本。RebuildFilteredItemsSources 会保存/恢复排序。
+                RebuildFilteredItemsSources();
+            }, DispatcherPriority.Background);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "[IndexBuild] background index build failed (grid data already visible)");
+            PerfTracer.End("profile-open");
+        }
     }
 
 
@@ -846,52 +926,60 @@ public partial class ModGameDataTabsView
         index.Clear();
 
         var entries = new List<ReferenceIndexService.IndexEntry>();
-
-        foreach (var tab in Tabs)
+        using (PerfTracer.Scope("profile-open", "MergeView.Index.BuildEntries"))
         {
-            var entityType = tab.EntityType;
-            var typeName = entityType.Name;
-            var keyProp = DataLoaderService.ResolveEntityKeyProperty(entityType);
-            if (keyProp is null) continue;
-
-            var groupIdProp = entityType.GetProperty("GroupId",
-                System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public);
-            var subgroupIdProp = entityType.GetProperty("SubgroupId",
-                System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public);
-
-            foreach (var obj in tab.SourceCollection)
+            foreach (var tab in Tabs)
             {
-                if (obj is not IEntity entity) continue;
-                var pk = keyProp.GetValue(entity)?.ToString();
-                if (pk is null) continue;
+                var entityType = tab.EntityType;
+                var typeName = entityType.Name;
+                var keyProp = DataLoaderService.ResolveEntityKeyProperty(entityType);
+                if (keyProp is null) continue;
 
-                MergeStore.EntityNamespaces.TryGetValue(entity.EntityId, out var ns);
-                ns ??= "0";
+                var groupIdProp = entityType.GetProperty("GroupId",
+                    System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public);
+                var subgroupIdProp = entityType.GetProperty("SubgroupId",
+                    System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public);
 
-                int? gid = null, sid = null;
-                if (groupIdProp is not null && subgroupIdProp is not null)
+                foreach (var obj in tab.SourceCollection)
                 {
-                    if (groupIdProp.GetValue(entity) is int g) gid = g;
-                    if (subgroupIdProp.GetValue(entity) is int s) sid = s;
-                }
+                    if (obj is not IEntity entity) continue;
+                    var pk = keyProp.GetValue(entity)?.ToString();
+                    if (pk is null) continue;
 
-                entries.Add(new ReferenceIndexService.IndexEntry(
-                    typeName, ns, pk, entity.EntityId, gid, sid));
+                    MergeStore.EntityNamespaces.TryGetValue(entity.EntityId, out var ns);
+                    ns ??= "0";
+
+                    int? gid = null, sid = null;
+                    if (groupIdProp is not null && subgroupIdProp is not null)
+                    {
+                        if (groupIdProp.GetValue(entity) is int g) gid = g;
+                        if (subgroupIdProp.GetValue(entity) is int s) sid = s;
+                    }
+
+                    entries.Add(new ReferenceIndexService.IndexEntry(
+                        typeName, ns, pk, entity.EntityId, gid, sid));
+                }
             }
         }
 
         // Sort entries: Game (ns="0") first within each type, then mods by load order.
         // This ensures INSERT OR REPLACE correctly implements merge override.
-        entries.Sort((a, b) =>
+        using (PerfTracer.Scope("profile-open", "MergeView.Index.Sort"))
         {
-            var typeCmp = string.CompareOrdinal(a.EntityType, b.EntityType);
-            if (typeCmp != 0) return typeCmp;
-            var nsA = a.Namespace == "0" ? 0 : 1;
-            var nsB = b.Namespace == "0" ? 0 : 1;
-            return nsA.CompareTo(nsB);
-        });
+            entries.Sort((a, b) =>
+            {
+                var typeCmp = string.CompareOrdinal(a.EntityType, b.EntityType);
+                if (typeCmp != 0) return typeCmp;
+                var nsA = a.Namespace == "0" ? 0 : 1;
+                var nsB = b.Namespace == "0" ? 0 : 1;
+                return nsA.CompareTo(nsB);
+            });
+        }
 
-        await index.BuildAsync(entries);
+        using (PerfTracer.Scope("profile-open", "MergeView.Index.SqliteBuild"))
+        {
+            await index.BuildAsync(entries);
+        }
 
         // Build reverse reference index
         await ReferenceResolver.BuildReverseIndexAsync(index, MergeStore);

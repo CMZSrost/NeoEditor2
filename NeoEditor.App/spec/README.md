@@ -11,8 +11,12 @@
 | [D02](D02-dynamic-dock-layout.md) | 动态 Dock 布局 — Tool/Document/Service Plugin 分类 + IToolPlugin 动态构建（1:1） | ✅ | 用户决策 2026-08-01 |
 | [D03](D03-paratranz-integration.md) | ParaTranz 集成 — 数据转换 / 同步工作流 / UI 设计（v1.6，M1-M4 已完成，M5 可选） | ✅ | 用户决策 2026-08-05 |
 | [D04](D04-itemtype-visualization-design.md) | ItemType 可视化设计 — 全字段语义 / 设计原因与目的 / 心理模型布局（其余实体类型的可视化设计模板） | ✅ | 用户决策 2026-08-08 |
-| [D05](D05-creature-visualization-design.md) | Creature 可视化设计 — 13 字段全覆盖 / 战斗三层 / 出场状态概率 / 战利品双池 / 遭遇链（实现中） | ✅ | 用户决策 2026-08-08 |
-| [D06](D06-encounter-storybranch-design.md) | Encounter 剧情分支重构 — 节点单组件（图片/标题/概率）+ tooltip 信息卡 + Mermaid 同源对齐（v1.1） | ✅ | 用户决策 2026-08-08 | | Creature 可视化设计 — 13 字段全覆盖 / 战斗三层 / 出场状态概率 / 战利品双池 / 遭遇链（实现中） | ✅ | 用户决策 2026-08-08 |
+| [D05](D05-creature-visualization-design.md) | Creature 可视化设计 — 13 字段全覆盖 / 战斗三层 / 出场状态概率 / 战利品双池 / 遭遇链（已完成） | ✅ | 用户决策 2026-08-08 |
+| [D06](D06-encounter-storybranch-design.md) | Encounter 剧情分支重构 — 节点单组件（标题/图片主体/概率）+ tooltip 信息卡 + Mermaid 同源 + 同目标多段合并（v1.3） | ✅ | 用户决策 2026-08-08 |
+| [D07](D07-encounter-semantics-design.md) | Encounter 剧情语义升级 — 终止节点（自指/Blank）+ Ingredient 双目标 + p2·p3 参数 + AND 多物品 + vLoot 用途标注 | ✅ | 用户决策 2026-08-08 |
+| [D08](D08-encounter-page-redesign.md) | Encounter 页面生命周期重排 — 内容效果两栏（中间锚点）+ 场景流转三行主视图 + 节点卡最终版（v1.3，已完成） | ✅ | 用户决策 2026-08-08 |
+| [D09](D09-js-visualization-design.md) | JS 可视化 — center 可视化 WebView2+JS 渲染重构：新插件 + EntityEditorView 第三 Tab「JS 可视化」+ 快照契约 + 单 WebView2 共享 + AI 截图验证闭环（v1.2，P0-P0.8 已实施） | ✅ | 用户决策 2026-08-08 |
+| [D10](D10-js-visualization-upgrade-design.md) | JS 可视化组件升级设计思路 — About Face 4 审查 9 项改进：统一模板/Section 单轨/导航历史/状态记忆/Raw Data 移底部/RefPanel 聚合/薄类型分级（v1.0，随 D09 P1-P4 实施） | ✅ | AF4 审查 2026-08-08 |
 
 > **D01 是项目根本架构决策**，高于所有 R/N 规则。R17-R22 是其执行细则。
 > **D02 是 Dock 布局的根本决策**，取代手写 XAML Tool 元素。Phase 9E 实现。
@@ -50,6 +54,7 @@
 | [R26](R26-save-export-repository.md) | 保存/导出工作流 — **对称 Repository 契约（CRUD/双 diff/dirty/Save/Load 全对称，v2）** + DB/XML 双 Repository + Save/Export/Publish 三动作 + per-profile dirty session | ✅ | Phase 9B |
 | [R27](R27-image-asset-dual-view.md) | ImageAssetManager 拆分为 Browser + Orchestration 双视图 | ✅ | Phase 9C |
 | [R28](R28-ai-mcp-configuration.md) | AI/MCP 必须有 UI 配置界面和启动路径 | ✅ | Phase 9D |
+| [R29](R29-performance-instrumentation.md) | 性能埋点与两阶段加载 — PerfTracer（[Perf] 前缀）/ Debug 日志禁 O(N) 求值 / 数据先出索引后台 + 完成后 rebind / 缓存表字面量 SQL + 重建期 synchronous=OFF | ✅ | R65 |
 
 ## 禁止规则（DON'T）
 
@@ -66,4 +71,4 @@
 
 | 文件 | 内容 |
 |------|------|
-| [open-questions.md](open-questions.md) | 暂无未决项；Q1-Q11 已全部归档为 R09-R16, N06；R01-R28 全部落地；D01-D03 全部生效（D03 M1-M4 已完成） |
+| [open-questions.md](open-questions.md) | 暂无未决项；Q1-Q11 已全部归档为 R09-R16, N06；R01-R29 全部落地；D01-D03 全部生效（D03 M1-M4 已完成） |

@@ -8,12 +8,14 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
+using Avalonia.Threading;
 using MsBox.Avalonia;
 using MsBox.Avalonia.Dto;
 using NeoEditor.Player.Core.Services;
 using NeoEditor.Player.Core.ViewModels;
 using NeoEditor.Player.Services;
 using NeoEditor.Player.ViewModels;
+using Serilog;
 
 namespace NeoEditor.Player.Views;
 
@@ -78,6 +80,18 @@ public partial class PlayerWindow : Window
         // No eager WebView creation: the drag placeholder stays visible until the first
         // SWF loads (a native child window cannot be covered by Avalonia controls).
         AttachViewModel();
+        BootstrapLog.Write("主窗口已显示（OnLoaded）");
+        // v2.68: WebView2 Runtime is the player's only rendering path — detect at startup
+        // and alert with the official install link. The lazy WebView creation would only
+        // surface a bare error text after the user already dragged a SWF.
+        if (!WebView2RuntimeCheck.IsInstalled())
+        {
+            Log.Logger.Warning("[Player] WebView2 Runtime 未检测到 — 弹窗提示安装（{InstallUrl}）",
+                WebView2RuntimeCheck.InstallUrl);
+            BootstrapLog.Write("WebView2 Runtime 未检测到 — 弹出安装提示");
+            // Deferred: the window must be visible before a modal dialog can show.
+            Dispatcher.UIThread.Post(() => _ = ShowWebView2MissingAsync());
+        }
         if (StartupSwfPath is { Length: > 0 } path && DataContext is PlayerViewModel vm)
             _ = vm.StartAsync(path);
     }
@@ -336,6 +350,33 @@ public partial class PlayerWindow : Window
             okText: LocalizationManager.Instance["Log.OpenFolder"],
             cancelText: LocalizationManager.Instance["Common.Ok"]);
         if (open is not null) OpenLogFolder(vm.FileLogDirectory);
+    }
+
+    /// <summary>
+    /// v2.68: WebView2 Runtime 缺失 → 启动弹窗（提示 + 官方安装链接）；「打开安装页面」
+    /// 用默认浏览器打开 evergreen bootstrapper，装完重启播放器即可。
+    /// </summary>
+    private async Task ShowWebView2MissingAsync()
+    {
+        var open = await PromptDialogWindow.PromptAsync(this,
+            LocalizationManager.Instance["WebView2.MissingTitle"],
+            string.Format(LocalizationManager.Instance["WebView2.MissingBody"], WebView2RuntimeCheck.InstallUrl),
+            okText: LocalizationManager.Instance["WebView2.OpenInstallPage"],
+            cancelText: LocalizationManager.Instance["Common.Close"]);
+        if (open is not null)
+        {
+            try
+            {
+                Process.Start(new ProcessStartInfo(WebView2RuntimeCheck.InstallUrl)
+                {
+                    UseShellExecute = true,
+                });
+            }
+            catch (Exception)
+            {
+                // No default browser / URL blocked — the alert already showed the link.
+            }
+        }
     }
 
     /// <summary>R38: 在 Explorer 中定位最新运行日志（或打开日志目录）。</summary>

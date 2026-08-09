@@ -1,6 +1,6 @@
 # D06 — Encounter 剧情分支可视化重构设计（节点单组件 / 去重定位 / Mermaid 对齐）
 
-> 设计文档 · 2026-08-08 · v1.2（v1.1 = 节点精简为「图片+标题+概率」三要素，复杂信息移入 tooltip 信息卡；v1.2 = 节点卡布局改为标题→图片（主体 70%）→chip 行，tooltip 物品行用 Name 且置于第二行——用户 2026-08-08 二次追加反馈）
+> 设计文档 · 2026-08-08 · v1.3（v1.1 = 三要素 + tooltip；v1.2 = 标题→图片主体→chip 行 + tooltip 物品 Name 第二行；v1.3 = 同目标多段响应合并为一张分支卡，tooltip/Mermaid 列出全部触发物品——用户 2026-08-08 三次追加反馈「多选时 tooltip 只看到一个徽章」）
 > 上承：D05 Creature 可视化设计（模板与决策体系沿用）+ 用户对「剧情分支」Tab 的反馈（2026-08-08）
 > 下启：`EncounterEntityVisualizer.cs` 剧情分支区重构实现
 > 依从：R04 View 只组装 · R13 VisHelper 内部组件 · N03 视图无逻辑 · D05 设计语言（区块语义色 / 徽章 / 卡片）
@@ -166,11 +166,15 @@
 从 `ParseResponseEntries` 结果推导一份纯数据，两个渲染都从它生成：
 
 ```csharp
+record BranchItem(string? ItemId, double ItemMult, ItemType? Item);
+
 record BranchData(
     int TargetId,
     Encounter? Target,                       // resolved 目标（null = 未解析）
-    string? ItemId, double ItemMult, ItemType? Item,
-    double Weight, double EffectiveProb,     // EffectiveProb=0 表示被过滤
+    List<BranchItem> Items,                  // v1.3: 多个响应段可指向同一目标（实测 31 例），
+                                             //       合并后 Items 为全部触发物品
+    double Weight,                           // 同目标各段权重累加
+    double EffectiveProb,                    // EffectiveProb=0 表示被过滤
     bool IsSatisfied,                        // 前置条件在当前过滤下是否满足
     List<(string Raw, bool IsNeg, Condition? Resolved)> PreConds);
 ```
@@ -290,7 +294,8 @@ record BranchData(
 11. **导航**：Ctrl+Click 分支卡 → `StubNavigationRouter` 记录跳转到目标 Encounter；
     Ctrl+RMB → peek。
 12. **当前卡**：含「📍 当前剧情」标识；当前卡不触发任何导航记录。
-13. **回归**：TabControl 仍含 3 个 Tab（剧情分支 / 剧情链 / Mermaid源码）；`Responses` 为空时
+13. **多段同目标合并（v1.3）**：`90.3x2=16x2x0x0x0,91.4x1=16x1x0x0x0` → 仅一张分支卡（TargetId 16）、`Items.Count==2`、权重累加 3.0、tooltip 含两个物品徽章（🛡 撬棍 ×2 / 🛡 打火机）、Mermaid 边标签 `撬棍 ×2 + 打火机 | 3.0(100%)`。
+14. **回归**：TabControl 仍含 3 个 Tab（剧情分支 / 剧情链 / Mermaid源码）；`Responses` 为空时
     显示「无分支」占位；`PrepareBranches` 对 `=1x1x0x0x0`、`90.3x2=16x2x0x0x0,=16x1x0x0x0`
     等实测格式解析出正确的物品/权重/概率（对照 `field_descriptions.json` `encounters.responses`
     实测值域）。

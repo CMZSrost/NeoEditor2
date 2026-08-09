@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Data.Sqlite;
+using NeoEditor.Diagnostics;
 using Serilog;
 
 namespace NeoEditor.Services;
@@ -224,19 +225,31 @@ public sealed class ReferenceIndexService : IDisposable
     public async Task BuildAsync(IReadOnlyList<IndexEntry> entries)
     {
         var sw = System.Diagnostics.Stopwatch.StartNew();
-        using var tx = _connection.BeginTransaction();
 
-        // Clear existing
-        using (var delCmd = _connection.CreateCommand())
+        // Perf: reference_index is a rebuildable cache table — disable fsync for the
+        // rebuild (worst case: cache lost on crash, rebuilt on next open), then restore.
+        var prevSync = await GetSynchronousAsync();
+        await SetSynchronousAsync("OFF");
+        try
         {
-            delCmd.CommandText = "DELETE FROM reference_index;";
-            await delCmd.ExecuteNonQueryAsync();
+            using var tx = _connection.BeginTransaction();
+
+            // Clear existing
+            using (var delCmd = _connection.CreateCommand())
+            {
+                delCmd.CommandText = "DELETE FROM reference_index;";
+                await delCmd.ExecuteNonQueryAsync();
+            }
+
+            // Bulk insert
+            await InsertBatchAsync(entries);
+
+            await tx.CommitAsync();
         }
-
-        // Bulk insert
-        await InsertBatchAsync(entries);
-
-        await tx.CommitAsync();
+        finally
+        {
+            await SetSynchronousAsync(prevSync);
+        }
         sw.Stop();
         Log.Logger.Information(
             "[RefIndex] BuildAsync complete: {Count} entries in {Ms}ms",
@@ -248,6 +261,8 @@ public sealed class ReferenceIndexService : IDisposable
     /// with the same (entity_type, namespace, pk) override earlier ones.
     /// Batches 500 rows per INSERT to minimise SQLite P/Invoke overhead.
     /// Should be called inside a transaction for performance.
+    /// Values are written as string literals (see BuildIndexLiteralSql) — parameter
+    /// binding (AddWithValue × 6/row) was the dominant cost of the ~0.6s build.
     /// </summary>
     private const int BatchSize = 500;
 
@@ -262,43 +277,59 @@ public sealed class ReferenceIndexService : IDisposable
 
     private async Task InsertBatchChunkAsync(IReadOnlyList<IndexEntry> entries, int offset, int count)
     {
-        var sql = BuildMultiValuesSql("reference_index",
-            ["entity_type", "namespace", "pk", "entity_id", "group_id", "subgroup_id"],
-            count);
+        var sql = BuildIndexLiteralSql(entries, offset, count);
 
         using var cmd = _connection.CreateCommand();
         cmd.CommandText = sql;
-
-        for (var i = 0; i < count; i++)
-        {
-            var entry = entries[offset + i];
-            cmd.Parameters.AddWithValue($"@a{i}", entry.EntityType);
-            cmd.Parameters.AddWithValue($"@b{i}", entry.Namespace);
-            cmd.Parameters.AddWithValue($"@c{i}", entry.Pk);
-            cmd.Parameters.AddWithValue($"@d{i}", entry.EntityId);
-            cmd.Parameters.AddWithValue($"@e{i}", entry.GroupId.HasValue ? (object)entry.GroupId.Value : DBNull.Value);
-            cmd.Parameters.AddWithValue($"@f{i}", entry.SubgroupId.HasValue ? (object)entry.SubgroupId.Value : DBNull.Value);
-        }
-
         await cmd.ExecuteNonQueryAsync();
     }
 
-    /// <summary>Build INSERT OR REPLACE ... VALUES (...), (...), ... for a batch of rows.</summary>
-    private static string BuildMultiValuesSql(string table, string[] columns, int rowCount)
+    /// <summary>Build INSERT OR REPLACE for reference_index with literal (non-parameterized)
+    /// values. All values are app-internal (sha256 entity ids, C# type/namespace names, parsed
+    /// keys) — only single quotes are escaped. Avoids AddWithValue type-inference per cell.</summary>
+    private static string BuildIndexLiteralSql(IReadOnlyList<IndexEntry> entries, int offset, int count)
     {
-        var colList = string.Join(", ", columns);
-        var rows = new System.Text.StringBuilder();
-        for (var r = 0; r < rowCount; r++)
+        var sb = new System.Text.StringBuilder();
+        sb.Append("INSERT OR REPLACE INTO reference_index (entity_type, namespace, pk, entity_id, group_id, subgroup_id) VALUES ");
+        for (var r = 0; r < count; r++)
         {
-            if (r > 0) rows.Append(", ");
-            var vals = string.Join(", ", columns.Select((c, i) =>
-            {
-                var ch = (char)('a' + i);
-                return $"@{ch}{r}";
-            }));
-            rows.Append($"({vals})");
+            var e = entries[offset + r];
+            if (r > 0) sb.Append(", ");
+            sb.Append("('").Append(EscapeSql(e.EntityType)).Append("','")
+              .Append(EscapeSql(e.Namespace)).Append("','")
+              .Append(EscapeSql(e.Pk)).Append("','")
+              .Append(EscapeSql(e.EntityId)).Append("',")
+              .Append(e.GroupId.HasValue ? e.GroupId.Value.ToString() : "NULL").Append(',')
+              .Append(e.SubgroupId.HasValue ? e.SubgroupId.Value.ToString() : "NULL")
+              .Append(')');
         }
-        return $"INSERT OR REPLACE INTO {table} ({colList}) VALUES {rows};";
+        sb.Append(';');
+        return sb.ToString();
+    }
+
+    /// <summary>Escape a string for a SQLite single-quoted literal.</summary>
+    private static string EscapeSql(string s) => s.Replace("'", "''");
+
+    /// <summary>Build INSERT OR REPLACE for reference_reverse with literal (non-parameterized)
+    /// values — all app-internal strings (sha256 ids, C# property names, parsed raw segments),
+    /// only single quotes are escaped. Parameter binding × 4/row was the ~2s hot spot.</summary>
+    private static string BuildReverseLiteralSql(
+        IReadOnlyList<(string TargetEntityId, string SourceEntityId, string PropertyName, string RawId)> entries,
+        int offset, int count)
+    {
+        var sb = new System.Text.StringBuilder();
+        sb.Append("INSERT OR REPLACE INTO reference_reverse (target_entity_id, source_entity_id, property_name, raw_id) VALUES ");
+        for (var r = 0; r < count; r++)
+        {
+            var (target, source, prop, raw) = entries[offset + r];
+            if (r > 0) sb.Append(", ");
+            sb.Append("('").Append(EscapeSql(target)).Append("','")
+              .Append(EscapeSql(source)).Append("','")
+              .Append(EscapeSql(prop)).Append("','")
+              .Append(EscapeSql(raw)).Append("')");
+        }
+        sb.Append(';');
+        return sb.ToString();
     }
 
     /// <summary>Sync version of InsertBatchAsync.</summary>
@@ -313,24 +344,10 @@ public sealed class ReferenceIndexService : IDisposable
 
     private void InsertBatchChunk(IReadOnlyList<IndexEntry> entries, int offset, int count)
     {
-        var sql = BuildMultiValuesSql("reference_index",
-            ["entity_type", "namespace", "pk", "entity_id", "group_id", "subgroup_id"],
-            count);
+        var sql = BuildIndexLiteralSql(entries, offset, count);
 
         using var cmd = _connection.CreateCommand();
         cmd.CommandText = sql;
-
-        for (var i = 0; i < count; i++)
-        {
-            var entry = entries[offset + i];
-            cmd.Parameters.AddWithValue($"@a{i}", entry.EntityType);
-            cmd.Parameters.AddWithValue($"@b{i}", entry.Namespace);
-            cmd.Parameters.AddWithValue($"@c{i}", entry.Pk);
-            cmd.Parameters.AddWithValue($"@d{i}", entry.EntityId);
-            cmd.Parameters.AddWithValue($"@e{i}", entry.GroupId.HasValue ? (object)entry.GroupId.Value : DBNull.Value);
-            cmd.Parameters.AddWithValue($"@f{i}", entry.SubgroupId.HasValue ? (object)entry.SubgroupId.Value : DBNull.Value);
-        }
-
         cmd.ExecuteNonQuery();
     }
 
@@ -524,42 +541,64 @@ public sealed class ReferenceIndexService : IDisposable
         IReadOnlyList<(string TargetEntityId, string SourceEntityId, string PropertyName, string RawId)> entries)
     {
         var sw = System.Diagnostics.Stopwatch.StartNew();
-        using var tx = _connection.BeginTransaction();
 
-        using (var delCmd = _connection.CreateCommand())
+        // Perf: reference_reverse is a rebuildable cache table — disable fsync for the
+        // rebuild (worst case: cache lost on crash, rebuilt on next open), then restore.
+        // With 94k+ rows this was ~1.8s of the merge-view open; sync=OFF cuts it to ~0.
+        var prevSync = await GetSynchronousAsync();
+        await SetSynchronousAsync("OFF");
+        try
         {
-            delCmd.CommandText = "DELETE FROM reference_reverse;";
-            await delCmd.ExecuteNonQueryAsync();
-        }
+            using var tx = _connection.BeginTransaction();
 
-        // Batch insert in chunks of BatchSize rows per INSERT
-        for (var offset = 0; offset < entries.Count; offset += BatchSize)
-        {
-            var count = Math.Min(BatchSize, entries.Count - offset);
-            var sql = BuildMultiValuesSql("reference_reverse",
-                ["target_entity_id", "source_entity_id", "property_name", "raw_id"],
-                count);
-
-            using var cmd = _connection.CreateCommand();
-            cmd.CommandText = sql;
-
-            for (var i = 0; i < count; i++)
+            using (PerfTracer.Scope("profile-open", "MergeView.Reverse.Delete"))
             {
-                var (target, source, prop, raw) = entries[offset + i];
-                cmd.Parameters.AddWithValue($"@a{i}", target);
-                cmd.Parameters.AddWithValue($"@b{i}", source);
-                cmd.Parameters.AddWithValue($"@c{i}", prop);
-                cmd.Parameters.AddWithValue($"@d{i}", raw);
+                using var delCmd = _connection.CreateCommand();
+                delCmd.CommandText = "DELETE FROM reference_reverse;";
+                await delCmd.ExecuteNonQueryAsync();
             }
 
-            await cmd.ExecuteNonQueryAsync();
-        }
+            using (PerfTracer.Scope("profile-open", "MergeView.Reverse.Insert"))
+            {
+                // Batch insert in chunks of BatchSize rows per INSERT.
+                // Perf: literal SQL (no AddWithValue) — parameter binding × 4/row was
+                // the ~2s hot spot for 94k reverse entries (37.8M bindings).
+                for (var offset = 0; offset < entries.Count; offset += BatchSize)
+                {
+                    var count = Math.Min(BatchSize, entries.Count - offset);
+                    var sql = BuildReverseLiteralSql(entries, offset, count);
 
-        await tx.CommitAsync();
+                    using var cmd = _connection.CreateCommand();
+                    cmd.CommandText = sql;
+                    await cmd.ExecuteNonQueryAsync();
+                }
+            }
+
+            await tx.CommitAsync();
+        }
+        finally
+        {
+            await SetSynchronousAsync(prevSync);
+        }
         sw.Stop();
         Log.Logger.Information(
             "[RefIndex] BuildReverseBatchAsync complete: {Count} reverse entries in {Ms}ms",
             entries.Count, sw.ElapsedMilliseconds);
+    }
+
+    private async Task<string> GetSynchronousAsync()
+    {
+        using var cmd = _connection.CreateCommand();
+        cmd.CommandText = "PRAGMA synchronous;";
+        var result = await cmd.ExecuteScalarAsync();
+        return result?.ToString() ?? "0";
+    }
+
+    private async Task SetSynchronousAsync(string mode)
+    {
+        using var cmd = _connection.CreateCommand();
+        cmd.CommandText = $"PRAGMA synchronous = {mode};";
+        await cmd.ExecuteNonQueryAsync();
     }
 
     /// <summary>Get ALL entries from the reference_index table (6 columns).</summary>

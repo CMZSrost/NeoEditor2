@@ -433,4 +433,29 @@ public static class ReferenceParser
 
         return results;
     }
+
+    /// <summary>
+    /// Fastest path for reverse-index building: (ExtractedId, RawText) pairs only.
+    /// Skips display formatting AND DecomposeId/ParseReference — the SQLite
+    /// reference_reverse table only needs the id for lookup and the raw text for
+    /// its raw_id column. Full <see cref="Parse"/> costs ~10x more per segment
+    /// (ResolvedRefSegment allocation + Dictionary per segment).
+    /// </summary>
+    public static List<(string ExtractedId, string RawText)> ExtractIdsWithRaw(
+        string value, ReferenceFieldAttribute attr)
+    {
+        var results = new List<(string, string)>();
+        if (string.IsNullOrWhiteSpace(value)) return results;
+
+        var pattern = attr.Pattern ?? "{id}";
+        var refPattern = ReferencePattern.FromName(pattern);
+
+        foreach (var trimmed in SplitSegments(value, attr))
+        {
+            var extractedId = refPattern.ExtractRawId(trimmed);
+            results.Add((extractedId, trimmed));
+        }
+
+        return results;
+    }
 }

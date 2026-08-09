@@ -39,6 +39,7 @@
         <ProjectReference Include="..\NeoEditor.Plugins.AiChat\NeoEditor.Plugins.AiChat.csproj" />
         <ProjectReference Include="..\NeoEditor.Plugins.Paratranz\NeoEditor.Plugins.Paratranz.csproj" />
         <ProjectReference Include="..\NeoEditor.Plugins.WebView\NeoEditor.Plugins.WebView.csproj" />
+        <ProjectReference Include="..\NeoEditor.Plugins.JsVisualization\NeoEditor.Plugins.JsVisualization.csproj" />
     </ItemGroup>
 
     <ItemGroup>

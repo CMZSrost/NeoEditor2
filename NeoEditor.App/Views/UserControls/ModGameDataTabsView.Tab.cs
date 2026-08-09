@@ -23,6 +23,7 @@ using NeoEditor.Data;
 using NeoEditor.Data.Context;
 using NeoEditor.Data.Model;
 using NeoEditor.Data.Model.Game;
+using NeoEditor.Diagnostics;
 using NeoEditor.Helper;
 using NeoEditor.Helper.Converter;
 using NeoEditor.Services;
@@ -342,6 +343,7 @@ public partial class ModGameDataTabsView
 
         _logger.LogInformation("[Attach] ENTER viewHash={VH:x} ESHash={ES:x} MSHash={MS:x} loadPending={LP} merge={IM}",
             GetHashCode(), EditStore.GetHashCode(), MergeStore.GetHashCode(), _loadPending, IsMergeView);
+        PerfTracer.Checkpoint("profile-open", "Attach");
 
         _navigationRouter.RegisterTarget(this);
 
@@ -378,6 +380,7 @@ public partial class ModGameDataTabsView
             _logger.LogInformation("[Attach] cache hit, replacing stores  oldES={OldES:x}→newES={NewES:x} oldMS={OldMS:x}→newMS={NewMS:x}",
                 EditStore.GetHashCode(), cached.EditStore.GetHashCode(),
                 MergeStore.GetHashCode(), cached.MergeStore.GetHashCode());
+            PerfTracer.Checkpoint("profile-open", "CacheHitRestore");
             // Replace VM stores with cached ones — so ALL code paths use the same stores.
             _vm.ReplaceStores(cached.MergeStore, cached.EditStore);
             _overriddenEntityIds = new HashSet<string>(MergeStore.OverriddenEntityIds);
@@ -412,6 +415,7 @@ public partial class ModGameDataTabsView
             {
                 _logger.LogError(ex, "[Attached] reload failed");
                 IsLoading = false;
+                PerfTracer.End("profile-open");
             }
         }, DispatcherPriority.Background);
     }

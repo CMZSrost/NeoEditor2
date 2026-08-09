@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using NeoEditor.Core.Abstractions;
 using NeoEditor.Data.Model;
 using NeoEditor.Data.Model.Game;
+using NeoEditor.Diagnostics;
 using NeoEditor.Services;
 
 namespace NeoEditor.Helper;
@@ -53,13 +54,15 @@ public class ReferenceIndex
 
     // ── R30: segment-normalization support ──
     //   _entityIdToType: EntityId → source entity type (built with the index)
-    //   _patternCache:   (sourceEntityId, propertyName) → [ReferenceField].Pattern
+    //   _patternCache:   (sourceType, propertyName) → [ReferenceField].Pattern
     // Used by Lookup to extract the id part of a segment ("67x0.05" → "67") per the
     // source field's parse pattern, so every caller — DataGrid, Value Editor badges,
     // visualizer badges — feeds the SAME canonical backend regardless of whether it
     // passes a full segment or an already-extracted id (ExtractRawId is idempotent).
+    // Keyed by (Type, propertyName) — the pattern depends only on the source field,
+    // so ~16k entities never repeat per-entity reflection (was per (entityId, prop)).
     private readonly Dictionary<string, Type> _entityIdToType = new();
-    private readonly Dictionary<(string SourceEntityId, string PropertyName), string?> _patternCache = new();
+    private readonly Dictionary<(Type SourceType, string PropertyName), string?> _patternCache = new();
 
     public ReferenceIndex(EntityMergeStore store)
     {
@@ -88,83 +91,89 @@ public class ReferenceIndex
             var skippedNoNs = 0;
             var skippedNoMergedId = 0;
 
-            foreach (var (entityType, entities) in _store.ReferenceLookups)
+            using (PerfTracer.Scope("profile-open", "RefIndex.Build.Fill"))
             {
-                foreach (var obj in entities)
+                foreach (var (entityType, entities) in _store.ReferenceLookups)
                 {
-                    if (obj is not IEntity entity) continue;
-                    totalEnt++;
-
-                    // R30: EntityId → source type, so Lookup can resolve the source field's
-                    // parse pattern for segment normalization ("67x0.05" → "67").
-                    _entityIdToType[entity.EntityId] = entityType;
-
-                    // Compute primary key — try Id first, then nID (same as MergeService.ResolveEntityKeyProperty)
-                    var primaryKey = ComputeEntityKey(entity);
-
-                    // Index by MergedId — ALWAYS if available (don't skip just because primaryKey is null)
-                    var hasMergedId = _store.EntityMergedIds.TryGetValue(entity.EntityId, out var mergedId);
-                    if (hasMergedId)
+                    foreach (var obj in entities)
                     {
-                        var midKey = (entityType, mergedId);
-                        if (_mergedIdIndex.TryGetValue(midKey, out var prevEid))
+                        if (obj is not IEntity entity) continue;
+                        totalEnt++;
+
+                        // R30: EntityId → source type, so Lookup can resolve the source field's
+                        // parse pattern for segment normalization ("67x0.05" → "67").
+                        _entityIdToType[entity.EntityId] = entityType;
+
+                        // Compute primary key — try Id first, then nID (same as MergeService.ResolveEntityKeyProperty)
+                        var primaryKey = ComputeEntityKey(entity);
+
+                        // Index by MergedId — ALWAYS if available (don't skip just because primaryKey is null)
+                        var hasMergedId = _store.EntityMergedIds.TryGetValue(entity.EntityId, out var mergedId);
+                        if (hasMergedId)
                         {
-                            _store.EntityModNames.TryGetValue(prevEid, out var prevMod);
-                            _store.EntityModNames.TryGetValue(entity.EntityId, out var newMod);
-                            Serilog.Log.Logger.Debug(
-                                "[RefIndex:Build] MergedId OVERWRITE: {Type}:mid={Mid} old={OldEid}(mod={OldMod}) → new={NewEid}(mod={NewMod})",
-                                entityType.Name, mergedId, prevEid, prevMod ?? "?", entity.EntityId, newMod ?? "?");
+                            var midKey = (entityType, mergedId);
+                            if (_mergedIdIndex.TryGetValue(midKey, out var prevEid))
+                            {
+                                _store.EntityModNames.TryGetValue(prevEid, out var prevMod);
+                                _store.EntityModNames.TryGetValue(entity.EntityId, out var newMod);
+                                Serilog.Log.Logger.Debug(
+                                    "[RefIndex:Build] MergedId OVERWRITE: {Type}:mid={Mid} old={OldEid}(mod={OldMod}) → new={NewEid}(mod={NewMod})",
+                                    entityType.Name, mergedId, prevEid, prevMod ?? "?", entity.EntityId, newMod ?? "?");
+                            }
+                            _mergedIdIndex[midKey] = entity.EntityId;
+                            midIdxCount++;
                         }
-                        _mergedIdIndex[midKey] = entity.EntityId;
-                        midIdxCount++;
-                    }
-                    else
-                    {
-                        skippedNoMergedId++;
-                    }
+                        else
+                        {
+                            skippedNoMergedId++;
+                        }
 
-                    // Index by namespace — only if we have a namespace and primary key
-                    if (primaryKey is null) continue;
-                    if (!_store.EntityNamespaces.TryGetValue(entity.EntityId, out var ns))
-                    {
-                        skippedNoNs++;
-                        continue;
-                    }
+                        // Index by namespace — only if we have a namespace and primary key
+                        if (primaryKey is null) continue;
+                        if (!_store.EntityNamespaces.TryGetValue(entity.EntityId, out var ns))
+                        {
+                            skippedNoNs++;
+                            continue;
+                        }
 
-                    var nsKey = (entityType, ns, primaryKey);
-                    if (_nsIndex.TryGetValue(nsKey, out var prevNsEid))
-                    {
-                        _store.EntityModNames.TryGetValue(prevNsEid, out var prevNsMod);
-                        _store.EntityModNames.TryGetValue(entity.EntityId, out var newNsMod);
-                        Serilog.Log.Logger.Debug(
-                            "[RefIndex:Build] NsIndex OVERWRITE: {Type}:ns={Ns}/pk={Pk} old={OldEid}(mod={OldMod}) → new={NewEid}(mod={NewMod})",
-                            entityType.Name, ns, primaryKey, prevNsEid, prevNsMod ?? "?", entity.EntityId, newNsMod ?? "?");
-                    }
-                    _nsIndex[nsKey] = entity.EntityId;
-                    nsIdxCount++;
+                        var nsKey = (entityType, ns, primaryKey);
+                        if (_nsIndex.TryGetValue(nsKey, out var prevNsEid))
+                        {
+                            _store.EntityModNames.TryGetValue(prevNsEid, out var prevNsMod);
+                            _store.EntityModNames.TryGetValue(entity.EntityId, out var newNsMod);
+                            Serilog.Log.Logger.Debug(
+                                "[RefIndex:Build] NsIndex OVERWRITE: {Type}:ns={Ns}/pk={Pk} old={OldEid}(mod={OldMod}) → new={NewEid}(mod={NewMod})",
+                                entityType.Name, ns, primaryKey, prevNsEid, prevNsMod ?? "?", entity.EntityId, newNsMod ?? "?");
+                        }
+                        _nsIndex[nsKey] = entity.EntityId;
+                        nsIdxCount++;
 
-                    // Composite-key index (e.g. ItemType nGroupID.nSubgroupID) — mirrors nsIndex/mergedIdIndex semantics.
-                    // R30 (M5): skip the invalid (0,0) key — every ItemType has GroupId/SubgroupId
-                    // defaulting to 0, and "0.0" is not a referenceable id (mirrors the rawId=="0" skip).
-                    if (TryGetCompositeKey(entity, out var gid, out var sid) && !(gid == 0 && sid == 0))
-                    {
-                        _mergedCompositeIndex[(entityType, gid, sid)] = entity.EntityId;
-                        _nsCompositeIndex[(entityType, ns, gid, sid)] = entity.EntityId;
+                        // Composite-key index (e.g. ItemType nGroupID.nSubgroupID) — mirrors nsIndex/mergedIdIndex semantics.
+                        // R30 (M5): skip the invalid (0,0) key — every ItemType has GroupId/SubgroupId
+                        // defaulting to 0, and "0.0" is not a referenceable id (mirrors the rawId=="0" skip).
+                        if (TryGetCompositeKey(entity, out var gid, out var sid) && !(gid == 0 && sid == 0))
+                        {
+                            _mergedCompositeIndex[(entityType, gid, sid)] = entity.EntityId;
+                            _nsCompositeIndex[(entityType, ns, gid, sid)] = entity.EntityId;
+                        }
                     }
                 }
+
+                Serilog.Log.Logger.Information(
+                    "[RefIndex:Build] totalEnt={Total} nsIdx={Ns} midIdx={Mid} skippedNoNs={NoNs} skippedNoMid={NoMid}",
+                    totalEnt, nsIdxCount, midIdxCount, skippedNoNs, skippedNoMergedId);
+
+                // Log first 10 MergedId entries for verification
+                var sample = _mergedIdIndex.Take(10).Select(kv =>
+                    $"{kv.Key.EntityType.Name}:mid={kv.Key.MergedId}→{kv.Value}").ToList();
+                Serilog.Log.Logger.Information("[RefIndex:Build] mergedIdIndex sample: {Sample}", string.Join(", ", sample));
             }
 
-            Serilog.Log.Logger.Information(
-                "[RefIndex:Build] totalEnt={Total} nsIdx={Ns} midIdx={Mid} skippedNoNs={NoNs} skippedNoMid={NoMid}",
-                totalEnt, nsIdxCount, midIdxCount, skippedNoNs, skippedNoMergedId);
-
-            // Log first 10 MergedId entries for verification
-            var sample = _mergedIdIndex.Take(10).Select(kv =>
-                $"{kv.Key.EntityType.Name}:mid={kv.Key.MergedId}→{kv.Value}").ToList();
-            Serilog.Log.Logger.Information("[RefIndex:Build] mergedIdIndex sample: {Sample}", string.Join(", ", sample));
-
             // Build reverse index
-            BuildReverse();
+            using (PerfTracer.Scope("profile-open", "RefIndex.Build.Reverse"))
+            {
+                BuildReverse();
+            }
         });
 
         Serilog.Log.Logger.Information(
@@ -274,15 +283,16 @@ public class ReferenceIndex
         if (nsPrefix is not null)
         {
             // Namespace-prefixed: lookup by (type, namespace, primary key)
-            Serilog.Log.Logger.Debug(
-                "[RefIndex:Lookup] NS route: type={Type} ns={Ns} pk={Pk} rawId={RawId} src={Src}",
-                targetType.Name, nsPrefix, lookupKey, rawId, sourceEntityId);
-
             if (_nsIndex.TryGetValue((targetType, nsPrefix, lookupKey), out var eid))
             {
-                _store.EntityModNames.TryGetValue(eid, out var mod);
-                var entityPk = TryGetEntityPrimaryKey(eid, targetType);
-                Serilog.Log.Logger.Debug("[RefIndex:Lookup] NS hit → {Eid} mod={Mod} pk={Pk}", eid, mod ?? "?", entityPk ?? "?");
+                // Perf: Debug arg evaluation is expensive (reflection + GetValue) —
+                // guard it so the hot lookup path stays pure dictionary access.
+                if (Serilog.Log.Logger.IsEnabled(Serilog.Events.LogEventLevel.Debug))
+                {
+                    _store.EntityModNames.TryGetValue(eid, out var mod);
+                    var entityPk = TryGetEntityPrimaryKey(eid, targetType);
+                    Serilog.Log.Logger.Debug("[RefIndex:Lookup] NS hit → {Eid} mod={Mod} pk={Pk}", eid, mod ?? "?", entityPk ?? "?");
+                }
                 return eid;
             }
 
@@ -300,40 +310,44 @@ public class ReferenceIndex
             if (_store.NamespaceToModName.TryGetValue(nsPrefix, out var mapped)
                 && _nsIndex.TryGetValue((targetType, mapped, lookupKey), out var mappedEid))
             {
-                _store.EntityModNames.TryGetValue(mappedEid, out var mappedMod);
-                Serilog.Log.Logger.Debug("[RefIndex:Lookup] NS mapped hit ns={Mapped} → {Eid} mod={Mod}", mapped, mappedEid, mappedMod ?? "?");
+                if (Serilog.Log.Logger.IsEnabled(Serilog.Events.LogEventLevel.Debug))
+                {
+                    _store.EntityModNames.TryGetValue(mappedEid, out var mappedMod);
+                    Serilog.Log.Logger.Debug("[RefIndex:Lookup] NS mapped hit ns={Mapped} → {Eid} mod={Mod}", mapped, mappedEid, mappedMod ?? "?");
+                }
                 return mappedEid;
             }
 
-            Serilog.Log.Logger.Debug("[RefIndex:Lookup] NS miss — nsIdx has {Count} entries for {Type}",
-                _nsIndex.Count(kv => kv.Key.EntityType == targetType), targetType.Name);
+            // Perf: the old `_nsIndex.Count(kv => ...)` in this Debug arg was an O(N)
+            // scan on EVERY miss — the dominant cost of reverse-index building.
+            if (Serilog.Log.Logger.IsEnabled(Serilog.Events.LogEventLevel.Debug))
+                Serilog.Log.Logger.Debug("[RefIndex:Lookup] NS miss — type={Type} ns={Ns} pk={Pk} rawId={RawId} src={Src}",
+                    targetType.Name, nsPrefix, lookupKey, rawId, sourceEntityId);
             return null;
         }
         else
         {
             // No namespace prefix: lookup by MergedId
-            Serilog.Log.Logger.Debug(
-                "[RefIndex:Lookup] MERGEDID route: type={Type} lookupKey={Key} rawId={RawId} src={Src}",
-                targetType.Name, lookupKey, rawId, sourceEntityId);
-
             if (int.TryParse(lookupKey, out var mergedId))
             {
                 if (_mergedIdIndex.TryGetValue((targetType, mergedId), out var eid))
                 {
-                    // Also log which entity we found
-                    _store.EntityModNames.TryGetValue(eid, out var foundMod);
-                    _store.EntityNamespaces.TryGetValue(eid, out var foundNs);
-                    var entityPk = TryGetEntityPrimaryKey(eid, targetType);
-                    Serilog.Log.Logger.Debug(
-                        "[RefIndex:Lookup] MergedId hit mid={Mid} → {Eid} mod={Mod} ns={Ns} pk={Pk}",
-                        mergedId, eid, foundMod ?? "?", foundNs ?? "?", entityPk ?? "?");
+                    if (Serilog.Log.Logger.IsEnabled(Serilog.Events.LogEventLevel.Debug))
+                    {
+                        // Also log which entity we found
+                        _store.EntityModNames.TryGetValue(eid, out var foundMod);
+                        _store.EntityNamespaces.TryGetValue(eid, out var foundNs);
+                        var entityPk = TryGetEntityPrimaryKey(eid, targetType);
+                        Serilog.Log.Logger.Debug(
+                            "[RefIndex:Lookup] MergedId hit mid={Mid} → {Eid} mod={Mod} ns={Ns} pk={Pk}",
+                            mergedId, eid, foundMod ?? "?", foundNs ?? "?", entityPk ?? "?");
+                    }
                     return eid;
                 }
-                Serilog.Log.Logger.Debug(
-                    "[RefIndex:Lookup] MergedId miss mid={Mid} — mergedIdIdx has {Count} entries for {Type}",
-                    mergedId,
-                    _mergedIdIndex.Count(kv => kv.Key.EntityType == targetType),
-                    targetType.Name);
+                // Perf: same O(N) `_mergedIdIndex.Count(...)` scan removed from the miss log.
+                if (Serilog.Log.Logger.IsEnabled(Serilog.Events.LogEventLevel.Debug))
+                    Serilog.Log.Logger.Debug("[RefIndex:Lookup] MergedId miss mid={Mid} — type={Type}",
+                        mergedId, targetType.Name);
             }
             else
             {
@@ -343,9 +357,10 @@ public class ReferenceIndex
                 {
                     return ceid;
                 }
-                Serilog.Log.Logger.Debug(
-                    "[RefIndex:Lookup] lookupKey '{Key}' is not a valid MergedId (not an int) — returning null",
-                    lookupKey);
+                if (Serilog.Log.Logger.IsEnabled(Serilog.Events.LogEventLevel.Debug))
+                    Serilog.Log.Logger.Debug(
+                        "[RefIndex:Lookup] lookupKey '{Key}' is not a valid MergedId (not an int) — returning null",
+                        lookupKey);
             }
 
             return null;
@@ -532,24 +547,22 @@ public class ReferenceIndex
 
     /// <summary>
     /// R30: resolve the [ReferenceField].Pattern of the SOURCE field for segment
-    /// normalization. Pattern depends on the source field, not the target type —
+    /// normalization. Pattern depends only on the source field (type + property) —
     /// resolved via EntityId → source type (built at index time) + reflection,
-    /// cached per (sourceEntityId, propertyName).
+    /// cached per (sourceType, propertyName) so the ~16k entities never repeat
+    /// reflection for the same field.
     /// </summary>
     private string? ResolvePattern(string sourceEntityId, string propertyName)
     {
         if (string.IsNullOrEmpty(propertyName)) return null;
-        var key = (sourceEntityId, propertyName);
+        if (!_entityIdToType.TryGetValue(sourceEntityId, out var sourceType)) return null;
+
+        var key = (sourceType, propertyName);
         if (_patternCache.TryGetValue(key, out var cached)) return cached;
 
-        string? pattern = null;
-        if (_entityIdToType.TryGetValue(sourceEntityId, out var sourceType))
-        {
-            var prop = sourceType.GetProperty(propertyName,
-                BindingFlags.Instance | BindingFlags.Public | BindingFlags.IgnoreCase);
-            pattern = prop?.GetCustomAttribute<ReferenceFieldAttribute>()?.Pattern;
-        }
-
+        var prop = sourceType.GetProperty(propertyName,
+            BindingFlags.Instance | BindingFlags.Public | BindingFlags.IgnoreCase);
+        var pattern = prop?.GetCustomAttribute<ReferenceFieldAttribute>()?.Pattern;
         _patternCache[key] = pattern;
         return pattern;
     }

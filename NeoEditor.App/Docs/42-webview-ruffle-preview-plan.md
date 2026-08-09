@@ -132,8 +132,9 @@ Chromium 内核限制：`file://` 页面无法 fetch/XHR 本地文件、无法�
 - **日志链路（实测）**：页面 console 拦截（**必须在 ruffle.js 之前执行**）→ 批量 POST 本地日志
   端点 → 每次运行独立日志文件（run id 由页面生成）；`%c` 样式标记清洗；window.onerror 一并上报。
 - ⚠️ **已知限制（影响编辑器默认预览）**：Steam 模组版（7 个 NSE 模组）卡预加载 **43%
-  「更新template-based items」** —— 数据特有的问题（成功版数据集同位置通过），与 Ruffle 能力无关，
-  待逐模组二分定位。**编辑器 GameRootDir 默认指向 Steam 版 → 排查完成前快速预览可能卡 43%**。
+  「更新template-based items」** —— **主要是编辑器写出的模组数据存在问题**（成功版数据集 ~40 模组
+  同位置完整通过 → 带模组可正常加载，非 Ruffle/播放器能力限制），待逐模组二分定位。
+  **编辑器 GameRootDir 默认指向 Steam 版 → 排查完成前快速预览可能卡 43%**。
 - **存档存储机制（SharedObject，调研目录 RESEARCH.md §4 确认）**：Ruffle web 将 SharedObject
   存浏览器 **localStorage**（key 带 swf 路径前缀，如 `<路径>/<名字>`），**无 Flash Player 的 100KB
   默认 SO 限额** —— Flash 时代「存档 ~1MB 恶性 bug」源于 Flash 默认 SO 限额，**理论上 Ruffle
@@ -258,8 +259,8 @@ SWF 发现逻辑。
   缓存失效问题。
 - **兼容**：未导入编辑器的 mod / 数据回退磁盘原文件 —— 预览先保证能跑，导入过才实时化。
 - **R24 合规**：实体数据一律经 `IHostService` 读取，不经 `GameDbContext`。
-- **与反代无关项**：Steam 模组版 43% 卡点为数据解析问题（R6），反代不改变；但换源后请求时序
-  变化，实装后顺带观察一次。
+- **与反代无关项**：Steam 模组版 43% 卡点为编辑器写出的模组数据解析问题（R6，非 Ruffle/播放器
+  限制，带模组可正常加载），反代不改变；但换源后请求时序变化，实装后顺带观察一次。
 
 ### 3.7 入口设计（语义分流：开发态 vs 交付态）
 
@@ -368,7 +369,8 @@ NeoEditor.Player（新 exe，Avalonia 桌面，独立运行）
 | P2.5 | **「内置预览（实时）」入口**：`SwfPreviewRequestedMessage` + 工具栏按钮（§3.7 入口矩阵）→ 打开 WebView 面板并以**反代模式**加载游戏 SWF | `Messages/`、`ModGameDataTabsView.*` |
 | P2.6 | **反代模块**：`ProxyHttpModule` —— getmods.php / getimages.php / data/*.xml / neogame.xml 四类路由（§3.6），经 `IHostService` + `IXmlParser.Export` + `PhpParser.GenerateImagePhp` 实时生成，磁盘回退；只读、仅回环 | `Services/ProxyHttpModule.cs`、resx |
 
-验收：点击预览 → 面板内运行 SWF 进入主菜单（**Steam 模组版卡 43% 为已知限制，见 R6**）；
+验收：点击预览 → 面板内运行 SWF 进入主菜单（**Steam 模组版可能卡 43% —— 编辑器写出的模组数据
+问题，非播放器限制，见 R6**）；
 `data/`/`img/` 正常加载；游戏内部日志（剪贴板）与 Ruffle 日志进入编辑器日志；关闭面板后回环端口
 释放；游戏根目录无任何写入。
 **存档实测（P0 路径 B 落地为验收项）**：预览内将存档玩至 1MB+，对比 Flash 时代恶性 bug 是否复现：
@@ -609,10 +611,10 @@ ruffle/ 静态资源 + LICENSE*）
 |---|------|----------|
 | R1（已降级） | 游戏 SWF 为 AIR 目标，web 版 Ruffle 无 AIR runtime | **P0.1 已实测缓解**：nightly-2026-08-04 完整加载成功版数据集并进入游戏（TypeError 0）；残余差异见 R6/O1；本功能定位快速预览，完整游戏仍走 ruffle.exe |
 | R2（中） | `Avalonia.Controls.WebView 12.0.1` 为较新官方控件：API 面、稳定性、非 Windows 行为未验证 | P0.2 最小工程验证；Windows 优先，非 Windows 平台行为定级后决定隐藏或降级 |
-| R3（低） | WebView2 Runtime 缺失（个别精简版 Win10） | 启动时检测（控件加载失败/环境探测），给出安装指引提示 |
+| R3（已关闭） | WebView2 Runtime 缺失（个别精简版 Win10） | **v2.68 已实施**：启动注册表检测 + 缺失弹窗（提示 + 官方安装链接，「打开安装页面」直达下载页）；控件创建异常兜底提示保留 |
 | R4（低） | 回环 HTTP 服务安全 | 仅 127.0.0.1 + 随机端口 + 面板生命周期内运行 + 路径越界 404；不做任何写接口 |
 | R5（低） | ruffle 版本漂移（0.5.0 过旧缺 Loader 等） | **版本锁定 nightly-2026-08-04（0.6.0-nightly.2026.8.4）起，实施时锁定最新正式版** + `RuffleWebAssets` 记录版本；升级走独立变更 |
-| **R6（高）** | **Steam 模组版（编辑器默认 GameRootDir）卡预加载 43%「更新template-based items」** —— 数据特有的问题，成功版数据集同位置通过 | 快速预览在排查完成前可能卡 43%：P2 验收需「卡进度提示 + 回退 ruffle.exe」兜底；根因排查（逐模组二分）可选跟进，成功版数据集可作对比基线 |
+| **R6（高）** | **Steam 模组版（编辑器默认 GameRootDir）卡预加载 43%「更新template-based items」** —— **主要是编辑器写出的模组数据存在问题**（成功版数据集 ~40 模组同位置完整通过 → 带模组可正常加载，非 Ruffle/播放器限制） | 快速预览在排查完成前可能卡 43%：P2 验收需「卡进度提示 + 回退 ruffle.exe」兜底；根因排查（逐模组二分）可选跟进，成功版数据集可作对比基线 |
 | R7（中） | 加载时长 5-10 分钟（模组多时数据解析慢） | `maxExecutionDuration: 600` + 加载进度提示；预览定位「慢但可用」，日志可观察进度 |
 | R8（低） | 图片请求洪峰（~3000 请求）压垮服务器 | P0.1 已实测解法：整读入内存 + LRU 256MB + EMFILE 重试 + ETag/304（static-server.js） |
 | O1 | `flash.display.Loader.load()` stub 是否影响后续运行 | 0.5.0 实测为 stub；成功版数据集完整通过（图片经 URLLoader 并行加载成功），**最新 nightly 是否已实现待重测**；运行时持续观察 |
@@ -689,13 +691,15 @@ dist/
 |------|------|
 | `%LocalAppData%/NeoScavengerPlayer/settings.json` | 主题 / 语言持久化 |
 | exe 旁 `logs/`（不可写时回退 `%LocalAppData%/NeoScavengerPlayer/logs/`） | `player-run-*.log`，每 run 一个，保留最新 2 个；导出产物（`player-log-export-*.txt`、`NeoScavengerPlayer-export-*.zip`）也落这里 |
+| 同上 `logs/` | `player-boot-*.log`，每启动一个，保留最新 5 个——**启动里程碑 + 崩溃原因**（v2.69；启动即闪退时凭它定位，游戏/运行日志另在 `player-run-*.log`）；反馈 zip 一并包含 |
 | `%LocalAppData%/NeoScavengerPlayer/WebView2/` | WebView2 缓存（EBWebView） |
 
 ### 发布前校验清单
 
 1. `dotnet build NeoEditor.sln` → 0 错误；`dotnet test NeoEditor.sln` → 13 项目全绿。
 2. publish 产物 < 200MB、**无 `*.pdb`**、无 `runtimes/` 多平台目录、Web/ruffle 存在。
-3. 冒烟：运行 exe 数秒无异常；拖入 SWF → 游戏进主菜单（Steam 模组版卡 43% 为已知限制）。
+3. 冒烟：运行 exe 数秒无异常；拖入 SWF → 游戏进主菜单（Steam 模组版卡 43% 为编辑器写出的
+   模组数据问题，非播放器限制，见 R6）。
 4. 数据浏览：合并 24 类、详情两栏、图片画廊、被引用链接跳转。
 5. 主题（跟随系统/亮/暗）与语言（中/英）切换即时生效，重启后保持。
 6. 日志：覆盖层分类过滤（console/clipboard/warn/error/debug）；游戏退出后 `logs/`
@@ -720,7 +724,7 @@ dist/
 
 - **杀毒/Defender 误报** self-contained 单文件：加白名单或改多文件发布。
 - **SmartScreen「发布者未知/已保护你的电脑」**：未签名 exe 从网络下载（带 MOTW）的正常提示——右键 zip/exe → 属性 → 解除锁定，或「更多信息 → 仍要运行」；代码签名（Azure Trusted Signing / 商业证书）列入后续计划（R61）。
-- **WebView2 Runtime 缺失**：控件加载异常提示 → 安装 WebView2 Runtime。
+- **WebView2 Runtime 缺失**：启动时检测（v2.68）——缺失即弹窗（提示 + 官方安装链接，「打开安装页面」直达下载页）；控件创建异常兜底提示仍在。
 - **端口占用**：GameContentServer 随机回环端口，冲突自动重试。
 - **日志文件打不开**：日志 sink 以 FileShare.ReadWrite 打开，可并发读；保留策略自动清理。
 
@@ -1415,3 +1419,24 @@ BaseLow 与侧栏区分；Markdown 区域走 MarkdownTheme.axaml 双字典（v2.
     存档管理/存档修改器/日志窗统一缩小）；④ **数据浏览器模组图片修复**：图片来源 =
     主 `img/` + `Mods/<mod>/img/`（与 ProxyHttpModule/ImageSearchService 约定一致），
     WikiDetailBuilder 构造时扫描缓存、按序查找——mod 图片不再"缺失"（R54）。
+  - v2.67（2026-08-08）：**43% 卡点根因订正（非播放器限制）** —— Steam 模组版卡 43%
+    「更新template-based items」**主要是编辑器写出的模组数据存在问题**（带模组实际可正常加载：
+    成功版数据集 ~40 模组完整加载进入游戏），非 Ruffle/播放器兼容性限制。订正：README「已知限制」
+    只保留杀软误报一条（删除 43% 条目）、Help/zh/Ruffle运行游戏.md FAQ 归因、本文 §2.5 / §3.6 /
+    P2 验收 / R6 / §八 冒烟表述。纯文档订正，代码无改动。
+  - v2.68（2026-08-08）：**WebView2 Runtime 启动检测 + 缺失弹窗** —— 播放器唯一渲染路径是
+    WebView2 承载的 Ruffle 预览，运行时缺失不能再等到拖入 SWF 才在面板里露出裸错误文本。
+    `WebView2RuntimeCheck`（Services/，注册表检测 EdgeUpdate Clients 键的 pv 值，四视图
+    HKLM/HKCU × 64/32，与 WebView2 SDK 内部逻辑一致，零新依赖——Avalonia.Controls.WebView
+    自带 interop 未引 SDK 包）：PlayerWindow OnLoaded 时检测，缺失 → 弹窗（提示 + 官方安装
+    链接 https://go.microsoft.com/fwlink/?linkid=2124701，resx zh/en 三键），「打开安装页面」
+    按钮默认浏览器直达；非缺失类异常不回退弹窗（懒创建 WebView 的兜底错误文本仍负责）。
+  - v2.69（2026-08-08）：**启动日志（player-boot-*.log）** —— 实机反馈：部分机器启动即闪退
+    （鼠标转圈后无反应、无任何输出），且此前启动期崩溃发生在 Serilog/FileRunLogWriter/UI 就绪
+    之前，原因不可见。新增 `BootstrapLog`（Player/Services/）：Program.Main 第一行即建
+    `logs/player-boot-*.log`（沿用 FileRunLogWriter.ResolveDirectory 的 exe 旁/回退规则，每启动
+    一个、保留最新 5 个、逐行落盘），记录启动里程碑（Main 进入 + OS/CLR/args/WebView2 检测 →
+    AppBuilder 启动 → XAML 加载 → PlayerServices.Create → 主窗口创建/显示 → 退出），并挂
+    AppDomain.UnhandledException / TaskScheduler.UnobservedTaskException 早绑处理器 +
+    Avalonia 启动 try/catch，崩溃原因必有落盘；游戏/运行日志保持独立 player-run-*.log 不动，
+    反馈 zip 同时包含 boot 日志。纯日志基础设施，UI 无变化。

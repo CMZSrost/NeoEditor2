@@ -236,7 +236,7 @@ public class RecipeEntityVisualizer : IEntityVisualizer
                         Padding = new Thickness(8, 3),
                         Child = new TextBlock { Text = ing.Name ?? seg, FontSize = 11, Foreground = Brush.Parse("#333") }
                     };
-                    _refNode.WireNavigation(nameBadge, typeof(Ingredient), ing.EntityId, r);
+                    _refNode.WireNavigation(nameBadge, typeof(Ingredient), ing.EntityId, r, ing);
                     nameRow.Children.Add(nameBadge);
                 }
                 else

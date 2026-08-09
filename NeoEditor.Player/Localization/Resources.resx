@@ -83,6 +83,9 @@
   <data name="Common.Close" xml:space="preserve"><value>关闭</value></data>
   <data name="Error.DialogTitle" xml:space="preserve"><value>检测到游戏错误</value></data>
   <data name="Error.DialogBody" xml:space="preserve"><value>游戏可能发生了错误：&#x0a;{0}&#x0a;&#x0a;完整错误已记录到运行日志。</value></data>
+  <data name="WebView2.MissingTitle" xml:space="preserve"><value>缺少 WebView2 Runtime</value></data>
+  <data name="WebView2.MissingBody" xml:space="preserve"><value>未检测到 Microsoft Edge WebView2 Runtime——播放器依赖它渲染 Ruffle 游戏画面，缺少时无法运行游戏。&#x0a;&#x0a;请安装后重新启动播放器：&#x0a;{0}</value></data>
+  <data name="WebView2.OpenInstallPage" xml:space="preserve"><value>打开安装页面</value></data>
   <data name="Status.ErrorDetected" xml:space="preserve"><value>⚠ 检测到游戏错误（详见日志）</value></data>
   <data name="Status.ErrorExit" xml:space="preserve"><value>游戏异常退出（详见日志）</value></data>
   <data name="Storage.Title" xml:space="preserve"><value>存档管理</value></data>

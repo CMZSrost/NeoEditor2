@@ -41,15 +41,13 @@ GitHub Actions 自动出 zip，见 [Docs/42 §八](NeoEditor.App/Docs/42-webview
 |------|------|
 | 游戏存档 | 页面 localStorage（固定回环端口 → 重开播放器保留）；另自动备份到 `{游戏根目录}/save_backup/`（最近 5 份） |
 | 运行日志 | exe 旁 `logs/player-run-*.log`（每 run 一个，保留最新 2 份）；不可写时落到 `%LocalAppData%/NeoScavengerPlayer/logs` |
+| 启动日志 | exe 旁 `logs/player-boot-*.log`（每次启动一个，保留最新 5 份——启动里程碑 + 崩溃原因，启动即闪退时凭它定位）；不可写时同上回退 |
 | 设置 | `%LocalAppData%/NeoScavengerPlayer/settings.json` |
 | WebView2 缓存 | `%LocalAppData%/NeoScavengerPlayer/WebView2` |
 
 ### 已知限制
 
-- **Steam 模组版加载卡 43%**：Ruffle 兼容性限制（原版游戏正常）
-- **杀软误报**：self-contained 单文件 exe 可能被 Defender 误报——加白名单，或改用多文件发布（`./publish.ps1` 选项 2）
-- **剪贴板策略**：游戏会把内部日志写入剪贴板，播放器已接管拦截——内容重定向到日志（level=clipboard），不再污染系统剪贴板
-- 存档损坏修复依赖 Ruffle 序列化兼容性，历史备份见 `save_backup/` 与「存档管理 → 备份」
+- **杀软误报**：未签名 self-contained 单文件 exe 可能被 Defender 误报——加白名单，或改用多文件发布（`./publish.ps1` 选项 2）
 
 ### 反馈 bug
 

@@ -13,6 +13,7 @@ using NeoEditor.Data.Messages;
 using NeoEditor.Plugins.EntityEditor.ViewModels;
 using NeoEditor.Services;
 using NeoEditor.UI.Common.Services;
+using NeoEditor.UI.Common.Visualizers;
 
 namespace NeoEditor.Plugins.EntityEditor.Views;
 
@@ -20,6 +21,7 @@ public partial class EntityEditorView : UserControl
 {
     private EntityEditorDocument? _lastDoc;
     private CancellationTokenSource? _xmlDebounce;
+    private IEntityJsVisualizationHost? _jsVizHost;
 
     /// <summary>Resolve service from DI container registered in App.</summary>
     private static T GetService<T>() where T : notnull
@@ -121,13 +123,46 @@ public partial class EntityEditorView : UserControl
                 RebuildVisualizer(_lastDoc);
             EditorTabs.SelectedIndex = 0;
         }
+        EnsureJsVizHost();
+    }
+
+    /// <summary>
+    /// D09: mount the JS 可视化 tab via the cross-plugin extension point
+    /// (IEntityJsVisualizationHost, registered by NeoEditor.Plugins.JsVisualization).
+    /// No implementation or no WebView2 → the tab stays hidden (IsVisible=false).
+    /// </summary>
+    private void EnsureJsVizHost()
+    {
+        // 幂等：已挂载或本 Grid 已有子视图（DataContext 重入/重挂）则跳过——
+        // JsVizView 不可被第二次 Add 进同一/新宿主（"already has a visual parent"）。
+        if (_jsVizHost != null || JsVizHost.Children.Count > 0) return;
+        IEntityJsVisualizationHost host;
+        try
+        {
+            host = GetService<IEntityJsVisualizationHost>();
+        }
+        catch (Exception)
+        {
+            return; // plugin not registered — keep the tab hidden
+        }
+
+        var view = host.BuildView();
+        if (view is null) return; // WebView2 unavailable on this platform
+        JsVizHost.Children.Add(view);
+        JsVizTabItem.IsVisible = true;
+        _jsVizHost = host;
+        if (DataContext is EntityEditorDocument doc && doc.Entity != null)
+            _jsVizHost.LoadEntity(doc.Entity);
     }
 
     private void OnDocPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName == nameof(EntityEditorDocument.Entity)
             && DataContext is EntityEditorDocument doc)
+        {
             RebuildVisualizer(doc);
+            _jsVizHost?.LoadEntity(doc.Entity);
+        }
     }
 
     public void RebuildVisualizer(EntityEditorDocument doc)

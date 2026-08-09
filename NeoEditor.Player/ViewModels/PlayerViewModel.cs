@@ -280,7 +280,10 @@ public sealed partial class PlayerViewModel : ObservableObject, IDisposable
                 }
             }
 
-            var logFiles = Directory.EnumerateFiles(dir, "player-run-*.log").ToList();
+            // v2.69: the feedback bundle also carries the boot log (startup crash diagnosis).
+            var logFiles = Directory.EnumerateFiles(dir, "player-run-*.log")
+                .Concat(Directory.EnumerateFiles(dir, "player-boot-*.log"))
+                .ToList();
             var backupDir = Path.Combine(_config.Config.GameRootDir, "save_backup");
             var backupFiles = Directory.Exists(backupDir)
                 ? Directory.EnumerateFiles(backupDir, "*.json").ToList()

@@ -423,7 +423,7 @@ public class ItemTypeEntityVisualizer : IEntityVisualizer
                     Text = t.Subject ?? t.Name ?? $"TT#{t.Id}", FontSize = 11,
                     Foreground = Brush.Parse("#795548")
                 };
-                _refNode.WireNavigation(breakHeader, typeof(TreasureTable), t.EntityId, it);
+                _refNode.WireNavigation(breakHeader, typeof(TreasureTable), t.EntityId, it, t);
                 itemBody.Children.Add(breakHeader);
                 if (!string.IsNullOrWhiteSpace(tt.Treasures))
                 {
@@ -549,7 +549,7 @@ public class ItemTypeEntityVisualizer : IEntityVisualizer
         };
         if (!isUnresolved)
         {
-            _refNode.WireNavigation(nameTb, typeof(AttackMode), am.EntityId, am);
+            _refNode.WireNavigation(nameTb, typeof(AttackMode), am.EntityId, am, am);
             ToolTip.SetTip(nameTb, _vis.BuildRefTooltip(am));
         }
 
@@ -1367,7 +1367,7 @@ public class ItemTypeEntityVisualizer : IEntityVisualizer
             Text = $"{label}: {t.Subject ?? t.Name ?? $"TT#{t.Id}"}",
             FontSize = 11, Foreground = Brush.Parse("#1565C0")
         };
-        _refNode.WireNavigation(header, typeof(TreasureTable), t.EntityId, t);
+        _refNode.WireNavigation(header, typeof(TreasureTable), t.EntityId, t, t);
         section.Children.Add(header);
 
         if (!string.IsNullOrWhiteSpace(tt.Treasures))

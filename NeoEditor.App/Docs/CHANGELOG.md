@@ -2,9 +2,105 @@
 
 ---
 
+## R65：profile 打开性能 20.6s→3.9s（[Perf] 埋点体系 + 引用索引四项优化 + 两阶段加载）| 2026-08-08
+
+**目标**（用户）：profile 打开到数据表加载完 + UI 正常整个流程太慢（明明从数据库加载），埋点定位慢环节。
+
+**埋点体系**（`NeoEditor.Infra/Diagnostics/PerfTracer.cs`，永久保留）：`Start`/`Checkpoint`/`End`（flow 累计耗时 + 段增量）+ `Scope`（独立计时段），输出 `[Perf]` 前缀到 Serilog。覆盖：app-startup 六段（含 EnsureDb 三段细分）、profile-open 全流程（PreLoad 每 mod / ComputeMerge 每类型 EF 查询与合并 / CopyToStores / 索引构建 / Restore）、MergeView 收集每类型 + hit/miss 统计、BrowserIndex.Rebuild/Restore。
+
+**定位结论**：EF 查库不是瓶颈（25 类型全加载仅 ~550ms）；慢的是加载完后的**两个引用索引构建**（内存 `ReferenceIndex` + SQLite `reference_index`/`reference_reverse`），最初占 15.9s 打开流程的 84%。
+
+**优化**（`ReferenceIndexService.cs` / `ReferenceIndex.cs` / `ReferenceResolver.cs` / `ModGameDataTabsView`）：
+1. **反向索引批量写入**：逐条 `AddReverseAsync`（无事务，每次 fsync）→ `BuildReverseBatchAsync`（DELETE + 500 条/批 + 单事务），MergeViewIndex 9.2s→6.4s
+2. **Debug 日志 O(N) 参数求值**：`_nsIndex.Count(kv => ...)` 每次 miss 全表扫描 + 命中时反射 pk 解析，全部移进 `IsEnabled(Debug)` 守卫 → `RefIndex.Build.Reverse` **4144→370ms**
+3. **Collect 三连**：`LookupRefByRawId` fallback 去掉（内存版 BuildReverse 本就 miss 直跳，O(N) 扫描是 4.4s 主因）→ 4376→325ms；`LookupGlobal`→context-aware `Lookup`（source pattern + NamespaceToModName 映射）；`Parse`→`ExtractIdsWithRaw` 快速路径（跳过 ResolvedRefSegment/Dictionary 分配）；**移除 `BuildReverseIndexAsync` 内重复正向构建**（调用方已构建；顺带修复 group_id/subgroup_id 被 4 列简版覆盖为 NULL）
+4. **SQLite 批量写入**：重建期临时 `PRAGMA synchronous=OFF`（缓存表可重建）+ **字面量 SQL 去参数化**（`BuildIndexLiteralSql`/`BuildReverseLiteralSql`，值均为应用内部字符串仅转义 `'`；消除 37.8 万次 AddWithValue）→ `MergeView.Reverse.Insert` **2040→344ms**、`MergeViewIndex` **2997→695ms**
+
+**两阶段加载**（`ReloadMergeTabsAsync` 拆分）：
+- 阶段 1（~2.3s）：数据加载到 SeedCache → `IsLoading=false` → 网格立即可见（引用列显示 rawtext）
+- 阶段 2（后台 `BuildIndexesAndFinalizeAsync`）：内存索引 → SQLite 索引（保序）→ **TabSnapshotCache 保存（必须等索引完成，缓存命中不重建）** → 命令日志/待导出恢复 → UI 线程重绑 ItemsSource（`RebuildFilteredItemsSources`，引用列模板重新生成）**rawtext 自动刷新为解析文本**
+- 机制事实（探索确认）：引用列每行渲染时实时查 `Index.LookupDisplay`、结果物化进 TextBlock（无 Binding）→ 索引就绪必须 rebind；`store.Index` lazy + 全部消费者 null 守卫 → 未就绪时跳转/视觉器静默降级不崩
+- 期间跳转：索引就绪前 Ctrl+点击静默 no-op（~1s 窗口）；视觉器/Referenced By 面板就绪前为空，重开即正常
+
+**结果**（复测日志 [Perf]）：
+
+| 指标 | 初始 | 最终 |
+|---|---|---|
+| DataReady（网格可见） | 15522ms | **2258ms** |
+| UILoaded（UI 正常） | 15861ms | **2670ms** |
+| MergeViewIndex | 13835ms | **695ms** |
+| END total（完整就绪） | 20585ms | **3915ms** |
+
+**测试**：未新增测试（纯埋点 + 性能改动，语义保持）；14 个测试项目全绿（924）。用户 GUI 复测：两阶段显示 / 引用列刷新 / 缓存命中 / 跳转均正常。
+
+---
+## R62：Encounter 剧情语义升级（D07 v1.2）| 2026-08-08
+
+**目标**（用户）：从 Encounter 设计角度让 mod 开发者直观看出数据信息——先调研（字段说明 + 2264 条实测 + Doc 37 §5.1）再设计，UI 是呈现数据的最好手段，烂 UI 只会增加学习成本。
+
+**调研发现**（全量 2264 条 encounters.xml 解析）：
+- 自指循环 437 段 = 「停留」语义；指向 id=1（Blank 空剧情）855 段 = 「无后续」
+- 响应左侧纯数字 = **Ingredient**（52=撬棍，Doc 37 §5.1 已验证 6 种），非 ItemType
+- p2 = 物品销毁标记（32 段 =1 直接销毁；54 段 =0 由目标移除池）；p3 = 成功概率（破解场景）
+- **p3 分布：0 占 99.1%（4351/4392，标准后缀默认值）、1 仅 32、∈(0,1) 仅 9** → 仅 (0,1) 显示
+- **vLoot 哨兵：默认 "0" 1666 条 + "3"（空白池）577 条，真值仅 21 条** → 0/3 双排除
+- vAccidents 默认 "1" 570 + "0" 479，真值 17；nRemoveTreasureID 默认 3 真值 46；nTreasureID 默认 3 真值 240
+- AND 多物品（`+` 连接 = 需同时拥有）仅 5 段；vLoot 双语义（type=1 搜刮池 / type=0 事件给物）
+
+**实现**（设计文档 `spec/D07-encounter-semantics-design.md` v1.2）：
+1. **终止节点**：`BranchEndKind`（自指→Stay「⏹ 停留」、=1 且当前≠1→Blank「☰ 无后续」、自指优先）——灰色胶囊（#ECEFF1/#546E7A）替代卡片，无图/无导航；Mermaid 输出 STAY/BLANK 节点，消除 `A --> A` 自环
+2. **Ingredient 双目标**：纯数字 → `LookupRef<Ingredient>`（nID）优先 → ItemType 主键兜底 → 灰 `Item #id`；tooltip `🛠 撬棍`（工具色 #E8EAF6/#283593，与物品 🛡 区分）
+3. **p2/p3**：p2=1 → 徽章 `（消耗）`；p3∈(0,1) → `⚡ 成功概率 50%`；0/1 均不显示（v1.1 修正，防 99% 分支误标 0%）
+4. **AND 语义**：`需同时拥有：A + B`（与多段合并的并列"任一"区分）
+5. **vLoot/nItemsID 标注**：vLoot 按 type → `搜刮池`/`事件给物`（v1.2 哨兵修正，0/3 双排除）；nItemsID ≠3 → `触发给予物品` + 物品名
+
+**测试**：EncounterVisualizerTests 16→27（+11：终止判定纯函数/渲染/Mermaid/Ingredient/兜底/p2/p3/AND/vLoot 双语义/vLoot 哨兵回归/nItemsID）。**873/873**（EntityEditor 87→98）。
+
+---
+
+## R63：Encounter 页面全页生命周期重排（D08 v1.2：场景流转主视图）| 2026-08-08
+
+**目标**（用户）：从 Encounter 设计角度让 mod 开发者直观看出数据信息——**场景流转认知**：
+看不见前后场景就无法定位场景在干什么；DataTable 的 `90.1x1=12x1x0x0x0` 复杂语法基本不可能串联，
+应由 UI 直观呈现并贴合用户心理模型。
+
+**重构**（设计文档 `spec/D08-encounter-page-redesign.md` v1.2）：
+1. **页面五段生命周期**：① 身份（Hero + 入口/终点标记）→ ② **场景流转主视图** → ③ 如何进入（触发条件/触发器摘要）→ ④ 内容与效果 → 被引用面板
+2. **场景流转主视图**（`BuildFlowView`）：横向三段「前驱层 → 当前卡 → 后继层」——前驱 = 谁通向这里（来路标注 `🛡 撬棍 ×1 →` / `需同时拥有：A+B →`，无前驱 → `⛳ 入口`）；当前卡高亮居中；后继层复用 D06/D07 分支卡（概率胶囊/终止胶囊/AND/p2·p3 全保留）；**复杂引用语法全 UI 翻译**
+3. **「⏎ 回到当前场景」按钮**（v1.2）：节标题右侧常显，点击 `NavigateToEntity` 一键归位
+4. **节点 Ctrl+LMB 跳转 / Ctrl+RMB Peek**（v1.2）：前驱/后继卡整卡 `WireNavigation`（复用 `RefNode.cs` 内置修饰键导航），当前卡不接
+5. **③ 如何进入**：触发条件（"1"/"0" 去噪、语义色、hover 效果翻译）+ 自身 PreConditions + 触发器摘要（📍 区域/📅 日期/🧱 格类型/♻ 可重复，可跳转）
+6. **④ 内容与效果**：描述书页式（96px 缩略图 + 文本）+ ✨ 效果区 6 字段聚合行（🎁 给物+内联战利品树 / 📦 给予物品 / 💰 费用 / 🗑 移除 / 📍 传送 / 🐾 刷出+半径，全空隐藏）+ 地图标注小节
+7. **纯函数**：`FindPredecessors`（aResponses 无 [ReferenceField] 不进引用索引 → 扫描 Encounter 集合并用共享 ParseResponseEntries 解析，可选预建 itemTypes 字典）、`DetermineEntryTerminal`（无入边→入口、全终止出边→终点）
+8. **Refs/触发器面板拆散归位**（无遗留字段，无需「其他引用」折叠区）
+
+**偏离**：① 4 个旧测试断言随 D08 更新（剧情分支→场景流转；vLoot/nItemsID 改统一效果行标签）；② nTreasureID 渲染为「🎒 战利品池」行（避免双「给物」）；③ aConditions 效果链行未做（条件效果翻译已在 ③ hover 提供）。
+
+**测试**：EncounterVisualizerTests 27→41（+14，含页面顺序/前驱渲染/来路翻译/回到当前 headless 点击/节点导航 Ctrl+LMB+RMB/效果区/入口终点纯函数）。**887/887**（EntityEditor 98→112）。
+
+---
+
+## R64：Encounter 流转组件交互修订（D08 v1.3）| 2026-08-08
+
+**反馈**（用户）：① 内容与效果区一般般——简单参数（小地图标记/编辑器坐标）占两三行，基于物品太小、明显是 TreasureTable 要递归展开；② Ctrl+RMB Peek 有问题——可视化里 peek 反而显示自己；场景流转里只有 Ctrl+LMB 有反应；③ 场景流转的设计意图 = **左键点击加载下一步场景（组件内 navigation）**，「回到当前」是为这个设计的。
+
+**修复**（设计文档 `spec/D08-encounter-page-redesign.md` v1.3）：
+1. **流转组件左键导航**：前驱/后继卡（EndKind.None）普通左键点击 → `current = 目标; RebuildFlow()`——组件内焦点切换，重算该场景的入边/出边并重渲染；「⏎ 回到当前」改为**组件内焦点复位**（`current = enc`），不再页面跳转
+2. **Ctrl+RMB Peek 修复**：`RefNode.WireNavigation` 原传 `sourceEntity`（当前实体）给 RequestPeek → peek 显示自己；**v1.3 终版：WireNavigation 新增 `resolvedTarget` 参数，全部 10 个调用点（Badge/TreasureTable/AttackMode/Ingredient/CreatureSource/FlowView 前驱后继/链树/分支卡）直接传入已解析目标实体**——peek 永远收到正确实体，不依赖内部二次解析（LookupRefByRawId 仅作兜底）；peek 测试断言增强为验证实体对象非 null 且为正确目标
+3. **效果区压缩**：地图标注（aMinimapHexes/ptEditor）从两节两三行压缩为**一行 WrapPanel 徽章**（📍(x,y) 标签 / ✏️(坐标)）；新增 Vis.MapNotes 键
+4. **nTreasureID 递归展开**：🎒 战利品池与 vLoot 一致递归展开内联战利品树（复用 BuildLootInlineTree）
+
+**测试**：2 个测试按 R64 更新（居中断言适配 currentHolder；回到当前改为「左键切换焦点 → 点击复位」完整交互断言）。**887/887**（EntityEditor 112/112）。
+
+**R64 补充**（用户复测反馈）：① 场景流转改**三行布局**（用户澄清：横向排布 = 排成 3 行、当前场景放第二行——前驱层一行横向排开 / 当前场景第二行居中 / 后继层第三行横向排开；每层内部一字排开一屏多节点，不是全部塞进同一行）；② 焦点切换后当前场景卡**滚动居中**（CenterOnCurrent：Dispatcher.Post 布局完成后按 currentHolder 位置计算 Offset）。**887/887**（EntityEditor 112/112，FlowView 5 测试全过）。
+**R64 补充 2**（用户复测反馈）：① **去掉 TabControl**——只留场景流转内容直接内联（剧情链/Mermaid 源码两个 Tab 没必要，连同 BuildEncounterChainTree/BuildMermaidText 死代码一并删除）；② **内容与效果区重构**——效果区从 8 个散落徽章行改为紧凑"行为清单"（单 Card 内每行 = 语义徽章 + 值，可跳转）；vLoot/nTreasureID **同类合并**为 🎁 获得行且战利品树直接复用 TreasureTable 嵌套组件；地图标注（🗺）**并入效果区最后一行**；emoji 统一由资源键值承担（修正：后续补充 3 明确复用 BuildNestedItems，不再手搓 Expander）。**884/884**（EntityEditor 109/109，-3 Mermaid 测试）。
+**R64 补充 3**（用户复测反馈）：① 内容与效果**移到场景流转上方**（先看"这个剧情是什么/做了什么"，再进入流转上下文）；② **分两栏**——左 = 内容（仅描述，图片已在 Hero 不重复，文本 Wrap 收进 Card 不超出），右 = 效果（行为清单）；③ **场景流转高度拉高**（MaxHeight 500→900，三行布局完整可见）；④ **战利品树复用 TreasureTableEntityVisualizer.BuildNestedItems**（现成嵌套组件：概率归一/递归/兜底，不再手搓 Expander）；⑤ 效果区**去掉"效果"标题头**（每行自带语义徽章，看内容自然能猜出来）。**884/884**（EntityEditor 109/109）。
+**R64 补充 4**（用户复测反馈）：① 场景流转**去掉所有箭头**（布局三行已暗示流向：前驱行→当前行→后继行，无需显式箭头）；② **前驱来路标注/后继去路标注移入节点卡片底部行中间**（Annotation 字段，不再放卡片外部；后继多触发段用 ｜ 分隔，AND 用 需同时拥有）；③ **类型 badge（剧情/搜刮/战斗/破解）移到节点标题左边**——每个节点都有的属性，放标题旁一眼表明场景类型（不再挤在底部 chip 行）。**884/884**（EntityEditor 109/109）。
+
 ---
 
 ## R60：发布线拆分（player-v*/editor-v* 独立 workflow）+ 内测包 1.0.0 | 2026-08-08
+
 
 **反馈**（用户）：① 推送脚本应该单独两条发布线——Player 发包时 release 只发播放器包，不混发；② 重新发 1.0.0 只发 player。
 
@@ -40,6 +136,8 @@
 **测试**：EncounterVisualizerTests +15（纯函数数值断言 + Avalonia.Headless 输入模拟导航 + ToolTip.GetTip 断言 tooltip 内容）。**861/861**（13 项目全绿，EntityEditor 71→86）。
 
 **v2 微调**（用户复测反馈）：节点卡布局改为 标题（第一行居中）→ 图片（第二行主体 168×110 ≈ 卡片 70%，点击放大）→ 第三行左&中 ID/类型 chip + 右侧概率胶囊；tooltip 物品行用 **Item.Name**（非 Description）且置于第二行（标题之后）。测试断言图片 52→168。
+
+**v3 微调**（用户复测反馈「多选时 tooltip 只看到一个徽章」）：**同目标多段响应合并**——实测游戏数据有 31 例（如 `91.4x1=941x1x0x0x0,103.8x1=941x1x0x0x0` 多个物品触发同一剧情），此前每段渲染一张卡导致同目标多张相同卡、tooltip 只有单物品徽章。修复：`BranchData.Item → List<BranchItem>`，`PrepareBranches` 按 TargetId 合并（权重累加、物品列表），分支卡每目标一张，**tooltip 列出全部触发物品徽章**，Mermaid 边标签多物品 `+` 连接。+1 测试（合并/权重累加/tooltip 双物品断言）。**862/862**。
 
 ---
 

@@ -12,6 +12,7 @@ using NeoEditor.Data.Context;
 using NeoEditor.Data.DTO;
 using NeoEditor.Data.Messages;
 using NeoEditor.Data.Model.Game;
+using NeoEditor.Diagnostics;
 using NeoEditor.Helper;
 using Serilog;
 
@@ -180,6 +181,8 @@ public class BrowserIndexService : IBrowserIndexService
 
     private async Task BuildStoreAndIndexCoreAsync(bool rebuildIndex)
     {
+        using var perf = PerfTracer.Scope("app-startup",
+            rebuildIndex ? "BrowserIndex.Rebuild" : "BrowserIndex.Restore");
         // R35: record the root this build serves so later unchanged-value
         // GameRootDirChangedMessages (config reload) can be ignored.
         _indexedRootDir = _configService.Config?.GameRootDir;

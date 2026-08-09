@@ -63,6 +63,14 @@
                         </Grid>
                     </Grid>
                 </TabItem>
+                <!-- D09: JS 可视化 —— WebView2 + JS 渲染（跨插件扩展点 IEntityJsVisualizationHost，
+                     无实现时 IsVisible=false 整 Tab 隐藏，Avalonia 可视化不受影响） -->
+                <TabItem Name="JsVizTabItem" IsVisible="False">
+                    <TabItem.Header>
+                        <TextBlock Text="{Binding Loc[Jsv.TabName]}" FontSize="11" />
+                    </TabItem.Header>
+                    <Grid Name="JsVizHost" />
+                </TabItem>
             </TabControl.Items>
         </TabControl>
     </DockPanel>

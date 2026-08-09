@@ -318,7 +318,7 @@ public class CreatureEntityVisualizer : IEntityVisualizer
         };
         if (!entry.IsUnresolved)
         {
-            _refNode.WireNavigation(nameTb, typeof(AttackMode), am.EntityId, am);
+            _refNode.WireNavigation(nameTb, typeof(AttackMode), am.EntityId, am, am);
             ToolTip.SetTip(nameTb, _vis.BuildRefTooltip(am));
         }
 
@@ -898,7 +898,7 @@ public class CreatureEntityVisualizer : IEntityVisualizer
                 }
             };
             var csRef = cs;
-            _refNode.WireNavigation(row, typeof(CreatureSource), csRef.EntityId, csRef);
+            _refNode.WireNavigation(row, typeof(CreatureSource), csRef.EntityId, csRef, csRef);
             rows.Children.Add(row);
         }
         return LabeledSection(_vis.Loc("Vis.SpawnPoints"), rows);

@@ -28,6 +28,7 @@ using NeoEditor.Data.DTO;
 using NeoEditor.Data.Messages;
 using NeoEditor.Data.Model;
 using NeoEditor.Data.Model.Game;
+using NeoEditor.Diagnostics;
 using NeoEditor.Helper;
 using NeoEditor.Plugins.DataViewer;
 using NeoEditor.Plugins.DataViewer.ViewModels;
@@ -767,12 +768,16 @@ public partial class DocumentWorkspaceViewModel : ViewModelBase,
         _logger.LogInformation("Opening merge editor for profile: {ProfileName} (id={ProfileId})",
             message.ProfileInfo.Name, message.ProfileInfo.ProfileId);
 
+        PerfTracer.Start("profile-open");
+
         // R26 §3: dirty tracking is scoped to the profile being opened.
         _serviceProvider.GetRequiredService<IHostService>().SetActiveProfile(message.ProfileInfo.ProfileId);
+        PerfTracer.Checkpoint("profile-open", "SetActiveProfile");
 
         if (FindOpenMergeEditorDocument(message.ProfileInfo) is { } existing)
         {
             ActivateDocument(existing);
+            PerfTracer.End("profile-open");
             return;
         }
 
@@ -781,18 +786,21 @@ public partial class DocumentWorkspaceViewModel : ViewModelBase,
         // The merge view queries DB directly, so entities MUST be in DB first.
         try
         {
+            using var preloadPerf = PerfTracer.Scope("profile-open", "PreLoad");
             var profileManager = _serviceProvider.GetRequiredService<IProfileManager>();
             var modManager = _serviceProvider.GetRequiredService<IModManager>();
             var gameRoot = _serviceProvider.GetRequiredService<IConfigService>().Config.GameRootDir;
 
             _logger.LogInformation("[PreLoad] Content length={Len}", message.ProfileInfo.Content?.Length ?? -1);
 
-            var modLoadInfos = profileManager.LoadMods(message.ProfileInfo.Content);
-            message.ProfileInfo.ModLoadInfos.Clear();
-            foreach (var mli in modLoadInfos)
-                message.ProfileInfo.ModLoadInfos.Add(mli);
-
-            _logger.LogInformation("[PreLoad] parsed {Count} mod(s) from getmods.php", modLoadInfos.Count);
+            using (PerfTracer.Scope("profile-open", "PreLoad.ParseMods"))
+            {
+                var modLoadInfos = profileManager.LoadMods(message.ProfileInfo.Content);
+                _logger.LogInformation("[PreLoad] parsed {Count} mod(s) from getmods.php", modLoadInfos.Count);
+                message.ProfileInfo.ModLoadInfos.Clear();
+                foreach (var mli in modLoadInfos)
+                    message.ProfileInfo.ModLoadInfos.Add(mli);
+            }
 
             foreach (var mli in message.ProfileInfo.ModLoadInfos)
             {
@@ -814,6 +822,7 @@ public partial class DocumentWorkspaceViewModel : ViewModelBase,
                         modPath, System.IO.Directory.Exists(modPath));
                     if (!string.IsNullOrWhiteSpace(mli.Info.Path) && System.IO.Directory.Exists(modPath))
                     {
+                        using var importPerf = PerfTracer.Scope("profile-open", $"PreLoad.import.{mli.Info.Name}");
                         var imported = await modManager.ImportModAsync(modPath);
                         if (imported is not null)
                         {
@@ -831,6 +840,7 @@ public partial class DocumentWorkspaceViewModel : ViewModelBase,
                 {
                     try
                     {
+                        using var loadPerf = PerfTracer.Scope("profile-open", $"PreLoad.load.{mli.Info.Name}");
                         await modManager.LoadModAsync(mli.Info);
                         _logger.LogInformation("[PreLoad] LoadModAsync OK: '{Name}' ModId={ModId}",
                             mli.Info.Name, mli.Info.ModId);
@@ -864,6 +874,7 @@ public partial class DocumentWorkspaceViewModel : ViewModelBase,
         // Focus the DataTable tool so the merge grid (its Content) is the active bottom tab.
         if (DataTableTool is not null)
             DockFactory.SetActiveDockable(DataTableTool);
+        PerfTracer.Checkpoint("profile-open", "UI-Kickoff");
         Messenger.Send(new SessionStateChangedMessage(true));
         ShowWelcomeDocument();
     }

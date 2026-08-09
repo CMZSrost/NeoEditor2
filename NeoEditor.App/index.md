@@ -21,6 +21,7 @@
 | **R17-R22** | Plugin 规则：互不引用/依赖范围/跨 Plugin 通信/DI/独立测试/集成测试 | ✅ |
 | **R23-R25** | Plugin 分类标记/统一写路径/跨 Plugin 扩展点 | ✅ |
 | **R26-R28** | 保存导出双 Repository（v2）/ 图片双视图 / AI-MCP 配置 | ✅ |
+| **R29** | 性能埋点与两阶段加载（PerfTracer / 索引后台构建 + rebind / 缓存表字面量 SQL） | ✅ |
 | **N01-N06** | 禁止规则（DON'T）：禁静态状态/禁 .Instance/禁 View 逻辑等 | ✅ |
 | [spec/open-questions.md](spec/open-questions.md) | 暂无未决项 | ✅ |
 
@@ -97,7 +98,7 @@
 
 ## 阅读顺序建议
 
-1. **先读** [spec/README.md](spec/README.md) — 知道硬约束（R/N 规则全表，R00-R28 + D01-D03 + N01-N06 全部落地）
+1. **先读** [spec/README.md](spec/README.md) — 知道硬约束（R/N 规则全表，R00-R29 + D01-D03 + N01-N06 全部落地）
 2. **再读** [Docs/25](Docs/25-architecture-decisions.md) + [Docs/26](Docs/26-refactor-roadmap.md) — 理解架构决策与重构路线
 3. **当前** [Docs/42](Docs/42-webview-ruffle-preview-plan.md) — WebView 内置预览 + NeoScavengerPlayer 播放器（v2.44，P0-P5 完成）⭐
 4. **进行中** [spec/D03](spec/D03-paratranz-integration.md)（M1-M4 已完成，M5 可选）+ [Docs/42](Docs/42-webview-ruffle-preview-plan.md)（播放器后续打磨）— 下一个任务

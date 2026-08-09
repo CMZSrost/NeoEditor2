@@ -41,6 +41,7 @@ using NeoEditor.Data.Messages;
 using NeoEditor.Data.Model;
 using NeoEditor.Data.Model.Game;
 using NeoEditor.Data.Options;
+using NeoEditor.Diagnostics;
 using NeoEditor.Helper;
 using NeoEditor.Helper.DragDropHandler;
 using NeoEditor.Helper.Extensions;
@@ -57,6 +58,7 @@ using NeoEditor.Plugins.Cli;
 using NeoEditor.Plugins.AiChat;
 using NeoEditor.Plugins.Paratranz;
 using NeoEditor.Plugins.WebView;
+using NeoEditor.Plugins.JsVisualization;
 using NeoEditor.UI.Common.Services;
 using NeoEditor.UI.Common.Visualizers;
 using NeoEditor.ViewModels.Dialog;
@@ -189,6 +191,16 @@ public partial class App : Application
                 services.AddAiChatPlugin();
                 services.AddParatranzPlugin();
                 services.AddWebViewPlugin();
+                // D09: JS 可视化 —— center 可视化 WebView2+JS 渲染（IEntityJsVisualizationHost
+                // 扩展点）。语义提取器在组合根注册：findImage 委托来自 App 的 IImageService
+                // （R18: 插件不引用 App）。
+                services.AddJsVisualizationPlugin();
+                services.AddSingleton<NeoEditor.Plugins.JsVisualization.Services.EncounterSemanticsExtractor>(
+                    sp => new NeoEditor.Plugins.JsVisualization.Services.EncounterSemanticsExtractor(
+                        sp.GetRequiredService<IEntityLookupService>(),
+                        sp.GetRequiredService<Helper.IReferenceResolver>(),
+                        sp.GetRequiredService<ILocalizationService>(),
+                        sp.GetRequiredService<Services.IImageService>().FindImage));
                 // D02: App-level tool plugins (Profile Tool). Registered with the other
                 // IToolPlugin instances so the dynamic dock build picks them up.
                 services.AddSingleton<ViewModels.MainContent.ProfileToolViewModel>();
@@ -246,9 +258,18 @@ public partial class App : Application
     /// </summary>
     public static void EnsureDatabases(IServiceProvider services)
     {
-        InitDatabase<EditorDbContext>(services);
-        InitDatabase<GameDbContext>(services);
-        RunEditorDbMigrations(services);
+        using (PerfTracer.Scope("app-startup", "EnsureDb.Editor"))
+        {
+            InitDatabase<EditorDbContext>(services);
+        }
+        using (PerfTracer.Scope("app-startup", "EnsureDb.Game"))
+        {
+            InitDatabase<GameDbContext>(services);
+        }
+        using (PerfTracer.Scope("app-startup", "EnsureDb.Migrations"))
+        {
+            RunEditorDbMigrations(services);
+        }
     }
 
     private static void InitDatabase<TContext>(IServiceProvider services) where TContext : DbContext
@@ -342,6 +363,7 @@ public partial class App : Application
     public override void OnFrameworkInitializationCompleted()
     {
         // 注册应用程序运行所需的所有服务
+        PerfTracer.Start("app-startup");
 
         // Register IServiceProvider for View code-behind service resolution via ViewServices
         Resources["Services"] = _host.Services;
@@ -364,10 +386,12 @@ public partial class App : Application
         {
             _host.Services.GetRequiredService<ILogger<App>>().LogError(ex, "[Startup] Config load failed, using defaults");
         }
+        PerfTracer.Checkpoint("app-startup", "ConfigLoad");
 
         // Set default visualizer and register all 25 from EntityEditor Plugin
         var visualizerRegistry = _host.Services.GetRequiredService<EntityVisualizerRegistry>();
         _host.Services.RegisterEntityEditorVisualizers();
+        PerfTracer.Checkpoint("app-startup", "Visualizers");
 
         EnsureDatabases(_host.Services);
 
@@ -375,6 +399,7 @@ public partial class App : Application
         var startupLogger = _host.Services.GetRequiredService<ILogger<App>>();
         startupLogger.LogInformation("[DB] Editor db path: {Path}, exists: {Exists}, baseDir: {BaseDir}",
             editorDbPath, System.IO.File.Exists(editorDbPath), AppContext.BaseDirectory);
+        PerfTracer.Checkpoint("app-startup", "EnsureDatabases");
 
         // Ensure game base data is imported BEFORE building the browser index.
         // This is critical for first-time users: the game's XML files in data/ must be
@@ -383,9 +408,11 @@ public partial class App : Application
 
         // Build the global browser reference index eagerly on startup.
         Helper.AsyncHelper.FireAndForget(_host.Services.GetRequiredService<IBrowserIndexService>().EnsureBuiltAsync());
+        PerfTracer.Checkpoint("app-startup", "FireAndForgetStarted");
 
         // Initialize field descriptions from .docx
         InitializeFieldDescriptions();
+        PerfTracer.Checkpoint("app-startup", "FieldDescriptions");
 
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
@@ -400,6 +427,7 @@ public partial class App : Application
         }
 
         base.OnFrameworkInitializationCompleted();
+        PerfTracer.End("app-startup");
     }
 
     private void InitializeFieldDescriptions()
@@ -509,6 +537,7 @@ public partial class App : Application
     /// Critical for first-time users who haven't opened a profile yet.</summary>
     private async Task ImportGameDataOnStartupAsync()
     {
+        using var perfScope = PerfTracer.Scope("app-startup", "ImportGameData");
         var sp = _host.Services;
         var logger = sp.GetRequiredService<ILogger<App>>();
         var configService = sp.GetRequiredService<IConfigService>();

@@ -2182,6 +2182,7 @@ Ctrl+右键点击引用 = 仅预览不跳转。
     <data name="Vis.BattleMove.Flags" xml:space="preserve"><value>行为标签</value></data>
     <data name="Vis.Move" xml:space="preserve"><value>移动</value></data>
     <data name="Vis.MinimapHexes" xml:space="preserve"><value>小地图标记</value></data>
+    <data name="Vis.MapNotes" xml:space="preserve"><value>地图标注</value></data>
     <data name="Vis.EditorPos" xml:space="preserve"><value>编辑器坐标</value></data>
     <data name="Vis.Exposure.Hidden" xml:space="preserve"><value>隐藏</value></data>
     <data name="Vis.Exposure.Seen" xml:space="preserve"><value>可见</value></data>
@@ -2279,6 +2280,7 @@ Ctrl+右键点击引用 = 仅预览不跳转。
     <data name="Vis.EncounterRange" xml:space="preserve"><value>遭遇范围</value></data>
     <data name="Vis.CampItemsLabel" xml:space="preserve"><value>营地物品</value></data>
     <data name="Vis.ScavengeLoot" xml:space="preserve"><value>搜刮战利品</value></data>
+    <data name="Vis.ScavengePool" xml:space="preserve"><value>搜刮池</value></data>
     <data name="Vis.InitialScavenge" xml:space="preserve"><value>初始搜刮</value></data>
     <data name="Vis.HourlyScavenge" xml:space="preserve"><value>每小时搜刮</value></data>
     <data name="Vis.OnEnterConditions" xml:space="preserve"><value>进入时条件</value></data>
@@ -2356,6 +2358,13 @@ Ctrl+右键点击引用 = 仅预览不跳转。
     <data name="Vis.NoBranches" xml:space="preserve"><value>（无分支）</value></data>
     <data name="Vis.RemoveSubmit" xml:space="preserve"><value>移除（上交/摧毁）</value></data>
     <data name="Vis.GiveItem" xml:space="preserve"><value>给予物品</value></data>
+    <data name="Vis.EventGive" xml:space="preserve"><value>事件给物</value></data>
+    <data name="Vis.TriggerGiveItem" xml:space="preserve"><value>触发给予物品</value></data>
+    <data name="Vis.StayEnd" xml:space="preserve"><value>⏹ 停留</value></data>
+    <data name="Vis.BlankEnd" xml:space="preserve"><value>☰ 无后续</value></data>
+    <data name="Vis.RequireAll" xml:space="preserve"><value>需同时拥有：</value></data>
+    <data name="Vis.Consumed" xml:space="preserve"><value>（消耗）</value></data>
+    <data name="Vis.SuccessProb" xml:space="preserve"><value>成功概率</value></data>
     <data name="Vis.Conditions" xml:space="preserve"><value>获得状态</value></data>
     <data name="Vis.PreConditions" xml:space="preserve"><value>前置条件</value></data>
     <data name="Vis.CurrentEncounter" xml:space="preserve"><value>📍 当前剧情</value></data>
@@ -2391,6 +2400,7 @@ Ctrl+右键点击引用 = 仅预览不跳转。
     <data name="EP.SplitView" xml:space="preserve"><value>分屏</value></data>
     <data name="EP.EmptyHint" xml:space="preserve"><value>点击引用以预览</value></data>
     <data name="EV.Visualization" xml:space="preserve"><value>可视化</value></data>
+    <data name="Jsv.TabName" xml:space="preserve"><value>JS 可视化</value></data>
     <data name="EV.XmlEdit" xml:space="preserve"><value>XML 编辑</value></data>
     <data name="EV.XmlDiffToggle" xml:space="preserve"><value>差异对比</value></data>
     <data name="EV.Refresh" xml:space="preserve"><value>刷新</value></data>
@@ -2452,4 +2462,20 @@ Ctrl+右键点击引用 = 仅预览不跳转。
   <data name="Vis.EncTypeScavenge" xml:space="preserve"><value>搜刮</value></data>
   <data name="Vis.EncTypeCombat" xml:space="preserve"><value>战斗</value></data>
   <data name="Vis.EncTypeHack" xml:space="preserve"><value>破解</value></data>
+  <!-- D08 2026-08-08: Encounter 页面全页生命周期重排 -->
+  <data name="Vis.FlowView" xml:space="preserve"><value>场景流转</value></data>
+  <data name="Vis.HowToEnter" xml:space="preserve"><value>如何进入</value></data>
+  <data name="Vis.ContentEffects" xml:space="preserve"><value>内容与效果</value></data>
+  <data name="Vis.BackToCurrent" xml:space="preserve"><value>⏎ 回到当前</value></data>
+  <data name="Vis.EntryPoint" xml:space="preserve"><value>⛳ 入口</value></data>
+  <data name="Vis.TerminalPoint" xml:space="preserve"><value>⏹ 终点</value></data>
+  <data name="Vis.Triggers" xml:space="preserve"><value>触发器</value></data>
+  <data name="Vis.GiveLoot" xml:space="preserve"><value>🎁 给物</value></data>
+  <data name="Vis.LootPool" xml:space="preserve"><value>🎒 战利品池</value></data>
+  <data name="Vis.Cost" xml:space="preserve"><value>💰 费用</value></data>
+  <data name="Vis.RemoveLoot" xml:space="preserve"><value>🗑 移除</value></data>
+  <data name="Vis.TeleportTo" xml:space="preserve"><value>📍 传送</value></data>
+  <data name="Vis.SpawnOut" xml:space="preserve"><value>🐾 刷出</value></data>
+  <data name="Vis.Repeatable" xml:space="preserve"><value>♻ 可重复</value></data>
+  <data name="Vis.HexTypesShort" xml:space="preserve"><value>🧱 格类型</value></data>
 </root>

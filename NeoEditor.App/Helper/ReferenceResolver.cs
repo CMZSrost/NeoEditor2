@@ -4,6 +4,7 @@ using System.Linq;
 using System.Reflection;
 using NeoEditor.Data.Model;
 using NeoEditor.Data.Model.Game;
+using NeoEditor.Diagnostics;
 using NeoEditor.Plugins.DataViewer.Services;
 using NeoEditor.Services;
 // Alias only IReferenceEntry to avoid IWorkspaceSession/IHostService ambiguity with NeoEditor.Services.
@@ -318,56 +319,89 @@ public class ReferenceResolver : IReferenceResolver
     public async System.Threading.Tasks.Task BuildReverseIndexAsync(
         ReferenceIndexService indexService, EntityMergeStore store)
     {
-        var entries = new List<ReferenceIndexService.IndexEntry>();
-        foreach (var (entityType, entities) in store.ReferenceLookups)
-        {
-            foreach (var obj in entities)
-            {
-                if (obj is not IEntity entity) continue;
-                // R30: read namespaces from the explicit store, not the session-global one.
-                var ns = store.EntityNamespaces.TryGetValue(entity.EntityId, out var n) ? n : "0";
-                var keyProp = entityType.GetProperty("Id",
-                    System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.IgnoreCase)
-                    ?? entityType.GetProperty("nID",
-                    System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.IgnoreCase);
-                var pk = keyProp?.GetValue(entity)?.ToString() ?? entity.EntityId;
-                entries.Add(new ReferenceIndexService.IndexEntry(
-                    entityType.Name, ns, pk, entity.EntityId));
-            }
-        }
-        await indexService.BuildAsync(entries);
+        // NOTE: the caller (ModGameDataTabsView.BuildMergeViewIndexAsync / BrowserIndexService)
+        // has ALREADY built the forward reference_index via indexService.BuildAsync — with the
+        // full 6-column entries including group_id/subgroup_id. Rebuilding it here would
+        // (a) duplicate ~1.5s of entries building + SQLite DELETE+INSERT and (b) overwrite the
+        // composite-key columns with NULL (this method's entries only carry 4 columns).
+        // This method therefore builds ONLY the reverse reference_reverse table.
 
-        // Build reverse index
-        foreach (var (entityType, entities) in store.ReferenceLookups)
+        // Build reverse index — collect ALL entries first, then batch-insert.
+        // Perf: the old per-row AddReverseAsync was ~9s for ~16k entities (one
+        // INSERT + fsync each); BuildReverseBatchAsync runs DELETE + batched
+        // INSERTs inside a single transaction. Incremental edits still go through
+        // AddReverseAsync/UpdateField — this is the full-rebuild path only.
+        var reverseEntries =
+            new List<(string TargetEntityId, string SourceEntityId, string PropertyName, string RawId)>(
+                store.ReferenceLookups.Values.Sum(l => l.Count) * 2);
+        var collectHit = 0;
+        var collectMiss = 0;
+        using (PerfTracer.Scope("profile-open", "MergeView.Reverse.Collect"))
         {
-            foreach (var obj in entities)
+            foreach (var (entityType, entities) in store.ReferenceLookups)
             {
-                if (obj is not IEntity entity) continue;
-                foreach (var prop in entityType.GetProperties())
+                // Resolve [ReferenceField] properties once per type, not per entity.
+                var refProps = entityType.GetProperties()
+                    .Where(p => p.GetCustomAttribute<ReferenceFieldAttribute>() is not null)
+                    .ToList();
+                if (refProps.Count == 0) continue;
+
+                using (PerfTracer.Scope("profile-open", $"MergeView.Collect.{entityType.Name}"))
+                foreach (var obj in entities)
                 {
-                    var refAttr = prop.GetCustomAttribute<ReferenceFieldAttribute>();
-                    if (refAttr is null) continue;
-                    var val = prop.GetValue(entity) is ReferenceList<IReferenceEntry> rl
-                        ? rl.ToRawString(refAttr.Separator)
-                        : prop.GetValue(entity)?.ToString();
-                    if (string.IsNullOrWhiteSpace(val)) continue;
-                    var parsed = ReferenceParser.Parse(val, refAttr);
-                    foreach (var seg in parsed.Segments)
+                    if (obj is not IEntity entity) continue;
+                    foreach (var prop in refProps)
                     {
-                        // R30 (H1/H2): resolve through the explicit store's index — the
-                        // session store may be a different merge view or not published yet.
-                        var targetEid = LookupRefByRawId(entity, seg.ExtractedId,
-                            refAttr.TargetEntityType, store)?.EntityId;
-                        if (targetEid is null && refAttr.SecondaryTargetEntityType is not null)
-                            targetEid = LookupRefByRawId(entity, seg.ExtractedId,
-                                refAttr.SecondaryTargetEntityType, store)?.EntityId;
-                        if (targetEid is not null)
-                            await indexService.AddReverseAsync(targetEid, entity.EntityId, prop.Name, seg.RawText);
+                        var refAttr = prop.GetCustomAttribute<ReferenceFieldAttribute>()!;
+                        var propValue = prop.GetValue(entity);
+                        var val = propValue is ReferenceList<IReferenceEntry> rl
+                            ? rl.ToRawString(refAttr.Separator)
+                            : propValue?.ToString();
+                        if (string.IsNullOrWhiteSpace(val)) continue;
+                        // Perf: ExtractIdsWithRaw skips Parse's display fields
+                        // (ResolvedRefSegment objects, Dictionary per segment,
+                        // ParseReference/FormatExtraInfo) — ~10x cheaper and all we
+                        // need here is id + raw text for the reference_reverse table.
+                        foreach (var (extractedId, rawText) in ReferenceParser.ExtractIdsWithRaw(val, refAttr))
+                        {
+                            // R30 (H1/H2): resolve through the explicit store's index — the
+                            // session store may be a different merge view or not published yet.
+                            // Context-aware Lookup (source field pattern + NamespaceToModName
+                            // mapping) mirrors the in-memory BuildReverse. NO fallback scan:
+                            // the in-memory index skips misses too (O(1) miss), and the old
+                            // LookupRefByRawId fallback was O(N) per miss — the ~4s culprit.
+                            var targetEid = ResolveReverseTarget(store, entity, prop.Name, refAttr.TargetEntityType, extractedId);
+                            if (targetEid is null && refAttr.SecondaryTargetEntityType is not null)
+                                targetEid = ResolveReverseTarget(store, entity, prop.Name, refAttr.SecondaryTargetEntityType, extractedId);
+                            if (targetEid is not null)
+                            {
+                                reverseEntries.Add((targetEid, entity.EntityId, prop.Name, rawText));
+                                collectHit++;
+                            }
+                            else
+                            {
+                                collectMiss++;
+                            }
+                        }
                     }
                 }
             }
+            Serilog.Log.Logger.Information("[MergeView.Reverse.Collect] hit={Hit} miss={Miss}", collectHit, collectMiss);
+        }
+        using (PerfTracer.Scope("profile-open", "MergeView.Reverse.BatchInsert"))
+        {
+            await indexService.BuildReverseBatchAsync(reverseEntries);
         }
     }
+
+    /// <summary>Resolve a raw reference id to a target EntityId during reverse-index
+    /// building: context-aware O(1) dictionary lookup (source field pattern +
+    /// NamespaceToModName mapping). Misses are skipped — identical to the
+    /// in-memory ReferenceIndex.BuildReverse semantics; never fall back to the
+    /// O(N) linear scan here (that was the ~4s hot spot for ~16k entities).</summary>
+    private static string? ResolveReverseTarget(EntityMergeStore store, IEntity sourceEntity,
+        string sourcePropertyName, Type targetType, string rawId)
+        => store.Index?.Lookup(sourceEntity.EntityId, sourcePropertyName, targetType, rawId);
 
     /// <summary>
     /// Convenience: reverse-lookup + resolve source entity display info.

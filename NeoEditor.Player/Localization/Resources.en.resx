@@ -83,6 +83,9 @@
   <data name="Common.Close" xml:space="preserve"><value>Close</value></data>
   <data name="Error.DialogTitle" xml:space="preserve"><value>Game Error Detected</value></data>
   <data name="Error.DialogBody" xml:space="preserve"><value>The game may have hit an error:&#x0a;{0}&#x0a;&#x0a;Full details are recorded in the run log.</value></data>
+  <data name="WebView2.MissingTitle" xml:space="preserve"><value>WebView2 Runtime missing</value></data>
+  <data name="WebView2.MissingBody" xml:space="preserve"><value>Microsoft Edge WebView2 Runtime was not detected — the player needs it to render the Ruffle game and cannot run without it.&#x0a;&#x0a;Please install it and restart the player:&#x0a;{0}</value></data>
+  <data name="WebView2.OpenInstallPage" xml:space="preserve"><value>Open install page</value></data>
   <data name="Status.ErrorDetected" xml:space="preserve"><value>⚠ Game error detected (see logs)</value></data>
   <data name="Status.ErrorExit" xml:space="preserve"><value>Game exited abnormally (see logs)</value></data>
   <data name="Storage.Title" xml:space="preserve"><value>Save Manager</value></data>

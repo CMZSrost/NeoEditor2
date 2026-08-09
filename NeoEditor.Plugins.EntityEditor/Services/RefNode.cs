@@ -46,7 +46,7 @@ public class RefNode
         var badge = BuildBadge(label, bg, fg);
         if (isResolved && entity is not null)
         {
-            WireNavigation(badge, typeof(T), entity.EntityId, sourceEntity);
+            WireNavigation(badge, typeof(T), entity.EntityId, sourceEntity, entity);
             AttachTooltip(badge, entity);
         }
 
@@ -75,7 +75,7 @@ public class RefNode
         panel.Children.Add(BuildBadge(label, bg, fg));
         if (isResolved && entity is not null)
         {
-            WireNavigation(panel, typeof(T), entity.EntityId, sourceEntity);
+            WireNavigation(panel, typeof(T), entity.EntityId, sourceEntity, entity);
             AttachTooltip(panel, entity);
         }
 
@@ -91,7 +91,7 @@ public class RefNode
         var bg = ColorFromHex(bgHex);
         var fg = ColorFromHex(fgHex);
         var badge = BuildBadge(label, bg, fg);
-        WireNavigation(badge, typeof(T), targetEntity.EntityId, sourceEntity);
+        WireNavigation(badge, typeof(T), targetEntity.EntityId, sourceEntity, targetEntity);
         AttachTooltip(badge, targetEntity);
         return badge;
     }
@@ -105,25 +105,38 @@ public class RefNode
         var bg = ColorFromHex(bgHex);
         var fg = ColorFromHex(fgHex);
         var badge = BuildBadge(label, bg, fg);
-        WireNavigation(badge, targetEntity.GetType(), targetEntity.EntityId, sourceEntity);
+        WireNavigation(badge, targetEntity.GetType(), targetEntity.EntityId, sourceEntity, targetEntity);
         AttachTooltip(badge, targetEntity);
         return badge;
     }
 
     /// <summary>
     /// Wire Ctrl+Click (navigate) and Ctrl+RMB (peek) to a control.
+    /// R64: the peek panel must show the REFERENCED entity, never the current one —
+    /// callers already hold the resolved target (Badge&lt;T&gt; resolves before wiring,
+    /// FlowView has the predecessor/successor entity), so it is passed in directly
+    /// instead of re-resolving inside (which could fail and fall back to null).
     /// </summary>
     public void WireNavigation(Control control, Type targetType, string targetEntityId,
-        IEntity? sourceEntity = null)
+        IEntity? sourceEntity = null, IEntity? resolvedTarget = null)
     {
         control.PointerPressed += (_, e) =>
         {
             if ((e.KeyModifiers & KeyModifiers.Control) == 0) return;
             e.Handled = true;
             if (e.GetCurrentPoint(null).Properties.IsRightButtonPressed)
-                _router?.RequestPeek(targetType, targetEntityId, sourceEntity);
+            {
+                // Belt-and-braces: callers pass the resolved target; if a future
+                // call site forgets it, resolve here instead of peeking null.
+                var target = resolvedTarget ?? (sourceEntity is not null
+                    ? _resolver?.LookupRefByRawId(sourceEntity, targetEntityId, targetType)
+                    : null);
+                _router?.RequestPeek(targetType, targetEntityId, target);
+            }
             else
+            {
                 _router?.NavigateToEntity(targetType, targetEntityId);
+            }
         };
     }
 

@@ -16,6 +16,7 @@ using NeoEditor.Data;
 using NeoEditor.Data.Context;
 using NeoEditor.Data.Model;
 using NeoEditor.Data.Model.Game;
+using NeoEditor.Diagnostics;
 using NeoEditor.Infra.Services;
 
 namespace NeoEditor.Services;
@@ -93,6 +94,7 @@ public class ModManager : IModManager
 
     public async Task<ModInfo?> ImportModAsync(string modFullPath, int? modId = null)
     {
+        using var importPerf = PerfTracer.Scope("LoadModAsync", $"{Path.GetFileNameWithoutExtension(modFullPath)}:ImportMod");
         try
         {
             var normalizedPath = modFullPath.Replace(Config.GameRootDir ?? "", "")
@@ -140,6 +142,7 @@ public class ModManager : IModManager
 
     public async Task LoadModAsync(ModInfo modInfo)
     {
+        using var loadPerf = PerfTracer.Scope("LoadModAsync", $"{modInfo.Name}:Total");
         var modFullPath = Path.Combine(Config.GameRootDir, modInfo.Path);
         if (!Directory.Exists(modFullPath))
         {
@@ -151,11 +154,14 @@ public class ModManager : IModManager
         // Check ItemTypes first (most commonly populated table), then Conditions as fallback
         // (some mods only add conditions). Previously only checked AttackModes which is 0
         // for many mods, causing full XML re-import on every startup.
-        await using var checkDb = await _gameDbFactory.CreateDbContextAsync();
-        var existingCount = await checkDb.ItemTypes.CountAsync(e => e.ModId == modInfo.ModId);
-        if (existingCount == 0)
-            existingCount = await checkDb.Conditions.CountAsync(e => e.ModId == modInfo.ModId);
-        if (existingCount > 0) return;
+        using (PerfTracer.Scope("LoadModAsync", $"{modInfo.Name}:Check"))
+        {
+            await using var checkDb = await _gameDbFactory.CreateDbContextAsync();
+            var existingCount = await checkDb.ItemTypes.CountAsync(e => e.ModId == modInfo.ModId);
+            if (existingCount == 0)
+                existingCount = await checkDb.Conditions.CountAsync(e => e.ModId == modInfo.ModId);
+            if (existingCount > 0) return;
+        }
 
         try
         {
@@ -163,8 +169,10 @@ public class ModManager : IModManager
             var xmlFilePaths = Directory.GetFiles(modFullPath, "*.xml", SearchOption.AllDirectories);
 
             await using var db = await _gameDbFactory.CreateDbContextAsync();
+            using (PerfTracer.Scope("LoadModAsync", $"{modInfo.Name}:Import"))
             foreach (var xmlPath in xmlFilePaths)
             {
+                using var filePerf = PerfTracer.Scope("LoadModAsync", $"{modInfo.Name}:{Path.GetFileName(xmlPath)}");
                 var doc = LoadXmlFile(xmlPath);
                 foreach (var gameType in Constants.GameTypes)
                 {
