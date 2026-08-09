@@ -716,7 +716,7 @@ dist/
 ### 版本号
 
 - 分发名固定 `NeoScavengerPlayer`（AssemblyName）；版本号 = csproj `<Version>`（R43 起，
-  当前 `1.0.0` 内测版，2026-08-08 已发 player-v1.0.0），窗口标题/About/启动日志/导出 zip 命名同源；publish.ps1 的 zip
+  当前 `1.0.1` 内测版，2026-08-09 已发 player-v1.0.1），窗口标题/About/启动日志/导出 zip 命名同源；publish.ps1 的 zip
   默认命名读取该值，git tag `vX.Y.Z` 走 GitHub Actions 自动 release。
 - ruffle 版本锁定 nightly-2026-08-04；升级走独立变更（替换 `Web/ruffle` + 更新本文档）。
 
@@ -1440,3 +1440,6 @@ BaseLow 与侧栏区分；Markdown 区域走 MarkdownTheme.axaml 双字典（v2.
     AppDomain.UnhandledException / TaskScheduler.UnobservedTaskException 早绑处理器 +
     Avalonia 启动 try/catch，崩溃原因必有落盘；游戏/运行日志保持独立 player-run-*.log 不动，
     反馈 zip 同时包含 boot 日志。纯日志基础设施，UI 无变化。
+  - v2.70（2026-08-09）：**v1.0.1 内测包** —— 版本号 1.0.0 → 1.0.1，git tag
+    `player-v1.0.1`（release-player.yml 自动构建 + 发 Release）；v2.68（WebView2 启动检测
+    弹窗）与 v2.69（player-boot-*.log 启动日志）随 0809.01 入库后首个内测包。
