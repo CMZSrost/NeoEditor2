@@ -1,4 +1,4 @@
-NeoScavenger Player v1.0.0（内测版）
+NeoScavenger Player v1.0.2（内测版）
 =====================================
 
 基于 Ruffle 的 NeoScavenger 独立播放器（Windows x64）。

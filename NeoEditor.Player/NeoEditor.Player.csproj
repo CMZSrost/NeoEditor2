@@ -16,7 +16,7 @@
         <Authors>Cromzst</Authors>
         <!-- R43: 试用版版本号——窗口标题/About/启动日志/导出 zip 均取自此（publish.ps1
              也用它作为 zip 默认命名）。发布新试用版时只改这里 + git tag vX.Y.Z。 -->
-        <Version>1.0.1</Version>
+        <Version>1.0.2</Version>
         <PackageIcon>Assets\nsLogo.png</PackageIcon>
         <Company>Cromzst</Company>
         <SignAssembly>true</SignAssembly>

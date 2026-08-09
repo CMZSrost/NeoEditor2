@@ -48,14 +48,10 @@ jobs:
         with:
           tag_name: ${{ github.ref_name }}
           name: NeoScavenger Player ${{ github.ref_name }}
-          body: |
-            NeoScavenger Player（Ruffle 独立播放器）Windows x64 自包含单文件版，无需安装 .NET 运行时。
-
-            - **NeoScavengerPlayer-${{ github.ref_name }}-win-x64.zip** — 解压运行 `NeoScavengerPlayer.exe`，把 NEOScavenger.swf 拖入窗口即玩（自备游戏文件，SWF 与 data/ 同目录）
-            - 需系统自带 WebView2 Runtime；运行时数据落盘于 `%LocalAppData%/NeoScavengerPlayer/`
-            - zip 内含 README.txt（要求/使用/数据位置/已知限制）
-
-            **反馈 bug**：请提供窗口标题栏版本号 + 「文件 → 导出存档+日志 (zip)」生成的 zip（GitHub Issues）。
-          generate_release_notes: true
+          # v1.0.2：Release body 直接附用户向 CHANGELOG（NeoEditor.Player/CHANGELOG.md）；
+          # 使用/反馈说明见 zip 内 README.txt。
+          body_path: NeoEditor.Player/CHANGELOG.md
+          generate_release_notes: false
           files: |
             NeoScavengerPlayer-*-win-x64.zip
+            NeoEditor.Player/CHANGELOG.md
