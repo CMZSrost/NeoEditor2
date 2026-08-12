@@ -2444,6 +2444,11 @@ Keyboard Shortcuts:
   <data name="ImportMod" xml:space="preserve"><value>Import Mod</value></data>
   <data name="AiGenerate" xml:space="preserve"><value>Generate with AI</value></data>
   <data name="AiPromptPlaceholder" xml:space="preserve"><value>Enter a prompt, e.g. a pixel-art sword</value></data>
+  <data name="AiPromptPreset" xml:space="preserve"><value>Template:</value></data>
+  <data name="AiPromptPresetSelect" xml:space="preserve"><value>Select a prompt preset…</value></data>
+  <data name="AiPromptPresetNamePlaceholder" xml:space="preserve"><value>Template name (blank = auto name)</value></data>
+  <data name="AiPromptSaveAsPreset" xml:space="preserve"><value>Save as preset</value></data>
+  <data name="AiPromptPresetDefaultName" xml:space="preserve"><value>Custom preset</value></data>
   <data name="AiUnavailableHint" xml:space="preserve"><value>AI not configured (set an API key in Settings)</value></data>
   <data name="OriginalImage" xml:space="preserve"><value>Original</value></data>
   <data name="PixelatedImage" xml:space="preserve"><value>Pixel Art</value></data>

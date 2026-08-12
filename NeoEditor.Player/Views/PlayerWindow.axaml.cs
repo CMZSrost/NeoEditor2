@@ -27,6 +27,7 @@ public partial class PlayerWindow : Window
     private StorageManagerWindow? _storageWindow;
     private StorageManagerViewModel? _storageVm;
     private SaveEditorWindow? _saveEditor;
+    private FaqWindow? _faqWindow;
     private bool _attached;
     private bool _loadFailed;
     private bool _backgroundMode;
@@ -94,6 +95,30 @@ public partial class PlayerWindow : Window
         }
         if (StartupSwfPath is { Length: > 0 } path && DataContext is PlayerViewModel vm)
             _ = vm.StartAsync(path);
+        else if (DataContext is PlayerViewModel vm2)
+            _ = AutoStartAsync(vm2);
+        // v2.79: 启动静默检查更新（有新版本才弹窗；失败不打扰）。
+        _ = CheckForUpdatesAsync(silentFail: true);
+    }
+
+    /// <summary>
+    /// v2.79 自动加载链（玩家向，不懂拖 SWF）：上次游戏目录（settings.json 持久化）
+    /// → 自动定位（Steam 库 / 下载·桌面·文档目录扫描）→ 都没有则占位页引导选择文件夹。
+    /// </summary>
+    private async Task AutoStartAsync(PlayerViewModel vm)
+    {
+        var savedRoot = vm.GameRootDir;
+        if (!string.IsNullOrWhiteSpace(savedRoot) && GameLocator.FindSwf(savedRoot) is { } saved)
+        {
+            await vm.StartAsync(saved);
+            return;
+        }
+        if (GameLocator.TryLocate() is { } located)
+        {
+            vm.StatusText = string.Format(LocalizationManager.Instance["Status.FoundGame"], located);
+            await vm.StartAsync(located);
+            return;
+        }
     }
 
     /// <summary>Create the webview on first navigation; hides the drag placeholder.</summary>
@@ -129,14 +154,56 @@ public partial class PlayerWindow : Window
     }
 
     /// <summary>
-    /// Page bridge (host.html Shift+Tab → chrome.webview.postMessage): toggle the log
-    /// overlay — a Steam-style overlay floating above the native WebView surface.
+    /// Page bridge (host.html → chrome.webview.postMessage): toggle-overlay (F10) +
+    /// v2.79 玩家向消息——save-deleted（游戏内删除存档，角色可能死亡）→ 弹恢复提示；
+    /// game-loaded（Ruffle loaded 事件）→ 状态栏「游戏已启动」。
     /// </summary>
     private void OnWebMessageReceived(object? sender, WebMessageReceivedEventArgs e)
     {
         if (string.IsNullOrWhiteSpace(e.Body)) return;
         if (e.Body.Contains("toggle-overlay", StringComparison.OrdinalIgnoreCase))
             ToggleLogOverlay();
+        else if (e.Body.Contains("save-deleted", StringComparison.OrdinalIgnoreCase))
+            Dispatcher.UIThread.Post(() => _ = PromptDeathRecoveryAsync());
+        else if (e.Body.Contains("game-loaded", StringComparison.OrdinalIgnoreCase))
+            Dispatcher.UIThread.Post(() => (DataContext as PlayerViewModel)?.NotifyGameLoaded());
+    }
+
+    /// <summary>
+    /// v2.79（玩家向核心）：游戏内删除存档（角色死亡/重新开始）→ 提示「从最近备份继续」。
+    /// 玩家不知道 save_backup 的存在——这是进度救回的唯一入口。恢复复用存档管理的恢复
+    /// 逻辑：未触碰即时生效；已触碰（死亡必然已触碰）保护 + 立即重启（点了继续就是要玩）。
+    /// </summary>
+    private async Task PromptDeathRecoveryAsync()
+    {
+        if (DataContext is not PlayerViewModel vm || _webView is null) return;
+        var backups = new SaveBackupService(App.Services.Config);
+        var newest = backups.List().FirstOrDefault();
+        if (newest is null)
+        {
+            await PromptDialogWindow.PromptAsync(this,
+                LocalizationManager.Instance["DeathRecovery.Title"],
+                LocalizationManager.Instance["DeathRecovery.None"],
+                okText: LocalizationManager.Instance["Common.Ok"],
+                cancelText: LocalizationManager.Instance["Common.Close"]);
+            return;
+        }
+
+        var restore = await PromptDialogWindow.PromptAsync(this,
+            LocalizationManager.Instance["DeathRecovery.Title"],
+            LocalizationManager.Instance["DeathRecovery.Body"],
+            okText: LocalizationManager.Instance["DeathRecovery.Restore"],
+            cancelText: LocalizationManager.Instance["DeathRecovery.Ignore"]);
+        if (restore is null) return;
+
+        var restoreVm = new StorageManagerViewModel(
+            script => _webView?.InvokeScript(script) ?? Task.FromResult<string?>(null),
+            key => LocalizationManager.Instance[key],
+            backups,
+            () => vm.RestartGame());
+        await restoreVm.RestoreCommand.ExecuteAsync(newest);
+        // 死亡场景：玩家点了「继续」就是要马上玩——直接重启加载恢复的存档。
+        if (restoreVm.NeedsRestart) restoreVm.RestartGameCommand.Execute(null);
     }
 
     private void AttachViewModel()
@@ -286,6 +353,32 @@ public partial class PlayerWindow : Window
             await vm.StartAsync(files[0].Path.LocalPath);
     }
 
+    /// <summary>
+    /// v2.79（玩家向）：选择「游戏文件夹」（含 NEOScavenger.swf + data/ 的根目录），
+    /// 比选 SWF 文件直观——玩家只知道游戏装在哪个文件夹，不知道 SWF 是什么。
+    /// </summary>
+    private async Task PickAndOpenGameFolderAsync(PlayerViewModel vm)
+    {
+        var folders = await StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
+        {
+            Title = LocalizationManager.Instance["Menu.OpenGameFolder"],
+            AllowMultiple = false,
+        });
+        if (folders.Count == 0) return;
+
+        var swf = GameLocator.FindSwf(folders[0].Path.LocalPath);
+        if (swf is null)
+        {
+            await PromptDialogWindow.PromptAsync(this,
+                LocalizationManager.Instance["Menu.OpenGameFolder"],
+                LocalizationManager.Instance["Status.NoSwfInFolder"],
+                okText: LocalizationManager.Instance["Common.Ok"],
+                cancelText: LocalizationManager.Instance["Common.Close"]);
+            return;
+        }
+        await vm.StartAsync(swf);
+    }
+
     private async void OnDrop(object? sender, DragEventArgs e)
     {
         string? swf = null;
@@ -310,6 +403,13 @@ public partial class PlayerWindow : Window
     {
         if (DataContext is PlayerViewModel vm)
             vm.OpenSwfCommand.Execute(null);
+    }
+
+    /// <summary>v2.79：选择游戏文件夹（含 NEOScavenger.swf + data/ 的根目录）。</summary>
+    private async void OnOpenGameFolderClick(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is PlayerViewModel vm)
+            await PickAndOpenGameFolderAsync(vm);
     }
 
     private void OnPlaceholderClick(object? sender, Avalonia.Input.PointerPressedEventArgs e)
@@ -340,16 +440,79 @@ public partial class PlayerWindow : Window
             vm.StatusText = LocalizationManager.Instance["Debug.DevToolsUnavailable"];
     }
 
-    /// <summary>R38: 报错捕捉弹窗——错误详情 + 「打开日志目录」。确认=打开日志目录。</summary>
+    /// <summary>
+    /// v2.79/v2.80（玩家向）：检查更新——启动时静默（失败不打扰），帮助菜单手动（失败给
+    /// 提示）。三态：网络失败 → 提示；已是最新 → 明确告知（v2.80 修复：此前「已是最新」
+    /// 被误报为网络错误）；有新版本 → 弹窗直达 GitHub Release 下载页。
+    /// </summary>
+    private async Task CheckForUpdatesAsync(bool silentFail)
+    {
+        var result = await UpdateCheckService.CheckLatestAsync();
+        if (!result.Ok)
+        {
+            if (!silentFail)
+                await PromptDialogWindow.PromptAsync(this,
+                    LocalizationManager.Instance["Menu.CheckUpdate"],
+                    LocalizationManager.Instance["Update.CheckFailed"],
+                    okText: LocalizationManager.Instance["Common.Ok"],
+                    cancelText: LocalizationManager.Instance["Common.Close"]);
+            return;
+        }
+        if (result.Info is null)
+        {
+            if (!silentFail)
+                await PromptDialogWindow.PromptAsync(this,
+                    LocalizationManager.Instance["Menu.CheckUpdate"],
+                    string.Format(LocalizationManager.Instance["Update.UpToDate"],
+                        NeoEditor.Player.Services.AppInfo.Version),
+                    okText: LocalizationManager.Instance["Common.Ok"],
+                    cancelText: LocalizationManager.Instance["Common.Close"]);
+            return;
+        }
+        var open = await PromptDialogWindow.PromptAsync(this,
+            LocalizationManager.Instance["Update.NewVersionTitle"],
+            string.Format(LocalizationManager.Instance["Update.NewVersionBody"],
+                result.Info.TagName, NeoEditor.Player.Services.AppInfo.Version),
+            okText: LocalizationManager.Instance["Update.OpenPage"],
+            cancelText: LocalizationManager.Instance["Common.Cancel"]);
+        if (open is not null)
+        {
+            try
+            {
+                Process.Start(new ProcessStartInfo(result.Info.HtmlUrl) { UseShellExecute = true });
+            }
+            catch (Exception)
+            {
+                // 无默认浏览器——弹窗里已显示版本号
+            }
+        }
+    }
+
+    private void OnCheckUpdateClick(object? sender, RoutedEventArgs e)
+        => _ = CheckForUpdatesAsync(silentFail: false);
+
+    /// <summary>v2.79：帮助 → 常见问题（玩家向 FAQ，Q&A 来自 resx）。</summary>
+    private void OnFaqClick(object? sender, RoutedEventArgs e)
+    {
+        if (_faqWindow is null)
+        {
+            _faqWindow = new FaqWindow();
+            _faqWindow.Closed += (_, _) => _faqWindow = null;
+        }
+        _faqWindow.Show(this);
+    }
+
+    /// <summary>R38: 报错捕捉弹窗——玩家向：主按钮「生成反馈包」（导出存档+日志 zip 并定位），
+    /// 玩家不懂日志文件，反馈包一键生成即可发给作者。</summary>
     private async void ShowGameErrorDialog(string detail)
     {
         if (DataContext is not PlayerViewModel vm) return;
-        var open = await PromptDialogWindow.PromptAsync(this,
+        var report = await PromptDialogWindow.PromptAsync(this,
             LocalizationManager.Instance["Error.DialogTitle"],
             string.Format(LocalizationManager.Instance["Error.DialogBody"], detail),
-            okText: LocalizationManager.Instance["Log.OpenFolder"],
+            okText: LocalizationManager.Instance["Error.MakeReport"],
             cancelText: LocalizationManager.Instance["Common.Ok"]);
-        if (open is not null) OpenLogFolder(vm.FileLogDirectory);
+        if (report is not null) vm.ExportBundleZipCommand.Execute(null);
     }
 
     /// <summary>

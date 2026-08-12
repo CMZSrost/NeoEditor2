@@ -12,10 +12,7 @@ public class VizSnapshotServiceTests
 {
     private static VizSnapshotService CreateService(StubHostService host, StubXmlParser xmlParser,
         StubEntityLookupService lookup, StubReferenceResolver resolver)
-    {
-        var extractor = new EncounterSemanticsExtractor(lookup, resolver, new StubLocalizationService(), _ => null);
-        return new VizSnapshotService(host, xmlParser, lookup, extractor);
-    }
+        => TestSemantics.CreateService(host, xmlParser, lookup, resolver);
 
     // ── XML fragment（pma_xml_export 形状，round-trip）───────────────────
 
@@ -105,12 +102,12 @@ public class VizSnapshotServiceTests
         Assert.Null(service.BuildFromXml("NoSuchType", "<table/>"));
     }
 
-    // ── 非 Encounter 类型：通用快照兜底 ─────────────────────────────────
+    // ── 类型分发（P1）：ItemType 全语义；无提取器的类型 → 通用快照兜底 ──
 
     [Fact]
-    public void BuildById_OtherEntityType_NoSemantics()
+    public void BuildById_ItemType_HasFullSemantics()
     {
-        var item = new ItemType { EntityId = "52", Name = "撬棍" };
+        var item = new ItemType { EntityId = "52", Name = "猎刀", GroupId = 0, SubgroupId = 0 };
         var host = new StubHostService { Cache = { ["52"] = item } };
         var lookup = new StubEntityLookupService { ReferenceLookups = { [typeof(ItemType)] = new List<object> { item } } };
         var service = CreateService(host, new StubXmlParser(), lookup, new StubReferenceResolver());
@@ -118,7 +115,40 @@ public class VizSnapshotServiceTests
         var snapshot = service.BuildById("ItemType", "52");
 
         Assert.NotNull(snapshot);
-        Assert.Null(snapshot!.Semantics); // P1 渲染器
-        Assert.Equal("撬棍", snapshot.RawXml is null ? snapshot.DisplayName : snapshot.DisplayName);
+        Assert.NotNull(snapshot!.Semantics as ItemTypeSemantics);
+        Assert.Equal("0.0", ((ItemTypeSemantics)snapshot.Semantics).Gs);
+    }
+
+    [Fact]
+    public void BuildById_ThinType_HasTemplateSemantics()
+    {
+        // P4 全类型铺开：D 级薄类型（如 ItemProp）→ 模板语义（字段表 + refs）
+        var prop = new ItemProp { EntityId = "p1", PropertyName = "锋利" };
+        var host = new StubHostService { Cache = { ["p1"] = prop } };
+        var lookup = new StubEntityLookupService { ReferenceLookups = { [typeof(ItemProp)] = new List<object> { prop } } };
+        var service = CreateService(host, new StubXmlParser(), lookup, new StubReferenceResolver());
+
+        var snapshot = service.BuildById("ItemProp", "p1");
+
+        Assert.NotNull(snapshot);
+        var sem = Assert.IsType<TemplateSemantics>(snapshot!.Semantics);
+        Assert.NotNull(snapshot.Audit);   // TopBar 审计统计对所有类型生效
+        Assert.True(snapshot.Audit.Fields > 0);
+    }
+
+    [Fact]
+    public void BuildById_AttackMode_HasTemplateSemantics()
+    {
+        var am = new AttackMode { EntityId = "14", Name = "挥击", DamageCut = 4, Morale = 0.5 };
+        var host = new StubHostService { Cache = { ["14"] = am } };
+        var lookup = new StubEntityLookupService { ReferenceLookups = { [typeof(AttackMode)] = new List<object> { am } } };
+        var service = CreateService(host, new StubXmlParser(), lookup, new StubReferenceResolver());
+
+        var snapshot = service.BuildById("AttackMode", "14");
+
+        Assert.NotNull(snapshot);
+        var sem = Assert.IsType<TemplateSemantics>(snapshot!.Semantics);
+        // 战斗区块带 Mode（单攻击模式详情）
+        Assert.Contains(sem.Blocks, b => b.Mode is not null);
     }
 }

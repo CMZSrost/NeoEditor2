@@ -17,13 +17,13 @@
     <DockPanel>
         <TabControl Name="EditorTabs" DockPanel.Dock="Top" Margin="0">
             <TabControl.Items>
-                <TabItem Name="VisualTabItem">
+                <!-- D09: JS 可视化 —— WebView2 + JS 渲染（跨插件扩展点 IEntityJsVisualizationHost，
+                     无实现时 IsVisible=false 整 Tab 隐藏并回退原可视化；默认首个页签） -->
+                <TabItem Name="JsVizTabItem" IsVisible="False">
                     <TabItem.Header>
-                        <TextBlock Text="{Binding Loc[EV.Visualization]}" FontSize="11" />
+                        <TextBlock Text="{Binding Loc[Jsv.TabName]}" FontSize="11" />
                     </TabItem.Header>
-                    <ScrollViewer HorizontalScrollBarVisibility="Disabled">
-                        <ContentControl Name="VisualizationHost" />
-                    </ScrollViewer>
+                    <Grid Name="JsVizHost" />
                 </TabItem>
                 <TabItem Name="XmlTabItem"
                          IsEnabled="{Binding IsReadOnly, Converter={x:Static BoolConverters.Not}}">
@@ -63,13 +63,14 @@
                         </Grid>
                     </Grid>
                 </TabItem>
-                <!-- D09: JS 可视化 —— WebView2 + JS 渲染（跨插件扩展点 IEntityJsVisualizationHost，
-                     无实现时 IsVisible=false 整 Tab 隐藏，Avalonia 可视化不受影响） -->
-                <TabItem Name="JsVizTabItem" IsVisible="False">
+                <!-- 原 Avalonia 可视化（双轨保留，放最后；JS 可视化不可用时回退） -->
+                <TabItem Name="VisualTabItem">
                     <TabItem.Header>
-                        <TextBlock Text="{Binding Loc[Jsv.TabName]}" FontSize="11" />
+                        <TextBlock Text="{Binding Loc[EV.Visualization]}" FontSize="11" />
                     </TabItem.Header>
-                    <Grid Name="JsVizHost" />
+                    <ScrollViewer HorizontalScrollBarVisibility="Disabled">
+                        <ContentControl Name="VisualizationHost" />
+                    </ScrollViewer>
                 </TabItem>
             </TabControl.Items>
         </TabControl>

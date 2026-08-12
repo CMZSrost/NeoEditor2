@@ -6,6 +6,7 @@ using Moq;
 using NeoEditor.Core.Abstractions;
 using NeoEditor.Core.Model;
 using NeoEditor.Infra.Services;
+using NeoEditor.Plugins.ImageTools.Services;
 using NeoEditor.Plugins.ImageTools.ViewModels;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
@@ -44,13 +45,39 @@ public class AiGenerationPanelViewModelTests
         return loc.Object;
     }
 
+    private static IAiPromptPresetService CreatePresets(params AiPromptPreset[] presets)
+    {
+        var svc = new Mock<IAiPromptPresetService>();
+        svc.Setup(s => s.GetPresets()).Returns(presets);
+        return svc.Object;
+    }
+
+    /// <summary>Stateful in-memory preset service for save-as-preset tests.</summary>
+    private sealed class FakePresetService : IAiPromptPresetService
+    {
+        public List<AiPromptPreset> Items { get; } = new();
+        public AiPromptPreset? LastAdded { get; private set; }
+
+        public IReadOnlyList<AiPromptPreset> GetPresets() => Items;
+
+        public AiPromptPreset AddOrUpdatePreset(AiPromptPreset preset)
+        {
+            Items.RemoveAll(p => p.Name == preset.Name);
+            Items.Add(preset);
+            LastAdded = preset;
+            return preset;
+        }
+    }
+
     private static AiGenerationPanelViewModel CreatePanel(
-        IImageGenerationService? gen = null, IConfigService? config = null)
+        IImageGenerationService? gen = null, IConfigService? config = null,
+        IAiPromptPresetService? presets = null)
     {
         return new AiGenerationPanelViewModel(
             gen ?? new Mock<IImageGenerationService>().Object,
             CreateLocMock(),
-            config ?? CreateConfig(4));
+            config ?? CreateConfig(4),
+            presets ?? CreatePresets());
     }
 
     private static Mock<IImageGenerationService> CreateWorkingGen(int width = 16, int height = 16)
@@ -195,5 +222,130 @@ public class AiGenerationPanelViewModelTests
 
         Assert.Equal(2, generated.Count); // the failed candidate is skipped
         Assert.False(panel.HasGenerationError); // partial failure is not fatal
+    }
+
+    [Fact]
+    public void Presets_AreExposed_FromService()
+    {
+        var panel = CreatePanel(presets: CreatePresets(
+            new AiPromptPreset("武器·正侧视", "weapon prompt", 1024, 512)));
+
+        var preset = Assert.Single(panel.Presets);
+        Assert.Equal("武器·正侧视", preset.Name);
+        Assert.Equal("weapon prompt", preset.Prompt);
+    }
+
+    [Fact]
+    public void SelectingPreset_FillsPromptAndSize_ThenResetsSelection()
+    {
+        var panel = CreatePanel(presets: CreatePresets(
+            new AiPromptPreset("武器·正侧视", "weapon prompt", 1024, 512)));
+
+        panel.SelectedPreset = panel.Presets[0];
+
+        Assert.Equal("weapon prompt", panel.AiPrompt);
+        Assert.Equal(1024, panel.AiWidth);
+        Assert.Equal(512, panel.AiHeight);
+        // The selection resets so the same preset can be re-applied after editing.
+        Assert.Null(panel.SelectedPreset);
+    }
+
+    [Fact]
+    public void SelectingPreset_WithoutSize_KeepsCurrentSize()
+    {
+        var panel = CreatePanel(presets: CreatePresets(
+            new AiPromptPreset("通用", "generic prompt")));
+        panel.AiWidth = 768;
+        panel.AiHeight = 768;
+
+        panel.SelectedPreset = panel.Presets[0];
+
+        Assert.Equal("generic prompt", panel.AiPrompt);
+        Assert.Equal(768, panel.AiWidth);
+        Assert.Equal(768, panel.AiHeight);
+    }
+
+    [Fact]
+    public void SelectingNull_DoesNotClearExistingPrompt()
+    {
+        var panel = CreatePanel(presets: CreatePresets(new AiPromptPreset("X", "p")));
+        panel.AiPrompt = "typed by user";
+
+        panel.SelectedPreset = null;
+
+        Assert.Equal("typed by user", panel.AiPrompt);
+    }
+
+    [Fact]
+    public void SavePresetCommand_Disabled_WhenPromptEmpty()
+    {
+        var panel = CreatePanel(presets: new FakePresetService());
+
+        Assert.False(panel.CanSavePreset);
+
+        panel.AiPrompt = "a prompt";
+        Assert.True(panel.CanSavePreset);
+    }
+
+    [Fact]
+    public void SavePreset_AddsNamedPreset_WithSize_AndRefreshesDropdown()
+    {
+        var fake = new FakePresetService();
+        var panel = CreatePanel(presets: fake);
+        panel.AiPrompt = "my prompt";
+        panel.NewPresetName = "我的模板";
+        panel.AiWidth = 768;
+        panel.AiHeight = 512;
+
+        panel.SavePresetCommand.Execute(null);
+
+        Assert.NotNull(fake.LastAdded);
+        Assert.Equal("我的模板", fake.LastAdded!.Name);
+        Assert.Equal("my prompt", fake.LastAdded.Prompt);
+        Assert.Equal(768, fake.LastAdded.Width);
+        Assert.Equal(512, fake.LastAdded.Height);
+        Assert.Contains(fake.LastAdded, panel.Presets); // dropdown refreshed
+        Assert.Equal(string.Empty, panel.NewPresetName); // name box cleared
+    }
+
+    [Fact]
+    public void SavePreset_EmptyName_UsesLocalizedAutoName()
+    {
+        var fake = new FakePresetService();
+        var panel = CreatePanel(presets: fake);
+        panel.AiPrompt = "a prompt";
+
+        panel.SavePresetCommand.Execute(null);
+
+        // The loc stub returns the key itself — the auto-name falls back to it.
+        Assert.Equal("AiPromptPresetDefaultName", fake.LastAdded!.Name);
+    }
+
+    [Fact]
+    public void SavePreset_EmptyName_NumberedWhenTaken()
+    {
+        var fake = new FakePresetService();
+        fake.Items.Add(new AiPromptPreset("AiPromptPresetDefaultName", "existing"));
+        var panel = CreatePanel(presets: fake);
+        panel.AiPrompt = "a prompt";
+
+        panel.SavePresetCommand.Execute(null);
+
+        Assert.Equal("AiPromptPresetDefaultName 2", fake.LastAdded!.Name);
+    }
+
+    [Fact]
+    public void SavePreset_SameName_ReplacesExisting()
+    {
+        var fake = new FakePresetService();
+        fake.Items.Add(new AiPromptPreset("武器", "old prompt"));
+        var panel = CreatePanel(presets: fake);
+        panel.AiPrompt = "new prompt";
+        panel.NewPresetName = "武器";
+
+        panel.SavePresetCommand.Execute(null);
+
+        Assert.Single(fake.Items);
+        Assert.Equal("new prompt", fake.Items[0].Prompt);
     }
 }

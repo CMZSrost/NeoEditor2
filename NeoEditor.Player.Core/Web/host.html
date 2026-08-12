@@ -295,6 +295,15 @@
                             // Ruffle 页面卸载 flush_shared_objects 会把缓存 data 写回（存档复活）。
                             // 标记本次会话删除过存档 → beforeunload/pagehide 时拦截写回。
                             if (key && key.indexOf("nsSGv1") !== -1) window.__savesCleared = true;
+                            // v2.79: 游戏内删除「真实存在的存档」（死亡删档/重开）→ 通知宿主
+                            // 弹「从最近备份继续」提示（玩家不懂 save_backup，这是进度救回入口）；
+                            // 存档管理自己的删除（__managerOp）不打扰；仅 WebView2 宿主转发。
+                            if (!window.__managerOp && old !== null && key && key.indexOf("nsSGv1") !== -1) {
+                                try {
+                                    if (window.chrome && window.chrome.webview && window.chrome.webview.postMessage)
+                                        window.chrome.webview.postMessage({ type: "save-deleted" });
+                                } catch (e) {}
+                            }
                             // v2.72: 游戏内 clear/新开档 = 主动重新开始 → 解除墓碑/保护
                             // （新档的保存放行）；存档管理自己的操作（__managerOp）不受影响。
                             if (!window.__managerOp) window.__unmarkKey(key);
@@ -431,7 +440,15 @@
                 return out;
             };
 
-            player.addEventListener("loaded", function () { window.__gameLoaded = true; });
+            player.addEventListener("loaded", function () {
+                window.__gameLoaded = true;
+                // v2.79: 游戏数据加载完成 → 宿主状态栏提示「游戏已启动」（加载 5-10 分钟
+                // 期间玩家需要明确反馈，不能只有黑屏/百分比）。
+                try {
+                    if (window.chrome && window.chrome.webview && window.chrome.webview.postMessage)
+                        window.chrome.webview.postMessage({ type: "game-loaded" });
+                } catch (e) {}
+            });
 
             // ── 失焦暂停（Docs/42 v2.7/v2.8）：游戏用 Stage.deactivate 实现失焦暂停，但 Ruffle
             //    只在 document.hidden（最小化/切 tab）时暂停 —— 窗口失焦（画面仍可见）不触发。

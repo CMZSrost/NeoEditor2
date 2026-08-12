@@ -40,6 +40,9 @@ public sealed class PlayerConfigService : IConfigService
             // which makes saves vanish. (v2.36 never serialized it.)
             if (settings.ServerPort is > 0 and < 65536)
                 Config.ServerPort = settings.ServerPort.Value;
+            // v2.79: 记住上次打开的游戏目录（玩家不懂拖 SWF，启动自动加载上次游戏）。
+            if (!string.IsNullOrWhiteSpace(settings.GameRootDir) && System.IO.Directory.Exists(settings.GameRootDir))
+                Config.GameRootDir = settings.GameRootDir;
         }
         catch (Exception)
         {
@@ -58,6 +61,7 @@ public sealed class PlayerConfigService : IConfigService
                 Theme = Config.Theme,
                 Language = Language,
                 ServerPort = Config.ServerPort,
+                GameRootDir = string.IsNullOrWhiteSpace(Config.GameRootDir) ? null : Config.GameRootDir,
             }));
         }
         catch (Exception)
@@ -72,5 +76,6 @@ public sealed class PlayerConfigService : IConfigService
         public string? Theme { get; set; }
         public string? Language { get; set; }
         public int? ServerPort { get; set; }
+        public string? GameRootDir { get; set; }
     }
 }

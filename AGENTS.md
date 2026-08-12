@@ -24,6 +24,13 @@ assets without hand-writing XML. All game entity data is persisted to SQLite
   instantiated by HostService.
 - `IModManager` resolves to the `HostService` instance (mod import/create/delete
   all go through the host pipeline).
+- Performance instrumentation (R65/R29): use `PerfTracer`
+  (`NeoEditor.Infra/Diagnostics/PerfTracer.cs`, `[Perf]` Serilog prefix) for any
+  timing — `grep "\[Perf\]" logs/modeditor-*.log` shows the whole startup /
+  profile-open timeline. Merge-view load is two-phase (data grid first with raw
+  reference text, index builds in background, then a rebind flips cells to
+  resolved text); TabSnapshotCache save must stay after index build. Rules in
+  `NeoEditor.App/spec/R29-performance-instrumentation.md`.
 - Projects: `NeoEditor.Core` (abstractions), `NeoEditor.Infra` (services/data),
   `NeoEditor.App` (GUI shell), `NeoEditor.Plugins.*` (feature plugins:
   DataViewer / EntityEditor / ImageTools / Mcp / Cli / AiChat / Paratranz / WebView),

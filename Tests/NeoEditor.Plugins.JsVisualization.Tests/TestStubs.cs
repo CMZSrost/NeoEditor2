@@ -7,9 +7,35 @@ using NeoEditor.Core.Abstractions;
 using NeoEditor.Data.Model.Game;
 using NeoEditor.Helper;
 using NeoEditor.Infra.Services;
+using NeoEditor.Plugins.JsVisualization.Services;
 using NeoEditor.Services;
 
 namespace NeoEditor.Plugins.JsVisualization.Tests;
+
+/// <summary>
+/// P1: 统一工厂 —— 组装全套语义提取器（Encounter/ItemType/Creature/Recipe/薄类型 +
+/// SemanticsShared + LootTreeBuilder）与 VizSnapshotService。提取器测试与样本生成
+/// 共用同一构造路径，保证与组合根行为一致。
+/// </summary>
+internal static class TestSemantics
+{
+    public static VizSnapshotService CreateService(StubHostService host, StubXmlParser xmlParser,
+        StubEntityLookupService lookup, StubReferenceResolver resolver, ILocalizationService? loc = null)
+    {
+        loc ??= new StubLocalizationService();
+        var shared = new SemanticsShared(lookup, resolver, loc, _ => null);
+        var lootTrees = new LootTreeBuilder(lookup, resolver);
+        return new VizSnapshotService(
+            host, xmlParser, lookup,
+            new EncounterSemanticsExtractor(lookup, resolver, loc, _ => null, lootTrees),
+            new ItemTypeSemanticsExtractor(shared, lootTrees),
+            new CreatureSemanticsExtractor(shared, lootTrees),
+            new RecipeSemanticsExtractor(shared, lootTrees),
+            new ThinSemanticsExtractor(shared),
+            new TemplateSemanticsExtractor(shared, lootTrees),
+            shared);
+    }
+}
 
 /// <summary>
 /// Reusable stubs for JsVisualization plugin tests (R21: independent test project,

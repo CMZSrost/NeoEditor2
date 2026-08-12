@@ -360,9 +360,17 @@ public sealed partial class PlayerViewModel : ObservableObject, IDisposable
         _currentSwf = swfPath;
         var relative = Path.GetFileName(swfPath);
         var uri = new Uri(_server.BaseUrl! + "?swf=" + Uri.EscapeDataString(relative));
-        StatusText = string.Format(L("Status.Loading"), relative, gameRoot);
+        // v2.79: 加载提示白话化——玩家不知道数据加载要 5-10 分钟，容易以为卡死直接关掉。
+        StatusText = string.Format(L("Status.Loading"), relative);
         IsSwfLoaded = true;
         RequestNavigate(uri);
+    }
+
+    /// <summary>v2.79: 页面 Ruffle loaded 事件 → 状态栏「游戏已启动」（加载结束的明确反馈）。</summary>
+    public void NotifyGameLoaded()
+    {
+        if (_currentUri is null) return;   // 已停止/重置后忽略迟到的 loaded
+        StatusText = L("Status.GameLoaded");
     }
 
     /// <summary>

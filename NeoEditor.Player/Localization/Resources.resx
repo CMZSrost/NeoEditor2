@@ -54,7 +54,7 @@
   <data name="Log.OpenFolder" xml:space="preserve"><value>打开日志目录</value></data>
   <data name="Log.Export" xml:space="preserve"><value>导出日志</value></data>
   <data name="Log.Exported" xml:space="preserve"><value>已导出: {0}</value></data>
-  <data name="Log.ExportBundle" xml:space="preserve"><value>Export Saves &amp; Logs (zip)</value></data>
+  <data name="Log.ExportBundle" xml:space="preserve"><value>导出存档+日志 (zip)</value></data>
   <data name="Log.Clipboard" xml:space="preserve"><value>剪贴板</value></data>
   <data name="Log.ClipboardTitle" xml:space="preserve"><value>系统剪贴板内容</value></data>
   <data name="Log.ClipboardEmpty" xml:space="preserve"><value>（系统剪贴板为空）</value></data>
@@ -558,4 +558,31 @@
   <data name="Log.LevelAll" xml:space="preserve"><value>全部</value></data>
   <data name="Storage.RestartPendingTitle" xml:space="preserve"><value>退出时将重启游戏生效</value></data>
   <data name="Storage.Hint" xml:space="preserve"><value>存档操作提示：备份、删除存档永远不需要重启游戏。恢复备份时——如果游戏刚打开、还没进过游戏，立即生效不用重启；如果已经进过游戏或保存过，需要重启游戏才能读到恢复的存档（退出本窗口时会自动重启）。</value></data>
+  <data name="Menu.OpenGameFolder" xml:space="preserve"><value>选择游戏文件夹…</value></data>
+  <data name="Menu.Help" xml:space="preserve"><value>帮助</value></data>
+  <data name="Menu.CheckUpdate" xml:space="preserve"><value>检查更新</value></data>
+  <data name="Menu.Faq" xml:space="preserve"><value>常见问题</value></data>
+  <data name="Status.Loading" xml:space="preserve"><value>正在加载游戏数据：{0}…（首次/模组多时约需 5-10 分钟，请耐心等待，勿关闭窗口）</value></data>
+  <data name="Status.GameLoaded" xml:space="preserve"><value>游戏已启动 ✓</value></data>
+  <data name="Status.FoundGame" xml:space="preserve"><value>找到游戏：{0}</value></data>
+  <data name="Status.NoSwfInFolder" xml:space="preserve"><value>该文件夹里没有找到 NEOScavenger.swf。请选择游戏根目录（包含 NEOScavenger.swf 和 data 文件夹的目录）。</value></data>
+  <data name="Update.NewVersionTitle" xml:space="preserve"><value>发现新版本</value></data>
+  <data name="Update.NewVersionBody" xml:space="preserve"><value>发现新版本 {0}（当前 {1}）。要打开下载页面吗？</value></data>
+  <data name="Update.OpenPage" xml:space="preserve"><value>打开下载页</value></data>
+  <data name="Update.CheckFailed" xml:space="preserve"><value>检查更新失败（网络不可用？）</value></data>
+  <data name="Error.MakeReport" xml:space="preserve"><value>生成反馈包</value></data>
+  <data name="DeathRecovery.Title" xml:space="preserve"><value>检测到存档被删除</value></data>
+  <data name="DeathRecovery.Body" xml:space="preserve"><value>游戏删除了存档（角色可能死亡，或开始了新游戏）。存档已自动备份——要从最近备份继续吗？</value></data>
+  <data name="DeathRecovery.Restore" xml:space="preserve"><value>从最近备份继续</value></data>
+  <data name="DeathRecovery.Ignore" xml:space="preserve"><value>忽略</value></data>
+  <data name="DeathRecovery.None" xml:space="preserve"><value>存档已被删除，但没有找到可用备份。</value></data>
+  <data name="Help.Faq.Q1" xml:space="preserve"><value>存档在哪里？会不会丢？</value></data>
+  <data name="Help.Faq.A1" xml:space="preserve"><value>存档保存在播放器自己的存储里，和游戏原版存档分开，不会污染原版。菜单「存档管理」可以查看/备份/删除；「文件 → 导出存档+日志」可打包备份。</value></data>
+  <data name="Help.Faq.Q2" xml:space="preserve"><value>角色死了，存档没了？</value></data>
+  <data name="Help.Faq.A2" xml:space="preserve"><value>角色死亡时游戏会删除存档——但每次保存/删除都会自动备份（游戏目录下 save_backup 文件夹，保留最近 5 份）。死亡后会弹窗问你是否从最近备份继续；也可以随时在「存档管理 → 备份」里恢复。</value></data>
+  <data name="Help.Faq.Q3" xml:space="preserve"><value>加载好久，是卡住了吗？</value></data>
+  <data name="Help.Faq.A3" xml:space="preserve"><value>不是。游戏数据加载需要时间，首次启动或模组较多时约 5-10 分钟，请耐心等待，不要关闭窗口。</value></data>
+  <data name="Help.Faq.Q7" xml:space="preserve"><value>全屏、后台、日志怎么用？</value></data>
+  <data name="Help.Faq.A7" xml:space="preserve"><value>F11 全屏；「视图 → 后台运行」开启后窗口失焦不暂停；F10 查看运行日志（游戏报错时这里会有记录）。</value></data>
+  <data name="Update.UpToDate" xml:space="preserve"><value>已是最新版本（v{0}）</value></data>
 </root>

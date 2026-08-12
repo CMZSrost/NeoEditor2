@@ -1520,6 +1520,37 @@ BaseLow 与侧栏区分；Markdown 区域走 MarkdownTheme.axaml 双字典（v2.
       标志避免重复触发）；玩家可连续做多次操作后一次性重启。
     测试：恢复用例改为断言「不立即重启 + 待重启标志 + 标题提示 + 手动触发后重启一次」，
     Player.Core.Tests 146/146 全绿。
+  - v2.79（2026-08-09）：**玩家向体验（不懂代码的玩家视角：首次引导/死亡恢复/更新/FAQ）** ——
+    ① **死亡删档自动提示恢复**（玩家向核心）：游戏内删除「真实存在的存档」（死亡删档/
+    重新开始）→ host.html removeItem 包装器（非存档管理操作 + 有旧值）postMessage
+    `save-deleted` → 宿主弹窗「检测到存档被删除——要从最近备份继续吗？」。玩家不知道
+    save_backup 的存在，这是进度救回的唯一入口；「继续」复用存档管理恢复逻辑（保护 +
+    立即重启——死亡场景点了继续就是要玩）。② **记住游戏目录 + 启动自动加载**：
+    PlayerSettings 持久化 GameRootDir；启动链 = 命令行 SWF → 上次游戏目录 → 自动定位。
+    ③ **游戏定位（首次引导）**：`GameLocator`——Steam 注册表 SteamPath →
+    steamapps/common/NeoScavenger（含别名）+ 下载/桌面/文档浅层扫描 NEOScavenger.swf
+    （固定名优先，缺时唯一 *.swf）；「选择游戏文件夹…」入口（File 菜单 + 占位页按钮——
+    文件夹选择器比选 SWF 直观），文件夹内无 SWF 给图文提示。④ **加载等待提示**：状态栏
+    「正在加载游戏数据…（首次/模组多时约需 5-10 分钟，勿关闭窗口）」，Ruffle `loaded`
+    事件 → `game-loaded` 消息 → 状态栏「游戏已启动 ✓」（玩家不再以为卡死）。⑤ **一键
+    反馈包**：报错弹窗主按钮改为「生成反馈包」（导出存档+日志 zip 并 Explorer 定位）。
+    ⑥ **检查更新**：`UpdateCheckService`（GitHub Releases API 对比 player-v 标签版本），
+    启动静默 + 帮助菜单手动，有新版本弹窗直达下载页。⑦ **帮助菜单 + 界面内 FAQ**：
+    FaqWindow 常见问题 7 条（存档在哪/死亡恢复/加载久/闪退/SmartScreen/mod 安装/快捷键），
+    resx 双语随语言切换。沙箱增补死亡删档通知流程；Player.Core.Tests 146/146 全绿。
+  - v2.80（2026-08-09）：**检查更新修复 + FAQ 精简 + 导出本地化修复** —— ① **检查更新
+    误报「网络不可用」根因**：`CheckLatestAsync` 用 null 表示「没有新版本」，而手动检查
+    处理器把 null 一律当作失败——刚发完 v1.0.2，latest == 当前版本 → 每次都报网络错误。
+    重构为三态结果 `UpdateCheckResult(Ok, Info)`：网络/解析失败 = Ok=false 提示网络问题；
+    成功但已是最新 = Ok=true + Info=null 明确告知「已是最新版本（vX）」；有新版本才弹
+    下载页。**双通道兜底**：api.github.com（国内网络常被墙/限流）失败后走
+    github.com/releases/latest 的 302 Location 头（不跟随重定向，从 URL 解析 tag）。②
+    **FAQ 精简**（用户要求）：去掉「游戏闪退怎么办」「发布者未知/已保护你的电脑」「怎么
+    安装 mod/汉化」三项，保留存档/死亡恢复/加载/快捷键 4 条。③ **导出本地化修复**：
+    去重脚本把 en 修复正则误用到 zh，`Log.ExportBundle` 中文值被覆盖成英文——恢复
+    「导出存档+日志 (zip)」。
+    （注：NeoEditor.Plugins.JsVisualization 有未提交 WIP 编译错误
+    IReferenceResolver/ReferenceList<>，非本版本引入，全解决方案构建待 WIP 完成后验证）
   - v2.78（2026-08-09）：**v1.0.2 内测包** —— 版本号 1.0.1 → 1.0.2，git tag
     `player-v1.0.2`（release-player.yml 自动构建 + 发 Release）；Release body 改为
     `body_path` 直接附 `NeoEditor.Player/CHANGELOG.md`（用户向更新内容，替代内联 body，

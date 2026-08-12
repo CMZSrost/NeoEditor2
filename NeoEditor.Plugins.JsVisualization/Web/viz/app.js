@@ -1,44 +1,27 @@
 'use strict';
 /* D09 JS 可视化 — 渲染引擎（零宿主依赖）
  * 版本标记：右下角小字显示构建时间戳，便于确认编辑器加载的是否最新页面。 */
-const VIZ_VERSION = '20260808-2120';
- *
- * 契约：/viz/data 返回 EntitySnapshotDto JSON（C# 侧语义提取、字符串已本地化），
+const VIZ_VERSION = '20260809-1830';
+/* 契约：/viz/data 返回 EntitySnapshotDto JSON（C# 侧语义提取、字符串已本地化），
  * 本页只做布局与交互 —— D09 原则②。页面可在 WebView2 与独立浏览器中一致运行：
  * 数据全部经相对路径 fetch；chrome.webview 仅作可选增强。
  *
- * 交互（对照 RefNode.WireNavigation / D08 v1.3）：
+ * 结构（D10 统一模板）：TopBar → Hero → 问题区（类型渲染器）→ RefPanel → 原始 XML。
+ * 类型渲染器注册表在 renderers.js（window.VizRenderers）；组件库在 components.js。
+ *
+ * Encounter 交互（对照 RefNode.WireNavigation / D08 v1.3）：
  *  - 左键点击前驱/后继卡  = 组件内焦点切换（重算其前后文）
  *  - 「⏎ 回到当前」       = 焦点复位到最初查看的场景
  *  - Ctrl+左键 徽章/卡    = 页面跳转到目标实体（/viz/action navigate）
  *  - Ctrl+右键 徽章/卡    = Peek 预览（/viz/action peek）
- */
+ * 包在 IIFE 内：顶层 const { el } 解构与 renderers.js 重复声明冲突；postAction
+ * 经 window.VizActions 桥给组件库/渲染器。 */
 
-// ─────────────────────────── DOM 辅助 ───────────────────────────
-
-function el(tag, attrs = {}, children = []) {
-  const node = document.createElement(tag);
-  for (const [k, v] of Object.entries(attrs)) {
-    if (v == null) continue;
-    if (k === 'class') node.className = v;
-    else if (k === 'text') node.textContent = v;
-    else if (k.startsWith('on')) node.addEventListener(k.slice(2), v);
-    else if (k === 'dataset') Object.assign(node.dataset, v);
-    else node.setAttribute(k, v);
-  }
-  for (const c of [].concat(children)) {
-    if (c == null) continue;
-    node.append(c.nodeType ? c : document.createTextNode(String(c)));
-  }
-  return node;
-}
+(() => {
+const { el, fmtP, chip, badge, badgeRow, section, twoCol, hero, valueGrid, statBar,
+        lootTree, topBar, refPanel, details, imageBlock, bindTip, restoreExpands } = window.VizComponents;
 
 const app = () => document.getElementById('app');
-
-function fmtP(p) {
-  const clamped = Math.max(0, Math.min(1, p));
-  return (clamped * 100).toFixed(clamped * 100 % 1 === 0 ? 0 : 1).replace(/\.0$/, '') + '%';
-}
 
 // ─────────────────────────── 状态 ───────────────────────────
 
@@ -50,6 +33,8 @@ const state = {
   animateFlow: false,  // 焦点切换动画（初次加载不动画，交互切换时开）
   pendingTargetId: null, // 本次切换点击的目标卡 id（平移/淡入动画用）
   sample: null,       // sample 模式：焦点切换读本地 samples/<type><id>.json
+  navStack: [],       // P2 §3.1: 组件内导航历史（← 返回逐级回退）
+  snapshotCache: new Map(),  // P2 §3.1: id → snapshot（返回不重新 fetch）
 };
 
 const sleep = ms => new Promise(r => setTimeout(r, ms));
@@ -72,19 +57,26 @@ function animateJs(duration, onFrame, easing = easeInOut) {
 
 // ─────────────────────────── API ───────────────────────────
 
+/// 快照获取：缓存优先（P2 §3.1 —— 组件内导航返回不重新 fetch）。
 async function fetchSnapshot(id) {
+  const key = String(id);
+  if (state.snapshotCache.has(key)) return state.snapshotCache.get(key);
   // sample 模式（独立静态服务器/无后端）：切换目标从本地 samples/ 取；
   // 正式环境（WebView2 回环 /viz/data）走同源端点。
+  let s;
   if (state.sample) {
     const res = await fetch(`samples/${state.type.toLowerCase()}${id}.json`);
-    if (res.ok) return res.json();
-    throw new Error(`samples/${state.type.toLowerCase()}${id}.json → ${res.status}`);
+    if (!res.ok) throw new Error(`samples/${state.type.toLowerCase()}${id}.json → ${res.status}`);
+    s = await res.json();
+  } else {
+    const params = new URLSearchParams({ type: state.type, id });
+    if (state.preConds.size > 0) params.set('pre', [...state.preConds].join(','));
+    const res = await fetch('/viz/data?' + params);
+    if (!res.ok) throw new Error(`/viz/data → ${res.status}`);
+    s = await res.json();
   }
-  const params = new URLSearchParams({ type: state.type, id });
-  if (state.preConds.size > 0) params.set('pre', [...state.preConds].join(','));
-  const res = await fetch('/viz/data?' + params);
-  if (!res.ok) throw new Error(`/viz/data → ${res.status}`);
-  return res.json();
+  state.snapshotCache.set(key, s);
+  return s;
 }
 
 async function fetchSnapshotFromXml(type, xml) {
@@ -94,15 +86,81 @@ async function fetchSnapshotFromXml(type, xml) {
   return res.json();
 }
 
+/// 交互桥：POST /viz/action 为主（零宿主依赖，决策 8）；fetch 失败时回退
+/// chrome.webview.postMessage（P2 增强通道，与 POST 同一协议、同一 Handler）。
 async function postAction(kind, entityType, entityId) {
+  const body = JSON.stringify({ kind, entityType, entityId });
   try {
-    await fetch('/viz/action', {
+    const res = await fetch('/viz/action', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ kind, entityType, entityId }),
+      body,
     });
+    if (res.ok) return;
   } catch (_) { /* 独立浏览器环境无 /viz/action —— 静默 */ }
+  try {
+    window.chrome?.webview?.postMessage(body);
+  } catch (_) { /* 无宿主桥（纯浏览器）—— 静默 */ }
 }
+
+// 交互桥挂载（组件库/渲染器的 postAction 经此路由）
+window.VizActions = { postAction };
+
+// ─────────────────────────── 状态记忆（P2 §3.2：sessionStorage）───────────────────────────
+
+/// 展开状态 + 滚动位置：sessionStorage['jsv:ui:{type}:{id}']，跨实体重渲染保留。
+const uiState = {
+  expanded: new Set(),
+  scrollY: 0,
+  loaded: false,
+};
+
+// 键 = 文档实体（rootId）：流转焦点切换属文档内导航，展开/滚动状态属于整个文档
+const uiKey = () => (state.type && state.rootId) ? `jsv:ui:${state.type}:${state.rootId}` : null;
+
+function loadUiState() {
+  uiState.expanded.clear();
+  uiState.scrollY = 0;
+  uiState.loaded = true;
+  const k = uiKey();
+  if (!k) return;
+  try {
+    const raw = sessionStorage.getItem(k);
+    if (!raw) return;
+    const data = JSON.parse(raw);
+    uiState.scrollY = Number(data.scrollY) || 0;
+    for (const key of data.expanded || []) uiState.expanded.add(key);
+  } catch (_) { /* 损坏的状态忽略 */ }
+}
+
+function saveUiState() {
+  const k = uiKey();
+  if (!k || !uiState.loaded) return;
+  try {
+    sessionStorage.setItem(k, JSON.stringify({
+      scrollY: uiState.scrollY,
+      expanded: [...uiState.expanded],
+    }));
+  } catch (_) { /* sessionStorage 不可用（隐私模式）忽略 */ }
+}
+
+let scrollTimer = null;
+function initScrollMemory() {
+  window.addEventListener('scroll', () => {
+    uiState.scrollY = window.scrollY;
+    clearTimeout(scrollTimer);
+    scrollTimer = setTimeout(saveUiState, 500);   // debounce 500ms（D10 §3.2）
+  }, { passive: true });
+}
+
+// 组件库经此读写展开状态（bindExpand / restoreExpands / details）
+window.VizUiState = {
+  expanded: uiState.expanded,
+  toggle: (key, open) => {
+    if (open) uiState.expanded.add(key); else uiState.expanded.delete(key);
+    saveUiState();
+  },
+};
 
 // ─────────────────────────── 交互：导航 / peek ───────────────────────────
 
@@ -134,6 +192,7 @@ function bindFocusSwitch(element, targetId) {
     document.querySelectorAll('.flow-track .node-card').forEach(c => {
       if (c.dataset.id !== tid) c.style.opacity = '0.12';
     });
+    pushNav(state.currentId ?? state.rootId);   // P2 §3.1: 记录来路（← 返回逐级回退）
     state.currentId = targetId;
     state.pendingTargetId = tid;
     state.animateFlow = true;
@@ -141,66 +200,36 @@ function bindFocusSwitch(element, targetId) {
   });
 }
 
-// ─────────────────────────── 组件库（D09 §四 映射表） ───────────────────────────
-
-function chip(c) {
-  return el('span', { class: 'chip', style: `background:${c.bg};color:${c.fg}` }, c.label);
+// P2 §3.1: 组件内导航历史 —— 来源 id 入栈（去重连续相同 id）
+function pushNav(sourceId) {
+  if (sourceId == null) return;
+  const key = String(sourceId);
+  if (state.navStack[state.navStack.length - 1] === key) return;
+  state.navStack.push(key);
 }
 
-function badge(b) {
-  const node = el('span', { class: 'badge', style: `background:${b.bg};color:${b.fg}` },
-    (b.icon ? b.icon + ' ' : '') + b.text);
-  if (b.targetType && b.targetId) bindNav(node, b.targetType, b.targetId);
-  if (b.tooltip) bindTip(node, b.tooltip, b.text);
-  return node;
+/// ← 返回：逐级回退到上一场景（快照缓存命中，不重新 fetch；无动画直接重建流转区）。
+function goBack() {
+  const prev = state.navStack.pop();
+  if (prev == null) return;
+  state.currentId = prev;
+  state.pendingTargetId = String(prev);
+  state.animateFlow = false;
+  load();
 }
 
-function badgeRow(badges, prefix) {
-  if (!badges || badges.length === 0) return null;
-  const children = [];
-  if (prefix) children.push(el('span', { class: 'chip', text: prefix }));
-  children.push(...badges.map(badge));
-  return el('div', { class: 'row' }, children);
-}
-
-// hover tooltip（复杂信息住在这里，不在卡面 —— D06 §四）
-const tipEl = el('div', { class: 'tip', style: 'display:none' });
-document.addEventListener('DOMContentLoaded', () => document.body.append(tipEl));
-let tipTimer = null;
-
-function bindTip(target, text, title) {
-  target.addEventListener('mouseenter', () => {
-    tipTimer = setTimeout(() => {
-      tipEl.innerHTML = '';
-      if (title) tipEl.append(el('div', { class: 'tip-title', text: title }));
-      tipEl.append(el('div', { class: 'tip-line', text }));
-      const r = target.getBoundingClientRect();
-      tipEl.style.left = Math.min(r.left, window.innerWidth - 300) + 'px';
-      tipEl.style.top = (r.bottom + 6) + 'px';
-      tipEl.style.display = 'block';
-    }, 250);
-  });
-  target.addEventListener('mouseleave', () => { clearTimeout(tipTimer); tipEl.style.display = 'none'; });
-}
-
-function section(title, accent, backBtn, content) {
-  const head = el('div', { class: 'section-head' },
-    [el('span', { class: 'accent-bar', style: `background:${accent}` }), el('span', { text: title })]);
-  if (backBtn) head.append(backBtn);
-  const sec = el('div', { class: 'section' }, [head, content]);
-  return sec;
-}
-
-function imageBlock(containerClass, placeholder, url) {
-  const box = el('div', { class: containerClass });
-  if (url) {
-    const img = el('img', { src: url, alt: '' });
-    img.addEventListener('error', () => { img.remove(); box.append(placeholder); });
-    box.append(img);
-  } else {
-    box.append(placeholder);
+/// P2 §3.1: 流转区局部重渲染后同步 TopBar 返回按钮（renderSnapshot 全量重建时自带）。
+function updateTopBar() {
+  const bar = document.querySelector('.topbar');
+  if (!bar) return;
+  const hasBack = !!bar.querySelector('.topbar-back');
+  if (state.navStack.length > 0 && !hasBack) {
+    const back = el('button', { class: 'back-btn topbar-back', text: '← 返回' });
+    back.addEventListener('click', goBack);
+    bar.prepend(back);
+  } else if (state.navStack.length === 0 && hasBack) {
+    bar.querySelector('.topbar-back').remove();
   }
-  return box;
 }
 
 // ─────────────────────────── 节点卡（D06 §四 最终版 / R64） ───────────────────────────
@@ -276,40 +305,23 @@ function branchTipText(branch) {
   return lines.join('\n');
 }
 
-// ─────────────────────────── Hero（D08 §一） ───────────────────────────
+// ─────────────────────────── Hero（D08 §一，经统一 Hero 组件） ───────────────────────────
 
 function renderHero(s) {
   const sem = s.semantics;
-  const info = el('div', { class: 'hero-info' });
+  const badges = [chip(sem.typeChip)];
+  if (sem.isEntry && !sem.isTerminal) badges.push(el('span', { class: 'chip', style: 'background:#e8f5e9;color:#2e7d32', text: '⛳ 入口' }));
+  if (sem.isTerminal && !sem.isEntry) badges.push(el('span', { class: 'chip', style: 'background:#eceff1;color:#546e7a', text: '⏹ 终点' }));
+  if (sem.removeCreatures) badges.push(el('span', { class: 'chip', style: 'background:#ffebee;color:#c62828', text: 'RemoveCreatures' }));
+  if (sem.removeUsed) badges.push(el('span', { class: 'chip', style: 'background:#ffebee;color:#c62828', text: 'RemoveUsed' }));
 
-  const idRow = el('div', { class: 'row' });
-  idRow.append(el('span', { class: 'chip', style: 'background:#e3f2fd;color:#1565c0;font-weight:700',
-    text: `ID: ${s.id}` }));
-  if (s.modId != null) idRow.append(el('span', { class: 'chip', style: 'background:#f3e5f5;color:#6a1b9a',
-    text: `mod ${s.modId}` }));
-  info.append(idRow);
+  const stats = [];
+  if (sem.price !== 0) stats.push({ value: `Price: $${sem.price.toFixed(2)}` });
+  if (sem.lootChance > 0) stats.push({ value: `Loot: ${fmtP(sem.lootChance)}`, color: '#2e7d32' });
+  if (sem.accidentChance > 0) stats.push({ value: `Accident: ${fmtP(sem.accidentChance)}`, color: '#c62828' });
+  if (sem.creatureChance > 0) stats.push({ value: `Creature: ${fmtP(sem.creatureChance)}`, color: '#283593' });
 
-  const infoRow = el('div', { class: 'row' });
-  infoRow.append(chip(sem.typeChip));
-  if (sem.isEntry && !sem.isTerminal) infoRow.append(el('span', { class: 'chip', style: 'background:#e8f5e9;color:#2e7d32', text: '⛳ 入口' }));
-  if (sem.isTerminal && !sem.isEntry) infoRow.append(el('span', { class: 'chip', style: 'background:#eceff1;color:#546e7a', text: '⏹ 终点' }));
-  if (sem.removeCreatures) infoRow.append(el('span', { class: 'chip', style: 'background:#ffebee;color:#c62828', text: 'RemoveCreatures' }));
-  if (sem.removeUsed) infoRow.append(el('span', { class: 'chip', style: 'background:#ffebee;color:#c62828', text: 'RemoveUsed' }));
-  info.append(infoRow);
-
-  info.append(el('div', { class: 'hero-title', text: s.displayName }));
-
-  const chanceParts = [];
-  if (sem.price !== 0) chanceParts.push(el('span', { text: `Price: $${sem.price.toFixed(2)}` }));
-  if (sem.lootChance > 0) chanceParts.push(el('span', { style: 'color:#2e7d32', text: `Loot: ${fmtP(sem.lootChance)}` }));
-  if (sem.accidentChance > 0) chanceParts.push(el('span', { style: 'color:#c62828', text: `Accident: ${fmtP(sem.accidentChance)}` }));
-  if (sem.creatureChance > 0) chanceParts.push(el('span', { style: 'color:#283593', text: `Creature: ${fmtP(sem.creatureChance)}` }));
-  if (chanceParts.length) info.append(el('div', { class: 'hero-chance' }, chanceParts));
-
-  return el('div', { class: 'card hero' }, [
-    imageBlock('hero-img', el('span', { class: 'placeholder', text: '📖' }), s.image),
-    info,
-  ]);
+  return hero(s, { badges, stats });
 }
 
 // ─────────────────────────── ④ 内容与效果（D08 §五，两栏） ───────────────────────────
@@ -320,7 +332,14 @@ function renderEffects(effects) {
     const value = el('div', { class: 'value' });
     if (r.badges && r.badges.length) value.append(...r.badges.map(badge));
     if (r.text) value.append(el('span', { class: 'text', text: r.text }));
-    return el('div', { class: 'effect-row' }, [chip(r.label), value]);
+    const rowEl = el('div', { class: 'effect-row' }, [chip(r.label), value]);
+    // P1: 战利品嵌套树（效果区 GiveLoot/LootPool 行的可展开树）
+    if (r.trees && r.trees.length) {
+      const treeBox = el('div', { class: 'effect-tree' });
+      for (const t of r.trees) treeBox.append(lootTree(t));
+      rowEl.append(treeBox);
+    }
+    return rowEl;
   });
   return el('div', { class: 'card' }, rows);
 }
@@ -335,7 +354,7 @@ function renderContentEffects(s) {
   const body = (left && right)
     ? el('div', { class: 'two-col' }, [left, right])
     : (left ?? right);
-  return section('内容与效果', '#e65100', null, body);
+  return section('内容与效果', { icon: '📜', accent: '#e65100' }, body);
 }
 
 // ─────────────────────────── ② 场景流转（D08 §二，单轨道三行 ★） ───────────────────────────
@@ -392,6 +411,7 @@ function buildFlowSection(s) {
   backBtn.addEventListener('click', () => {
     // 目标（根场景）不在当前视图 → 全部淡化，重建后新卡依次出现
     document.querySelectorAll('.flow-track .node-card').forEach(c => { c.style.opacity = '0.12'; });
+    pushNav(state.currentId ?? state.rootId);   // P2 §3.1: 回到根也入栈（返回可逐级退）
     state.currentId = state.rootId;
     state.pendingTargetId = String(state.rootId);
     state.animateFlow = true;
@@ -420,7 +440,7 @@ function buildFlowSection(s) {
   content.append(el('div', { class: 'flow-hint', text: s.semantics.formatHint ?? '' }));
   content.append(el('div', { class: 'flow-scroll' }, buildFlowTrack(s)));
 
-  return section('场景流转', '#00695c', backBtn, content);
+  return section('场景流转', { icon: '🔀', accent: '#00695c', right: backBtn }, content);
 }
 
 /// 无动画路径：只替换轨道（主体不动）。
@@ -433,10 +453,9 @@ function renderFlowInto(flowSection, s) {
 
 /// 焦点切换动画（"视角平移"，全部 JS 驱动插值——离屏 WebView2 不播 CSS transition）：
 /// 0. （点击时已完成）同级淡化到 0.12，fetch 并行
-/// 1. 淡化续播：被压低的卡片从 0.12 → 进一步到 0.12（保持）——点击瞬间已到位
-/// 2. 平移：轨道 transform 让目标卡横向移到当前卡位置（视角跟随目标）
-/// 3. 重建：目标快照的三行替换轨道，复位 transform + 平滑滚动让新当前卡居中
-/// 4. 出现：新当前卡先显现 → 前驱行 → 后继行依次淡入（目标的前驱后继慢慢出现）
+/// 1. 平移：轨道 transform 让目标卡横向移到当前卡位置（视角跟随目标）
+/// 2. 重建：目标快照的三行替换轨道，复位 transform + 平滑滚动让新当前卡居中
+/// 3. 出现：新当前卡先显现 → 前驱行 → 后继行依次淡入（目标的前驱后继慢慢出现）
 async function animateFlowSwitch(flowSection, s) {
   const scroll = flowSection.querySelector('.flow-scroll');
   const track = flowSection.querySelector('.flow-track');
@@ -505,36 +524,59 @@ function renderEntry(s) {
     content.append(el('div', { style: 'margin-top:8px' }, [el('div', { style: 'font-size:9px;color:#999;font-weight:600;margin-bottom:4px', text: '触发器' }), ...rows]));
   }
 
-  return section('如何进入', '#1565c0', null, content);
+  return section('如何进入', { icon: '🚪', accent: '#1565c0' }, content);
 }
 
-// ─────────────────────────── Raw XML 兜底 ───────────────────────────
+// ─────────────────────────── 主渲染（D10 模板分发） ───────────────────────────
 
-function renderRaw(s) {
-  if (!s.rawXml) return null;
-  return el('details', { class: 'raw-xml' },
-    [el('summary', { text: 'Raw XML' }), el('pre', { text: s.rawXml })]);
+/// Encounter 渲染器（D08 页面序：Hero → 内容与效果 → 场景流转 → 如何进入 → 引用 → XML）；
+/// 场景流转由 renderSnapshot 按锚点插入（焦点切换动画的局部重渲染目标）。
+function renderEncounter(s) {
+  return [
+    renderHero(s),
+    renderContentEffects(s),
+    renderEntry(s),
+    refPanel(s.semantics.refs),
+    details(s.rawXml),
+  ];
 }
 
-// ─────────────────────────── 主渲染 ───────────────────────────
+window.VizRenderers.Encounter = renderEncounter;
 
 function renderSnapshot(s) {
-  if (!s.semantics) {
+  // P2 §3.2: 全量渲染前载入该文档的 UI 状态（展开/滚动），渲染后恢复
+  loadUiState();
+  const renderer = window.VizRenderers[s.type];
+  if (!renderer) {
     app().replaceChildren(
+      topBar(s),
       el('div', { class: 'not-implemented' },
         `「${s.type}」类型尚无 JS 渲染器（P1）—— 已加载 ${s.displayName}（${s.id}），见下方 Raw XML。`),
-      renderRaw(s));
+      details(s.rawXml));
+    restoreUi();
     return;
   }
 
-  const flowSection = buildFlowSection(s);
-  flowSection.classList.add('flow-section');   // 焦点切换局部重建的锚点
+  const body = renderer(s);
+  if (s.type === 'Encounter') {
+    // Encounter 特有：流转区局部重渲染锚点（焦点切换动画只替换流转区）
+    const flowSection = buildFlowSection(s);
+    flowSection.classList.add('flow-section');
+    body.splice(2, 0, flowSection);   // Hero → 内容与效果 → [场景流转] → 如何进入
+  }
   app().replaceChildren(
-    renderHero(s),
-    renderContentEffects(s),
-    flowSection,
-    renderEntry(s),
-    renderRaw(s));
+    topBar(s, { canBack: state.navStack.length > 0, onBack: goBack }),
+    ...body);
+  restoreUi();
+}
+
+/// 渲染后恢复展开状态 + 滚动位置（P2 §3.2）
+function restoreUi() {
+  restoreExpands();
+  if (uiState.scrollY > 0) {
+    requestAnimationFrame(() => window.scrollTo(0, uiState.scrollY));
+  }
+  saveUiState();
 }
 
 // 版本标记（右下角小字）：确认编辑器加载的页面版本
@@ -555,6 +597,8 @@ function applySnapshot(s, resetRoot) {
     state.rootId = s.id;
     state.currentId = s.id;
     state.sample = null;   // 传入模式焦点切换走 /viz/data（应用内回环端点）
+    state.navStack = [];   // P2 §3.1: 新实体 = 新历史 + 新快照缓存
+    state.snapshotCache.clear();
   }
   renderSnapshot(s);
 }
@@ -627,14 +671,15 @@ async function load() {
 
     const flowSection = document.querySelector('.flow-section');
     const animate = state.animateFlow;
-    if (flowSection && s.semantics) {
+    if (flowSection && s.semantics && s.type === 'Encounter') {
       if (animate) {
         await animateFlowSwitch(flowSection, s);   // 视角平移动画（淡化→平移→重建→依次出现）
       } else {
-        renderFlowInto(flowSection, s);            // 无动画（初次/前置过滤重算）
+        renderFlowInto(flowSection, s);            // 无动画（初次/前置过滤重算/← 返回）
       }
+      updateTopBar();   // P2 §3.1: 流转切换后同步返回按钮
     } else {
-      renderSnapshot(s);   // 无流转区（异常/首次路径兜底）→ 全量渲染
+      renderSnapshot(s);   // 无流转区（异常/非 Encounter）→ 全量渲染
       state.animateFlow = false;
     }
   } catch (err) {
@@ -652,6 +697,7 @@ async function load() {
 
 async function main() {
   initDragDrop();
+  initScrollMemory();   // P2 §3.2: 滚动位置记忆（debounce 500ms）
   const params = new URLSearchParams(location.search);
   state.type = params.get('type') || 'Encounter';
   const id = params.get('id');
@@ -671,6 +717,8 @@ async function main() {
       state.type = s.type;
       state.rootId = s.id;
       state.currentId = s.id;
+      state.navStack = [];          // P2 §3.1
+      state.snapshotCache.clear();
       renderSnapshot(s);
     } else if (json) {
       renderJson(json);                      // 快照 JSON 文本直接传入（渲染器 API）
@@ -702,9 +750,35 @@ async function main() {
         if (target) target.dispatchEvent(new MouseEvent('click', { bubbles: true }));
       }, 600);
     }
+
+    // 调试入口：?autoback=N 自动点击「← 返回」N 次（P2 导航历史验收通道，同 autoplay 模式）
+    if (params.get('autoback')) {
+      const times = parseInt(params.get('autoback'), 10) || 1;
+      setTimeout(() => {
+        for (let i = 0; i < times; i++) {
+          const btn = document.querySelector('.topbar-back');
+          if (btn) btn.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+        }
+      }, 1400);
+    }
+
+    // 调试入口：?autotoggle=key1,key2 自动点击指定 data-expand-key 元素
+    // （P2 §3.2 状态记忆验收通道：同一浏览器会话内 sessionStorage 跨刷新持久化）
+    if (params.get('autotoggle')) {
+      const keys = params.get('autotoggle').split(',');
+      setTimeout(() => {
+        for (const key of keys) {
+          const target = document.querySelector(`[data-expand-key="${key}"]`);
+          // <details> 的原生开关在 summary 上（点击 details 本体不触发）
+          const clickTarget = target?.querySelector('summary') ?? target;
+          if (clickTarget) clickTarget.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+        }
+      }, 900);
+    }
   } catch (err) {
     showStatus('加载失败: ' + err.message, true);
   }
 }
 
 main();
+})();

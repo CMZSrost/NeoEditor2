@@ -18,7 +18,8 @@ public class EncounterSemanticsExtractorTests
 {
     private static EncounterSemanticsExtractor CreateExtractor(StubEntityLookupService lookup,
         StubReferenceResolver resolver, Func<string, string?>? findImage = null)
-        => new(lookup, resolver, new StubLocalizationService(), findImage ?? (_ => null));
+        => new(lookup, resolver, new StubLocalizationService(), findImage ?? (_ => null),
+            new LootTreeBuilder(lookup, resolver));
 
     // ── 纯函数：D07 §3.1 终止语义 ─────────────────────────────────────────
 

@@ -2,6 +2,7 @@ using System;
 using Avalonia.Controls;
 using NeoEditor.Data.Model.Game;
 using NeoEditor.Plugins.JsVisualization.Services;
+using Serilog;
 
 namespace NeoEditor.Plugins.JsVisualization;
 
@@ -16,13 +17,15 @@ namespace NeoEditor.Plugins.JsVisualization;
 public sealed class SharedJsVizWebView
 {
     private readonly VizContentServer _server;
+    private readonly VizActionHandler _actions;
     private NativeWebView? _webView;
     private bool _loadFailed;
     private IEntity? _current;
 
-    public SharedJsVizWebView(VizContentServer server)
+    public SharedJsVizWebView(VizContentServer server, VizActionHandler actions)
     {
         _server = server;
+        _actions = actions;
     }
 
     /// <summary>切换渲染实体（文档打开/实体变化）：记录 + 若已就绪则导航。</summary>
@@ -65,6 +68,7 @@ public sealed class SharedJsVizWebView
             var webView = new NativeWebView();
             VizWebViewEnvironment.Attach(webView);   // 共享环境 + 离屏合成（滚轮/输入转发）
             webView.NavigationCompleted += OnNavigationCompleted;
+            webView.WebMessageReceived += OnWebMessageReceived;   // P2: postMessage 增强通道（§五）
             attachHost.Children.Add(webView);
             _webView = webView;
             return true;
@@ -74,6 +78,21 @@ public sealed class SharedJsVizWebView
             _loadFailed = true;
             return false;
         }
+    }
+
+    /// <summary>
+    /// P2 (D09 §五): 页面 `chrome.webview.postMessage` 桥 —— 与 /viz/action POST 同一协议、
+    /// 同一 VizActionHandler（"双向可选、协议唯一"）。页面以 POST 为主，桥作为 WebView2
+    /// 内 fetch 失败时的兜底通道；浏览器环境无 chrome.webview 自然回退 HTTP。
+    /// </summary>
+    private void OnWebMessageReceived(object? sender, WebMessageReceivedEventArgs e)
+    {
+        if (string.IsNullOrWhiteSpace(e.Body)) return;
+        if (!_actions.TryParse(e.Body, out var action)) return;
+        var error = _actions.Handle(action);
+        if (error is not null)
+            Log.Logger.ForContext("Source", "JsVisualization")
+                .Warning("[JsViz] postMessage action rejected: {Error}", error);
     }
 
     private void OnNavigationCompleted(object? sender, WebViewNavigationCompletedEventArgs e)

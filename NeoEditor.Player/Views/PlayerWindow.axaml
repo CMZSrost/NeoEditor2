@@ -23,6 +23,9 @@
                 <Menu Grid.Column="0">
                     <MenuItem Header="{Binding [Menu.File], Source={x:Static loc:LocalizationManager.Instance}}">
                         <MenuItem Header="{Binding [Menu.OpenSwf], Source={x:Static loc:LocalizationManager.Instance}}" HotKey="Ctrl+O" Click="OnOpenSwfClick" />
+                        <!--  v2.79：玩家向——选「游戏文件夹」比选 SWF 文件直观  -->
+                        <MenuItem Header="{Binding [Menu.OpenGameFolder], Source={x:Static loc:LocalizationManager.Instance}}"
+                                  Click="OnOpenGameFolderClick" />
                         <MenuItem Header="{Binding [Menu.Reload], Source={x:Static loc:LocalizationManager.Instance}}" HotKey="F5" Click="OnReloadClick" />
                         <!--  R46: 日志/导出类操作归入「文件」  -->
                         <Separator />
@@ -94,6 +97,13 @@
                     <MenuItem Header="{Binding [Menu.Storage], Source={x:Static loc:LocalizationManager.Instance}}"
                               IsEnabled="{Binding IsSwfLoaded}"
                               Click="OnStorageClick" />
+                    <!--  v2.79：帮助菜单（玩家向）——检查更新 / 常见问题  -->
+                    <MenuItem Header="{Binding [Menu.Help], Source={x:Static loc:LocalizationManager.Instance}}">
+                        <MenuItem Header="{Binding [Menu.CheckUpdate], Source={x:Static loc:LocalizationManager.Instance}}"
+                                  Click="OnCheckUpdateClick" />
+                        <MenuItem Header="{Binding [Menu.Faq], Source={x:Static loc:LocalizationManager.Instance}}"
+                                  Click="OnFaqClick" />
+                    </MenuItem>
                 </Menu>
                 <TextBlock
                     Grid.Column="1"
@@ -129,10 +139,16 @@
                         FontSize="13"
                         Text="{Binding [Placeholder.Click], Source={x:Static loc:LocalizationManager.Instance}}"
                         Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}" />
+                    <!--  v2.79：玩家向——「选择游戏文件夹」比选 SWF 文件直观  -->
+                    <Button
+                        HorizontalAlignment="Center"
+                        Margin="0,4,0,0"
+                        Content="{Binding [Menu.OpenGameFolder], Source={x:Static loc:LocalizationManager.Instance}}"
+                        Click="OnOpenGameFolderClick" />
                     <TextBlock
                         HorizontalAlignment="Center"
                         FontSize="12"
-                        Margin="0,12,0,0"
+                        Margin="0,8,0,0"
                         Text="{Binding [Placeholder.MenuHint], Source={x:Static loc:LocalizationManager.Instance}}"
                         TextAlignment="Center"
                         Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}" />

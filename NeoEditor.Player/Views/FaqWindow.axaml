@@ -1,0 +1,50 @@
+<Window
+    x:Class="NeoEditor.Player.Views.FaqWindow"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:loc="clr-namespace:NeoEditor.Player.Services"
+    x:Name="Root"
+    Title="{Binding [Menu.Faq], Source={x:Static loc:LocalizationManager.Instance}}"
+    ShowInTaskbar="False"
+    Width="560" Height="560"
+    WindowStartupLocation="CenterOwner">
+
+    <!--  v2.79：玩家向 FAQ——Q 加粗、A 换行，内容来自 resx（随语言切换即时刷新）  -->
+    <ScrollViewer Margin="16,12">
+        <StackPanel Spacing="12">
+            <StackPanel Spacing="4">
+                <TextBlock Text="{Binding [Help.Faq.Q1], Source={x:Static loc:LocalizationManager.Instance}}"
+                           FontSize="14" FontWeight="SemiBold"
+                           Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}" />
+                <TextBlock Text="{Binding [Help.Faq.A1], Source={x:Static loc:LocalizationManager.Instance}}"
+                           FontSize="13" TextWrapping="Wrap"
+                           Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}" />
+            </StackPanel>
+            <StackPanel Spacing="4">
+                <TextBlock Text="{Binding [Help.Faq.Q2], Source={x:Static loc:LocalizationManager.Instance}}"
+                           FontSize="14" FontWeight="SemiBold"
+                           Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}" />
+                <TextBlock Text="{Binding [Help.Faq.A2], Source={x:Static loc:LocalizationManager.Instance}}"
+                           FontSize="13" TextWrapping="Wrap"
+                           Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}" />
+            </StackPanel>
+            <StackPanel Spacing="4">
+                <TextBlock Text="{Binding [Help.Faq.Q3], Source={x:Static loc:LocalizationManager.Instance}}"
+                           FontSize="14" FontWeight="SemiBold"
+                           Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}" />
+                <TextBlock Text="{Binding [Help.Faq.A3], Source={x:Static loc:LocalizationManager.Instance}}"
+                           FontSize="13" TextWrapping="Wrap"
+                           Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}" />
+            </StackPanel>
+            <!--  v2.80：移除 Q4 游戏闪退 / Q5 SmartScreen / Q6 mod 安装（用户要求精简）  -->
+            <StackPanel Spacing="4">
+                <TextBlock Text="{Binding [Help.Faq.Q7], Source={x:Static loc:LocalizationManager.Instance}}"
+                           FontSize="14" FontWeight="SemiBold"
+                           Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}" />
+                <TextBlock Text="{Binding [Help.Faq.A7], Source={x:Static loc:LocalizationManager.Instance}}"
+                           FontSize="13" TextWrapping="Wrap"
+                           Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}" />
+            </StackPanel>
+        </StackPanel>
+    </ScrollViewer>
+</Window>

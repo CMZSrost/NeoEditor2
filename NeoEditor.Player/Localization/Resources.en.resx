@@ -558,4 +558,31 @@
   <data name="Log.LevelAll" xml:space="preserve"><value>All</value></data>
   <data name="Storage.RestartPendingTitle" xml:space="preserve"><value>restart on exit to apply</value></data>
   <data name="Storage.Hint" xml:space="preserve"><value>Save tips: backing up and deleting saves never needs a restart. When restoring a backup — if the game was just opened and hasn't been played yet, it takes effect immediately; if you have already played or saved, restart the game to read the restored save (this window restarts it automatically when closed).</value></data>
+  <data name="Menu.OpenGameFolder" xml:space="preserve"><value>Choose game folder…</value></data>
+  <data name="Menu.Help" xml:space="preserve"><value>Help</value></data>
+  <data name="Menu.CheckUpdate" xml:space="preserve"><value>Check for updates</value></data>
+  <data name="Menu.Faq" xml:space="preserve"><value>FAQ</value></data>
+  <data name="Status.Loading" xml:space="preserve"><value>Loading game data: {0}… (5-10 min on first launch / with many mods — please wait, keep the window open)</value></data>
+  <data name="Status.GameLoaded" xml:space="preserve"><value>Game started ✓</value></data>
+  <data name="Status.FoundGame" xml:space="preserve"><value>Game found: {0}</value></data>
+  <data name="Status.NoSwfInFolder" xml:space="preserve"><value>No NEOScavenger.swf found in this folder. Please choose the game root (the folder containing NEOScavenger.swf and the data folder).</value></data>
+  <data name="Update.NewVersionTitle" xml:space="preserve"><value>New version available</value></data>
+  <data name="Update.NewVersionBody" xml:space="preserve"><value>New version {0} found (current {1}). Open the download page?</value></data>
+  <data name="Update.OpenPage" xml:space="preserve"><value>Open download page</value></data>
+  <data name="Update.CheckFailed" xml:space="preserve"><value>Update check failed (no network?)</value></data>
+  <data name="Error.MakeReport" xml:space="preserve"><value>Create report</value></data>
+  <data name="DeathRecovery.Title" xml:space="preserve"><value>Save deleted</value></data>
+  <data name="DeathRecovery.Body" xml:space="preserve"><value>The game deleted the save (the character may have died, or a new game started). It was backed up automatically — continue from the most recent backup?</value></data>
+  <data name="DeathRecovery.Restore" xml:space="preserve"><value>Continue from backup</value></data>
+  <data name="DeathRecovery.Ignore" xml:space="preserve"><value>Ignore</value></data>
+  <data name="DeathRecovery.None" xml:space="preserve"><value>The save was deleted, but no backup was found.</value></data>
+  <data name="Help.Faq.Q1" xml:space="preserve"><value>Where are my saves? Can I lose them?</value></data>
+  <data name="Help.Faq.A1" xml:space="preserve"><value>Saves live in the player's own storage, separate from the original game — they never touch your vanilla saves. Use Save Manager to view/back up/delete; File → Export Saves &amp; Logs bundles everything into one file.</value></data>
+  <data name="Help.Faq.Q2" xml:space="preserve"><value>My character died and the save is gone?</value></data>
+  <data name="Help.Faq.A2" xml:space="preserve"><value>The game deletes the save on death — but every save/delete is auto-backed up (save_backup folder in the game folder, newest 5 kept). After a death you'll be asked whether to continue from the newest backup; you can also restore any time in Save Manager → Backups.</value></data>
+  <data name="Help.Faq.Q3" xml:space="preserve"><value>It's loading forever — is it stuck?</value></data>
+  <data name="Help.Faq.A3" xml:space="preserve"><value>No. Loading the game data takes time: 5-10 minutes on first launch or with many mods. Please wait and keep the window open.</value></data>
+  <data name="Help.Faq.Q7" xml:space="preserve"><value>Fullscreen, background, logs?</value></data>
+  <data name="Help.Faq.A7" xml:space="preserve"><value>F11 fullscreen; View → Run in background keeps the game running when unfocused; F10 shows the run log (useful when reporting errors).</value></data>
+  <data name="Update.UpToDate" xml:space="preserve"><value>You're up to date (v{0})</value></data>
 </root>

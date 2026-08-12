@@ -37,6 +37,13 @@ public class ImageCreateDocumentTests
         return loc.Object;
     }
 
+    private static IAiPromptPresetService CreateEmptyPresets()
+    {
+        var svc = new Mock<IAiPromptPresetService>();
+        svc.Setup(s => s.GetPresets()).Returns(new List<AiPromptPreset>());
+        return svc.Object;
+    }
+
     private static ImageCreateDocument CreateDoc(IMessenger? messenger = null,
         IImageGenerationService? imageGen = null)
     {
@@ -47,7 +54,8 @@ public class ImageCreateDocumentTests
             new AiGenerationPanelViewModel(
                 imageGen ?? new Mock<IImageGenerationService>().Object,
                 loc,
-                Mock.Of<IConfigService>(c => c.Config == new NeoEditor.Core.Model.AppConfig())),
+                Mock.Of<IConfigService>(c => c.Config == new NeoEditor.Core.Model.AppConfig()),
+                CreateEmptyPresets()),
             messenger ?? new Mock<IMessenger>().Object);
     }
 
@@ -78,7 +86,8 @@ public class ImageCreateDocumentTests
             new AiGenerationPanelViewModel(
                 new Mock<IImageGenerationService>().Object,
                 loc,
-                Mock.Of<IConfigService>(c => c.Config == new NeoEditor.Core.Model.AppConfig())),
+                Mock.Of<IConfigService>(c => c.Config == new NeoEditor.Core.Model.AppConfig()),
+                CreateEmptyPresets()),
             new Mock<IMessenger>().Object);
 
         doc2.ImportImagesCommand.Execute(null);

@@ -2412,6 +2412,11 @@ Ctrl+右键点击引用 = 仅预览不跳转。
     <data name="ImportMod" xml:space="preserve"><value>导入 Mod</value></data>
     <data name="AiGenerate" xml:space="preserve"><value>AI 生成图片</value></data>
     <data name="AiPromptPlaceholder" xml:space="preserve"><value>输入提示词，如：一把像素风的剑</value></data>
+    <data name="AiPromptPreset" xml:space="preserve"><value>模板:</value></data>
+    <data name="AiPromptPresetSelect" xml:space="preserve"><value>选择预设模板…</value></data>
+    <data name="AiPromptPresetNamePlaceholder" xml:space="preserve"><value>模板名称（留空自动命名）</value></data>
+    <data name="AiPromptSaveAsPreset" xml:space="preserve"><value>保存为模板</value></data>
+    <data name="AiPromptPresetDefaultName" xml:space="preserve"><value>自定义模板</value></data>
     <data name="AiUnavailableHint" xml:space="preserve"><value>AI 未配置（设置中填写 API Key）</value></data>
     <data name="OriginalImage" xml:space="preserve"><value>原图</value></data>
     <data name="PixelatedImage" xml:space="preserve"><value>像素处理图</value></data>

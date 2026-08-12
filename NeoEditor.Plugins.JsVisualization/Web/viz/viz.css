@@ -142,13 +142,6 @@ body {
 }
 .node-card.current.card-pulse { animation: cardPulse 0.9s ease-out; }
 
-.flow-scroll {
-  display: flex;
-  overflow-x: auto;
-  padding-bottom: 4px;
-}
-.flow-row { display: flex; gap: 10px; margin: 0 auto; padding: 2px 0; }
-
 .precond-filter { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
 .precond-filter label {
   display: flex;
@@ -316,3 +309,232 @@ details.raw-xml pre {
   font-size: 11px;
   box-shadow: 0 1px 4px rgba(198, 40, 40, 0.15);
 }
+
+/* ═══════════════ P1 / D10 组件库样式 ═══════════════ */
+
+/* ── TopBar（页面级工具条，sticky；D10 §二）────────── */
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(4px);
+  border-bottom: 1px solid #eee;
+  padding: 6px 2px;
+  margin: -12px -16px 12px;
+}
+.topbar-type { font-size: 11px; }
+.topbar-audit { font-size: 10px; color: var(--text-dim); }
+.topbar-back {
+  font-size: 10px;
+  padding: 2px 10px;
+  background: var(--accent-bg-blue);
+  color: var(--accent-blue);
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 600;
+}
+.topbar-back:hover { filter: brightness(0.94); }
+
+/* ── Section 统一区块头（D10 §3.4 单轨）────────────── */
+.section-head .section-icon { font-size: 12px; }
+.section-head .section-title { font-weight: 700; }
+.section-count {
+  background: #eceff1;
+  color: #546e7a;
+  border-radius: 8px;
+  padding: 0 6px;
+  font-size: 9px;
+  font-weight: 600;
+}
+
+/* ── Hero 统一身份区（D10 §二）────────────────────── */
+.hero-subtitle { font-size: 12px; font-style: italic; color: #888; }
+
+/* ── 可感知的可点击性（D10 §3.7）──────────────────── */
+.badge[data-nav], .node-card.navigable, .am-row.navigable,
+.loot-row.nav, .spawn-row.nav, .ing-name.nav, .node-title[data-nav] {
+  cursor: pointer;
+}
+.badge[data-nav]:hover, .am-row.navigable:hover, .loot-row.nav:hover,
+.spawn-row.nav:hover, .ing-name.nav:hover {
+  outline: 1px solid rgba(21, 101, 192, 0.35);
+  transform: translateY(-1px);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+  filter: brightness(0.97);
+}
+/* 静态 ↗ 角标（能供性提示） */
+.nav-arrow {
+  font-size: 8px;
+  opacity: 0.55;
+  margin-left: 2px;
+  vertical-align: super;
+}
+.badge[data-nav] .nav-arrow { margin-left: 3px; }
+
+/* ── ValueGrid（键值格，D10 模板主力）──────────────── */
+.value-grid {
+  display: grid;
+  grid-template-columns: repeat(var(--cols, 2), 1fr);
+  gap: 2px 14px;
+  margin: 4px 0;
+}
+.value-grid[data-cols="3"] { --cols: 3; }
+.value-cell { padding: 3px 4px; }
+.value-label { font-size: 9px; color: var(--text-dim); }
+.value-num { font-size: 13px; font-weight: 600; color: #333; }
+.value-row { display: flex; align-items: baseline; gap: 8px; margin: 3px 0; font-size: 11px; }
+.value-row .value-label { color: var(--text-dim); min-width: 60px; }
+.value-row .value-num { font-size: 11px; }
+
+/* ── StatBar（stacked / centered）─────────────────── */
+.statbar { margin: 4px 0; }
+.statbar-text { font-size: 11px; color: #555; display: block; margin-bottom: 2px; }
+.statbar-track {
+  height: 10px;
+  border-radius: 5px;
+  background: rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+  display: flex;
+}
+.statbar-track.stacked { background: #eceff1; }
+/* bipolar：零中心双向条（正右负左） */
+.statbar-track.bipolar {
+  background: linear-gradient(90deg, #fdecea 50%, #e8f5e9 50%);
+  border: 1px solid #eee;
+}
+.statbar-seg { height: 100%; }
+.statbar-fill { height: 100%; border-radius: 5px; }
+
+/* ── 光照热力格（HexType，Avalonia BuildLightPanel 同款：时段名+热力色块内数值）──── */
+.light-grid { display: flex; gap: 6px; margin: 4px 0; }
+.light-cell { flex: 1; min-width: 0; }
+.light-label {
+  display: block; text-align: center; font-size: 9px; color: #999; margin-bottom: 4px;
+}
+.light-value {
+  border-radius: 3px; padding: 4px 2px; text-align: center;
+  font-size: 11px; font-weight: 500;
+}
+
+/* ── 战利品嵌套树（P1，D04 语义）──────────────────── */
+.loot-tree { margin: 4px 0; }
+.loot-tree-title { margin-bottom: 4px; }
+.loot-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 3px 6px;
+  border-radius: 4px;
+  font-size: 11px;
+}
+.loot-row:hover { background: rgba(0, 0, 0, 0.03); }
+.loot-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.loot-prob { font-size: 10px; font-weight: 700; white-space: nowrap; }
+.loot-qty { font-size: 10px; color: #888; }
+.loot-children { margin-left: 18px; border-left: 1px dashed #ddd; padding-left: 8px; }
+/* P2 §3.2: 展开协议 —— .open 控制子层显示（bindExpand 统一机制） */
+.loot-wrap:not(.open) .loot-children { display: none; }
+.loot-arrow { font-size: 8px; color: #999; }
+.loot-table > .loot-name { font-weight: 600; color: #283593; }
+
+/* ── RefPanel（P2 §3.6：过滤 + 滚动加载）────────────── */
+.ref-summary { font-size: 11px; font-weight: 600; color: #455a64; margin-bottom: 6px; }
+.ref-filter {
+  width: 100%;
+  font-size: 11px;
+  padding: 4px 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  margin-bottom: 8px;
+  box-sizing: border-box;
+}
+.ref-filter:focus { outline: 1px solid var(--accent-blue); }
+.ref-group { margin-bottom: 6px; }
+.ref-group-title { font-size: 10px; color: #666; font-weight: 600; display: block; margin-bottom: 3px; }
+.ref-list { gap: 6px; }
+.ref-sentinel {
+  font-size: 9px;
+  color: var(--text-dim);
+  padding: 2px 6px;
+  cursor: pointer;
+}
+
+/* ── 攻击模式行 + 展开详情（D04/D05 三层）──────────── */
+.am-wrap { margin: 2px 0; }
+/* P2 §3.2: 展开协议 —— .open 控制详情显示（bindExpand 统一机制） */
+.am-wrap .am-detail { display: none; }
+.am-wrap.open .am-detail { display: block; }
+.am-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.03);
+}
+.am-row.unresolved { background: transparent; }
+.am-name { font-size: 12px; font-weight: 600; color: #333; min-width: 120px; max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.am-name.unresolved { color: #999; font-weight: 400; }
+.am-row .statbar { flex: 1; margin: 0; }
+.am-row .statbar-track { height: 8px; }
+.am-meta { font-size: 10px; color: #777; white-space: nowrap; }
+.am-arrow { font-size: 10px; color: #999; }
+.am-detail { margin: 2px 0 6px 14px; padding: 6px 10px; border-left: 2px solid #e0e0e0; }
+.am-top { gap: 8px; }
+.am-icon { width: 36px; height: 36px; border-radius: 5px; background: rgba(0,0,0,0.05); object-fit: contain; }
+.am-morale { font-size: 11px; font-weight: 600; }
+.am-effective { font-size: 11px; font-weight: 600; color: #9575cd; }
+.am-formula { font-size: 9px; color: #999; margin: 4px 0; }
+.am-sub { margin-top: 6px; }
+.am-sub-label { font-size: 10px; color: #999; font-weight: 600; margin-bottom: 3px; }
+.am-phrase { font-size: 11px; font-style: italic; color: #666; margin: 6px 0; }
+.am-notes { font-size: 10px; color: #888; margin: 4px 0; }
+.am-hint { font-size: 9px; color: #999; margin-top: 6px; }
+
+/* ── Creature 刷新点行 ────────────────────────────── */
+.spawn-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.03);
+  font-size: 11px;
+  margin-bottom: 3px;
+}
+.spawn-name { font-weight: 600; color: #333; }
+.spawn-pos, .spawn-count { font-size: 10px; color: #777; }
+.spawn-weight { font-size: 10px; color: #e65100; margin-left: auto; }
+.notes-box { font-size: 11px; color: #666; margin: 6px 0; }
+
+/* ── Recipe 原料卡 ────────────────────────────────── */
+.ing-group { margin-bottom: 10px; }
+.ing-list { display: flex; flex-direction: column; gap: 6px; margin-top: 4px; }
+.ing-card { padding: 8px 10px; }
+.ing-name { font-size: 11px; font-weight: 600; color: #333; }
+.ing-name.unresolved { color: #999; font-weight: 400; }
+.ing-props { margin-top: 6px; }
+.ing-prop { min-width: 0; }
+
+/* ── 薄类型模板 ───────────────────────────────────── */
+.mono-text {
+  font-family: Consolas, monospace;
+  font-size: 10px;
+  color: #555;
+  white-space: pre-wrap;
+  word-break: break-word;
+  background: #f7f7f7;
+  border: 1px solid #eee;
+  border-radius: 4px;
+  padding: 8px;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+/* ── 效果区战利品树（Encounter P1 升级）────────────── */
+.effect-tree { flex-basis: 100%; margin-top: 4px; }

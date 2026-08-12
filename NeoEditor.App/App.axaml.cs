@@ -195,12 +195,28 @@ public partial class App : Application
                 // 扩展点）。语义提取器在组合根注册：findImage 委托来自 App 的 IImageService
                 // （R18: 插件不引用 App）。
                 services.AddJsVisualizationPlugin();
+                // D09 P1: 语义提取器在组合根注册 —— findImage 委托来自 App 的 IImageService
+                // （R18: 插件不引用 App）。SemanticsShared（条件语义色/攻击模式/审计/引用聚合）
+                // 与 LootTreeBuilder（战利品嵌套树）为各提取器共享。
+                services.AddSingleton<NeoEditor.Plugins.JsVisualization.Services.LootTreeBuilder>();
+                services.AddSingleton<NeoEditor.Plugins.JsVisualization.Services.SemanticsShared>(
+                    sp => new NeoEditor.Plugins.JsVisualization.Services.SemanticsShared(
+                        sp.GetRequiredService<IEntityLookupService>(),
+                        sp.GetRequiredService<Helper.IReferenceResolver>(),
+                        sp.GetRequiredService<ILocalizationService>(),
+                        sp.GetRequiredService<Services.IImageService>().FindImage));
                 services.AddSingleton<NeoEditor.Plugins.JsVisualization.Services.EncounterSemanticsExtractor>(
                     sp => new NeoEditor.Plugins.JsVisualization.Services.EncounterSemanticsExtractor(
                         sp.GetRequiredService<IEntityLookupService>(),
                         sp.GetRequiredService<Helper.IReferenceResolver>(),
                         sp.GetRequiredService<ILocalizationService>(),
-                        sp.GetRequiredService<Services.IImageService>().FindImage));
+                        sp.GetRequiredService<Services.IImageService>().FindImage,
+                        sp.GetRequiredService<NeoEditor.Plugins.JsVisualization.Services.LootTreeBuilder>()));
+                services.AddSingleton<NeoEditor.Plugins.JsVisualization.Services.ItemTypeSemanticsExtractor>();
+                services.AddSingleton<NeoEditor.Plugins.JsVisualization.Services.CreatureSemanticsExtractor>();
+                services.AddSingleton<NeoEditor.Plugins.JsVisualization.Services.RecipeSemanticsExtractor>();
+                services.AddSingleton<NeoEditor.Plugins.JsVisualization.Services.ThinSemanticsExtractor>();
+                services.AddSingleton<NeoEditor.Plugins.JsVisualization.Services.TemplateSemanticsExtractor>();
                 // D02: App-level tool plugins (Profile Tool). Registered with the other
                 // IToolPlugin instances so the dynamic dock build picks them up.
                 services.AddSingleton<ViewModels.MainContent.ProfileToolViewModel>();
@@ -334,11 +350,19 @@ public partial class App : Application
             "Id INTEGER PRIMARY KEY AUTOINCREMENT, " +
             "ProfileId INTEGER NOT NULL, " +
             "EntityId TEXT NOT NULL, " +
+            "EntityType TEXT NULL, " +
+            "ModId INTEGER NOT NULL DEFAULT -1, " +
             "ColumnName TEXT NULL, " +
             "RawValue TEXT NULL, " +
             "IsNew INTEGER NOT NULL DEFAULT 0, " +
             "IsDeleted INTEGER NOT NULL DEFAULT 0, " +
             "UpdatedAt TEXT NOT NULL DEFAULT (datetime('now','localtime')))");
+        // Existing DBs created before EntityType/ModId existed: add the columns so the
+        // EF query (which selects them) doesn't fail with 'no such column'.
+        AddColumnIfMissing(db, "SELECT name FROM pragma_table_info('profile_edits')", "EntityType",
+            "ALTER TABLE profile_edits ADD COLUMN EntityType TEXT NULL");
+        AddColumnIfMissing(db, "SELECT name FROM pragma_table_info('profile_edits')", "ModId",
+            "ALTER TABLE profile_edits ADD COLUMN ModId INTEGER NOT NULL DEFAULT -1");
         db.Database.ExecuteSqlRaw(
             "CREATE UNIQUE INDEX IF NOT EXISTS IX_profile_edits_ProfileId_EntityId_ColumnName " +
             "ON profile_edits (ProfileId, EntityId, ColumnName)");

@@ -121,10 +121,22 @@ public partial class EntityEditorView : UserControl
             _lastDoc.PropertyChanged += OnDocPropertyChanged;
             if (_lastDoc.Entity != null)
                 RebuildVisualizer(_lastDoc);
-            EditorTabs.SelectedIndex = 0;
+            // 先挂载 JS 页签（成功则 IsVisible=true），再选默认页签
+            EnsureJsVizHost();
+            SelectDefaultTab();
         }
-        EnsureJsVizHost();
+        else
+        {
+            EnsureJsVizHost();
+        }
     }
+
+    /// <summary>
+    /// D09 页签默认：JS 可视化可用时默认选中；不可用（插件缺失/WebView2 不支持）时
+    /// 回退原 Avalonia 可视化页签。
+    /// </summary>
+    private void SelectDefaultTab()
+        => EditorTabs.SelectedItem = JsVizTabItem.IsVisible ? JsVizTabItem : VisualTabItem;
 
     /// <summary>
     /// D09: mount the JS 可视化 tab via the cross-plugin extension point
@@ -150,6 +162,8 @@ public partial class EntityEditorView : UserControl
         if (view is null) return; // WebView2 unavailable on this platform
         JsVizHost.Children.Add(view);
         JsVizTabItem.IsVisible = true;
+        // D09 页签默认：挂载成功即选中 JS 可视化（首次 DataContext 设置/首次打开实体）。
+        EditorTabs.SelectedItem = JsVizTabItem;
         _jsVizHost = host;
         if (DataContext is EntityEditorDocument doc && doc.Entity != null)
             _jsVizHost.LoadEntity(doc.Entity);

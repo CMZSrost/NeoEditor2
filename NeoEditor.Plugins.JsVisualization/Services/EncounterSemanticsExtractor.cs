@@ -23,17 +23,20 @@ public sealed class EncounterSemanticsExtractor
     private readonly IReferenceResolver _resolver;
     private readonly ILocalizationService _loc;
     private readonly Func<string, string?> _findImage;
+    private readonly LootTreeBuilder _lootTrees;
 
     public EncounterSemanticsExtractor(
         IEntityLookupService dataTable,
         IReferenceResolver resolver,
         ILocalizationService localization,
-        Func<string, string?> findImage)
+        Func<string, string?> findImage,
+        LootTreeBuilder lootTrees)
     {
         _dataTable = dataTable;
         _resolver = resolver;
         _loc = localization;
         _findImage = findImage;
+        _lootTrees = lootTrees;
     }
 
     private string Loc(string key) => _loc[key];
@@ -62,6 +65,7 @@ public sealed class EncounterSemanticsExtractor
             Flow = BuildFlow(enc, predecessors, branches, pre),
             Effects = BuildEffects(enc),
             Entry = BuildEntry(enc),
+            Refs = SemanticsShared.BuildRefSummary(_dataTable, enc.EntityId),
         };
     }
 
@@ -72,9 +76,9 @@ public sealed class EncounterSemanticsExtractor
     {
         var raw = imageList?.ToRawString(null);
         if (string.IsNullOrWhiteSpace(raw)) return null;
-        var path = _findImage(raw);
-        if (string.IsNullOrWhiteSpace(path)) return null;
-        return "/viz/assets?path=" + Uri.EscapeDataString(path);
+        // 候选链与 Avalonia LoadImage 对齐（StripNs / 纯文件名 / .png 兜底）——
+        // 统一走 SemanticsShared（"JS 可视化找不到图片"根因修复）
+        return SemanticsShared.ImageUrl(raw, _findImage);
     }
 
     // ═══════════════ response parsing (D07 §四/§五/§六 — ported from the Encounter visualizer) ═══════════════
@@ -649,12 +653,20 @@ public sealed class EncounterSemanticsExtractor
     }
 
     private EffectRowDto BuildTreasureRow(string label, string bg, string fg, TreasureTable? tt, string rawId)
-        => new()
+    {
+        var row = new EffectRowDto
         {
             Label = new ChipDto { Label = label, Bg = bg, Fg = fg },
-            // v1: 只出表徽章（战利品嵌套树 P1）。
             Badges = [ToBadge(tt, rawId, bg, fg)],
         };
+        // P1: 战利品嵌套树 —— 表徽章 + 可展开树（复用 ItemType/Creature 同一 LootTreeBuilder）
+        if (tt is not null)
+        {
+            var tree = _lootTrees.Build(tt);
+            if (tree is not null) row.Trees.Add(tree);
+        }
+        return row;
+    }
 
     private static BadgeDto ToBadge(IEntity? resolved, string rawId, string bg, string fg)
         => resolved is not null

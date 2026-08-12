@@ -1,18 +1,40 @@
 # D09 — JS 可视化：center 可视化 UI 的 WebView2 + JS 渲染重构
 
-> 设计文档 · 2026-08-08 · v1.2（实施推进：P0 → P0.8 全部落地）
+> 设计文档 · 2026-08-08 · v1.5（实施推进：P0 → P0.14 全部落地，**P1 全部落地**）
 > v1.1 = 用户拍板：① **Encounter 优先**（最复杂也最完善，语义契约以它为模板铺开）；
 > ② P4 验收无 bug 后**下线 Avalonia visualizer**（不再长期双轨）；
 > ③ 命名沿用（插件 `NeoEditor.Plugins.JsVisualization`、资源键 `Jsv.*`）。
 > v1.2 = 实施记录追加（P0.5 焦点切换动画 / P0.6 局部重渲染 + XML 导入 / P0.7 崩溃修复 /
-> P0.8 **单 WebView2 共享 → 修订 v2**：共享控件 reparent 实机输入失效（"像图片一样"），
-> 改为**每文档 WebView2 + 环境共享**（UserDataFolder/Profile 统一 → 单一浏览器进程））+
+> P0.8 共享架构两轮修订：v2 每文档 WebView + 环境共享 → v3 共享控件（离屏））+
 > 订正 P0.7 性能段落中已被取代的旧架构描述。
 > v1.3 = [D10](D10-js-visualization-upgrade-design.md)（AF4 审查与组件升级设计思路）发布：
 > §四"原样继承"指 **D04-D08 语义规格**；组件层按 D10 统一模板与 9 项改进执行（Section 单轨/
 > 导航历史/状态记忆/Raw Data 移底部/RefPanel 聚合/薄类型分级），随 P1-P4 分期吸收。
-> 实施状态：插件 + 扩展点 + VizContentServer + 快照契约 + Encounter 全量语义 + JS 页面
-> + 每文档 WebView2（环境共享，单浏览器进程）+ 测试 40 项，构建通过、全量 922 回归通过。
+> v1.4 = 实机验收四轮修订汇总（P0.9 滚轮修复 / P0.10 共享 v3 / P0.11 单轨道+平移动画 /
+> P0.12 404 修复+XML 调试通道 / P0.13 动画重设计+通用渲染器 / P0.14 **JS 驱动动画 +
+> 共享 v4（Detach 销毁）**）——动画与 WebView 生命周期两处最终定稿（见 P0.13/P0.14）。
+> v1.5 = **P1 实施记录**（2026-08-09，D10 组件升级 + 类型铺开，见 §十）：
+> 组件库拆 components.js（IIFE 作用域隔离——顶层解构与全局函数名冲突的坑）+ renderers.js
+> 渲染器注册表；ItemType/Creature/Recipe 三个语义提取器（D04/D05 纯数据移植）+
+> C 级薄类型模板（ContainerType 引用聚合/BarterHex 补货/Map 规格摘要）；战利品嵌套树
+> LootTreeBuilder（Encounter 效果区一并接入）；TopBar 审计统计（N·M·K，与 Avalonia
+> RawData 折叠头同口径）；RefPanel 静态版（类型分组聚合，P2 补过滤/滚动加载）；
+> §3.7 [data-nav] hover + ↗ 角标。测试 77 项（新增 45）；Edge headless 截图 +
+> vision 识别对照 D04/D05 全过（含 Encounter autoplay 动画回归）。
+> v1.6 = **P2 实施记录**（2026-08-09，D10 §3.1/§3.2/§3.6 + D09 P2 交互桥，见 §十一）：
+> 组件内导航历史（← 返回 + 快照缓存）、状态记忆（展开/滚动 sessionStorage）、RefPanel
+> 过滤 + 滚动加载、postMessage 增强通道（POST 为主、桥兜底，协议唯一同一 Handler）。
+> v1.7 = **P4 全类型铺开**（2026-08-09，D10 §四 24 类型全覆盖，见 §十二）：
+> `TemplateSemanticsExtractor` 把剩余 17 类型全部接入——B 级 7 个（AttackMode/Condition/
+> TreasureTable/HexType/Faction/BattleMove/CampType，语义迁移）与 D 级 10 个（GameVar/
+> ItemProp/Headline/ForbiddenHex/ChargeProfile/Ingredient/DmcPlace/CreatureSource/
+> EncounterTrigger/DataFile，反射字段表 + 特化）；StatBarDto bipolar 双向条；JS 侧
+> renderTemplate 扩展（bars/mode/badgeGroups），17 类型注册到模板渲染器（零 per-type）。
+> **24 类型全部可渲染**，无"未实现"兜底。
+> 实施状态：插件 + 扩展点 + VizContentServer + 快照契约 + **24 类型语义全覆盖**
+> （A 级 3 + B 级 7 + C 级 3 + D 级 10）+ JS 页面（组件库 + 渲染器注册表 + 通用渲染器
+> NeoViz + JS 驱动动画 + P2 导航历史/状态记忆/RefPanel 交互）+ 共享 WebView2 v4
+> + 测试 91 项，构建通过、全量回归通过。
 > 上承：D04/D05/D06/D07/D08 视觉规格（Avalonia visualizer 的设计语言）
 >        + Docs/42 WebView 计划（NativeWebView 宿主 / 回环 HTTP / JS 桥 / 反代数据注入）
 > 下启：`NeoEditor.Plugins.JsVisualization` 新插件 + `EntityEditorView` 第三 Tab「JS 可视化」
@@ -61,7 +83,7 @@
 | 7 | XML 输入 | 双通道：C# 端点接受 XML 实时出快照；页面 debug 模式 DOMParser 兜底 | 回答"传 XML 看效果"——编辑器内 XML Tab 编辑实时反映到 JS 可视化；调试/验证时直接喂 XML |
 | 8 | 交互桥 | 页面 fetch POST `/viz/action`（主），`chrome.webview.postMessage`（WebView2 加速，可选） | 浏览器兼容优先；42 §3.4 已有"宿主桥优先、页面内 POST 兜底"先例，此处反用（POST 为主、桥为辅）以保零依赖 |
 | 9 | JS 技术栈 | **原生 JS + CSS，无框架、无构建链** | 项目无 Node 构建链（纯 dotnet）；页面作为插件内嵌资源直接发布；组件库对应 VisHelperService 工具箱 |
-| 10 | 生命周期 | **每文档一个 WebView2 + 环境共享**（P0.8 v2）：每个文档 JS tab 一个 NativeWebView（懒创建 + 关闭释放），所有实例共享同一 UserDataFolder/Profile → 单一浏览器进程 | 初版「Tab 首次激活才建 WebView」；用户实机反馈标签页快关快开、数量大 → 先试单控件共享（reparent 输入失效，废弃）→ 收敛到环境层共享（P0.8 v2） |
+| 10 | 生命周期 | **共享 WebView2 v4（P0.14 定稿）**：每次激活的文档 JS tab 一个 NativeWebView（懒创建），**文档失活即销毁、激活时重建**（不做控件 reparent——实测残留状态"一会行一会不行"）；所有实例共享 UserDataFolder/Profile（单一浏览器进程）+ 离屏合成（滚轮/输入走 Avalonia 转发） | 演变：初版「Tab 首次激活才建 WebView」→ 单控件共享（reparent 输入失效）→ v2 每文档+环境共享 → v3 共享控件（离屏下 reparent 恢复，但状态残留"一会行一会不行"）→ **v4：Detach 销毁 + 环境共享定稿**（重建 ~百 ms，快关快开无感） |
 
 ## 二、总体架构
 
@@ -76,13 +98,14 @@
 │   │  │  同环境（共享进程）     │   │        │   │  同环境（共享进程）    │ │ │
 │   │  └──────────────────────┘   │        │  └──────────────────────┘ │ │
 │   └─────────────────────────────┘        └──────────────────────────┘ │
-│   （切到 JS tab 才创建；关闭/Dock 回收即释放）                          │
+│   （切到 JS tab 才创建；文档失活即销毁、激活重建——v4，无 reparent）      │
 └────────────────────────────────┬───────────────────────────────────┘
                                  │ EnvironmentRequested 事件统一配置
 ┌────────────────────────────────▼───────────────────────────────────┐
-│ VizWebViewEnvironment（静态）—— 共享 WebView2 环境                  │
+│ VizWebViewEnvironment（静态）—— 共享 WebView2 环境（v4 共享层）       │
 │  · UserDataFolder = %LocalAppData%/NeoEditor/WebView2Viz           │
 │  · ProfileName = "neoviz" → 全部实例共用**单一浏览器进程**与缓存      │
+│  · ExperimentalOffscreen = true（离屏合成：滚轮/输入走 Avalonia 转发）│
 └────────────────────────────────┬───────────────────────────────────┘
                 │                                    ▲
   A. 实体变化    ▼                                    │ C. 交互（点击徽章/跳转）
@@ -339,9 +362,14 @@ WebView2 环境：页面优先 `chrome.webview.postMessage` 同协议（42 §3.4
   转发**（不依赖 native HWND hit-test）→ 控件 reparent 不再破坏输入通道 →
   `SharedJsVizWebView`（唯一 NativeWebView + 停靠容器）恢复，文档 JS tab 为轻量壳，
   激活移入/失活移回；与离屏 + 环境共享（UserDataFolder/Profile）三合一。快关快开零重建。
+  **⚠️ 该版已被 P0.14 v4 取代**：reparent 实机出现"一会行一会不行"（状态残留）→
+  最终改为 Detach 销毁 + Attach 重建（见 P0.14 ②）。
 - **P0.11 XML 输入改拖拽 + 流转平移动画**（用户三项反馈）：
   ① **去掉「加载 XML」按钮**——XML 输入 = **拖拽**：把 .xml 文件拖进页面即渲染
   （window dragover/drop + file.text() → openXml 全链路，零 C# 改动）；
+  **⚠️ 拖拽入口后续两次修订**：P0.12 按用户澄清移除（XML 输入定位为开发调试通道，
+  非应用功能）→ P0.13 以**通用渲染器**形式恢复（`NeoViz.render` API + 拖拽作为
+  输入通道之一，页面能力而非应用 UI）。
   ② **流转布局改单轨道**：修正为 D08 R64 结构——**一个横向滚动容器**包三行
   （`.flow-track` 垂直三行，整体横向滚动），不再是三个独立横向滚动；
   ③ **视角平移动画**（用户指定效果）：点击前驱/后继卡 →
@@ -365,6 +393,8 @@ WebView2 环境：页面优先 `chrome.webview.postMessage` 同协议（42 §3.4
   页面 `?file=` 参数直接渲染。调试用法：`viz/index.html?file=data/encounters.xml`。
 
 **P0.13 动画优化 + 通用渲染器（2026-08-08，用户两项反馈）**：
+（时序设计即 P0.14 定稿版；实现于 P0.14 起改为 **JS 驱动插值**——CSS transition 在
+离屏 WebView2 合成器不播放，见 P0.14 ①）
 - **① 场景流转动画重设计（原"没啥动画/太快"）**：根因 = fetch 间隙（点击后先等网络
   无反馈）+ 各阶段偏短（总 ~700ms）。新版时序：
   `点击瞬间立即淡化（fetch 并行，消除间隙）→ 淡化 250ms（opacity 0.12）
@@ -385,11 +415,32 @@ WebView2 环境：页面优先 `chrome.webview.postMessage` 同协议（42 §3.4
 - **回归修复**：main() 重构时 sample 分支误走 `applySnapshot`（把 `state.sample=null`
   清掉 → 切换 fetch /viz/data → 404）——sample 模式改为独立渲染保留 state.sample。
 
+**P0.14 动画与 WebView 生命周期最终定稿（2026-08-08，实机"浏览器正常、编辑器没有"）**：
+- **① 动画改 JS 驱动插值**（根因：**离屏模式 WebView2 合成器不播放 CSS transition**——
+  浏览器正常（抓到中间帧 opacity=0.415），编辑器瞬间跳变）。方案：
+  `animateJs(duration, onFrame)`——`setTimeout` 16ms 步进 + 内联 style 插值
+  （不依赖合成器，任何环境强制播放）：淡化（点击瞬间直接压到 0.12，fetch 并行）→
+  平移（transform 插值 550ms，easeInOut）→ 重建 → 新卡依次淡入
+  （当前 0ms / 前驱 +200ms / 后继 +350ms，每卡 +120ms）。CSS transition 全部移除
+  （仅保留脉冲 keyframes——animation 在离屏下正常）。防重入锁（连点时忽略并发
+  load）+ fetch 失败恢复透明度。
+- **② 共享 WebView 定稿 v4（Detach 销毁）**：v3（唯一控件 + reparent 移入/移出
+  停靠容器）实机出现"**一会行一会不行**"——reparent 残留输入/渲染状态。最终：
+  **文档失活即销毁 NativeWebView，激活时重建**（不做任何控件移动）；共享收敛在
+  **环境层**：UserDataFolder/ProfileName 统一（单一浏览器进程 + 缓存）+
+  ExperimentalOffscreen（离屏：滚轮/输入走 Avalonia 转发 + 无 airspace）。
+  重建成本 ~百 ms（环境已就绪），快关快开场景不受影响。
+- **③ 页面版本标记**：右下角小字 `v20260808-2120`（`VIZ_VERSION` 常量，点击显示
+  完整版本）——编辑器加载页面版本可一眼确认（排查"是不是旧构建"）。
+- **④ 构建产物排查**：`bin/Release` 曾缺 `Web/viz/`（旧构建输出）——Debug/Release
+  均已重新构建同步；`artifacts/` 下历史验证 exe 均无 viz 资源（非日常运行入口）。
+  用户实机确认全 Debug 运行 → 排除构建覆盖，问题锁定运行时行为。
+
 ## 七、实现分期（v1.1：Encounter 优先）
 
 | 阶段 | 内容 | 验收 |
 |---|---|---|
-| **P0 骨架 + Encounter**（本会话） | 插件 + `IEntityJsVisualizationHost`（UI.Common）+ EntityEditorView 第三 Tab（无实现隐藏）+ `VizContentServer`（静态页/`/viz/data` 快照/`/viz/assets`/`/viz/action`）+ `EntitySnapshotDto` + **Encounter 全量语义提取**（Hero/流转三行/NodeCard/终止胶囊/效果区/入口区）+ JS 页面（组件库 + Encounter 渲染器 + 焦点切换/回到当前/前置过滤/导航桥）+ samples + **每文档 WebView2 + 环境共享**（P0.8 v2） | 构建通过；xUnit 40 项（纯函数/合并归一/终止语义/前驱反查/效果/入口/action 桥/快照契约/sample 生成）；浏览器截图对照 D08 布局 |
+| **P0 骨架 + Encounter**（本会话） | 插件 + `IEntityJsVisualizationHost`（UI.Common）+ EntityEditorView 第三 Tab（无实现隐藏）+ `VizContentServer`（静态页/`/viz/data` 快照/`/viz/assets`/`/viz/action`/`/viz/xmlfile`）+ `EntitySnapshotDto` + **Encounter 全量语义提取**（Hero/流转三行/NodeCard/终止胶囊/效果区/入口区）+ JS 页面（组件库 + Encounter 渲染器 + **通用渲染器 NeoViz** + 焦点切换平移动画 + 回到当前/前置过滤/导航桥）+ samples + **共享 WebView2 v4**（环境共享 + Detach 销毁，P0.14 定稿） | 构建通过；xUnit 41 项（纯函数/合并归一/终止语义/前驱反查/效果/入口/action 桥/快照契约/sample 生成/EntityId 导航）；浏览器截图 + IAB DOM 对照 D08 布局 |
 | **P1 组件库与其余类型迁移** | 战利品嵌套树 + Creature/ItemType/Recipe 渲染器 + 图片资产完善 + hover tooltip 全量 | 四类实体 samples 截图逐项对照 D04-D08 |
 | **P2 交互桥完善** | postMessage 增强通道 + 反向引用面板 + peek 细节 + 选中同步（R12）联调 | 浏览器与 WebView2 行为一致 |
 | **P3 AI 验证工具链** | `samples/` 测试资产 + 验收脚本（静态服务/截图清单）+ XML debug 入口打磨 | 「喂 XML → 截图 → 识别」全链路 |
@@ -422,6 +473,233 @@ WebView2 环境：页面优先 `chrome.webview.postMessage` 同协议（42 §3.4
 - **浏览器验收（§六闭环）**：samples 截图清单逐项对照 D04-D08；XML debug 入口冒烟。
 - **回归**：现有 861 测试不动；EntityEditor 侧只加"无 IEntityJsVisualizationHost 时
   Tab 隐藏"一条测试。
+
+## 十、P1 实施记录（2026-08-09，D09 P1 + D10 组件升级吸收）
+
+**C# 语义层**（`Services/`，全部纯数据移植自 Avalonia visualizer，语义以快照 DTO 为准）：
+- `SemanticsShared`：条件语义色（Fatal/Instant/Stackable/时长 + 后缀）、攻击模式行/展开详情
+  （D04 BuildAttackModeRow/Expanded 纯数据版）、`Raw` 引用列读取（解析条目优先、RawText-only
+  桩回退——`ToRawString` 只走解析条目的坑）、反向引用聚合摘要（静态版）、TopBar 审计统计
+  （与 Avalonia RawData 折叠头同口径：N 字段 · M 有值 · K 未解析）；
+- `LootTreeBuilder`：战利品嵌套树（`物品x权重x数量` → 表内权重 Σ 归一，嵌套 TT 递归
+  depth ≤ 3，嵌套概率独立归一，未解析灰色兜底）——Encounter 效果区战利品行一并接入
+  （`EffectRowDto.Trees`）；
+- `ItemTypeSemanticsExtractor`（D04 全量：Hero G.S/辨识/关键数字/画廊、⚔ 战斗三层、
+  🧍 装备、✨ 效果三组条件、⏳ 生命周期耐久/寿命推演/破损产物、📦 容器、🔗 来源产出）、
+  `CreatureSemanticsExtractor`（D05 全量：Hero 徽章、⚔ 三层+阵营关系/空手去噪、🧬 属性/
+  出场状态概率/Activities≤30、🎁 双池、📍 遭遇三侧+刷新点权重归一）、
+  `RecipeSemanticsExtractor`（原料三组 + Required/Forbidden、产物树、Temp/AlsoTry/Hidden）、
+  `ThinSemanticsExtractor`（C 级 3 个：ContainerType 按属性分组引用聚合、BarterHex 买卖/
+  补货、Map N cells/定义截断）；
+- `VizSnapshotService` 类型分发 switch + 快照级 `Image`（Encounter/Creature 图列、ItemType
+  首图、Map 名即图）+ `Audit`。
+
+**JS 页面**（`Web/viz/`，无构建链多 script）：
+- `components.js` 组件库（D10 §二统一模板）：`Section`（图标+色条+标题+计数+右侧操作区，
+  §3.4 单轨）、`Hero`（图 132px | ID/类型/旗标行 | 名称 | 副文本/数字行）、`ValueGrid`、
+  `StatBar`（stacked/centered）、`Badge` 增强（`[data-nav]` hover 描边+抬升 + `↗` 角标，
+  §3.7）、`LootTree`、`TopBar`（类型名 + 审计统计，← 返回 P2）、`RefPanel`（聚合摘要 +
+  类型分组 + 前 N 徽章 + more）、`Details`（Raw XML 底部，§3.3）；
+- `renderers.js` 渲染器注册表：ItemType（D04 三对两列）/ Creature（D05 两对两列）/
+  Recipe / 薄类型模板（§3.8 零 per-type 渲染器，C 级直接组合）；
+- `app.js`：主渲染分发（TopBar → renderer → 底部），Encounter 渲染器迁移统一组件
+  （流转区局部重渲染锚点保留，P0.6 语义不变），NeoViz API / 动画 / 拖拽原样保留；
+- **实施坑记录**：① 组件函数全局声明与渲染器 `const { el }` 顶层解构冲突
+  （`Identifier 'el' has already been declared`）→ components.js/renderers.js/app.js
+  全部 IIFE 作用域隔离，交互桥 postAction 经 `window.VizActions` 路由；
+  ② `ConditionChipDto.label` vs `BadgeDto.text` 字段不一致 → `badge()` 兼容回退；
+  ③ `ReferenceList.ToRawString` 只走解析条目，RawText-only 构造返回空 → `SemanticsShared.Raw`
+  统一回退。
+
+**验收**（§六 AI 闭环，Edge headless + deepseek-vision）：
+- samples 扩至 9 个：encounter90/41 + itemtype52（完整语义）+ creature101 + recipe1 +
+  containertype3 + barterhex1 + map1（全部走与 /viz/data 同一提取管线，真实键值本地化）；
+- DOM 验证：各类型区块/徽章/树/审计/引用面板全出；Encounter autoplay 动画回归
+  （`data-flow-animated=1`、当前卡切至前驱、Hero 不动、无错误横幅）；
+- 截图逐区块对照 D04/D05：ItemType 六区块 + 条件语义色 + 耐久条 + 破损产物树、
+  Creature 战斗三层 + 刷新点权重归一 + 双池树、Recipe 原料卡 + 必需徽章、Encounter
+  效果区战利品树（概率 33.3%/66.7%）——无 undefined/错位/溢出；
+- 测试 77 项（新增 45：提取器 5 类 + LootTreeBuilder + SemanticsShared + 分发 + 样本生成）。
+
+**遗留（P2 吸收项）**：§3.1 组件内导航历史（← 返回）、§3.2 状态记忆（sessionStorage）、
+§3.6 RefPanel 过滤框 + 滚动加载；postMessage 增强通道；选中同步（R12）联调。
+
+## 十一、P2 实施记录（2026-08-09，D09 P2 + D10 §3.1/§3.2/§3.6 吸收）
+
+**导航历史（D10 §3.1 组件内）**：
+- `state.navStack`（来源 id 栈，连续相同 id 去重）+ `state.snapshotCache`（id → 快照，
+  返回**不重新 fetch**，缓存优先——`fetchSnapshot` 改造）；组件内焦点切换与「回到当前」
+  均入栈；TopBar「← 返回」逐级回退（无动画直接重建流转区）；
+- 局部重渲染与 TopBar 解耦：流转切换只重建流转区（P0.6 语义），返回按钮由
+  `updateTopBar()` 同步（渲染层不感知导航栈）；
+- 调试通道：`?autoback=N` 自动点击返回 N 次（headless 验收，同 autoplay 模式）。
+
+**状态记忆（D10 §3.2）**：
+- `sessionStorage['jsv:ui:{type}:{rootId}']` = `{scrollY, expanded[]}`——键锚定**文档实体**
+  （rootId），流转焦点切换属文档内导航不换键；scroll debounce 500ms 存储；
+- 统一展开协议：可展开元素带 `data-expand-key`，`.open` 类控制显示（CSS 侧），
+  `bindExpand`/`restoreExpands` 读写状态——攻击模式行、战利品树 TT 行、Raw XML details
+  全部接入；`<details>` 的原生开关在 summary 上（合成点击需点 summary）；
+- 调试通道：`?autotoggle=key1,key2` 自动点击展开元素（headless 验收）。
+
+**RefPanel（D10 §3.6）**：
+- 过滤框（名称/id 前缀即时过滤，组计数联动）+ IntersectionObserver 滚动加载
+  （首批 20 + 哨兵补批，rootMargin 200px）；C# `BuildRefSummary` cap 8 → 100
+  （过滤/懒渲染的数据基础，快照体积可控）。
+
+**postMessage 增强通道（D09 §五/P2）**：
+- C# `SharedJsVizWebView` 挂 `WebMessageReceived` → `VizActionHandler`（与 /viz/action
+  POST **同一协议、同一 Handler**——"双向可选、协议唯一"）；
+- 页面 `postAction`：POST 为主（决策 8 零宿主依赖），fetch 失败回退
+  `chrome.webview.postMessage`；浏览器环境无桥自然回退 HTTP。
+
+**验收**（Edge headless + dump-dom/截图 + vision）：
+- 导航历史：autoplay 切至前驱 → TopBar 返回按钮出现；autoback=1 回退至根场景 90、
+  按钮消失、无错误横幅；快照缓存命中（无重复 fetch）；
+- 状态记忆：隔离页验证保存（点击 → sessionStorage 写入 `{expanded:["am:X"]}`）与恢复
+  （restoreExpands → `.open`）闭环（sessionStorage 会话内持久化，跨进程不持久——
+  符合 D10 设计意图）；真实页面 `autotoggle` 展开 `am:R-Hand: 劈砍` 成功；
+- RefPanel：45 条合成数据首批 20 + 哨兵存在；过滤 "猎刀3" → 11 条即时生效、计数联动；
+  真实页面过滤框渲染正常；
+- 回归：Encounter autoplay 动画、P1 六类型页面截图 vision 复核无 undefined/错位；
+  全量测试通过（77 JsVisualization + 全解决方案）。
+
+**遗留（P4 吸收项）**：§3.1 文档级 back（宿主导航历史，可选）、§3.9 sticky 段头、
+§四 D 级模板（剩余 21 类型）、§3.4 全量核查、下线 Avalonia visualizer。
+
+## 十二、P4 全类型铺开实施记录（2026-08-09，D10 §四 24 类型全覆盖）
+
+**背景**：用户反馈"24 个类的 JS 可视化看不全，AttackMode 显示未实现"——P1 只铺了 7 类，
+剩余 17 类走"渲染器未实现"兜底。本轮把 **D10 §四 B 级 7 + D 级 10 全部接入**，24 类型
+全覆盖，无兜底路径。
+
+**C#（`TemplateSemanticsExtractor.cs`，全部输出 TemplateSemantics，JS 零 per-type）**：
+- **B 级 7 个**（语义原样迁移，区块 Section 化）：
+  - `ExtractAttackMode`：复用 `SemanticsShared.BuildAttackMode`（AttackModeDto 全套）——
+    战斗区块 `Mode` 字段渲染单模式行+展开详情；近战/远程类型徽章、WieldPhrase 副文本、
+    弹药/攻击者条件/攻击短语区块；
+  - `ExtractCondition`：严重度徽章（FATAL/Instant/时长）、属性键值表、**效果区块**
+    （`ConditionFieldTranslations` 中文字典 + 带符号值 + **bipolar 双向条**）、Effects 原文、
+    状态链（IdNext 徽章 + ChanceNext）；
+  - `ExtractTreasureTable`：Nested/Suppress/Identify 旗标 + 战利品树（LootTreeBuilder）；
+  - `ExtractHexType`：Passable/Blocked 徽章、地形移动表（移动消耗/净能见度/营地物资映射）、
+    6 时段光照热力、引用分组（搜刮战利品/条件/默认营地，哨兵 3/25 跳过）；
+  - `ExtractFaction`：**外交关系 bipolar 条**（DictFactions → 名称 + 声望分级 同盟/友好/
+    中立/敌对/仇敌，按值升序）、成员（ReverseLookup Creature.Faction）；
+  - `ExtractBattleMove`：类型徽章（攻击类型·大类 + flags）、决策属性（Chance/Detect/
+    Fatigue/Order bipolar + 射程/暴露/MinCharges）、PopUp/Success/Fail 文本、
+    **8 组条件**（Pre 橙/双方粉蓝/Fail 灰 + NOT 否定红）；
+  - `ExtractCampType`：Capacities 徽章、营地属性 5 条 bipolar、营地物资树（"3" 哨兵跳过）；
+- **D 级 10 个**（模板组合保持薄）：通用反射字段表（FieldDescriptions 中文列名 + 原始值，
+  空值不渲染）+ 类型特化——GameVar（Type 蓝 + Value 绿大字）、Headline（N chars + 正文）、
+  ForbiddenHex（Forbidden 红 + 坐标）、ChargeProfile（Degrade ⚠ + 消耗率表 + ItemId 徽章）、
+  Ingredient（Required/Forbid 属性分组）、DmcPlace（坐标 + 剧情徽章）、CreatureSource
+  （坐标·数量 + 同点权重占比）、EncounterTrigger（类型徽章 + Chance + Area/DateRange +
+  剧情/格类型）、DataFile（$Value + 内容）；ItemProp 纯通用。
+
+**DTO/JS**：
+- `StatBarDto` 加 `NegativeColor` + `Mode="bipolar"`（零中心双向条：正右负左，负色
+  #C62828 兜底）；`TemplateBlockDto` 加 `Bars` / `Mode`（AttackModeDto）/ `BadgeGroups`；
+- `statBar()` 实现 bipolar 渲染（|v|/max × 50%，负值 marginLeft:auto）；`renderTemplate`
+  扩展渲染 Bars/Mode/BadgeGroups；渲染器注册表补 17 个类型 → renderTemplate。
+
+**验收**：
+- xUnit 91 项（新增 14：TemplateSemanticsExtractorTests 11 + 分发 2 + 样本 1）；
+  样本扩至 18 个（+9 B/D 代表类型）；
+- Edge headless dump-dom：9 个 B/D 样本全部渲染（hero 标题正确、无 not-implemented/
+  加载失败）；condition5 内容抽查（FATAL/中文翻译/双向条）、battlemove1（决策属性 +
+  NOT 饱食 否定组）；
+- vision 截图验收：condition5（FATAL 红徽章/血液总量 (m_fBloodLeft) 翻译/双向条
+  绿减红增）、faction2（中立 -30 敌对 / 玩家 +100 同盟 双向条）；
+- 全量测试通过（App 构建受运行中编辑器实例 DLL 锁影响，重启后生效）。
+
+**遗留**：§3.9 sticky 段头（>3 区块页面）、§3.1 文档级 back（可选）、§3.4 全量核查
+（Avalonia 侧双轨语义冻结）、下线 Avalonia visualizer（用户验收无 bug 后）。
+
+## 十三、图片加载修复记录（2026-08-09，用户反馈"JS 可视化经常找不到图片"）
+
+**根因**：JS 侧 `SemanticsShared.ImageUrl` 直接 `_findImage(raw)`，而
+`ImageService.FindImage` 用 `Directory.GetFiles(dir, name, AllDirectories)` **精确全名
+匹配**——Avalonia `LoadImage` 的三个兜底在 JS 侧缺失：
+1. **NSE: 前缀**未去除（`StripNs`）；
+2. **子目录引用**（`img/scenario/x.png`）——GetFiles 的 searchPattern 含路径分隔符在
+   Windows 上必然匹配不到，需退化为纯文件名搜索；
+3. **无扩展名引用**（游戏数据常见，如 `img/creature/dog`）不补 `.png` 必 miss。
+
+**修复**：`SemanticsShared.ImageUrl` 静态化并实现 Avalonia LoadImage 同款候选链
+（StripNs → 子目录退纯文件名 → 无扩展补 .png）；`EncounterSemanticsExtractor.ImageUrl`
+统一走同一逻辑；`VizSnapshotService.FindImage` 补 CampType/DmcPlace/DataFile 快照根图
+（P4 铺开时漏接）。测试 +4（NSE/子目录/补 png/未找到），95 项全绿。
+
+## 十四、真实数据验证 + 收尾修复 + 页签默认调整（2026-08-11）
+
+### 14.1 图片链路：用真实 game.db 逐一裁决（结论：解析层无差异）
+
+用户反馈"依旧 Avalonia 有图、JS 没图"并强调游戏机制（getmods.php → mod 路径、
+getimages.php → 图片字典、图片在 mod 路径 + img 下）。编写验证程序直连真实
+`game.db`（8.5MB，7 张带图表，8451 行 / 9560 个图片引用）对照两套逻辑：
+
+| 验证项 | 方法 | 结果 |
+|---|---|---|
+| JS `ImageUrl` vs Avalonia `LoadImage` 候选集 | 对每个引用跑两边解析 | 各命中 9559/9560，**0 差异**（唯一 miss 为磁盘真缺 `ItmEncBlock.png`，两侧一致） |
+| 快照 `ToRawString` 往返 | 真实 `ReferenceListSerializer.Deserialize` → `ToRawString` vs 库中原始值 | 8451 行 **0 失配**，0 行解析为空 |
+| `/viz/assets` 端点 | 绝对路径 + `File.Exists` + no-store 头 | 正确（此链路上轮已真实出图验证） |
+
+**结论**：JS 与 Avalonia 走同一 `IImageService.FindImage` 委托 + 同款候选链，解析层
+不可能出现"一边有图一边没图"。真实数据证明 99.99% 引用可解析；剩余个例（如
+`ItmEncBlock.png`）是磁盘缺文件，两边都无图（属预期）。
+
+### 14.2 本轮修复的两个真实 bug
+
+1. **`profile_edits` 表缺列**（用户日志 `SQLite Error 1: 'no such column: p.EntityType'`）：
+   建表 DDL 与 `ProfileEdit` 模型不同步——模型新增 `EntityType`/`ModId`（Docs/41 追修
+   的 IsNew 重建需要）但 CREATE TABLE 未含两列，`CREATE TABLE IF NOT EXISTS` 不改旧表
+   → 打开 profile 时 EF 查询必炸，profile 编辑覆盖层加载失败。修复：DDL 补两列 +
+   `AddColumnIfMissing` 迁移（与 pending_export/profile_info 同模式），在真实 editor.db
+   副本上验证列已加、EF 形状查询通过。
+2. **AttackMode 快照 hero 图缺失**：`VizSnapshotService.FindImage` switch 漏接
+   AttackMode（`strIMG`，attackmodes 表 300+ 行可解析）——Avalonia 可视化器显示 132px
+   hero 图、JS 模板页只有模式行小图标。修复：switch 补 AttackMode，快照级统一改用
+   `SemanticsShared.Raw` 兜底（RawText-only 列表不再丢值）；新增回归测试
+   `BuildById_AttackMode_ImageField_IsVizAssetUrl`（97/97 绿）。
+
+### 14.3 页签默认调整（用户拍板：JS 可视化默认，原可视化放最后）
+
+`EntityEditorView` 页签序由「可视化(原) → XML → JS 可视化」调整为
+**「JS 可视化(默认) → XML → 可视化(原,最后)」**：
+
+- XAML：`JsVizTabItem` 移至 `TabControl.Items` 首位，`VisualTabItem` 移至末位；
+- `SelectDefaultTab()`：JS 页签可见（插件可用）时默认选中，否则回退原可视化——
+  替换原 `EditorTabs.SelectedIndex = 0`（对隐藏首项置 0 会显示空白内容）；
+- `EnsureJsVizHost()` 挂载成功后显式 `SelectedItem = JsVizTabItem`，首次打开实体即
+  落在 JS 可视化；`OnDataContextChanged` 先挂载再选默认页签，避免首帧空内容。
+
+---
+
+## 十五、页面内容订正（2026-08-11，用户反馈 5 项）
+
+1. **HexType 光照等级与 Avalonia 不匹配**：原实现是"数值行 + statBar"，用户指出设计应为
+   **从早到晚 6 时段横排、数值 + 色块**。改为 `LightCellDto` 热力格（`TemplateBlockDto.LightCells`）：
+   与 Avalonia `BuildLightPanel` 完全同款——Dawn/Morning/Noon/Afternoon/Dusk/Midnight 六列并排，
+   时段名在上、热力色块内数值，红(0)→黄(0.5)→绿(1.0+) 同公式插值（r=198→46、g=0→125→0、
+   b=40→0），ratio>0.5 白字。JS 新增 `lightGrid` 组件 + `.light-grid` CSS。测试断言改为
+   逐格校验热力色（`#A73218`/`#2E7D00` 白字/`#7AFA00`）。
+2. **CreatureSource/EncounterTrigger 的"值域"**：根因是字段表标签直接用了
+   `field_descriptions.json` 的长描述——描述自带 `实测值域：…（共 N 种）` 多行文本，
+   又长又随数据漂移。**全局移除**：`BuildFieldTable` 标签改为模型 `[Display(Name)]`
+   短字段名（与合并视图列名一致，如 `Name`/`Chance`/`LocBased`/`Min`/`Max`/`Weight`），
+   不再引用 FieldDescriptions。测试断言：标签无"值域"/换行。
+3. 同 2（值域全局不写）。
+4. **字段名用字段描述太长**：同 2 根因，一并修复（短字段名）。
+5. **ItemType 加载失败 `Cannot read properties of null (reading 'totalBar')`**：无攻击模式的
+   物品 `combat` 为 null，`combatSection(sem.combat)` 内 `combat.totalBar` 崩溃 → 整页错误横幅。
+   修复：`combatSection` 开头 `if (!combat) return null`。用构造的 `combat:null` 样本 headless
+   验证不再报错、页面正常渲染。
+
+**验收**：Edge headless + vision 三页确认——hextype1 六色块热力格（Dawn 深红 0.2 / Morning
+深绿 1.0 白字 / Noon 黄 0.5 / Afternoon 棕 0.3 / Dusk·Midnight 灰 ?）、encountertrigger1 字段表
+全短名无"值域"、itemtype52 正常渲染。测试 97/97（+光照格断言重写、+短字段名断言）；全量
+14 项目全绿。
 
 ---
 
